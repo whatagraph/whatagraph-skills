@@ -20,17 +20,26 @@ These skills help Claude navigate the platform, fetch and interpret marketing da
 | [generating-marketing-insights](skills/generating-marketing-insights/) | Generate executive summaries, trend analysis, and actionable recommendations |
 | [auditing-account-health](skills/auditing-account-health/) | Review source connections, automations, sharing, goals, and account configuration |
 
+## Whatagraph MCP Server
+
+These skills are designed to work with the **Whatagraph MCP server**:
+
+- **Server info**: [https://mcp.whatagraph.com](https://mcp.whatagraph.com)
+- **MCP endpoint**: `https://mcp.whatagraph.com/mcp`
+
+The MCP server provides read-only access to your Whatagraph account data — sources, reports, widgets, metrics, and more. To connect, add the server endpoint to your MCP client configuration using your Whatagraph API credentials.
+
 ## Prerequisites
 
-- Access to the [Whatagraph MCP server](https://mcp.whatagraph.com)
 - A Whatagraph account with connected data sources
 - Claude with MCP integration enabled
+- The Whatagraph MCP server connected at `https://mcp.whatagraph.com/mcp`
 
 ## Installation
 
 ### Claude Desktop / Claude.ai
 
-1. Connect the Whatagraph MCP server to your Claude environment
+1. Connect the Whatagraph MCP server (`https://mcp.whatagraph.com/mcp`) to your Claude environment
 2. Add the skills from this repository to your Claude skills directory:
    ```
    ~/.claude/skills/
