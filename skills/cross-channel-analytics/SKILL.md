@@ -38,7 +38,7 @@ Help users analyze marketing performance across multiple channels by leveraging 
    fetch-data source_id: <blend_source_id>, report_type: "<type>",
      metrics: ["impressions", "clicks", "spend"],
      dimensions: ["date"],
-     date_from: "2026-03-01", date_to: "2026-03-31"
+     from: "2026-03-01", till: "2026-03-31"
    ```
 
 4. **For channel-by-channel comparison**, fetch data from each source individually and present side by side:
@@ -80,7 +80,7 @@ Source groups are particularly useful for agencies managing many accounts of the
 
 2. **Inspect a custom metric formula**:
    ```
-   list-custom-metrics action: show, custom_metric_id: <id>
+   list-custom-metrics action: show, metric_id: <id>
    ```
 
 3. **List custom dimensions**:

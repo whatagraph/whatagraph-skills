@@ -33,7 +33,7 @@ Ask clarifying questions to determine which category the issue falls into:
 
 2. **Check the integration account**:
    ```
-   list-integrations action: list_accounts, integration_id: <id>
+   list-integrations action: list_accounts, channel_id: <id>
    ```
    Account-level errors often affect all sources under that account.
 
@@ -59,14 +59,14 @@ Ask clarifying questions to determine which category the issue falls into:
    ```
    fetch-data source_id: <id>, report_type: "<type>",
      metrics: ["<metric>"], dimensions: ["date"],
-     date_from: "<start>", date_to: "<end>"
+     from: "<start>", till: "<end>"
    ```
    Compare day-by-day values with the native platform.
 
 4. **Check for filters**: Hidden filters on widgets or report-level filters can exclude data:
    ```
    list-filters action: list
-   list-widgets action: show, widget_id: <id>
+   list-widgets action: show, report_id: <report_id>, widget_id: <id>
    ```
 
 5. **Common causes**:
@@ -117,7 +117,7 @@ Blends and source groups combine data from multiple sources, which introduces co
 
 3. **Check widget-level filters**:
    ```
-   list-widgets action: show, widget_id: <id>
+   list-widgets action: show, report_id: <report_id>, widget_id: <id>
    ```
    Widgets can have their own filter configurations that override or layer on top of report-level filters.
 

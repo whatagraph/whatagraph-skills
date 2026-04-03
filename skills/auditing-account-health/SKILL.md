@@ -39,7 +39,7 @@ Review:
 
 For each integration, check connected accounts:
 ```
-list-integrations action: list_accounts, integration_id: <id>
+list-integrations action: list_accounts, channel_id: <id>
 ```
 
 ### 3. Source Health Scan
@@ -71,7 +71,7 @@ Review:
 
 For each space, check children:
 ```
-list-spaces action: show, space_id: <id>
+list-spaces action: show, client_id: <id>
 ```
 
 ### 5. Report Coverage
@@ -88,7 +88,7 @@ Check:
 ### 6. Automation & Delivery Audit
 
 ```
-list-automations action: list
+list-automations action: list, report_id: <id>
 ```
 
 Review:
@@ -100,7 +100,7 @@ Review:
 
 For each important report:
 ```
-view-sharing report_id: <id>
+view-sharing action: show, report_id: <id>
 ```
 
 Check:

@@ -46,13 +46,13 @@ Fetch data for the relevant period and channels:
 fetch-data source_id: <id>, report_type: "<type>",
   metrics: ["impressions", "clicks", "spend", "conversions", "conversion_value"],
   dimensions: ["date"],
-  date_from: "<period_start>", date_to: "<period_end>"
+  from: "<period_start>", till: "<period_end>"
 ```
 
 For period-over-period comparison, also fetch the previous period:
 ```
 fetch-data source_id: <id>, ...,
-  date_from: "<previous_period_start>", date_to: "<previous_period_end>"
+  from: "<previous_period_start>", till: "<previous_period_end>"
 ```
 
 ### Step 3: Analyze and Narrate

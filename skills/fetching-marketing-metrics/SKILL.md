@@ -18,7 +18,7 @@ Always confirm these three things before calling `fetch-data`:
 
 1. **Source ID** — Use `list-sources` to find the correct source. Users often refer to sources by name (e.g., "my Google Ads account"), so match by `service` and `standard_name`.
 2. **Available metrics and dimensions** — Call `list-sources` with `action: list_dimensions_and_metrics` and the `source_id` plus a `report_type` to see what fields are available.
-3. **Report type** — Each source has one or more report types (e.g., `wg_daily_ad_performance`). Check with `list-sources` action `list_metadata` to see available report types for a source.
+3. **Report type** — Each source has one or more report types (e.g., `wg_daily_ad_performance`). Check with `list-sources` action `list_report_types` to see available report types for a source.
 
 ## Workflow: Fetching Data
 
@@ -29,7 +29,7 @@ Always confirm these three things before calling `fetch-data`:
 
 2. **Check available report types**:
    ```
-   list-sources action: list_metadata, source_id: <id>
+   list-sources action: list_report_types, source_id: <id>
    ```
 
 3. **Check available metrics and dimensions**:
@@ -42,7 +42,7 @@ Always confirm these three things before calling `fetch-data`:
    fetch-data source_id: <id>, report_type: "<type>",
      metrics: ["impressions", "clicks", "spend"],
      dimensions: ["date"],
-     date_from: "2026-03-01", date_to: "2026-03-31"
+     from: "2026-03-01", till: "2026-03-31"
    ```
 
 ## Common Marketing Metrics by Channel
@@ -72,7 +72,7 @@ Always confirm these three things before calling `fetch-data`:
 
 ## Date Range Patterns
 
-| User Request | `date_from` | `date_to` |
+| User Request | `from` | `till` |
 |-------------|------------|----------|
 | "Last month" | First day of previous month | Last day of previous month |
 | "This month" | First day of current month | Today |
