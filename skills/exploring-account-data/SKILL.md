@@ -28,8 +28,8 @@ Help users discover and navigate the data available in their Whatagraph account.
 
 2. **Browse data sources** to see specific connected accounts:
    - Call `list-sources` with `action: list` to see all sources
-   - Filter by integration type using `filter_integration_ids`
-   - Use `action: list_metadata` on a source to see its available report types
+   - Filter by integration type using `channels` (array of integration IDs)
+   - Use `action: list_report_types` on a source to see its available report types
    - Use `action: list_dimensions_and_metrics` to discover available fields for a source
 
 3. **Explore the account structure**:
@@ -46,17 +46,24 @@ Help users discover and navigate the data available in their Whatagraph account.
 
 | Tool | Key Actions | Use When |
 |------|------------|----------|
-| `list-sources` | `list`, `show`, `list_metadata`, `list_dimensions_and_metrics`, `list_usage` | Finding data sources, checking available metrics |
+| `list-sources` | `list`, `show`, `list_report_types`, `list_dimensions_and_metrics`, `list_usage` | Finding data sources, checking available metrics |
 | `list-integrations` | `list`, `list_grouped`, `list_accounts`, `list_available_sources` | Understanding connected channels |
 | `list-spaces` | `list`, `show`, `children` | Navigating client/project folders |
 | `list-reports` | `list`, `show`, `list_sources` | Finding and examining reports |
-| `list-custom-metrics` | `list`, `show` | Discovering user-created metrics |
-| `list-custom-dimensions` | `list`, `show` | Discovering user-created dimensions |
-| `view-team` | `show`, `search` | Account settings, global search |
+| `list-report-tabs` | `list`, `show` | Browsing tabs (pages) within a report |
+| `list-widgets` | `list`, `show`, `csv_export` | Exploring widgets on report tabs |
+| `list-blends` | `list`, `show` | Cross-channel blended data sources |
+| `list-source-groups` | `list`, `show`, `source_issues` | Aggregated same-type sources |
+| `list-custom-metrics` | `list`, `list_with_premades`, `show`, `usage` | User-created and premade metrics |
+| `list-custom-dimensions` | `list`, `list_with_premades`, `show`, `usage` | User-created and premade dimensions |
+| `list-themes` | `list_themes`, `list_colors` | Report visual themes and palettes |
+| `list-overviews` | `list`, `show` | KPI tracking dashboards |
+| `view-goals` | `list`, `show` | Metric targets and progress |
+| `view-team` | `show`, `search`, `roles`, `show_subscription`, `list_plans` | Account settings, global search, subscription |
 
 ## Tips
 
-- Use `view-team` with `action: search` and a `query` to find anything across the account — sources, reports, spaces, blends, and more.
+- Use `view-team` with `action: search` and a `search` parameter to find anything across the account — reports, overviews, and spaces.
 - When a user asks "what data do I have?", start with `list-integrations` (action: `list_grouped`) for the big picture, then drill into specific sources.
 - Source IDs are needed for data fetching. Always confirm the source ID before calling `fetch-data`.
 - The `list_usage` action on `list-sources` shows which reports and widgets reference a source — useful for understanding data dependencies.

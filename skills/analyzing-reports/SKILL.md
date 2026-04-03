@@ -45,19 +45,19 @@ Report
 
 3. **Examine widgets on each tab**:
    ```
-   list-widgets action: list, report_id: <id>, tab_id: <id>
+   list-widgets action: list, report_id: <id>
    ```
    Widgets have types (KPI, chart, table, text, image) and configurations linking them to data sources and metrics.
 
 4. **Deep-dive into specific widgets**:
    ```
-   list-widgets action: show, widget_id: <id>
+   list-widgets action: show, report_id: <report_id>, widget_id: <id>
    ```
    Shows full widget configuration including metrics, dimensions, filters, and display options.
 
 5. **Export widget data as CSV** (for data verification):
    ```
-   list-widgets action: csv_export, widget_id: <id>, date_from: "2026-03-01", date_to: "2026-03-31"
+   list-widgets action: csv_export, report_id: <report_id>, widget_id: <id>
    ```
 
 6. **Check report sources**:
@@ -68,8 +68,8 @@ Report
 
 7. **Review sharing and delivery**:
    ```
-   view-sharing report_id: <id>
-   list-automations action: list
+   view-sharing action: show, report_id: <id>
+   list-automations action: list, report_id: <id>
    ```
 
 8. **Check for saved snapshots**:
@@ -92,7 +92,7 @@ Templates show which reports were created from them, making it easy to identify 
 ## Theme Review
 
 ```
-list-themes action: list
+list-themes action: list_themes, report_id: <id>
 ```
 
 Themes control visual styling (colors, fonts). Review which theme a report uses to understand branding consistency.
