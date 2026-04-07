@@ -4,7 +4,7 @@ A collection of [Claude Agent Skills](https://platform.claude.com/docs/en/agents
 
 ## Overview
 
-Whatagraph is a marketing data platform that connects 50+ marketing channels (Google Ads, Meta, GA4, LinkedIn, TikTok, etc.) into unified reports, dashboards, and automated deliveries. The Whatagraph MCP server provides read-only access to all account data through structured tools.
+Whatagraph is a marketing data platform that connects 60+ marketing channels (Google Ads, GA4, Shopify, Salesforce, Mailchimp, and more) into unified reports, dashboards, and automated deliveries. The Whatagraph MCP server provides read-only access to all account data through structured tools.
 
 These skills help Claude navigate the platform, fetch and interpret marketing data, analyze reports, troubleshoot issues, perform cross-channel comparisons, generate insights, and audit account health.
 
