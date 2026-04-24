@@ -88,7 +88,26 @@ cd whatagraph-skills
 
 This creates `dist/exploring-account-data.zip`, `dist/fetching-marketing-metrics.zip`, etc. — drag each one into the Skills section of your Claude.ai workspace settings.
 
-### Option 4 — Manual copy (if you only want one or two)
+### Option 4 — Ask your coding agent to install them
+
+If you use an agent with shell access (Claude Code, Cursor, Devin, etc.), paste the following prompt and it will install the skills for you:
+
+> Please install the Whatagraph Claude Agent Skills from <https://github.com/whatagraph/whatagraph-skills>.
+>
+> 1. Create `~/.claude/skills/` if it doesn't exist.
+> 2. Download the latest `main` archive and extract every folder from `skills/` into `~/.claude/skills/`, preserving the original folder names (each skill is a directory containing a `SKILL.md`).
+> 3. List the installed skills under `~/.claude/skills/` and confirm each one has a `SKILL.md` inside.
+> 4. If any skill already exists locally, overwrite it with the latest version.
+>
+> A one-liner that does steps 1–2 on macOS/Linux is:
+>
+> ```bash
+> mkdir -p ~/.claude/skills && \
+>   curl -L https://github.com/whatagraph/whatagraph-skills/archive/refs/heads/main.tar.gz | \
+>   tar -xz -C ~/.claude/skills --strip-components=2 whatagraph-skills-main/skills
+> ```
+
+### Option 5 — Manual copy (if you only want one or two)
 
 ```bash
 git clone https://github.com/whatagraph/whatagraph-skills.git
