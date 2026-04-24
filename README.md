@@ -38,82 +38,39 @@ The MCP server provides read-only access to your Whatagraph account data — sou
 
 ## Installation
 
-First, connect the Whatagraph MCP server (`https://mcp.whatagraph.com/mcp`) to your Claude environment, then install the skills using one of the options below.
+First, connect the Whatagraph MCP server (`https://mcp.whatagraph.com/mcp`) to your Claude environment, then install the skills.
 
-### Option 1 — One-line install (Claude Code / Claude Desktop, macOS & Linux)
+### Claude Code / Claude Desktop
 
-Copies every skill folder (with its `SKILL.md` inside) directly into `~/.claude/skills/`, keeping the original folder names. No `git` required.
-
-```bash
-mkdir -p ~/.claude/skills && \
-  curl -L https://github.com/whatagraph/whatagraph-skills/archive/refs/heads/main.tar.gz | \
-  tar -xz -C ~/.claude/skills --strip-components=2 whatagraph-skills-main/skills
-```
-
-Re-run the command any time to update to the latest version — `tar` will overwrite the existing files.
-
-To install only specific skills, append the skill paths to the `tar` command, for example:
+Clone the repo and copy the skills into your Claude skills directory:
 
 ```bash
-mkdir -p ~/.claude/skills && \
-  curl -L https://github.com/whatagraph/whatagraph-skills/archive/refs/heads/main.tar.gz | \
-  tar -xz -C ~/.claude/skills --strip-components=2 \
-  whatagraph-skills-main/skills/fetching-marketing-metrics \
-  whatagraph-skills-main/skills/generating-report-digests
+git clone https://github.com/whatagraph/whatagraph-skills.git
+cp -r whatagraph-skills/skills/* ~/.claude/skills/
 ```
 
-### Option 2 — Git clone + symlink (keeps skills updatable via `git pull`)
+To install a subset, copy only the folders you want (e.g. `cp -r whatagraph-skills/skills/generating-report-digests ~/.claude/skills/`).
+
+If you'd rather pull updates later with `git pull`, symlink instead of copying:
 
 ```bash
 git clone https://github.com/whatagraph/whatagraph-skills.git ~/whatagraph-skills
 mkdir -p ~/.claude/skills
 ln -s ~/whatagraph-skills/skills/* ~/.claude/skills/
+git -C ~/whatagraph-skills pull   # run later to update
 ```
 
-Later, update all skills with a single command:
+### Claude.ai web
 
-```bash
-git -C ~/whatagraph-skills pull
-```
-
-### Option 3 — Claude.ai web (packaged zips for upload)
-
-The Claude.ai web interface uploads one `.zip` per skill. Run the packaging script to produce one zip per skill under `dist/`:
+The Claude.ai web UI uploads one `.zip` per skill. Clone the repo and zip each skill folder:
 
 ```bash
 git clone https://github.com/whatagraph/whatagraph-skills.git
-cd whatagraph-skills
-./scripts/package-skills.sh
+cd whatagraph-skills/skills
+for dir in */; do (cd "$dir" && zip -r "../../${dir%/}.zip" .); done
 ```
 
-This creates `dist/exploring-account-data.zip`, `dist/fetching-marketing-metrics.zip`, etc. — drag each one into the Skills section of your Claude.ai workspace settings.
-
-### Option 4 — Ask your coding agent to install them
-
-If you use an agent with shell access (Claude Code, Cursor, Devin, Codex, etc.), copy the prompt below and paste it into your agent. It will figure out the correct skills directory for your environment and install everything.
-
-```
-Please install the Whatagraph Agent Skills from https://github.com/whatagraph/whatagraph-skills.
-
-1. Determine the correct skills directory for the agent/environment you are running in
-   (e.g. ~/.claude/skills for Claude Code / Claude Desktop, or the equivalent location
-   for whatever agent this is). If you are unsure, ask me.
-2. Download the latest `main` branch archive from
-   https://github.com/whatagraph/whatagraph-skills/archive/refs/heads/main.tar.gz
-   and extract every folder under `skills/` from the archive into the skills directory
-   from step 1, preserving the original folder names (each skill is a directory
-   containing a SKILL.md file).
-3. If any of these skills already exist locally, overwrite them with the latest version.
-4. List the installed skill folders and confirm each one contains a SKILL.md.
-5. Report back which skills were installed and where.
-```
-
-### Option 5 — Manual copy (if you only want one or two)
-
-```bash
-git clone https://github.com/whatagraph/whatagraph-skills.git
-cp -r whatagraph-skills/skills/generating-report-digests ~/.claude/skills/
-```
+Then drag each generated `.zip` into the Skills section of your Claude.ai workspace settings.
 
 ## MCP Tools Reference
 
