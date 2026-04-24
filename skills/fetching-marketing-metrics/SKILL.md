@@ -12,13 +12,45 @@ description: >-
 
 Retrieve marketing performance data from connected sources using the `fetch-data` tool. This skill covers selecting the right metrics, dimensions, date ranges, and interpreting the results.
 
+## Critical Rule: Never Guess Field Names
+
+**Every metric and dimension name you pass to `fetch-data` must come from a `list-sources` `action: list_dimensions_and_metrics` response for the exact same `source_id` + `report_type` combination. Never rely on your prior knowledge of the native platform's API.**
+
+Whatagraph exposes a normalized field catalog that differs from each platform's native API. The following guesses are common and all fail:
+
+| Wrong (native-API guess) | Actual Whatagraph field |
+|--------------------------|--------------------------|
+| `sessionDefaultChannelGroup` (GA4) | look it up — often `default_channel_group` |
+| `campaignName`, `campaign_name` | usually `campaign` |
+| `spend` (generic) | varies by channel — `cost`, `spend`, or a custom metric |
+| `date` (on sources without time dimension) | some report types don't support date at all — check first |
+| `universal_metric_N` | these are positional IDs, never stable — look up the actual name |
+
+If `fetch-data` returns `Invalid metrics: X` or `Invalid dimensions: X`, do not retry with a variant spelling. Re-run `list-sources action: list_dimensions_and_metrics` with the correct `source_id` and `report_type` and pick a name from the response verbatim.
+
 ## Before Fetching Data
 
 Always confirm these three things before calling `fetch-data`:
 
 1. **Source ID** — Use `list-sources` to find the correct source. Users often refer to sources by name (e.g., "my Google Ads account"), so match by `service` and `standard_name`.
-2. **Available metrics and dimensions** — Call `list-sources` with `action: list_dimensions_and_metrics` and the `source_id` plus a `report_type` to see what fields are available.
-3. **Report type** — Each source has one or more report types (e.g., `wg_daily_ad_performance`). Check with `list-sources` action `list_report_types` to see available report types for a source.
+2. **Report type** — Many sources expose multiple report types (e.g., Google Ads has `ACCOUNT`, `CAMPAIGN`, `AD_GROUP`, `AD`; Bing Ads has `customer`, `campaign`, `ad_group`, etc.). Always call `list-sources` with `action: list_report_types` before fetching. If the source has more than one report type, `fetch-data` **will error** unless you pass `report_type`.
+3. **Available metrics and dimensions** — Call `list-sources` with `action: list_dimensions_and_metrics` with both `source_id` **and** `report_type` to see what fields are available. The response is specific to that report type — switching report types changes the catalog.
+
+### Recovering from "Multiple report types are available"
+
+This is the single most common `fetch-data` error. Recovery:
+
+```
+list-sources action: list_report_types, source_id: <id>
+→ returns e.g. [{"id": "campaign", "name": "Campaign"}, ...]
+
+list-sources action: list_dimensions_and_metrics, source_id: <id>, report_type: "campaign"
+→ returns the field catalog for that report type
+
+fetch-data source_id: <id>, report_type: "campaign", metrics: [...], dimensions: [...]
+```
+
+If the user's question doesn't imply a report type, default to the most granular level that still supports `date` (usually `campaign` for paid, or the entity-level report for each channel). Never pick `ACCOUNT`/`customer` as a fallback — it often lacks the dimensions users want.
 
 ## Workflow: Fetching Data
 
@@ -46,6 +78,8 @@ Always confirm these three things before calling `fetch-data`:
    ```
 
 ## Common Marketing Metrics by Channel
+
+> The tables below are **orientation only** — they show the *kinds* of metrics you'll typically find on each channel, not verbatim field names. Actual names vary by integration and report type. Always confirm via `list-sources action: list_dimensions_and_metrics` before passing a name to `fetch-data`.
 
 ### Paid Advertising (Google Ads, Facebook Ads, LinkedIn Ads, TikTok Ads)
 - **Reach & visibility**: `impressions`, `reach`
@@ -93,5 +127,14 @@ Always confirm these three things before calling `fetch-data`:
 - Start with fewer metrics and dimensions, then expand. Large requests may be slower.
 - Always include a `date` dimension when users want to see trends over time.
 - If a metric returns unexpected results, check if the report type is correct — different report types expose different metrics.
-- Use `dimensions: ["campaign_name"]` for campaign-level breakdowns, `["ad_group_name"]` for ad group level, etc.
-- For period-over-period comparisons, make two `fetch-data` calls with different date ranges and compare the results side by side.
+- Keep requests to **≤ 10 metrics per call** — larger requests are rejected with `Requests are limited to 10 metrics.`
+- For period-over-period comparisons, make two `fetch-data` calls with different date ranges and compare the results side by side. (If the user has a Whatagraph report with a built-in comparison period, prefer the `generating-report-digests` skill, which surfaces comparison metrics directly.)
+
+## Handling Errors (read before retrying)
+
+- `Invalid metrics: X` / `Invalid dimensions: X` — do NOT retry with a spelling variant. Re-run `list-sources action: list_dimensions_and_metrics`.
+- `Multiple report types are available.` — the source has multiple report types; you must pass `report_type`. See recovery pattern above.
+- `The dimensions and metrics are incompatible.` — this report type does not support that combination. Pick a different report type or drop the dimension (typically the finest-grained dimension).
+- `Invalid source_id.` — the source ID was fabricated or stale. Re-run `list-sources action: list` with a `search` term matching the user's words.
+- `Ahrefs API usage limit reached.` / `Error validating access token:` / other provider errors — these are account-level issues the user must resolve; tell them which source is broken and stop retrying.
+- `One or more GA4 metric names contain unsupported characters.` — you used a GA4-native field name. Switch to the Whatagraph normalized name via `list-sources action: list_dimensions_and_metrics`.

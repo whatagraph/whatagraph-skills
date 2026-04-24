@@ -61,9 +61,23 @@ Help users discover and navigate the data available in their Whatagraph account.
 | `view-goals` | `list`, `show` | Metric targets and progress |
 | `view-team` | `show`, `search`, `roles`, `show_subscription`, `list_plans` | Account settings, global search, subscription |
 
+## Report Types: Required for Most Paid Channels
+
+Most paid advertising sources (Google Ads, Bing/Microsoft Ads, Facebook Ads, etc.) and several analytics sources (Google Search Console, Ahrefs) expose **multiple report types** — one per entity level (account, campaign, ad group, ad, keyword, …) or per search type (web, image, video). Each report type has its own catalog of dimensions and metrics.
+
+When exploring such a source:
+
+1. `list-sources action: list_report_types, source_id: <id>` — always do this before `list_dimensions_and_metrics` or `fetch-data`.
+2. If the response has more than one entry, **pass `report_type` explicitly** on every subsequent call. Omitting it causes:
+   - `list-sources action: list_dimensions_and_metrics` → `Multiple report types are available. Please specify a report_type parameter.`
+   - `fetch-data` → `This source has multiple report types. The report_type parameter is required — choose one of: ...`
+
+Single-report-type sources (e.g., most social pages, email platforms) return exactly one entry from `list_report_types` and you can omit the param.
+
 ## Tips
 
 - Use `view-team` with `action: search` and a `search` parameter to find anything across the account — reports, overviews, and spaces.
 - When a user asks "what data do I have?", start with `list-integrations` (action: `list_grouped`) for the big picture, then drill into specific sources.
 - Source IDs are needed for data fetching. Always confirm the source ID before calling `fetch-data`.
 - The `list_usage` action on `list-sources` shows which reports and widgets reference a source — useful for understanding data dependencies.
+- Never fabricate source IDs from memory. If `list-sources` / `fetch-data` responds with `Invalid source_id`, rerun `list-sources action: list` with a `search` term rather than guessing.
