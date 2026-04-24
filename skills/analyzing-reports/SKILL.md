@@ -60,6 +60,8 @@ Report
    list-widgets action: csv_export, report_id: <report_id>, widget_id: <id>
    ```
 
+   For a full-report dump — all widgets at once, with comparison metrics included — use `export-report` instead. See the `generating-report-digests` skill for when to prefer it over per-widget exports.
+
 6. **Check report sources**:
    ```
    list-reports action: list_sources, report_id: <id>

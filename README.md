@@ -14,6 +14,7 @@ These skills help Claude navigate the platform, fetch and interpret marketing da
 |-------|-------------|
 | [exploring-account-data](skills/exploring-account-data/) | Navigate data sources, integrations, metrics, dimensions, spaces, and reports |
 | [fetching-marketing-metrics](skills/fetching-marketing-metrics/) | Fetch raw performance data with proper metric/dimension selection and date ranges |
+| [generating-report-digests](skills/generating-report-digests/) | Summarize an existing Whatagraph report from a report URL, including comparison metrics and date-range overrides |
 | [analyzing-reports](skills/analyzing-reports/) | Examine report structure, widgets, tabs, templates, themes, and sharing settings |
 | [troubleshooting-data-issues](skills/troubleshooting-data-issues/) | Diagnose data discrepancies, source errors, blend issues, and filter problems |
 | [cross-channel-analytics](skills/cross-channel-analytics/) | Analyze performance across channels using blends, source groups, and custom fields |
@@ -68,6 +69,7 @@ These skills leverage the following Whatagraph MCP tools:
 | `list-reports` | Browse reports |
 | `list-report-tabs` | Browse tabs within reports |
 | `list-widgets` | Inspect widget configurations and export data |
+| `export-report` | Export all widgets in a report in one call (with comparison metrics) |
 | `list-integrations` | Browse connected channels and accounts |
 | `list-themes` | Review report visual themes |
 | `list-templates` | Browse report templates |
