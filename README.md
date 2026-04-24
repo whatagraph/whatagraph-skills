@@ -40,7 +40,23 @@ The MCP server provides read-only access to your Whatagraph account data — sou
 
 First, connect the Whatagraph MCP server (`https://mcp.whatagraph.com/mcp`) to your Claude environment, then install the skills.
 
-### Claude Code / Claude Desktop
+### Ask your coding agent to install them (no terminal needed)
+
+If you use an agent with shell access (Claude Code, Cursor, Devin, Codex, etc.), paste the prompt below into your agent. It will figure out the correct skills directory for your environment and install everything.
+
+```
+Please install the Whatagraph Agent Skills from https://github.com/whatagraph/whatagraph-skills.
+
+1. Determine the correct skills directory for the agent/environment you are running in
+   (e.g. ~/.claude/skills for Claude Code / Claude Desktop). If you are unsure, ask me.
+2. Clone https://github.com/whatagraph/whatagraph-skills.git and copy every folder under
+   its skills/ directory into the skills directory from step 1, preserving the folder
+   names (each skill is a directory containing a SKILL.md file).
+3. If any skills already exist locally, overwrite them with the latest version.
+4. List the installed skill folders and confirm each contains a SKILL.md.
+```
+
+### Claude Code / Claude Desktop (terminal)
 
 Clone the repo and copy the skills into your Claude skills directory:
 
