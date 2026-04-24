@@ -79,6 +79,8 @@ If the user's question doesn't imply a report type, default to the most granular
 
 ## Common Marketing Metrics by Channel
 
+> The tables below are **orientation only** — they show the *kinds* of metrics you'll typically find on each channel, not verbatim field names. Actual names vary by integration and report type. Always confirm via `list-sources action: list_dimensions_and_metrics` before passing a name to `fetch-data`.
+
 ### Paid Advertising (Google Ads, Facebook Ads, LinkedIn Ads, TikTok Ads)
 - **Reach & visibility**: `impressions`, `reach`
 - **Engagement**: `clicks`, `link_clicks`, `ctr` (click-through rate)
