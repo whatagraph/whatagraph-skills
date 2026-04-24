@@ -90,22 +90,23 @@ This creates `dist/exploring-account-data.zip`, `dist/fetching-marketing-metrics
 
 ### Option 4 — Ask your coding agent to install them
 
-If you use an agent with shell access (Claude Code, Cursor, Devin, etc.), paste the following prompt and it will install the skills for you:
+If you use an agent with shell access (Claude Code, Cursor, Devin, Codex, etc.), copy the prompt below and paste it into your agent. It will figure out the correct skills directory for your environment and install everything.
 
-> Please install the Whatagraph Claude Agent Skills from <https://github.com/whatagraph/whatagraph-skills>.
->
-> 1. Create `~/.claude/skills/` if it doesn't exist.
-> 2. Download the latest `main` archive and extract every folder from `skills/` into `~/.claude/skills/`, preserving the original folder names (each skill is a directory containing a `SKILL.md`).
-> 3. List the installed skills under `~/.claude/skills/` and confirm each one has a `SKILL.md` inside.
-> 4. If any skill already exists locally, overwrite it with the latest version.
->
-> A one-liner that does steps 1–2 on macOS/Linux is:
->
-> ```bash
-> mkdir -p ~/.claude/skills && \
->   curl -L https://github.com/whatagraph/whatagraph-skills/archive/refs/heads/main.tar.gz | \
->   tar -xz -C ~/.claude/skills --strip-components=2 whatagraph-skills-main/skills
-> ```
+```
+Please install the Whatagraph Agent Skills from https://github.com/whatagraph/whatagraph-skills.
+
+1. Determine the correct skills directory for the agent/environment you are running in
+   (e.g. ~/.claude/skills for Claude Code / Claude Desktop, or the equivalent location
+   for whatever agent this is). If you are unsure, ask me.
+2. Download the latest `main` branch archive from
+   https://github.com/whatagraph/whatagraph-skills/archive/refs/heads/main.tar.gz
+   and extract every folder under `skills/` from the archive into the skills directory
+   from step 1, preserving the original folder names (each skill is a directory
+   containing a SKILL.md file).
+3. If any of these skills already exist locally, overwrite them with the latest version.
+4. List the installed skill folders and confirm each one contains a SKILL.md.
+5. Report back which skills were installed and where.
+```
 
 ### Option 5 — Manual copy (if you only want one or two)
 
