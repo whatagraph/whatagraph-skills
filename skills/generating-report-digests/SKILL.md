@@ -3,7 +3,7 @@ name: generating-report-digests
 description: >-
   Produce a digest or summary of an existing Whatagraph report from a report
   URL or report ID. Use when the user pastes a live-report link
-  (`https://live.whatagraph.com/client/<cid>/live-report/<rid>`), asks for the
+  (`https://live.whatagraph.com/client/{cid}/live-report/{rid}`), asks for the
   "daily triage", "main metrics from this report", "weekly digest", or wants a
   running summary of the same report. Distinct from fetching-marketing-metrics
   (which builds answers from raw sources) — this skill reads the already-built
@@ -19,7 +19,7 @@ Many Whatagraph users run recurring prompts on top of a single report URL ("give
 Whatagraph report URLs look like:
 
 ```
-https://live.whatagraph.com/client/<client_id>/live-report/<report_id>
+https://live.whatagraph.com/client/{client_id}/live-report/{report_id}
 ```
 
 Use the number after `live-report/` as `report_id`. The `client_id` in the URL refers to a space (folder) and is not needed for the MCP tools.
@@ -27,7 +27,7 @@ Use the number after `live-report/` as `report_id`. The `client_id` in the URL r
 If the user mentions a report by name instead of URL, discover the ID:
 
 ```
-list-reports action: list, search: "<name fragment>"
+list-reports action: list, search: "{name fragment}"
 ```
 
 ## Workflow: Report Digest
@@ -35,7 +35,7 @@ list-reports action: list, search: "<name fragment>"
 1. **Inspect the report** to learn its date range, comparison period, and source coverage:
 
    ```
-   list-reports action: show, report_id: <id>
+   list-reports action: show, report_id: {id}
    ```
 
    The response includes `date_range.from`, `date_range.till`, and — when comparison is enabled — `date_range.vs_from`, `date_range.vs_till`, `date_range.compare_type`. If `vs_from` / `vs_till` are present, the report expects period-over-period output; surface both current and previous values in the digest.
@@ -43,7 +43,7 @@ list-reports action: list, search: "<name fragment>"
 2. **Export the report's data** in one call:
 
    ```
-   export-report report_id: <id>
+   export-report report_id: {id}
    ```
 
    This returns one envelope per widget containing the widget title, its configured source(s), the widget's date range (with `vs_from` / `vs_till` / `compare_type` when comparison is set), a structured `metrics` array, and a raw `csv` string.
@@ -59,9 +59,9 @@ list-reports action: list, search: "<name fragment>"
 3. **For time-series / chart widgets, read the `csv` string instead.** The `metrics` block on these widgets only reflects the first bucket. The CSV interleaves rows so previous-period values are visible alongside current-period ones:
    - Date dimensions: previous rows are emitted first with calendar-shifted dates (e.g. `2024-01-01` → `2025-01-01`), then current rows.
    - Non-date dimensions (e.g. `Day of week`, `Device`): previous rows get a ` (prev)` suffix in the same column (e.g. `Wednesday (prev)`).
-   - When a chart carries multiple metrics, all metrics share the first metric's dimension column; values are positioned by index, so the CSV columns are `<dimension> | <metric_1> | <metric_2> | …` with one row per dimension bucket.
+   - When a chart carries multiple metrics, all metrics share the first metric's dimension column; values are positioned by index, so the CSV columns are `{dimension} | {metric_1} | {metric_2} | …` with one row per dimension bucket.
 
-4. **For non-time-series widgets, the `csv` string also carries comparison side-by-side.** Each numeric metric expands to two columns: `<Metric>` (current) and `<Metric> (prev)` (previous-period). Goal widgets keep their existing `<Metric>` / `<Metric> Goal` layout — they don't get a `(prev)` column.
+4. **For non-time-series widgets, the `csv` string also carries comparison side-by-side.** Each numeric metric expands to two columns: `{Metric}` (current) and `{Metric} (prev)` (previous-period). Goal widgets keep their existing `{Metric}` / `{Metric} Goal` layout — they don't get a `(prev)` column.
 
 5. **Build the digest from the returned envelopes.** For each widget, include:
    - Widget title
