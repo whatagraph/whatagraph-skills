@@ -114,9 +114,27 @@ manage-blends action=duplicate blend_id=<id>
 
 Useful for blend variants ("Inner version of the full blend" to compare).
 
+## Unified dimensions and metrics across sub-sources
+
+A blend is only useful when the sub-sources expose equivalent dimensions and metrics that can be joined and aggregated. In practice that means:
+
+- **Dimensions**: pick the same set of universal dimensions on every sub-source (e.g. `universal_dimension_1137` = Date on every channel, plus a shared key like campaign name or channel name).
+- **Metrics**: pick the same set of universal metrics on every sub-source (e.g. `universal_metric_1` = Impressions, `universal_metric_2` = Clicks, `universal_metric_3` = Spend). The blend then exposes one aggregated metric per universal slot across the whole blend.
+- **Types and summability**: the joined metrics must be the same data type (integer/float/currency) and summable — counts, impressions, clicks, spend. Average or ratio metrics should not be blended directly; blend the numerator and denominator separately, then build a custom `data_formula` metric on top of the blend.
+
+A blend whose sub-sources expose disjoint dimensions/metrics will load with a lot of empty cells at best, or with the error *"Incorrect blend setup. View and edit it through the widget sidebar menu."* when read back via `fetch-data` — at that point fix the blend definition before putting it on a widget.
+
 ## Using the blend in widgets
 
-Treat the blend as a source. Pass the blend's integration source id as the widget's `source_id` via `manage-widgets`. The widget's metrics and dimensions come from the sub-sources; reference them via their external ids.
+Treat the blend as a source. The blend's integration source id must first be attached to the report in the Whatagraph UI (no MCP action attaches sources to reports yet); once attached, use the report-local source id returned by `list-widgets action=show` as the widget's `source_id` via `manage-widgets`. The widget's metrics and dimensions come from the sub-sources; reference them via their external ids.
+
+## Reading blend data directly
+
+Unlike source groups, a blend's virtual source **cannot** be read via `fetch-data` as a standalone source — the tool returns:
+
+> Error: Incorrect blend setup. View and edit it through the widget sidebar menu.
+
+The blend's aggregated fields are only resolvable in the widget data path, where each sub-source's metrics are joined and accumulated. To preview what the blend will produce, call `fetch-data` on each sub-source individually (with the unified dimensions/metrics you put into the blend), then mentally line up the rows — that's effectively what the blend does at widget-render time.
 
 ## Deleting a blend
 

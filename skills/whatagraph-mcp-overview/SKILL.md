@@ -53,6 +53,8 @@ Data flows into widgets from:
 3. **Read before writing.** Before a `manage-*` call, run the matching `list-*` / `show` action to confirm the asset exists and see its current shape.
 4. **Confirm destructive actions.** For `delete-*` tools, always confirm intent with the user first. Deletes are not reversible from the MCP surface.
 5. **Check `show` after a write.** After a create/update, re-fetch via `show` to confirm the change landed as expected.
+6. **Widget `source_id` is report-local.** A widget's `source_id` refers to a source already attached to the report, not a global integration source id. The MCP surface has no action to attach a new source to a report — that happens in the Whatagraph UI. When a report has no attached sources, create widgets with `source_id` omitted (they render sample data) and have the user attach real sources in the UI; then use `manage-widgets action=batch_change_source` to swap.
+7. **Write and delete tools are alpha.** Read tools work on every plan; write and delete tools are gated to customers in the private alpha. Non-alpha teams get plan/feature errors on `manage-*` / `delete-*` calls — fall back to read-only behaviour and tell the user what's gated.
 
 ## How users describe things (UI ↔ MCP parameter mapping)
 

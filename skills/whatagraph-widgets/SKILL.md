@@ -32,10 +32,22 @@ manage-widgets action=create
    tab_id=<tab_id>
    channel_id=<channel_id>
    widget_type_id=<widget_type>        # prefer 101+ (new architecture)
-   source_id=<integration_source_id>   # omit for sample-data widget
+   source_id=<report-local source id>  # omit for sample-data widget
 ```
 
 After creation, fill in configs via `manage-widgets action=update`.
+
+### `source_id` is a report-local id, not an integration source id
+
+The `source_id` on `manage-widgets` refers to a **report-local source copy**, not the global integration source id you get back from `list-sources action=list`. A report-local source only exists after the source has been explicitly attached to that report (normally done when a user adds the source to the report in the web UI). Passing an integration source id, source group id, or blend id that isn't already attached to the report returns:
+
+> Error: Source with ID &lt;id&gt; not found in report &lt;report_id&gt;. The source may not exist or may not be attached to this report.
+
+There is currently no MCP action to attach a new source to a report. Practical rules:
+
+- If you don't know which report-local sources exist, call `list-widgets action=show` on any existing widget in the report — the returned `configs[].source_id` / `source_name` show what's attached.
+- If the report has no attached sources yet, create widgets with `source_id` omitted — they get sample data — and instruct the user to attach a real source in the UI, then bulk-rewire with `manage-widgets action=batch_change_source`.
+- Source groups (channel id 154) and blends (channel id 142) are virtual sources; their ids cannot be passed as `source_id` to `manage-widgets` at all (they don't live in the per-report source table). They must be attached via the UI first, after which their report-local source copy becomes a valid `source_id`.
 
 ### `widget_type_id` — widget types
 

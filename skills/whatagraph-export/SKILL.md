@@ -54,10 +54,19 @@ Comment, calendar, image, and filter-control widgets have no tabular data and ar
 - Report as Excel (.xlsx) via `manage-sharing action=export_excel`.
 - Report as PDF via `manage-sharing action=download_pdf`.
 
+## Plan gating
+
+CSV export (both `export-report` and `list-widgets action=csv_export`) is a paid feature. On plans that don't include it, both calls return:
+
+> Error: The csv export feature is not included in your plan.
+
+This is independent of the alpha gating for write/delete tools — the user needs the CSV export add-on on their Whatagraph plan. Share the error verbatim back to the user and suggest contacting Whatagraph support to enable the feature.
+
 ## What MCP can't do here
 
 - Filter the export by dimension or date post-hoc — the widget's own filters and date range apply.
 - Export custom dimension/metric definitions — only widget data.
+- Bypass the plan check — CSV export requires the plan entitlement.
 
 ## Common pitfalls
 
@@ -65,3 +74,4 @@ Comment, calendar, image, and filter-control widgets have no tabular data and ar
 - **Huge exports** — very large reports can stall. Use `tab_id` or `widget_ids` to narrow scope.
 - **Image / comment widgets** — produce metadata-only rows. Filter them out of your widget_ids list when you want only tabular data.
 - **Fallback dates without both `from` and `till`** — both must be provided together.
+- **"The csv export feature is not included in your plan"** — plan limitation, not a bug; route the user to Whatagraph support.

@@ -51,11 +51,18 @@ manage-source-groups action=create
 - `integration_source_ids` — array of source ids from `list-sources action=list`. All sources must be the same channel.
 - `currency` — optional. Display currency.
 
-## Multi-report-type source groups
+## One config per group (strongly recommended)
 
-If the channel has multiple report types and you want all of them, list one config per report type:
+Build a source group with exactly **one** entry in `configs`. Multiple-config groups are legacy behaviour kept for backwards compatibility — every new group should expose a single, well-scoped report type that all widgets / blends / custom metrics point at. If the user needs campaign-level *and* keyword-level rollups from the same set of sources, build two separate source groups, one per report type. This keeps each group's virtual table small, the query path straightforward, and widgets/filters unambiguous about which report type they're operating on.
 
 ```
+configs=[{"output_name": "campaign"}]    # one config — preferred
+```
+
+The legacy "many report types in one group" pattern looked like this and should not be reused:
+
+```
+# LEGACY — do not use for new groups
 configs=[
   {"output_name": "campaign"},
   {"output_name": "keyword"},
@@ -90,7 +97,26 @@ manage-source-groups action=resolve_issues group_id=<id>
 
 ## Using the group in widgets
 
-The group exposes its own integration source id (found via `list-source-groups action=show` as `integration_source_id`). Use that id as a widget's `source_id`. The group's metrics and dimensions are the union of what the sub-sources expose.
+The group exposes its own integration source id (found via `list-source-groups action=show` as `integration_source_id`). To put it on a widget:
+
+1. A user attaches the group to the report in the Whatagraph UI (this creates a report-local source copy — there is no MCP action for this step yet).
+2. Once attached, use the report-local source id returned by `list-widgets action=show` as the `source_id` when creating widgets with `manage-widgets`.
+
+The group's metrics and dimensions are the union of what the sub-sources expose — e.g. for a Google Ads group with one `campaign` config, you get every Google Ads campaign-level metric and dimension.
+
+## Reading data from a group directly
+
+You don't need a widget to preview data from a source group. Use `fetch-data` on the group's `integration_source_id`:
+
+```
+fetch-data source_id=<group integration_source_id>
+  report_type="<output_name>"
+  metrics=["universal_metric_1", "universal_metric_2", "universal_metric_3"]
+  dimensions=["universal_dimension_1137"]
+  from="2026-04-01" till="2026-04-15"
+```
+
+Use the **unprefixed** field ids (`universal_metric_1`, `universal_dimension_1137`) — not the `aggregation_metric_*` / `aggregation_dimension_*` variants that `list-sources action=list_dimensions_and_metrics` may return for the group's virtual source. The aggregation-prefixed ids are for internal routing and are rejected by `fetch-data`. The platform aggregates (SUM for summable numerics, COUNT-distinct semantics for dimensions) across the sub-sources' BigQuery tables.
 
 ## Deleting a source group
 
