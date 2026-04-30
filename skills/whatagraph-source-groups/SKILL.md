@@ -97,7 +97,18 @@ manage-source-groups action=resolve_issues group_id=<id>
 
 ## Using the group in widgets
 
-The group exposes its own integration source id (found via `list-source-groups action=show` as `integration_source_id`). Pass that id directly as `source_id` when creating widgets with `manage-widgets`. The widget tool attaches the group to the report automatically if it isn't already attached.
+The group exposes its own integration source id (found via `list-source-groups action=show` as `integration_source_id`). Attach it to the report first, then create the widget against the returned report-local `source_id`:
+
+```
+manage-reports action=attach_source report_id=<id>
+   integration_source_id=<group_integration_source_id>
+# response.source_id is the report-local id
+
+manage-widgets action=create report_id=<id> tab_id=<tab_id>
+   channel_id=<group_channel_id>
+   source_id=<that report-local id>
+   widget_type_id=<...>
+```
 
 The group's metrics and dimensions are the union of what the sub-sources expose — e.g. for a Google Ads group with one `campaign` config, you get every Google Ads campaign-level metric and dimension.
 

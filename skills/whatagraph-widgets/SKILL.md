@@ -32,19 +32,19 @@ manage-widgets action=create
    tab_id=<tab_id>
    channel_id=<channel_id>
    widget_type_id=<widget_type>        # prefer 101+ (new architecture)
-   source_id=<integration_source_id>   # omit for sample-data widget
+   source_id=<report_local_source_id>  # omit for sample-data widget
 ```
 
 After creation, fill in configs via `manage-widgets action=update`.
 
-### `source_id` — report-local or global
+### `source_id` — report-local sources only
 
-`manage-widgets` accepts either form in `source_id`:
+`manage-widgets` validates `source_id` against the **sources already attached to the report** (the report-local `sources.id`, not the global `integration_sources.id`). Attach the source first via `manage-reports`:
 
-- A report-local `sources.id` returned by `list-widgets action=show` (useful for swapping sources on an existing widget).
-- A global `integration_sources.id` returned by `list-sources action=list`, `list-reports action=list_sources`, `list-source-groups`, or `list-blends`. The widget tool resolves the global id, validates team ownership, and attaches the source to the report automatically — no separate attach step is needed.
+1. `manage-reports action=attach_source report_id=<id> integration_source_id=<global_source_id>` — returns the report-local `source_id`.
+2. `manage-widgets action=create ... source_id=<that report-local id>`.
 
-Source groups and blends are themselves integration sources, so the same rule applies: pass their `id` from `list-source-groups` / `list-blends` directly as `source_id`.
+Discover already-attached sources via `list-reports action=list_sources report_id=<id>`. Source groups and blends are themselves data sources — attach them the same way using their `id` from `list-source-groups` / `list-blends`.
 
 ### `widget_type_id` — widget types
 
@@ -69,8 +69,10 @@ Adds a template widget pre-configured by Whatagraph for the channel (common KPI 
 manage-widgets action=create_premade
    report_id=<id>
    tab_id=<tab_id>
-   source_id=<integration_source_id>   # omit for sample-data premade
+   source_id=<report_local_source_id>  # omit for sample-data premade
 ```
+
+Same attach-first rule: the source must be attached to the report via `manage-reports action=attach_source` before referencing it here.
 
 ## Update a widget
 
@@ -127,12 +129,14 @@ manage-widgets action=batch_duplicate report_id=<id> widget_ids=[<id1>, <id2>, <
 
 ```
 manage-widgets action=batch_change_source
-   report_id=<id> widget_ids=[...] source_id=<new_source_id>
+   report_id=<id> widget_ids=[...] source_id=<report_local_source_id>
 
 manage-widgets action=batch_change_settings
    report_id=<id> widget_ids=[...]
    settings={"currency":"EUR","hide_footer":true}
 ```
+
+`batch_change_source` requires the new source to already be attached to the report. Attach it first via `manage-reports action=attach_source`.
 
 Use when swapping ~10+ widgets at once — much faster than per-widget updates.
 
@@ -168,6 +172,7 @@ Deletes are soft — a restore window exists. After a second delete or report-le
 - **Updating metrics on a widget that uses a source group** — after the group's sources change, the widget may need to re-save to pick up field definitions. Verify via `list-widgets action=show`.
 - **Creating without `channel_id`** — required at create time; channel_id = the source's channel.
 - **Creating without `widget_type_id`** — required; verify via existing widgets on the tab.
+- **Passing a global `integration_sources.id` as `source_id`** — widgets only accept the report-local `sources.id`. Attach first via `manage-reports action=attach_source` and use the returned `source_id`.
 - **`metrics=[]` as a top-level param** — wrong shape. Metrics live inside `rows[].configs[].metric`.
 - **Passing plain metric strings in `configs`** — configs expect `{"metric": {"external_id": "..."}}` shape, not bare strings.
 - **Batch operations without `widget_ids`** — the array is required. Empty array = no-op, not "all widgets".

@@ -53,7 +53,7 @@ Data flows into widgets from:
 3. **Read before writing.** Before a `manage-*` call, run the matching `list-*` / `show` action to confirm the asset exists and see its current shape.
 4. **Confirm destructive actions.** For `delete-*` tools, always confirm intent with the user first. Deletes are not reversible from the MCP surface.
 5. **Check `show` after a write.** After a create/update, re-fetch via `show` to confirm the change landed as expected.
-6. **Widget `source_id` accepts any source you already know about.** Pass the global `integration_sources.id` from `list-sources`, `list-source-groups`, or `list-blends`, or the report-local `sources.id` from `list-widgets`. The widget tool attaches the source to the report automatically if needed.
+6. **Attach a source to the report before pointing a widget at it.** `manage-widgets` only accepts the report-local `sources.id`. Use `manage-reports action=attach_source integration_source_id=<global_id>` first — the response includes the report-local `source_id` to pass into `manage-widgets`. The same flow works for source groups and blends (they are data sources too).
 7. **Write and delete tools are alpha.** Read tools work on every plan; write and delete tools are gated to customers in the private alpha. Non-alpha teams get plan/feature errors on `manage-*` / `delete-*` calls — fall back to read-only behaviour and tell the user what's gated.
 
 ## How users describe things (UI ↔ MCP parameter mapping)
@@ -78,7 +78,7 @@ Users rarely say "data source"; they say things like "my Google Ads account". Tr
 2. `list-spaces list` — see client folders.
 3. `list-sources list` (optionally filtered by a space) — see what's connected.
 4. Decide whether you need to aggregate same-channel accounts (`source-groups`) or combine different channels (`blends`).
-5. Build a report with `manage-reports create`, add tabs with `manage-report-tabs create`, add widgets with `manage-widgets create`.
+5. Build a report: `manage-reports create` → `manage-report-tabs create` → `manage-reports attach_source` (one call per data source the report needs) → `manage-widgets create` (using the report-local `source_id` returned by attach).
 6. Apply a theme with `manage-themes enable_theme`.
 7. Share with `manage-sharing create` and schedule with `manage-automations create`.
 

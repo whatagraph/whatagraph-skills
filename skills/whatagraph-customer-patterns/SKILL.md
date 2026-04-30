@@ -84,9 +84,10 @@ Inputs: Google Ads, Meta Ads, LinkedIn Ads sources; GA4 for revenue.
    - On each source group: `manage-custom-metrics action=create map_type=data_formula transformation_level=channel` with `aggregation_level="aggregate"` and `formula_increase="positive"` or `"negative"`. Use channel-native field ids (`metrics.clicks`, `metrics.impressions` for Google Ads; `clicks`, `spend` for Meta Ads) or platform-unified `universal_metric_<n>` ids when the formula should work on any channel that exposes the slot.
    - On the blend: build the cross-channel formula metric at `transformation_level=source` with the constituent sources' native fields as A, B, C, D.
 4. **Report shell.** `manage-reports action=create` → add tabs Overview, Google, Meta, LinkedIn, GA4, Blended (via `manage-report-tabs action=create`).
-5. **Widgets.** Create widgets with `manage-widgets action=create` or `create_premade`. Pass each source group's or blend's `integration_source_id` directly as `source_id` — the widget tool attaches the source to the report automatically. Use `list-sources action=list_dimensions_and_metrics` on the group or blend to pick the right field ids (`universal_metric_*` / `universal_dimension_*` on source groups; `aggregation_metric_universal_metric_*` / `aggregation_dimension_universal_dimension_*` on blends).
-6. **Verify.** `list-widgets action=show` on each widget to confirm configs; `fetch-data` on the source group (with `universal_metric_*` / `universal_dimension_*`) and on the blend (with `aggregation_metric_*` / `aggregation_dimension_*`) to sanity-check the aggregated numbers.
-7. **Share and automate.** `manage-sharing action=create` for the client share link; `manage-automations action=create` to schedule delivery; `manage-overviews action=create` for an exec-facing KPI summary.
+5. **Attach the data sources.** For each source group, blend, or per-channel source the report needs, call `manage-reports action=attach_source report_id=<id> integration_source_id=<id>`. Capture the returned report-local `source_id` for each — widgets reference these, not the global ids.
+6. **Widgets.** Create widgets with `manage-widgets action=create` or `create_premade`, passing the report-local `source_id` from the attach step. Use `list-sources action=list_dimensions_and_metrics` on the group or blend to pick the right field ids (`universal_metric_*` / `universal_dimension_*` on source groups; `aggregation_metric_universal_metric_*` / `aggregation_dimension_universal_dimension_*` on blends).
+7. **Verify.** `list-widgets action=show` on each widget to confirm configs; `fetch-data` on the source group (with `universal_metric_*` / `universal_dimension_*`) and on the blend (with `aggregation_metric_*` / `aggregation_dimension_*`) to sanity-check the aggregated numbers.
+8. **Share and automate.** `manage-sharing action=create` for the client share link; `manage-automations action=create` to schedule delivery; `manage-overviews action=create` for an exec-facing KPI summary.
 
 ### 3. Fix "data doesn't match the platform"
 
@@ -129,6 +130,7 @@ Only applicable if those reports are linked to a template.
 
 - **Reference IDs from the wrong domain** — spaces use `client_id`, sources use `source_id` (integration_source_id), widgets use `widget_id`. Skills state the required naming.
 - **Mixing up channel-native vs Whatagraph-native report type names** — custom metrics use channel-native names (e.g. `campaign`); source groups use Whatagraph-native names (e.g. `campaign_performance`). Wrong family → "Report type X not found for channel Y".
+- **Creating widgets before attaching sources** — `manage-widgets` validates `source_id` against report-local sources. Always run `manage-reports action=attach_source` first and use the returned `source_id`.
 - **Creating from template without running `change_sources`** — widgets stay on sample data.
 - **Automations without `time_zone`** — always include IANA timezone; local time ≠ team timezone by default.
 - **Sharing link without password on sensitive reports** — anyone with the URL can view.

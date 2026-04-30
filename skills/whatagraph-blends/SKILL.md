@@ -124,7 +124,18 @@ A blend is only useful when the sub-sources expose equivalent dimensions and met
 
 ## Using the blend in widgets
 
-A blend is a virtual source with its own `integration_source_id` (the `id` returned by `list-blends`). Pass it as a widget `source_id` via `manage-widgets` — the widget tool resolves it to a report-local source and attaches it automatically.
+A blend is a virtual source with its own `integration_source_id` (the `id` returned by `list-blends`). Attach it to the report first, then create the widget against the returned report-local `source_id`:
+
+```
+manage-reports action=attach_source report_id=<id>
+   integration_source_id=<blend_id>
+# response.source_id is the report-local id
+
+manage-widgets action=create report_id=<id> tab_id=<tab_id>
+   channel_id=<blend_channel_id>
+   source_id=<that report-local id>
+   widget_type_id=<...>
+```
 
 When picking metrics/dimensions on the widget, use the blend-level ids returned by `list-sources action=list_dimensions_and_metrics source_id=<blend_id>`:
 
