@@ -61,4 +61,4 @@ list-destinations action=list_jobs transfer_id=<id> config_id=<id>
 
 - **Confusing destinations with data sources** — destinations push data out; data sources pull in. Different tool.
 - **Assuming MCP can create a transfer** — only viewing is supported. The UI handles transfer setup and scheduling.
-- **`issue=account`** vs `issue=source`** — `account` means the authenticated integration account expired; `source` means the sub-source is failing. Different fixes.
+- **`issue=account` vs `issue=source`** — `account` means the authenticated integration account expired; `source` means the sub-source is failing. Different fixes.

@@ -90,7 +90,7 @@ manage-source-groups action=duplicate group_id=<id>
 Some sources in the group may have disabled ETL configs after errors. Re-enable them:
 
 ```
-manage-source-groups action=source_issues group_id=<id>      # view affected sources
+list-source-groups action=source_issues group_id=<id>        # view affected sources
 manage-source-groups action=resolve_issues group_id=<id>
    integration_source_ids=[<affected_source_ids>]
 ```

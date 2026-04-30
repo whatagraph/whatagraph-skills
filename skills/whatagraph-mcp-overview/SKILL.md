@@ -39,7 +39,7 @@ Data flows into widgets from:
 | Saving and restoring a report's structure | `whatagraph-snapshots` |
 | Visual branding, colors, fonts, logo | `whatagraph-themes` |
 | Public share links, password protection | `whatagraph-sharing` |
-| Scheduled email/Slack delivery | `whatagraph-automations` |
+| Scheduled email delivery | `whatagraph-automations` |
 | PDF/CSV export of a whole report | `whatagraph-export` |
 | Pushing data to BigQuery / data warehouse | `whatagraph-destinations` |
 | Inviting teammates, roles, subscription | `whatagraph-team-and-members` |
@@ -74,9 +74,9 @@ Users rarely say "data source"; they say things like "my Google Ads account". Tr
 
 ## The golden flow for new users
 
-1. `view-team show` — confirm plan, features enabled.
-2. `list-spaces list` — see client folders.
-3. `list-sources list` (optionally filtered by a space) — see what's connected.
+1. `view-team action=show` — confirm plan, features enabled.
+2. `list-spaces action=list` — see client folders.
+3. `list-sources action=list` (optionally filtered by a space) — see what's connected.
 4. Decide whether you need to aggregate same-channel accounts (`source-groups`) or combine different channels (`blends`).
 5. Build a report: `manage-reports create` → `manage-report-tabs create` → `manage-reports attach_source` (one call per data source the report needs) → `manage-widgets create` (using the report-local `source_id` returned by attach).
 6. Apply a theme with `manage-themes enable_theme`.
