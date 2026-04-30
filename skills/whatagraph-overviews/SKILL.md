@@ -5,7 +5,7 @@ description: Create overviews — KPI dashboards that track metrics over time. T
 
 # Overviews (Measurements)
 
-Tools covered: `list-overviews`, `manage-overviews`.
+Tools covered: `list-overviews`, `manage-overviews`, `delete-overviews`.
 
 An **overview** (UI name: "Measurement") is a KPI dashboard that tracks selected metrics over time with trend/column/heatmap visualizations and comparison framing. Overviews live at the team level and can optionally be associated with a space.
 
@@ -78,9 +78,17 @@ Optional. Same shape as metrics but no `visualize`/`sort_type`.
 
 Default `percentage`. Values: `percentage`, `absolute`, `combined`.
 
+## Deleting an overview
+
+```
+delete-overviews action=delete measurement_id=<id>
+```
+
+The parameter is `measurement_id`, not `overview_id` (matches the UI name).
+
 ## What MCP can't do here
 
-- Update, duplicate, or delete an overview — UI only.
+- Update or duplicate an overview — create a new one or use the UI.
 - Sharing — overviews inherit sharing from their space; share the space (UI) instead.
 - Set a target value on an overview metric — use `whatagraph-goals` to track goals alongside.
 

@@ -5,7 +5,7 @@ description: Create, duplicate, rename, and reorder tabs within a report. Each t
 
 # Report tabs (pages)
 
-Tools covered: `list-report-tabs`, `manage-report-tabs`.
+Tools covered: `list-report-tabs`, `manage-report-tabs`, `delete-report-tabs`.
 
 A **tab** is a page inside a report. Each tab holds its own widgets. Reports can have one or many tabs; tabs appear in the top navigation of the report.
 
@@ -66,9 +66,17 @@ manage-report-tabs action=move_widgets
 
 Widgets retain their configs and sources; only their tab assignment changes.
 
+## Deleting / restoring a tab
+
+```
+delete-report-tabs action=delete  report_id=<id> tab_id=<id>
+delete-report-tabs action=restore report_id=<id> tab_id=<id>   # soft-delete undo
+```
+
+A deleted tab's widgets are soft-deleted along with it. Restore puts them back. Always confirm with the user before deleting a tab with many widgets.
+
 ## What MCP can't do here
 
-- Delete a tab — UI only.
 - Set a tab-specific date range via MCP — date range lives at widget level; override there if needed (`manage-widgets action=update` with `date_range=`).
 - Protect a tab from editing — UI only.
 

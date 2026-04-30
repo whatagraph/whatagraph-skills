@@ -5,7 +5,7 @@ description: Create, update, duplicate, and batch-modify widgets on report tabs.
 
 # Widgets
 
-Tools covered: `list-widgets`, `manage-widgets`.
+Tools covered: `list-widgets`, `manage-widgets`, `delete-widgets`.
 
 A **widget** is a visual data component on a tab. Widgets are typed (KPI card, line chart, table, pie chart, etc.) and each has a data source (or no source for comment/image widgets). Widgets expose rows and configs — a row groups metrics and dimensions; configs define the data.
 
@@ -39,7 +39,7 @@ After creation, fill in configs via `manage-widgets action=update`.
 
 ### `widget_type_id` — widget types
 
-Widget types are integers from `WidgetTypeEnum`. Prefer 101+ (new architecture). Typical values:
+Widget types are integers. Higher values (101+) use the newer widget architecture with richer configs — prefer these unless you have a specific reason to use an older type. Common types:
 - KPI / single-value card
 - Line / area / column / bar chart
 - Pie / donut chart
@@ -136,9 +136,18 @@ Use when swapping ~10+ widgets at once — much faster than per-widget updates.
 - **Goal** — 3×2 to 4×3; matches KPI card sizing.
 - **Comment / image** — 12×small for section headers; 4–6 wide for sidebar callouts.
 
+## Deleting widgets
+
+```
+delete-widgets action=delete       report_id=<id> widget_id=<id>
+delete-widgets action=batch_delete report_id=<id> widget_ids=[<id>, <id>, <id>]
+delete-widgets action=restore      report_id=<id> widget_id=<id>   # undo a soft-delete
+```
+
+Deletes are soft — a restore window exists. After a second delete or report-level cleanup, they become permanent. Confirm with the user before deleting widgets that have unique configs (formulas, custom filters) that aren't easily recreated.
+
 ## What MCP can't do here
 
-- Delete a widget — UI only.
 - Move widgets to another tab — use `manage-report-tabs action=move_widgets`.
 - Set widget-level permissions — UI only.
 - Cross-report widget copy — duplicate within report only.

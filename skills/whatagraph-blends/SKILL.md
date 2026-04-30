@@ -5,7 +5,7 @@ description: Combine data from different channels (Google Ads + Meta + GA4) into
 
 # Blends
 
-Tools covered: `list-blends`, `manage-blends`.
+Tools covered: `list-blends`, `manage-blends`, `delete-blends`.
 
 A **blend** joins 2+ sources into a single virtual source. The blend has its own integration source id, so widgets and custom metrics can treat the blend like any other source.
 
@@ -118,9 +118,16 @@ Useful for blend variants ("Inner version of the full blend" to compare).
 
 Treat the blend as a source. Pass the blend's integration source id as the widget's `source_id` via `manage-widgets`. The widget's metrics and dimensions come from the sub-sources; reference them via their external ids.
 
+## Deleting a blend
+
+```
+delete-blends action=delete blend_id=<id>
+```
+
+Before deleting, check for usage — `list-blends action=show blend_id=<id>` returns `widgets_count`. Widgets referencing the blend break silently after delete.
+
 ## What MCP can't do here
 
-- Delete a blend — UI only.
 - Pre-filter sub-source data before joining — apply widget-level filters instead.
 
 ## Common pitfalls

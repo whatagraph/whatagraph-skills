@@ -45,7 +45,7 @@ list-integrations action: list_accounts, channel_id: <id>
 ### 3. Source Health Scan
 
 ```
-list-sources action: list, per_page: 50
+list-sources action: list, per_page: 128
 ```
 
 Check for:

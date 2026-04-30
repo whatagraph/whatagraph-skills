@@ -5,7 +5,7 @@ description: Create, duplicate, and update reports. Reports live in spaces and c
 
 # Reports
 
-Tools covered: `list-reports`, `manage-reports`.
+Tools covered: `list-reports`, `manage-reports`, `delete-reports`.
 
 A **report** is a named container of tabs and widgets, scoped to a single **space** (client folder). Reports can be created blank, from a template (linked, auto-updating), or duplicated from an existing report.
 
@@ -78,9 +78,16 @@ Special cases:
 
 Use `list-reports action=list_sources report_id=<id>` to discover current source ids.
 
+## Deleting a report
+
+```
+delete-reports action=delete report_id=<id>
+```
+
+Soft-delete — the report disappears from the space but can be restored by support for a retention window. Always confirm with the user, and check `list-templates action=linked_reports` first if the report is linked to a template.
+
 ## What MCP can't do here
 
-- Delete a report — UI only.
 - Share a report — see `whatagraph-sharing`.
 - Change a report's space after creation — duplicate into the new space instead.
 - Unlink a template-linked report via MCP — UI only.

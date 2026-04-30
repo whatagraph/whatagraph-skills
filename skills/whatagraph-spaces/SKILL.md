@@ -5,7 +5,7 @@ description: Create and manage spaces (also called client folders). Spaces are t
 
 # Spaces (client folders)
 
-Tools covered: `list-spaces`, `manage-spaces`.
+Tools covered: `list-spaces`, `manage-spaces`, `delete-spaces`.
 
 A **space** is a top-level container that organizes reports and data sources. In the UI it's labeled as a space or folder. Every team has a "Home" space by default (not editable).
 
@@ -49,9 +49,16 @@ manage-spaces action=update client_id=<id>
 
 Cannot update the Home space.
 
+## Deleting a space
+
+```
+delete-spaces action=delete client_id=<id>
+```
+
+The parameter is `client_id` (same as on create/update). Reports and measurements inside the space are soft-deleted with it; support can restore within the retention window. Cannot delete the Home space. Always confirm with the user — deleting a client folder is visible to the whole team.
+
 ## What MCP can't do here
 
-- Delete a space — UI only.
 - Move a space to a different parent after creation — UI only (where supported).
 - Assign users/permissions to a space — via `manage-members` for editor role.
 

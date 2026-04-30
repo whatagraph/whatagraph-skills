@@ -5,7 +5,7 @@ description: Create calculated or unified metrics on top of one or more data sou
 
 # Custom metrics
 
-Tools covered: `list-custom-metrics`, `manage-custom-metrics`.
+Tools covered: `list-custom-metrics`, `manage-custom-metrics`, `delete-custom-metrics`.
 
 A **custom metric** is a calculated field that behaves like any other metric. Use it in a widget, in a blend, in a goal, or in an overview.
 

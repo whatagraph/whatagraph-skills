@@ -5,7 +5,7 @@ description: Convert an existing report into a reusable template and apply templ
 
 # Templates
 
-Tools covered: `list-templates`, `manage-templates`, plus `manage-reports action=create_from_template`.
+Tools covered: `list-templates`, `manage-templates`, `delete-templates`, plus `manage-reports action=create_from_template`.
 
 A **template** is a reusable report blueprint. Reports created `from_template` are **linked** — structural changes to the template automatically propagate into the linked reports.
 
@@ -67,9 +67,16 @@ list-templates action=linked_reports template_id=<id>
 
 Returns the list of reports that will auto-update when the template changes. Review before making destructive template edits.
 
+## Deleting a template
+
+```
+delete-templates action=delete template_id=<id>
+```
+
+Reports linked to the template stay in place but lose future auto-updates. Run `list-templates action=linked_reports template_id=<id>` first — deleting a widely-used template stops an agency's standardization pipeline.
+
 ## What MCP can't do here
 
-- Delete a template — UI only.
 - Unlink a linked report — UI only (and irreversible).
 - Create an unlinked report from a template — duplicate a linked report if you want a one-off clone.
 

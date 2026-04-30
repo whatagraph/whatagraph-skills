@@ -5,7 +5,7 @@ description: Create goals — targets on metrics (monthly spend caps, lead targe
 
 # Goals
 
-Tools covered: `view-goals`, `manage-goals`.
+Tools covered: `view-goals`, `manage-goals`, `delete-goals`.
 
 A **goal** is a target value on a metric for a specific period (daily, weekly, monthly, quarterly, yearly, or static). Goals can be hit (`target`), capped (`limit`), or bound to a range.
 
@@ -73,9 +73,16 @@ manage-goals action=update goal_id=<id>
 
 The widget type "Goal" is how a goal renders in a report. Create via `manage-widgets action=create` with the goal-widget type on the target tab. Goals also surface in overviews, measurement dashboards, and the dedicated Goals page in the UI.
 
+## Deleting a goal
+
+```
+delete-goals action=delete goal_id=<id>
+```
+
+Any goal widgets referencing the deleted goal will show an empty state until re-attached.
+
 ## What MCP can't do here
 
-- Delete a goal — UI only.
 - Bulk create goals — one at a time.
 - Custom pacing schedules — linear only; for seasonal/custom pacing, reach out to support.
 

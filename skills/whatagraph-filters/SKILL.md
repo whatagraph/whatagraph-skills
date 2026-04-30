@@ -5,7 +5,7 @@ description: Create saved filter configurations for a channel. Filters are per-c
 
 # Filters
 
-Tools covered: `list-filters`, `manage-filters`.
+Tools covered: `list-filters`, `manage-filters`, `delete-filters`.
 
 A **filter** belongs to a channel and is a reusable set of dimension or metric conditions. Filters are organized as row groups; within a row group conditions use OR, across row groups conditions use AND.
 
@@ -90,9 +90,16 @@ manage-filters action=update filter_id=<id>
 
 Update applies to ALL rows in the filter — useful for renaming a value or switching an operator across the whole filter.
 
+## Deleting a filter
+
+```
+delete-filters filter_id=<id>
+```
+
+This tool takes only `filter_id` — no `action` parameter. Soft-delete. Widgets referencing the filter lose the filter behavior but keep rendering.
+
 ## What MCP can't do here
 
-- Delete a filter — UI only.
 - Attach a filter to a widget or report via MCP — do it through the UI, or create the filter inline on the widget via `manage-widgets`.
 - Reorder row groups — UI only.
 

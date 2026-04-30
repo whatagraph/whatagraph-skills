@@ -5,7 +5,7 @@ description: Create derived dimensions — tag-based groupings, condition-based 
 
 # Custom dimensions
 
-Tools covered: `list-custom-dimensions`, `manage-custom-dimensions`.
+Tools covered: `list-custom-dimensions`, `manage-custom-dimensions`, `delete-custom-dimensions`.
 
 A **custom dimension** is a derived field that groups, labels, or aliases existing dimension values. Once created, it appears in `list-sources action=list_dimensions_and_metrics` and can be used in widgets, blends, filters, and overviews.
 
@@ -134,9 +134,13 @@ manage-custom-dimensions action=duplicate dimension_id=<id>
 list-custom-dimensions action=usage universal_dimension_ids=[<id>]
 ```
 
-## What MCP can't do here
+## Deleting custom dimensions
 
-- Delete — UI only.
+```
+delete-custom-dimensions action=delete dimension_ids=[<id>, <id>]
+```
+
+Batch delete by ID list. Run `list-custom-dimensions action=usage universal_dimension_ids=[<id>]` first — widgets and filters relying on the dimension will show blank values after deletion.
 
 ## Common pitfalls
 

@@ -5,7 +5,7 @@ description: Schedule automated report delivery by email — daily, weekly, mont
 
 # Automations (scheduled report delivery)
 
-Tools covered: `list-automations`, `manage-automations`.
+Tools covered: `list-automations`, `manage-automations`, `delete-automations`.
 
 An **automation** = one report + a schedule + a list of email recipients. Multiple automations per report are allowed (e.g. weekly to the ops team, monthly to executives).
 
@@ -80,10 +80,17 @@ Changeable fields: `frequency`, `delivery_day`, `send_time`, `time_zone`, `recei
 
 Pass via `options.pdf_settings={...}` for advanced PDF options. Check `list-automations action=show` for current options.
 
+## Deleting an automation
+
+```
+delete-automations action=delete report_id=<id> automation_id=<id>
+```
+
+Stops future deliveries immediately. Confirm with the user first if recipients are relying on the schedule.
+
 ## What MCP can't do here
 
 - Pause/resume (no dedicated action) — use `update` to change schedule or set `stop_on_issues=true` and resolve the source issue externally.
-- Delete an automation — UI only.
 - Slack delivery — not exposed via MCP.
 - SMS / webhook delivery — not supported.
 

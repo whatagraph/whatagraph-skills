@@ -5,7 +5,7 @@ description: Save (create) and restore the structural state of a report — tabs
 
 # Snapshots
 
-Tools covered: `list-snapshots`, `manage-snapshots`.
+Tools covered: `list-snapshots`, `manage-snapshots`, `delete-snapshots`.
 
 A **snapshot** captures a report's structure (tabs, widget configs, layout, theme) at a point in time. Data values are not stored — they re-query at view time against current sources.
 
@@ -19,7 +19,7 @@ A **snapshot** captures a report's structure (tabs, widget configs, layout, them
 
 ```
 list-snapshots action=list report_id=<id>                     # paginated
-list-snapshots action=list report_id=<id> per_page="32" page=2
+list-snapshots action=list report_id=<id> per_page="32" page=2   # valid per_page: 16, 32, 64, 128
 ```
 
 ## Create (save) a snapshot
@@ -38,9 +38,16 @@ manage-snapshots action=restore report_id=<id> snapshot_id=<id>
 
 Restore rewrites the report's tabs, widgets, and layout to the snapshot state. **Destructive** — take a fresh `create` before restoring if the current state is also worth keeping.
 
+## Deleting a snapshot
+
+```
+delete-snapshots action=delete report_id=<id> snapshot_id=<id>
+```
+
+Irreversible — the saved state is gone. Keep at least one recent snapshot before cleanup if the report is under active editing.
+
 ## What MCP can't do here
 
-- Delete a snapshot — UI only.
 - Compare two snapshots (diff view) — UI only.
 - Name a snapshot — UI only.
 

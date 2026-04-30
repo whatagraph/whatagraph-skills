@@ -5,7 +5,7 @@ description: Apply themes (logos, fonts, header/footer) and color palettes (seri
 
 # Themes & color palettes
 
-Tools covered: `list-themes`, `manage-themes`.
+Tools covered: `list-themes`, `manage-themes`, `delete-themes`.
 
 Two concepts:
 - **Theme** — logo, fonts, header/footer layout, overall visual skin.
@@ -80,9 +80,17 @@ manage-themes action=update_color
    colors={"widget_colors":[...], "chart_colors":[...]}
 ```
 
+## Deleting a theme or palette
+
+```
+delete-themes action=delete_theme theme_id=<id>
+delete-themes action=delete_color color_id=<id>
+```
+
+Reports currently using the theme/palette fall back to the team default. Switch the affected reports to a replacement first (`manage-themes action=enable_theme` / `enable_color`) before deleting the source asset.
+
 ## What MCP can't do here
 
-- Delete a theme or palette — UI only.
 - Upload a logo image via MCP — logos are referenced by URL; upload via UI first.
 - Update a theme's options via MCP (`update_theme` does not exist) — UI only.
 

@@ -5,7 +5,7 @@ description: Create and update public share links for reports with optional pass
 
 # Sharing, PDF, Excel
 
-Tools covered: `view-sharing`, `manage-sharing`.
+Tools covered: `view-sharing`, `manage-sharing`, `delete-sharing`.
 
 A **share** is a public, view-only URL for a report. Anyone with the link (and optional password) can view; no login required.
 
@@ -78,7 +78,14 @@ Returns an Excel file with the report's widget data.
 - **Excel export for non-tabular widgets** — comment, image, and filter-control widgets produce no rows.
 - **Disable-date-changing and template-linked reports** — viewers with locked dates still see date changes when the template updates.
 
+## Revoking a share link
+
+```
+delete-sharing action=delete report_id=<id> share_id=<id>
+```
+
+Invalidates the public URL immediately — anyone with the old link gets a 404. Use when a client relationship ends or a password leaked. Do this before regenerating a share so stale links don't linger.
+
 ## What MCP can't do here
 
-- Revoke / delete a share via MCP — do it in the UI.
 - Allowlist specific email addresses — not exposed via MCP; UI only.

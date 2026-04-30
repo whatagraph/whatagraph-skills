@@ -5,7 +5,7 @@ description: Discover and query Whatagraph data sources — find which accounts 
 
 # Data sources and fetching data
 
-Tools covered: `list-sources`, `list-integrations`, `fetch-data`, `manage-sources`.
+Tools covered: `list-sources`, `list-integrations`, `fetch-data`, `manage-sources`, `delete-sources`.
 
 A **data source** is one connected account (one Google Ads account, one GA4 property, one Shopify store). A **channel** (or integration) is the type of account (Google Ads, GA4, Shopify). Users often say "my Facebook account" when they mean a Facebook Ads data source.
 
@@ -112,11 +112,18 @@ manage-sources action=tag
 
 **Currency override** is the most common fix when numbers look wrong — a USD Google Ads account reporting into a EUR-default team needs an explicit override here. Override affects display only; historical data rows keep their stored currency.
 
+## Deleting sources
+
+```
+delete-sources action=delete source_ids=[<id>, <id>]
+```
+
+Batch delete. High-impact — always run `list-sources action=list_usage source_ids=[...]` first. Widgets, blends, source groups, and measurements that reference the source break after delete. To disconnect at the account level instead (leaves the source in other teams untouched), see `remove-integrations action=remove_sources` in `whatagraph-integrations-admin`.
+
 ## What MCP can't do here
 
 - Connect a new OAuth integration account — UI only.
 - Re-authorize a source with an expired token — UI only.
-- Delete a source — UI only.
 - Assign a source to a space — use `manage-integrations action=sync_to_clients` (see `whatagraph-integrations-admin`).
 
 ## Common pitfalls

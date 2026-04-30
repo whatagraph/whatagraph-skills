@@ -5,7 +5,7 @@ description: Browse available integrations, connect sources from already-authent
 
 # Integrations & sources admin
 
-Tools covered: `list-integrations`, `manage-integrations`, `manage-sources`.
+Tools covered: `list-integrations`, `manage-integrations`, `manage-sources`, `remove-integrations`.
 
 An **integration** (also called a channel) is an OAuth-authenticated connection to a third-party platform. Each integration has one or more **accounts** (authenticated user/admin accounts). Each account exposes **sources** (sub-accounts, properties, ad accounts). Sources are what show up in the source picker.
 
@@ -63,12 +63,24 @@ manage-sources action=set_currency
 
 Find `tag_id` and `tag_value_ids` via `list-sources action=list_metadata`.
 
+## Removing sources or an entire account
+
+```
+remove-integrations action=remove_sources account_id=<id> source_ids=[<id>, <id>]
+remove-integrations action=delete_account  account_id=<id>
+```
+
+- `remove_sources` — drop specific sources from an authenticated account. Other sources on the same account stay connected.
+- `delete_account` — disconnect the entire authenticated account. All its sources go with it.
+
+Both operations are high-impact. Always check `list-sources action=list_usage source_ids=[...]` first — widgets, blends, source groups, and measurements referencing the removed sources break.
+
+To delete sources without touching the account (e.g., clean up individual sources at the team level), see `delete-sources` in `whatagraph-sources-and-data`.
+
 ## What MCP can't do here
 
 - Connect a new OAuth account — browser/UI flow only.
 - Re-authorize an expired token — UI only.
-- Disconnect an integration account — UI only.
-- Delete a source — UI only.
 
 ## Common pitfalls
 

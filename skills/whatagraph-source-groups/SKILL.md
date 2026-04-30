@@ -5,7 +5,7 @@ description: Combine multiple data sources of the SAME channel (e.g. five Google
 
 # Source groups
 
-Tools covered: `list-source-groups`, `manage-source-groups`.
+Tools covered: `list-source-groups`, `manage-source-groups`, `delete-source-groups`.
 
 A **source group** aggregates multiple sources of the same channel (e.g. multiple Google Ads accounts) into one virtual source. The group gets its own integration source id that widgets, blends, and custom metrics can reference as if it were a single source.
 
@@ -92,9 +92,16 @@ manage-source-groups action=resolve_issues group_id=<id>
 
 The group exposes its own integration source id (found via `list-source-groups action=show` as `integration_source_id`). Use that id as a widget's `source_id`. The group's metrics and dimensions are the union of what the sub-sources expose.
 
+## Deleting a source group
+
+```
+delete-source-groups action=delete group_id=<id>
+```
+
+Widgets and custom metrics that point at the group's virtual source will break. Run `list-source-groups action=show group_id=<id>` first and check usage; rebuild widgets to reference individual sources before deleting.
+
 ## What MCP can't do here
 
-- Delete a source group — UI only.
 - Remove one sub-source from the group without providing the full replacement list — use `update` with the full new `integration_source_ids` list.
 - Change the channel of a group — not supported; create a new group.
 

@@ -5,7 +5,7 @@ description: View team settings and subscription, update team name/localization,
 
 # Team & members
 
-Tools covered: `view-team`, `manage-team`, `manage-members`.
+Tools covered: `view-team`, `manage-team`, `manage-members`, `remove-members`.
 
 ## View team info and subscription
 
@@ -65,10 +65,17 @@ Changes role on a pending (not-yet-accepted) invitation. Once the user accepts, 
 manage-members action=resend_invite invite_id=<id>
 ```
 
+## Cancelling a pending invitation
+
+```
+remove-members action=cancel_invite invite_id=<id>
+```
+
+Only cancels a *pending* invite. Once the person has accepted and is an active member, use the UI to revoke their seat — MCP does not expose member removal.
+
 ## What MCP can't do here
 
 - Remove an accepted member — UI only.
-- Delete an invitation — UI only.
 - Change role on an accepted member — UI only.
 - Set custom permissions beyond admin/editor/viewer — UI only (Enterprise plans).
 - View audit log of member actions — UI only.
