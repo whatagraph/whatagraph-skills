@@ -7,7 +7,7 @@ description: Create and manage spaces (also called client folders). Spaces are t
 
 Tools covered: `list-spaces`, `manage-spaces`.
 
-A **space** is a top-level container that organizes reports and data sources. In the UI it's labeled as a space or folder; the internal pivot table name is `team_clients`. Every team has a "Home" space by default (not editable).
+A **space** is a top-level container that organizes reports and data sources. In the UI it's labeled as a space or folder. Every team has a "Home" space by default (not editable).
 
 ## Use this when
 
