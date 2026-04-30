@@ -48,7 +48,7 @@ manage-blends action=create
        "integration_source_id": <meta_ads_source>,
        "report_type": "campaigns",
        "dimensions": ["universal_dimension_1137", "campaign_name"],
-       "metrics":    ["impressions", "spend"]
+       "metrics":    ["universal_metric_1", "universal_metric_3"]
      }
    ]
    joins=[
@@ -122,19 +122,32 @@ A blend is only useful when the sub-sources expose equivalent dimensions and met
 - **Metrics**: pick the same set of universal metrics on every sub-source (e.g. `universal_metric_1` = Impressions, `universal_metric_2` = Clicks, `universal_metric_3` = Spend). The blend then exposes one aggregated metric per universal slot across the whole blend.
 - **Types and summability**: the joined metrics must be the same data type (integer/float/currency) and summable — counts, impressions, clicks, spend. Average or ratio metrics should not be blended directly; blend the numerator and denominator separately, then build a custom `data_formula` metric on top of the blend.
 
-A blend whose sub-sources expose disjoint dimensions/metrics will load with a lot of empty cells at best, or with the error *"Incorrect blend setup. View and edit it through the widget sidebar menu."* when read back via `fetch-data` — at that point fix the blend definition before putting it on a widget.
-
 ## Using the blend in widgets
 
-Treat the blend as a source. The blend's integration source id must first be attached to the report in the Whatagraph UI (no MCP action attaches sources to reports yet); once attached, use the report-local source id returned by `list-widgets action=show` as the widget's `source_id` via `manage-widgets`. The widget's metrics and dimensions come from the sub-sources; reference them via their external ids.
+A blend is a virtual source with its own `integration_source_id` (the `id` returned by `list-blends`). Pass it as a widget `source_id` via `manage-widgets` — the widget tool resolves it to a report-local source and attaches it automatically.
+
+When picking metrics/dimensions on the widget, use the blend-level ids returned by `list-sources action=list_dimensions_and_metrics source_id=<blend_id>`:
+
+- **Aggregated universal fields** — `aggregation_metric_universal_metric_<id>` and `aggregation_dimension_universal_dimension_<id>` — one row per unified field across all sub-sources.
+- **Per-sub-source fields** — `blend_metric_<id>` and `blend_dimension_<id>` — keep each sub-source's metric distinct (useful when you want `Google Spend` and `Meta Spend` as separate columns).
 
 ## Reading blend data directly
 
-Unlike source groups, a blend's virtual source **cannot** be read via `fetch-data` as a standalone source — the tool returns:
+Call `fetch-data` with the blend's integration source id and the aggregation field ids:
 
-> Error: Incorrect blend setup. View and edit it through the widget sidebar menu.
+```
+fetch-data
+   source_id=<blend_id>
+   dimensions=["aggregation_dimension_universal_dimension_1137"]
+   metrics=["aggregation_metric_universal_metric_1",
+            "aggregation_metric_universal_metric_2",
+            "aggregation_metric_universal_metric_3"]
+   from="2025-10-01" till="2025-10-31"
+```
 
-The blend's aggregated fields are only resolvable in the widget data path, where each sub-source's metrics are joined and accumulated. To preview what the blend will produce, call `fetch-data` on each sub-source individually (with the unified dimensions/metrics you put into the blend), then mentally line up the rows — that's effectively what the blend does at widget-render time.
+One row per date (or per join-key value) with the unified metrics summed across sub-sources.
+
+To preview per-sub-source values, call `fetch-data` on each sub-source's integration source id individually with its own native or universal field ids.
 
 ## Deleting a blend
 
@@ -144,14 +157,11 @@ delete-blends action=delete blend_id=<id>
 
 Before deleting, check for usage — `list-blends action=show blend_id=<id>` returns `widgets_count`. Widgets referencing the blend break silently after delete.
 
-## What MCP can't do here
-
-- Pre-filter sub-source data before joining — apply widget-level filters instead.
-
 ## Common pitfalls
 
-- **`join_type` vs `type`** — MCP uses `type` inside each join object. `join_type` is rejected.
-- **`join_fields` vs `conditions`** — MCP uses `conditions` with `{left_source_id, left_dimension, right_source_id, right_dimension}` per pair. Legacy `groups` format is accepted but the simplified `conditions` format is the recommended one.
+- **Picking the wrong field id family when reading** — use `aggregation_metric_*`/`aggregation_dimension_*` to read the blend's unified output, not the sub-source native ids (those won't resolve on the blend itself).
+- **`join_type` vs `type`** — use `type` inside each join object.
+- **`join_fields` vs `conditions`** — use `conditions` with `{left_source_id, left_dimension, right_source_id, right_dimension}` per pair.
 - **`inner` join silently dropping data** — most "where did my data go?" blend tickets are caused by `inner` on a dimension that doesn't match across sources (e.g. Google campaign name "Brand_US" vs Meta "Brand - US"). Use `full` unless you specifically want intersection.
 - **Joining on non-shared dimension names** — if dimensions have different external ids per channel (e.g. `campaign_name` vs `campaign`), create a `metadata` custom dimension alias first so the external ids match, then join on the aliased field.
 - **Including the same metric in multiple sub-sources** — the metric appears twice in widget field pickers (e.g. "Spend (Google)" and "Spend (Meta)"); use a custom metric of type `data_aggregation` on top of the blend if you want one combined "Spend" field.

@@ -83,19 +83,17 @@ The tool rejects `data_formula` creates without these four:
 | `aggregation_level` | `aggregate`, `row` | `aggregate` = apply formula on totals; `row` = apply per row, then accumulate |
 | `formula_increase` | `positive`, `negative` | `positive` = higher is better (revenue, CTR); `negative` = lower is better (CPA, CPL) |
 
-Missing any of them returns:
-
-> Error: The aggregation_level parameter is required for data_formula metrics. Values: aggregate, row. The formula_increase parameter is required for data_formula metrics. Values: positive (higher=better), negative (lower=better).
+All four must be set. If any is missing, the tool returns an error that names the missing parameter.
 
 ### Which `field_external_id` works where
 
-The backend resolves fields in this order by `field_external_id` prefix:
+`field_external_id` is whatever `list-sources action=list_dimensions_and_metrics` returns for the field you want. Three forms are accepted:
 
-1. `universal_*` prefix → looked up against the team's custom metric library (needs the numeric custom metric ID, e.g. `universal_511018`). **Platform-premade IDs like `universal_metric_1` / `universal_metric_2` / `universal_metric_3` are rejected here** — the parser strips `universal_` and tries to cast `metric_1` to an integer, which fails with *"Universal metric with ID 0 not found"*. For premade metrics, use the channel-native ID instead (see below).
-2. Otherwise with `integration_source_id` → resolved as a source-level native metric on that source's channel (e.g. `metrics.clicks` on a Google Ads source, `spend` on a Facebook Ads source).
-3. Otherwise with `channel_id` → resolved as a channel-level native metric (e.g. `metrics.impressions` for channel 5 / Google Ads).
+1. **Platform-unified metric ids** — `universal_metric_<n>` (e.g. `universal_metric_1` = Impressions, `universal_metric_2` = Clicks, `universal_metric_3` = Spend). Use these when you want the formula to work identically on any channel that exposes the unified slot.
+2. **Channel-native ids** — `metrics.clicks`, `metrics.impressions`, `spend`, `impressions`, etc. Use these when the field only exists on one channel.
+3. **Existing custom metric ids** — `universal_<custom_metric_id>` (e.g. `universal_511018`). Use these to build derived metrics on top of another custom metric.
 
-**Rule of thumb:** use the native channel/source `field_external_id` you get back from `list-sources action=list_dimensions_and_metrics` (things like `metrics.clicks`, `metrics.impressions`, `spend`, `impressions`, `clicks`), not the `universal_metric_*` premade IDs — they're for use in `fetch-data` queries, not for wiring into custom metric fields.
+The same applies to `manage-custom-dimensions` — accepts `universal_dimension_<n>`, channel-native ids, and existing `universal_<custom_dimension_id>`.
 
 ### Formula rules
 
@@ -138,8 +136,8 @@ manage-custom-metrics action=create
    transformation_level="source"
    fields=[
      {"integration_source_id": <google_ads_source>, "field_external_id": "universal_metric_3", "report_type_external_id": "campaign"},
-     {"integration_source_id": <meta_ads_source>,   "field_external_id": "spend",             "report_type_external_id": "campaigns"},
-     {"integration_source_id": <linkedin_ads_source>, "field_external_id": "cost"}
+     {"integration_source_id": <meta_ads_source>,   "field_external_id": "universal_metric_3", "report_type_external_id": "campaigns"},
+     {"integration_source_id": <linkedin_ads_source>, "field_external_id": "universal_metric_3"}
    ]
 ```
 
@@ -196,17 +194,15 @@ The metric resolves on any source of the same channel where the underlying nativ
 
 ## What MCP can't do here
 
-- Tag or currency-exchange map types via MCP — only `metadata`, `data_aggregation`, `data_formula` are exposed.
-- `transformation_level=widget` (widget-local custom formulas) — enum value exists in code but the MCP schema currently only accepts `channel` and `source`. Build widget-local formulas via `manage-widgets` instead.
-- Custom metrics on top of a blend's virtual source (channel id 142). The tool rejects blend field ids and blend source ids — write the formula using each constituent source's native fields at `transformation_level=source`, or compute the derived metric inside the widget.
+- Only `metadata`, `data_aggregation`, and `data_formula` map types are exposed.
+- `transformation_level=widget` — build widget-local formulas via `manage-widgets` instead.
 
 ## Common pitfalls
 
 - **Using `{placeholder}` tokens in formulas** — wrong. Use `A/B` style identifiers only.
 - **Passing metric display names as `field_external_id`** — field IDs come from `list-sources action=list_dimensions_and_metrics`, not display names.
-- **Passing `universal_metric_1` / `universal_metric_2` / `universal_metric_3` as `field_external_id`** — rejected with *"Universal metric with ID 0 not found"*. Use the channel-native ID (e.g. `metrics.clicks`, `metrics.impressions`).
 - **Missing any of `accumulator`, `aggregation_level`, `formula_increase`, `formula_value_type` on a `data_formula` create** — all four are required.
 - **`transformation_level=channel` with `integration_source_id` fields** — use `channel_id` at channel level; use `integration_source_id` at source level.
 - **Cross-channel aggregation without unified field names** — if Google Ads calls it `metrics.cost_micros` and Meta calls it `spend`, you still pick each per-source native field; the aggregation happens on the metric's output, not on the input names.
-- **Division by zero** → empty cell, not infinity. Add a fallback in client messaging if customers see blanks.
+- **Division by zero** → empty cell, not infinity.
 - **Formula spaces** — `A / B` with spaces is rejected. Write `A/B`.

@@ -97,10 +97,7 @@ manage-source-groups action=resolve_issues group_id=<id>
 
 ## Using the group in widgets
 
-The group exposes its own integration source id (found via `list-source-groups action=show` as `integration_source_id`). To put it on a widget:
-
-1. A user attaches the group to the report in the Whatagraph UI (this creates a report-local source copy — there is no MCP action for this step yet).
-2. Once attached, use the report-local source id returned by `list-widgets action=show` as the `source_id` when creating widgets with `manage-widgets`.
+The group exposes its own integration source id (found via `list-source-groups action=show` as `integration_source_id`). Pass that id directly as `source_id` when creating widgets with `manage-widgets`. The widget tool attaches the group to the report automatically if it isn't already attached.
 
 The group's metrics and dimensions are the union of what the sub-sources expose — e.g. for a Google Ads group with one `campaign` config, you get every Google Ads campaign-level metric and dimension.
 
@@ -110,13 +107,16 @@ You don't need a widget to preview data from a source group. Use `fetch-data` on
 
 ```
 fetch-data source_id=<group integration_source_id>
-  report_type="<output_name>"
+  report_type="<platform report type>"
   metrics=["universal_metric_1", "universal_metric_2", "universal_metric_3"]
   dimensions=["universal_dimension_1137"]
   from="2026-04-01" till="2026-04-15"
 ```
 
-Use the **unprefixed** field ids (`universal_metric_1`, `universal_dimension_1137`) — not the `aggregation_metric_*` / `aggregation_dimension_*` variants that `list-sources action=list_dimensions_and_metrics` may return for the group's virtual source. The aggregation-prefixed ids are for internal routing and are rejected by `fetch-data`. The platform aggregates (SUM for summable numerics, COUNT-distinct semantics for dimensions) across the sub-sources' BigQuery tables.
+Notes:
+
+- **`report_type`** is the platform-level report type the group exposes (e.g. `campaign_performance` for a Google Ads campaign rollup), not the channel-native `output_name` you supplied when creating the group. Run `list-sources action=list_report_types source_id=<group integration_source_id>` to see the exact string to pass.
+- **Field ids** use the unprefixed `universal_metric_*` / `universal_dimension_*` form on the group's virtual source. The platform aggregates sub-sources automatically (SUM for summable numerics, grouped by the selected dimensions).
 
 ## Deleting a source group
 
