@@ -56,6 +56,8 @@ manage-custom-dimensions action=create
 
 ## Creating a `data` (condition-based) dimension
 
+Each map has a result `value` (the bucket label) and one or more `conditions`. Each condition has an `operator`, a comparison `value`, and a `fields` array pointing at the source field(s) being matched against. Order matters — first matching map wins. Unmatched rows render blank; if you need a fallback bucket, add a final map whose conditions match anything reasonable for your data (there is no `default: true` shortcut on the API).
+
 ```
 manage-custom-dimensions action=create
    name="Brand Classification"
@@ -65,14 +67,32 @@ manage-custom-dimensions action=create
      {"channel_id": <channel_id>, "field_external_id": "campaign_name", "report_type_external_id": "campaign"}
    ]
    maps=[
-     {"when": "contains",       "value": "brand", "then": "Branded"},
-     {"when": "contains",       "value": "comp",  "then": "Competitor"},
-     {"when": "matches_regex",  "value": "^BRND_","then": "Branded"},
-     {"default": "Non-branded"}
+     {
+       "value": "Branded",
+       "conditions": [
+         {
+           "operator": "contains",
+           "value": "brand",
+           "fields": [{"channel_id": <channel_id>, "field_external_id": "campaign_name", "report_type_external_id": "campaign"}]
+         }
+       ]
+     },
+     {
+       "value": "Competitor",
+       "conditions": [
+         {
+           "operator": "contains",
+           "value": "comp",
+           "fields": [{"channel_id": <channel_id>, "field_external_id": "campaign_name", "report_type_external_id": "campaign"}]
+         }
+       ]
+     }
    ]
 ```
 
-Rule order matters — first match wins. Supported `when` operators: `equals`, `contains`, `starts_with`, `ends_with`, `matches_regex`.
+Supported `operator` values: `equals`, `contains`, `starts_with`, `ends_with`, `matches_regex`.
+
+Each condition's `fields` entry has the same shape as a top-level `fields` entry: `{channel_id, field_external_id, report_type_external_id?}` at channel level, or `{integration_source_id, field_external_id, report_type_external_id?}` at source level. On a blend or source-group source, use the unprefixed `universal_dimension_*` form (e.g. `universal_dimension_1` for Campaign Name) — the platform-prefixed `aggregation_dimension_*` and `blend_dimension_*` ids returned by `list-sources action=list_dimensions_and_metrics` are *not* accepted on `manage-custom-dimensions create` even though they show up on read.
 
 ## Creating a `tag` dimension
 
@@ -146,7 +166,7 @@ Batch delete by ID list. Run `list-custom-dimensions action=usage universal_dime
 
 - **Regex escaping** — JSON-escape backslashes (`"\\b"` not `"\b"`). Preview with `preview_ai` or a small test before wide rollout.
 - **Rule order** — first match wins. Put specific rules before general ones.
-- **`data` dimension with no `default`** — unmatched values render blank. Always include `{"default": "..."}` unless intentional.
+- **`data` dimension expecting a `default` shortcut** — there is no `{default: "..."}` map shape on the API. Unmatched rows render blank. If you need a "Other / Unclassified" bucket, add an explicit final map whose conditions match the rows you want to label.
 - **Tag dimension applied to source group's `source_id`** — applies to the group as a whole, not per-sub-source. For per-sub-source tagging, pass the individual source IDs.
 - **AI dimension prompt too open** — constrain outputs: "Return only one of: <list>". Unbounded prompts produce variant category names.
 - **Prompt-only without `fields`** — `ai` map_type still requires a source field via `fields` (or `integration_source_id` + `field_external_id` pair inside the preview call).
