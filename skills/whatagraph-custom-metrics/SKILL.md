@@ -91,9 +91,9 @@ All four must be set. If any is missing, the tool returns an error that names th
 
 1. **Platform-unified metric ids** — `universal_metric_<n>` (e.g. `universal_metric_1` = Impressions, `universal_metric_2` = Clicks, `universal_metric_3` = Spend). Use these when you want the formula to work identically on any channel that exposes the unified slot.
 2. **Channel-native ids** — `metrics.clicks`, `metrics.impressions`, `spend`, `impressions`, etc. Use these when the field only exists on one channel.
-3. **Existing custom metric ids** — `universal_<custom_metric_id>` (e.g. `universal_511018`). Use these to build derived metrics on top of another custom metric.
+3. **Existing custom metric ids** — `universal_metric_<custom_metric_id>` (e.g. `universal_metric_511018`). Use these to build derived metrics on top of another custom metric. Note the `_metric_` infix — the bare `universal_<id>` form is rejected by the underlying field resolver.
 
-The same applies to `manage-custom-dimensions` — accepts `universal_dimension_<n>`, channel-native ids, and existing `universal_<custom_dimension_id>`.
+The same applies to `manage-custom-dimensions` — accepts `universal_dimension_<n>`, channel-native ids, and existing `universal_dimension_<custom_dimension_id>`.
 
 ### Formula rules
 
@@ -180,12 +180,12 @@ Returns the number of widgets/reports affected.
 
 ## Using a custom metric in `fetch-data`
 
-Once created, a custom metric has a new `external_id` of the form `universal_<metric_id>` (e.g. `universal_511018`). Use that directly in `fetch-data`:
+Once created, a custom metric has a new `external_id` of the form `universal_metric_<metric_id>` (e.g. `universal_metric_511018`) — visible in `list-sources action=list_dimensions_and_metrics` next to the platform-native metrics. Use that directly in `fetch-data`:
 
 ```
 fetch-data source_id=<underlying source>
   report_type="campaign"
-  metrics=["universal_511018"]
+  metrics=["universal_metric_511018"]
   dimensions=["universal_dimension_1137"]
   from="2026-04-01" till="2026-04-15"
 ```
