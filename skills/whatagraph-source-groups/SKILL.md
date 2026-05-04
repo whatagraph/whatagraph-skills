@@ -126,7 +126,7 @@ fetch-data source_id=<group integration_source_id>
 
 Notes:
 
-- **`report_type`** is the platform-level report type the group exposes (e.g. `campaign_performance` for a Google Ads campaign rollup), not the channel-native `output_name` you supplied when creating the group. Run `list-sources action=list_report_types source_id=<group integration_source_id>` to see the exact string to pass.
+- **`report_type`** is the source-group template name the group exposes (e.g. `campaign_performance` for a Google Ads campaign rollup), not the original source's channel-native report type (`campaign`). It usually matches the `output_name` you supplied when creating the group. Run `list-sources action=list_report_types source_id=<group integration_source_id>` to see the exact string to pass.
 - **Field ids** use the unprefixed `universal_metric_*` / `universal_dimension_*` form on the group's virtual source. The platform aggregates sub-sources automatically (SUM for summable numerics, grouped by the selected dimensions).
 
 ## Deleting a source group

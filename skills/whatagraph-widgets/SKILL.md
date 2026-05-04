@@ -20,7 +20,7 @@ A **widget** is a visual data component on a tab. Widgets are typed (KPI card, l
 
 ```
 list-widgets action=list report_id=<id>                    # grouped by tab
-list-widgets action=show report_id=<id> widget_id=<id>     # full config
+list-widgets action=show report_id=<id> widget_id=<id>     # ids/layout/source binding only
 list-widgets action=csv_export report_id=<id> widget_id=<id>
 ```
 
@@ -203,4 +203,5 @@ Deletes are soft — a restore window exists. After a second delete or report-le
 - **Batch operations without `widget_ids`** — the array is required. Empty array = no-op, not "all widgets".
 - **Widget breaks after batch source swap** — the new source may not have the same report type or fields; always verify with `list-widgets action=show` after.
 - **`metric.external_id` change appears to no-op** — when the widget already has a config bound to a metric on a source group / blend, re-supplying a different `metric.external_id` in the same config sometimes leaves the original metric in place. The `list-widgets action=show` response masks this (it only echoes channel + source ids, not the metric). Always confirm via `list-widgets action=csv_export` or `export-report` after a metric swap; if the CSV still shows the previous metric name, delete and recreate the widget rather than trying to update it in place.
+- **`name` does not become the rendered widget title in the UI** — `name` persists on the widget record and is returned by `list-widgets`, but the live report title comes from a separate per-widget option. Until the title option key is documented, MCP-built widgets may render with placeholder titles; set or resize titles manually in the UI.
 - **`tab_id` missing on create** — required. Find via `list-report-tabs action=list`.

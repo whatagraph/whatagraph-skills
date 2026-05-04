@@ -55,6 +55,8 @@ Data flows into widgets from:
 5. **Check `show` after a write.** After a create/update, re-fetch via `show` to confirm the change landed as expected.
 6. **Attach a source to the report before pointing a widget at it.** `manage-widgets` only accepts the report-local `sources.id`. Use `manage-reports action=attach_source integration_source_id=<global_id>` first — the response includes the report-local `source_id` to pass into `manage-widgets`. The same flow works for source groups and blends (they are data sources too).
 7. **Write and delete tools are alpha.** Read tools work on every plan; write and delete tools are gated to customers in the private alpha. Non-alpha teams get plan/feature errors on `manage-*` / `delete-*` calls — fall back to read-only behaviour and tell the user what's gated.
+8. **Use canonical field id families.** Custom fields use `universal_metric_<id>` / `universal_dimension_<id>`. Do not use the old bare universal id form. Virtual sources may expose `aggregation_metric_*` / `aggregation_dimension_*` ids for reads, while some create flows still require unprefixed universal metric/dimension ids.
+9. **`show` endpoints are not full round-trip schemas.** They may omit fields that `manage-*` accepts, especially widget `options`. For widget metric/options verification, use `list-widgets action=csv_export` or `export-report`.
 
 ## How users describe things (UI ↔ MCP parameter mapping)
 

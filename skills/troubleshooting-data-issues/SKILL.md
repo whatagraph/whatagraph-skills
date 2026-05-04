@@ -68,6 +68,7 @@ Ask clarifying questions to determine which category the issue falls into:
    list-filters action: list
    list-widgets action: show, report_id: <report_id>, widget_id: <id>
    ```
+   `show` confirms layout/source binding and ids, but it does not return every widget option on current MCP builds. Use `list-widgets action: csv_export` or `export-report` when you need to verify the actual rendered metric/filter output.
 
 5. **Common causes**:
    - **Time zone differences**: Whatagraph may aggregate data in a different timezone than the native platform.
@@ -119,7 +120,7 @@ Blends and source groups combine data from multiple sources, which introduces co
    ```
    list-widgets action: show, report_id: <report_id>, widget_id: <id>
    ```
-   Widgets can have their own filter configurations that override or layer on top of report-level filters.
+   Widgets can have their own filter configurations that override or layer on top of report-level filters, but current `show` responses may omit option details. If the filter is not visible there, verify through `csv_export` / `export-report` and the UI.
 
 4. **Common causes**:
    - **Filters applied to blended sources vs original sources**: Filters may behave differently when applied to blends compared to individual sources.
