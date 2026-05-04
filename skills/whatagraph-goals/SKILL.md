@@ -16,6 +16,11 @@ A **goal** is a target value on a metric for a specific period (daily, weekly, m
 - "ROAS between 3 and 5." → `condition=range`, `min_value=3`, `max_value=5`.
 - "One-off Q2 revenue target." → `period=static`, `repeat=0`.
 
+
+## Known limitations
+
+- **`manage-goals action=create` is currently broken on this MCP build.** Every call returns a SQL error — `Column not found: 1054 Unknown column 'name'` — because the underlying `data_goals` table no longer has a `name` column but the create handler still tries to insert one. Until the migration ships, `view-goals` and existing goals work but new goal creation does not. Don't plan onboarding flows that depend on creating goals via MCP today.
+- **`manage-goals create` request body has a `name` field** that is silently ignored even when the SQL bug is fixed; goals are identified by `metric_external_id` + `integration_source_id`, not by name. The shape will likely drop `name` entirely once the migration lands.
 ## Listing
 
 ```
