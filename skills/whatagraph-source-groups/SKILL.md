@@ -40,14 +40,14 @@ manage-source-groups action=create
    name="Acme — Google Ads Rollup"
    description="All Acme Google Ads sub-accounts"
    currency="USD"
-   configs=[{"output_name": "campaign"}]
+   configs=[{"output_name": "campaign_performance"}]
    integration_source_ids=[<src1>, <src2>, <src3>]
 ```
 
 ### Parameters
 
 - `name` — group display name.
-- `configs` — required. Each entry `{output_name: "<report_type_external_id>"}`. The output name is the channel's report type external id (e.g. `campaign` for Google Ads, not `campaign_performance`). One entry per report type you want the group to expose.
+- `configs` — required. Each entry `{output_name: "<source_group_template_name>"}`. The `output_name` is the **source-group template name**, not the channel-native report type external id you see in `list-sources action=list_report_types`. For most channels the template name is the report type with a `_performance` suffix — e.g. Google Ads `campaign` → `campaign_performance`, `ad_group` → `ad_group_performance`, `geo_view` → `geo_performance`. If the API rejects an `output_name`, the error message lists every valid template name for that channel — copy one from the error verbatim. One entry per template you want the group to expose.
 - `integration_source_ids` — array of source ids from `list-sources action=list`. All sources must be the same channel.
 - `currency` — optional. Display currency.
 
@@ -56,7 +56,7 @@ manage-source-groups action=create
 Build a source group with exactly **one** entry in `configs`. Multiple-config groups are legacy behaviour kept for backwards compatibility — every new group should expose a single, well-scoped report type that all widgets / blends / custom metrics point at. If the user needs campaign-level *and* keyword-level rollups from the same set of sources, build two separate source groups, one per report type. This keeps each group's virtual table small, the query path straightforward, and widgets/filters unambiguous about which report type they're operating on.
 
 ```
-configs=[{"output_name": "campaign"}]    # one config — preferred
+configs=[{"output_name": "campaign_performance"}]    # one config — preferred
 ```
 
 The legacy "many report types in one group" pattern looked like this and should not be reused:
@@ -64,9 +64,9 @@ The legacy "many report types in one group" pattern looked like this and should 
 ```
 # LEGACY — do not use for new groups
 configs=[
-  {"output_name": "campaign"},
-  {"output_name": "keyword"},
-  {"output_name": "ad_group"}
+  {"output_name": "campaign_performance"},
+  {"output_name": "keyword_performance"},
+  {"output_name": "ad_group_performance"}
 ]
 ```
 
@@ -110,7 +110,7 @@ manage-widgets action=create report_id=<id> tab_id=<tab_id>
    widget_type_id=<...>
 ```
 
-The group's metrics and dimensions are the union of what the sub-sources expose — e.g. for a Google Ads group with one `campaign` config, you get every Google Ads campaign-level metric and dimension.
+The group's metrics and dimensions are the union of what the sub-sources expose — e.g. for a Google Ads group with one `campaign_performance` config, you get every Google Ads campaign-level metric and dimension.
 
 ## Reading data from a group directly
 
@@ -145,7 +145,7 @@ Widgets and custom metrics that point at the group's virtual source will break. 
 ## Common pitfalls
 
 - **Mixing channels** — source groups require all sources from the SAME channel. Google Ads + Meta Ads → use a blend instead.
-- **`output_name` is the native channel report type** — e.g. `campaign` for Google Ads. Custom metrics on top of the group use the group's exposed report type when referencing fields.
+- **`output_name` is the source-group template name, not the channel-native report type** — e.g. `campaign_performance` for Google Ads, not `campaign`. The channel-native report type (`campaign`) is what you pass to `fetch-data` and `report_type_external_id` on the *original* sources, but the template name (`campaign_performance`) is what `manage-source-groups create configs` accepts. The two diverge on every paid-ads channel.
 - **Empty group after creation** — freshly-created groups need time for ETL to populate; data may be empty for a few minutes for small accounts, longer for high-volume ones.
 - **Group not appearing in widget picker immediately** — refresh the report; new groups sometimes cache-miss for a few seconds.
 - **Very large groups (hundreds of sub-sources)** — query performance slows. The platform chunks queries for groups above a threshold. For very large rollups, consider a custom metric `data_aggregation` instead of a group.
