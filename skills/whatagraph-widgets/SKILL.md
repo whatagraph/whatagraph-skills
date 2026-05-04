@@ -48,29 +48,40 @@ Discover already-attached sources via `list-reports action=list_sources report_i
 
 ### `widget_type_id` — widget types
 
-Widget types are integers. Higher values (101+) use the newer widget architecture with richer configs — prefer these unless you have a specific reason to use an older type. Common types:
-- KPI / single-value card
-- Line / area / column / bar chart
-- Pie / donut chart
-- Table
-- Funnel
-- Goal
-- Map / geo
-- Image / creative
-- Comment / text
+Widget types are integers. Higher values (101+) use the newer widget architecture with richer configs — prefer these unless you have a specific reason to use an older type. The values verified against the production MCP and exposed in `list-widgets`:
 
-Discover exact ids by creating one in the UI and inspecting via `list-widgets action=show`.
+| Widget type | `widget_type_id` |
+|---|---|
+| Single value (KPI card) | `101` |
+| Table | `102` |
+| List | `103` |
+| Column chart | `104` |
+| Bar chart | `106` |
+| Line chart | `107` |
+| Pie chart | `108` |
+| Donut chart | `109` |
+| Funnel | `115` |
+| Goal | `123` |
+| Comment / text | `21` (channel_id `7` = Custom data; no `source_id` needed) |
+| Image | `34` (channel_id `7`; no `source_id`) |
+| Calendar / date control | `22` (channel_id `7`; no `source_id`) |
+| Media expanded (creative preview) | `111` |
+
+Comment, image, and calendar widgets are the only widget types that take `channel_id=7` and no `source_id`. Every data-bearing widget needs a `channel_id` matching the source's channel and a report-local `source_id`.
 
 ## Create a premade widget
 
-Adds a template widget pre-configured by Whatagraph for the channel (common KPI sets, common chart shapes). Faster than building from scratch.
+Adds a template widget pre-configured by Whatagraph for the channel (common KPI sets, common chart shapes). Faster than building from scratch — but note the API quirk below.
 
 ```
 manage-widgets action=create_premade
    report_id=<id>
    tab_id=<tab_id>
+   widget_id=<existing_widget_id>      # required — see note
    source_id=<report_local_source_id>  # omit for sample-data premade
 ```
+
+**Quirk** — despite the name, `create_premade` requires an existing `widget_id` that the premade configuration is applied on top of. The intended flow is: `action=create` first (with the right `channel_id` + `widget_type_id`) to mint a blank widget, then `action=create_premade` with that widget's id to fill in the premade configuration. If you call `create_premade` without `widget_id`, the API rejects it with `The widget_id parameter is required for ... create_premade actions.`
 
 Same attach-first rule: the source must be attached to the report via `manage-reports action=attach_source` before referencing it here.
 
@@ -84,18 +95,24 @@ manage-widgets action=update
    options={...}
    rows=[
      {
-       "id": <row_id_or_null>,
+       "id": <existing_row_id>,
        "options": {...},
        "configs": [
          {
+           "id": <existing_config_id>,
+           "channel_id": <channel_id>,
+           "source_id":  <report_local_source_id>,
+           "report_type": {"external_id": "campaign"},
            "metric":    {"external_id": "universal_metric_3", "name": "Spend"},
-           "dimension": {"external_id": "campaign_name"}
+           "dimension": {"external_id": "universal_dimension_1137", "name": "Date"}
          }
        ]
      }
    ]
    date_range={"from":"2025-10-01","till":"2025-10-31","period":"custom","compare_type":"previous"}
 ```
+
+`id` on each row and on each existing config is required and must be an integer — `null` is rejected with `The rows.0.id field must be an integer.`. To find them, call `list-widgets action=show widget_id=<id>` first; the response includes `rows[].id` and `rows[].configs[].id`. Adding a brand-new config (no existing id) is currently not safe via `update` — the API throws `Undefined array key "id"` because every config entry is read as if it had an id. To add another row/config, call `manage-widgets action=duplicate` to seed an extra row, look up its id, then `update` it. New rows can also appear automatically the first time you `update` a freshly-created widget — re-run `list-widgets action=show` after every update to discover the canonical `rows[].id` / `configs[].id` set.
 
 ### `rows` → `configs` shape
 
@@ -110,7 +127,13 @@ Overrides the report-level date for this widget. Fields: `from`, `till`, `period
 
 ### `options`
 
-Per-widget settings — legend, labels, sort, hide_footer, currency override, etc. Structure varies by widget type. Inspect an existing widget via `list-widgets action=show` to see valid keys.
+Per-widget settings — legend, labels, sort, hide_footer, currency override, etc. Structure varies by widget type. **`list-widgets action=show` does not return `options` today** — it only echoes `id`, `widget_type_id`, `tab_id`, `position_x`, `position_y`, and `rows[]` with channel/source ids. To see the full `options` shape for a widget type, configure one in the UI and read the network response in browser dev tools, or copy known shapes from the comment widget recipe below.
+
+Known `options` shapes:
+
+- **Comment / text widget** (`widget_type_id=21`): `{"text": "<html>", "comment": "<html>"}` — set both keys; the renderer reads `comment` while the editor writes `text`.
+- **Image widget** (`widget_type_id=34`): `{"image_url": "<url>", "url": "<url>"}` — same dual-key pattern.
+- **Single-value KPI** (`widget_type_id=101`): `{"compare_type": "previous_period"}` to surface the trend delta vs. the comparison window inherited from the report.
 
 ## Toggle breakdown on pie / donut / bar
 
@@ -142,7 +165,9 @@ Use when swapping ~10+ widgets at once — much faster than per-widget updates.
 
 ## Sizing rules (12-column grid)
 
-- **KPI / single-value card** — defaults to 2×1 or 2×2, not full width. Full-width single-value widgets look like headers, not metrics.
+These guidelines describe the layout you should aim for in the **UI**, not arguments you can pass to `manage-widgets`. The `update` action accepts `name`, `options`, `rows`, and `date_range` only — `position_x`, `position_y`, `width`, and `height` are **not** in the schema today and any keys you pass under `options.position_x` / `options.width` are silently ignored. Newly-created widgets stack vertically at column 0 with the platform's default height; reposition and resize from the UI after the data layer is configured. (When this gap is closed, the canonical home will be top-level layout fields, not `options.*`.)
+
+- **KPI / single-value card** — 2×1 or 2×2 in the UI; never full width.
 - **Line / column chart** — 6×3 minimum readable; 12-wide for trend emphasis.
 - **Table** — full width (12×N); narrower tables truncate columns.
 - **Pie / donut** — 4×4 or 6×4; full-width pies waste space.
@@ -177,4 +202,5 @@ Deletes are soft — a restore window exists. After a second delete or report-le
 - **Passing plain metric strings in `configs`** — configs expect `{"metric": {"external_id": "..."}}` shape, not bare strings.
 - **Batch operations without `widget_ids`** — the array is required. Empty array = no-op, not "all widgets".
 - **Widget breaks after batch source swap** — the new source may not have the same report type or fields; always verify with `list-widgets action=show` after.
+- **`metric.external_id` change appears to no-op** — when the widget already has a config bound to a metric on a source group / blend, re-supplying a different `metric.external_id` in the same config sometimes leaves the original metric in place. The `list-widgets action=show` response masks this (it only echoes channel + source ids, not the metric). Always confirm via `list-widgets action=csv_export` or `export-report` after a metric swap; if the CSV still shows the previous metric name, delete and recreate the widget rather than trying to update it in place.
 - **`tab_id` missing on create** — required. Find via `list-report-tabs action=list`.
