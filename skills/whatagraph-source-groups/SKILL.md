@@ -53,16 +53,15 @@ manage-source-groups action=create
 
 ## One config per group (strongly recommended)
 
-Build a source group with exactly **one** entry in `configs`. Multiple-config groups are legacy behaviour kept for backwards compatibility — every new group should expose a single, well-scoped report type that all widgets / blends / custom metrics point at. If the user needs campaign-level *and* keyword-level rollups from the same set of sources, build two separate source groups, one per report type. This keeps each group's virtual table small, the query path straightforward, and widgets/filters unambiguous about which report type they're operating on.
+Build a source group with exactly **one** entry in `configs`. If the user needs campaign-level *and* keyword-level rollups from the same set of sources, build two separate source groups, one per report type. This keeps each group focused and makes widgets, filters, and blends easier to reason about.
 
 ```
 configs=[{"output_name": "campaign_performance"}]    # one config — preferred
 ```
 
-The legacy "many report types in one group" pattern looked like this and should not be reused:
+Avoid putting multiple report types in one group:
 
 ```
-# LEGACY — do not use for new groups
 configs=[
   {"output_name": "campaign_performance"},
   {"output_name": "keyword_performance"},
@@ -87,7 +86,7 @@ manage-source-groups action=duplicate group_id=<id>
 
 ## Resolving sync issues
 
-Some sources in the group may have disabled ETL configs after errors. Re-enable them:
+Some sources in the group may need attention after sync errors. Check affected sources and resolve them:
 
 ```
 list-source-groups action=source_issues group_id=<id>        # view affected sources
@@ -127,7 +126,7 @@ fetch-data source_id=<group integration_source_id>
 Notes:
 
 - **`report_type`** is the source-group template name the group exposes (e.g. `campaign_performance` for a Google Ads campaign rollup), not the original source's channel-native report type (`campaign`). It usually matches the `output_name` you supplied when creating the group. Run `list-sources action=list_report_types source_id=<group integration_source_id>` to see the exact string to pass.
-- **Field ids** use the unprefixed `universal_metric_*` / `universal_dimension_*` form on the group's virtual source. The platform aggregates sub-sources automatically (SUM for summable numerics, grouped by the selected dimensions).
+- **Field ids** use the `universal_metric_*` / `universal_dimension_*` form on the group's source. The platform aggregates sub-sources automatically.
 
 ## Deleting a source group
 
@@ -147,8 +146,8 @@ Widgets and custom metrics that point at the group's virtual source will break. 
 - **Mixing channels** — source groups require all sources from the SAME channel. Google Ads + Meta Ads → use a blend instead.
 - **`output_name` is the source-group template name, not the channel-native report type** — e.g. `campaign_performance` for Google Ads, not `campaign`. The channel-native report type (`campaign`) is what you pass to `fetch-data` and `report_type_external_id` on the *original* sources, but the template name (`campaign_performance`) is what `manage-source-groups create configs` accepts. The two diverge on every paid-ads channel.
 - **Empty group after creation** — freshly-created groups need time for ETL to populate; data may be empty for a few minutes for small accounts, longer for high-volume ones.
-- **Group not appearing in widget picker immediately** — refresh the report; new groups sometimes cache-miss for a few seconds.
-- **Very large groups (hundreds of sub-sources)** — query performance slows. The platform chunks queries for groups above a threshold. For very large rollups, consider a custom metric `data_aggregation` instead of a group.
-- **Adding source groups consumes source credits** — each source in the group counts. Check plan headroom before bulk-creating.
+- **Group not appearing in widget picker immediately** — refresh the report; new groups can take a few seconds to appear.
+- **Very large groups (hundreds of sub-sources)** — query performance can slow down. For very large rollups, consider a custom metric `data_aggregation` instead of a group.
+- **Adding source groups can affect plan usage** — check the team's plan limits before bulk-creating groups.
 - **`source_ids` vs `integration_source_ids`** — MCP expects `integration_source_ids`. `source_ids` is rejected.
 - **Widget creation against a fresh group failing** — re-run `list-source-groups action=show` to verify `integration_source_id` exists and data has arrived before attaching widgets.

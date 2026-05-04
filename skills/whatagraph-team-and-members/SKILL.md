@@ -40,7 +40,7 @@ Team settings apply platform-wide defaults. Individual sources can override curr
 
 ```
 manage-members action=invite
-   email="alex@acme.com"
+   email="<member_email>"
    role="editor"
    spaces=[{"id": <space_id_1>}, {"id": <space_id_2>}]
 ```
@@ -87,4 +87,4 @@ Only cancels a *pending* invite. Once the person has accepted and is an active m
 - **Role name casing** — use lowercase (`admin`, `editor`, `viewer`) as returned by `action=roles`.
 - **Admin role is powerful** — grants full platform access. Prefer `editor` + specific spaces for everyday users.
 - **Changing team timezone retroactively** — existing automations keep their schedule in the old timezone. Review `list-automations` after timezone changes.
-- **Seat limits** — `view-team action=show_subscription` returns used/available seats. Invites fail silently or with plan error when over the limit.
+- **Seat limits** — `view-team action=show_subscription` returns used/available seats. Invites may fail when the team is over the limit.

@@ -123,7 +123,7 @@ Batch delete. High-impact — always run `list-sources action=list_usage source_
 ## What MCP can't do here
 
 - Connect a new OAuth integration account — UI only.
-- Re-authorize a source with an expired token — UI only.
+- Re-authorize a source with an expired connection — UI only.
 - Assign a source to a space — use `manage-integrations action=sync_to_clients` (see `whatagraph-integrations-admin`).
 
 ## Common pitfalls

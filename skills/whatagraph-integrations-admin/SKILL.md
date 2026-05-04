@@ -34,8 +34,8 @@ manage-integrations action=add_sources
    source_ids=["<external_id_1>", "<external_id_2>"]
 ```
 
-- `source_ids` are the **external** ids returned by `list_available_sources` — NOT integer database ids.
-- After `add_sources`, the source appears in `list-sources action=list` with a new internal `integration_source_id`.
+- `source_ids` are the external ids returned by `list_available_sources`.
+- After `add_sources`, the source appears in `list-sources action=list` with an `integration_source_id`.
 
 ## Assign a source to spaces
 
@@ -80,11 +80,11 @@ To delete sources without touching the account (e.g., clean up individual source
 ## What MCP can't do here
 
 - Connect a new OAuth account — browser/UI flow only.
-- Re-authorize an expired token — UI only.
+- Re-authorize an expired connection — UI only.
 
 ## Common pitfalls
 
-- **Adding a source that's already connected** — skipped silently or surfaced as "already exists".
+- **Adding a source that's already connected** — may be skipped or surfaced as "already exists".
 - **`source_ids` as integer ids in `add_sources`** — must be the external ids from `list_available_sources`.
 - **Currency override without matching cost data** — `set_currency` sets display currency; it does not convert existing rows. Historical data keeps its stored currency.
 - **`client_ids=[]` on `sync_to_clients`** — wipes space assignments. Intentional only when de-assigning.

@@ -136,5 +136,5 @@ If the user's question doesn't imply a report type, default to the most granular
 - `Multiple report types are available.` — the source has multiple report types; you must pass `report_type`. See recovery pattern above.
 - `The dimensions and metrics are incompatible.` — this report type does not support that combination. Pick a different report type or drop the dimension (typically the finest-grained dimension).
 - `Invalid source_id.` — the source ID was fabricated or stale. Re-run `list-sources action: list` with a `search` term matching the user's words.
-- `Ahrefs API usage limit reached.` / `Error validating access token:` / other provider errors — these are account-level issues the user must resolve; tell them which source is broken and stop retrying.
+- Provider access or usage-limit errors are account-level issues the user must resolve; tell them which source needs attention and stop retrying.
 - `One or more GA4 metric names contain unsupported characters.` — you used a GA4-native field name. Switch to the Whatagraph normalized name via `list-sources action: list_dimensions_and_metrics`.

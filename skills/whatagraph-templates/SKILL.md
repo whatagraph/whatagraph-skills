@@ -86,5 +86,5 @@ Reports linked to the template stay in place but lose future auto-updates. Run `
 - **Source mapping gaps after create_from_template** — widgets start on the template's default sources (often sample). Always follow up with `change_sources`.
 - **Template name < 4 characters** — rejected.
 - **Template references custom metrics or dimensions that don't exist in the target team** — won't resolve in the new report. Create the custom metrics/dimensions first, then apply.
-- **Two templates with identical structure but different names** — client reports linked to the wrong template silently show the "wrong" layout after your next edit. Keep a clear naming convention.
+- **Two templates with identical structure but different names** — client reports linked to the wrong template can show the wrong layout after your next edit. Keep a clear naming convention.
 - **Confusing template vs theme** — templates store structure (tabs/widgets); themes store visual branding (colors/fonts). See `whatagraph-themes`.

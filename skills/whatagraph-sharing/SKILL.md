@@ -50,7 +50,7 @@ manage-sharing action=update share_id=<id>
    options={"iq_chat": false}
 ```
 
-`share_id` comes from `view-sharing action=show`. Changing password invalidates any cached client session.
+`share_id` comes from `view-sharing action=show`. Changing the password invalidates existing share sessions.
 
 ## Generate a PDF
 
@@ -58,7 +58,7 @@ manage-sharing action=update share_id=<id>
 manage-sharing action=download_pdf report_id=<report_id>
 ```
 
-Triggers server-side PDF generation. Response contains the downloadable PDF URL or a job identifier; polling may be required for large reports.
+Starts PDF generation. The response contains the downloadable PDF URL or a job identifier; polling may be required for large reports.
 
 ## Export to Excel
 

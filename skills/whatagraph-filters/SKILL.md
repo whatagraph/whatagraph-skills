@@ -39,7 +39,7 @@ manage-filters action=create
 
 > **Important — filter dimension ids are channel-native, not universal.** The dimension ids accepted by `manage-filters` are the channel's raw dotted-path ids (Google Ads `campaign.name`, `segments.day_of_week`, `ad_group.status`; Facebook Ads `campaign_name`, `adset_name`; etc.) — **not** the `universal_dimension_*` ids returned by `list-sources action=list_dimensions_and_metrics`. If you pass a `universal_dimension_*` value the API rejects it and lists every valid filter dimension for the channel in the error message; copy the right one from there. The set of filterable dimensions is also smaller than the set of reportable dimensions on each channel.
 
-On a successful `create` the `name` you pass is persisted on the filter and shown in `list-filters action=show`. (Earlier builds dropped it silently — that bug has been fixed.)
+On a successful `create`, the `name` you pass is persisted on the filter and shown in `list-filters action=show`.
 
 Valid `dimension_operator`:
 - `contain_dimension`, `not_contain_dimension`

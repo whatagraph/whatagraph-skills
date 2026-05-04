@@ -95,7 +95,7 @@ All conditions in one join are ANDed together. For more complex joins, add multi
 | `left` | All rows from left + matching from right | When the left source is the "primary" view |
 | `cross` | Cartesian product | Rare; use only when you know why |
 
-Most production blends use `full` — it avoids silent data loss. `inner` is a common source of "my data disappeared after blending" tickets.
+Most blends should use `full` — it avoids excluding rows that only exist in one source. `inner` is a common source of "my data disappeared after blending" questions.
 
 ## Updating
 
@@ -166,15 +166,15 @@ To preview per-sub-source values, call `fetch-data` on each sub-source's integra
 delete-blends action=delete blend_id=<id>
 ```
 
-Before deleting, check for usage — `list-blends action=show blend_id=<id>` returns `widgets_count`. Widgets referencing the blend break silently after delete.
+Before deleting, check for usage — `list-blends action=show blend_id=<id>` returns `widgets_count`. Widgets referencing the blend will need to be updated after delete.
 
 ## Common pitfalls
 
 - **Picking the wrong field id family when reading** — use `aggregation_metric_*`/`aggregation_dimension_*` to read the blend's unified output, not the sub-source native ids (those won't resolve on the blend itself).
-- **Picking the wrong field id family when WRITING (custom metric / custom dimension on a blend)** — `manage-custom-metrics action=create map_type=data_aggregation` accepts both `universal_metric_<n>` (one entry sums the unified slot across every sub-source) and `blend_metric_<n>` (per-sub-source numeric ids from `list-sources action=list_dimensions_and_metrics`). `manage-custom-dimensions action=create map_type=data` only accepts the **unprefixed** `universal_dimension_<n>` form on a blend — the `aggregation_dimension_*` and `blend_dimension_*` ids returned by `list-sources` are NOT accepted on the create side, even though they show up on read. If a create call rejects your dimension id with `Integration dimension ... not found for source <blend_id> (channel 142)`, retry with `universal_dimension_<n>` (e.g. `universal_dimension_1` for Campaign Name).
+- **Picking the wrong field id family when writing custom fields on a blend** — `manage-custom-metrics action=create map_type=data_aggregation` accepts both `universal_metric_<n>` (unified metric slot) and `blend_metric_<n>` (per-sub-source metrics from `list-sources action=list_dimensions_and_metrics`). `manage-custom-dimensions action=create map_type=data` expects the `universal_dimension_<n>` form on a blend, not `aggregation_dimension_*` / `blend_dimension_*`.
 - **`join_type` vs `type`** — use `type` inside each join object.
 - **`join_fields` vs `conditions`** — use `conditions` with `{left_source_id, left_dimension, right_source_id, right_dimension}` per pair.
-- **`inner` join silently dropping data** — most "where did my data go?" blend tickets are caused by `inner` on a dimension that doesn't match across sources (e.g. Google campaign name "Brand_US" vs Meta "Brand - US"). Use `full` unless you specifically want intersection.
+- **`inner` join excluding data** — most "where did my data go?" blend issues are caused by `inner` on a dimension that doesn't match across sources (e.g. Google campaign name "Brand_US" vs Meta "Brand - US"). Use `full` unless you specifically want intersection.
 - **Joining on non-shared dimension names** — if dimensions have different external ids per channel (e.g. `campaign_name` vs `campaign`), create a `metadata` custom dimension alias first so the external ids match, then join on the aliased field.
 - **Including the same metric in multiple sub-sources** — the metric appears twice in widget field pickers (e.g. "Spend (Google)" and "Spend (Meta)"); use a custom metric of type `data_aggregation` on top of the blend if you want one combined "Spend" field.
 - **Blend without date dimension in join** — rows from different periods get cartesian-joined. Always include a date dimension in your join conditions.

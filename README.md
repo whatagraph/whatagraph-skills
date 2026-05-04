@@ -47,15 +47,15 @@ The task-oriented skills (`exploring-account-data`, `fetching-marketing-metrics`
 - Server info: [https://mcp.whatagraph.com](https://mcp.whatagraph.com)
 - MCP endpoint: `https://mcp.whatagraph.com/mcp`
 
-Add the server endpoint to your MCP client with your Whatagraph API credentials. Once connected, any agent using these skills will be able to call the Whatagraph tools directly.
+Add the server endpoint to your MCP client using your Whatagraph account's normal MCP setup flow. Once connected, any agent using these skills will be able to call the Whatagraph tools directly.
 
 ## Tool availability
 
 Read tools (browsing data, fetching metrics, exporting reports) are available on all plans.
 
-**Write and delete tools (creating, updating, or deleting reports, widgets, source groups, blends, custom metrics and dimensions, goals, sharing, automations, etc.) are currently in a private alpha** and only enabled for a selected set of customers. The skills describe the full surface — if a tool isn't enabled for your team, the server will return an error and the agent will fall back to read-only behavior.
+Write and delete tools (creating, updating, or deleting reports, widgets, source groups, blends, custom metrics and dimensions, goals, sharing, automations, etc.) may require enablement for your team. The skills describe the full surface — if a tool isn't enabled, the agent should continue with available read-only actions and explain what needs enablement.
 
-To request alpha access, reach out to Whatagraph support.
+To request access to additional MCP actions, reach out to Whatagraph support.
 
 ## Prerequisites
 

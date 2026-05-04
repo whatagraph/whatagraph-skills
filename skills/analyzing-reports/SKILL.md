@@ -53,7 +53,7 @@ Report
    ```
    list-widgets action: show, report_id: <report_id>, widget_id: <id>
    ```
-   Shows widget ids, layout, source binding, and row/config ids. It does not return every metric, dimension, filter, or display option on current MCP builds; for data/config verification, use `list-widgets action=csv_export` or full-report `export-report`.
+   Shows widget ids, layout, source binding, and row/config ids. It may not return every metric, dimension, filter, or display option; for data/config verification, use `list-widgets action=csv_export` or full-report `export-report`.
 
 5. **Export widget data as CSV** (for data verification):
    ```

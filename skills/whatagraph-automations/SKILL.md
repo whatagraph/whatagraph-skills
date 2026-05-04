@@ -33,7 +33,7 @@ manage-automations action=create
    delivery_day="monday"
    send_time="09:00"
    time_zone="Europe/London"
-   receivers=["client@acme.com","team@acme.com"]
+   receivers=["<client_email>","<team_email>"]
    compare_type="previous"                 # or "last_year" (nullable)
    include_report_pdf_in_email=true
    needs_approval=false
@@ -96,12 +96,12 @@ Stops future deliveries immediately. Confirm with the user first if recipients a
 
 ## Common pitfalls
 
-- **`timezone` vs `time_zone`** — MCP expects `time_zone` with underscore. Wrong spelling is silently rejected.
+- **`timezone` vs `time_zone`** — MCP expects `time_zone` with underscore.
 - **`recipients` vs `receivers`** — MCP expects `receivers`.
 - **`previous_period` vs `previous`** — MCP expects `previous` (or `last_year`). Other strings are rejected.
 - **`include_pdf` vs `include_report_pdf_in_email`** — MCP expects the long name.
 - **`review_before_send` vs `needs_approval`** — MCP expects `needs_approval`.
-- **Delivery day off by one** — `time_zone` drives which "yesterday" a daily report uses. Mismatch between source timezone and automation timezone creates off-by-one date bugs.
-- **Invalid recipient email silently drops** — the automation sends to the others; missed deliveries show in the automation's history.
+- **Delivery day off by one** — `time_zone` drives which "yesterday" a daily report uses. Mismatch between source timezone and automation timezone can create off-by-one date issues.
+- **Invalid recipient email** — verify delivery history if some recipients do not receive the automation.
 - **`stop_on_issues=true` but source keeps failing** — the automation stays stopped until the source is fixed. Check `list-sources action=list status=issue` regularly.
 - **Too many automations per report** — distinct purposes (weekly-ops, monthly-exec) are fine, but duplicates cause recipient confusion.

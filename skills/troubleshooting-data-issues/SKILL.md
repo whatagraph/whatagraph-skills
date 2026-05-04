@@ -43,7 +43,7 @@ Ask clarifying questions to determine which category the issue falls into:
    ```
    Check the `team_clients` array — empty means the source isn't in any space.
 
-4. **Common causes**: Expired OAuth tokens, revoked permissions, API quota limits, or the external account being deleted/renamed.
+4. **Common causes**: Expired connections, revoked permissions, API quota limits, or the external account being deleted/renamed.
 
 ## Workflow: Data Discrepancies
 
@@ -68,7 +68,7 @@ Ask clarifying questions to determine which category the issue falls into:
    list-filters action: list
    list-widgets action: show, report_id: <report_id>, widget_id: <id>
    ```
-   `show` confirms layout/source binding and ids, but it does not return every widget option on current MCP builds. Use `list-widgets action: csv_export` or `export-report` when you need to verify the actual rendered metric/filter output.
+   `show` confirms layout/source binding and ids, but it may not return every widget option. Use `list-widgets action: csv_export` or `export-report` when you need to verify the actual rendered metric/filter output.
 
 5. **Common causes**:
    - **Time zone differences**: Whatagraph may aggregate data in a different timezone than the native platform.

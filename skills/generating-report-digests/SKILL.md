@@ -78,14 +78,14 @@ list-reports action: list, search: "{name fragment}"
 
 If the user asks for the same digest over a different date range ("same report but for last 30 days"), the right paths are:
 
-1. Tell the user to change the report's saved date range in Whatagraph and re-run the digest. Cache re-warms automatically after a date-range change.
+1. Tell the user to change the report's saved date range in Whatagraph and re-run the digest.
 2. Or duplicate the report in Whatagraph and run the digest against the duplicate (each report has its own saved range).
 
-Do **not** invent a different window via `from` / `till` and present the result as if it answered the user's question — most widgets will silently ignore the override and return data for their configured range.
+Do **not** invent a different window via `from` / `till` and present the result as if it answered the user's question — many widgets use their configured date range instead.
 
 ## Performance Expectations
 
-- First call on a cold report (one that hasn't been viewed recently) can take 30–90 seconds because every widget's data is pulled from BigQuery / provider APIs and cached.
+- First call on a report that has not been viewed recently can take 30–90 seconds while data is prepared.
 - Follow-up calls on the same `report_id` run in under ~20 seconds for most reports.
 - If a user is running a recurring digest (daily, weekly), encourage them to enable Scheduled Refresh on the report so it's pre-warmed; this dramatically improves latency and reliability for the digest workflow.
 - If the report's saved date range was just changed, the first `export-report` call after the change does the warming synchronously — expect a longer response.

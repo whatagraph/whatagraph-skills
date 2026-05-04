@@ -71,7 +71,7 @@ Are all the sources the same channel (e.g. all Google Ads)?
 8. `manage-reports action=create_from_template client_id=<client_id> template_id=<tpl>` — apply the team's standard report template.
 9. `manage-reports action=change_sources report_id=<new_id> source_mapping={"0": <new_source_id>, "<old>": <new>}` — swap template sample data for the client's sources.
 10. `manage-themes action=enable_theme report_id=<id> theme_id=<client_theme_id>` + `enable_color` with the brand palette.
-11. `manage-sharing action=create report_id=<id> require_password=true password="..."` — generate the client share link.
+11. `manage-sharing action=create report_id=<id> require_password=true password="<share_password>"` — generate the client share link.
 12. `manage-automations action=create` — schedule monthly delivery.
 
 ### 2. Cross-channel paid media report
@@ -122,7 +122,7 @@ Only applicable if those reports are linked to a template.
 1. Create or pick the report.
 2. Apply branding (themes + palette).
 3. Data QA: `manage-sharing action=download_pdf` → skim the PDF → fix issues.
-4. Create share link: `manage-sharing action=create report_id=<id> require_password=true password="..."`.
+4. Create share link: `manage-sharing action=create report_id=<id> require_password=true password="<share_password>"`.
 5. Capture the URL from the response and hand it to the client.
 6. If recurring, attach an automation: `manage-automations action=create frequency=monthly receivers=["client@..."] time_zone="Europe/London"`.
 
@@ -133,4 +133,4 @@ Only applicable if those reports are linked to a template.
 - **Creating widgets before attaching sources** — `manage-widgets` validates `source_id` against report-local sources. Always run `manage-reports action=attach_source` first and use the returned `source_id`.
 - **Creating from template without running `change_sources`** — widgets stay on sample data.
 - **Automations without `time_zone`** — always include IANA timezone; local time ≠ team timezone by default.
-- **Sharing link without password on sensitive reports** — anyone with the URL can view.
+- **Sharing link without password on confidential reports** — anyone with the URL can view.

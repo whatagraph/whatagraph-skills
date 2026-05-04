@@ -19,8 +19,8 @@ A **goal** is a target value on a metric for a specific period (daily, weekly, m
 
 ## Known limitations
 
-- **`manage-goals action=create` is currently broken on this MCP build.** Every call returns a SQL error — `Column not found: 1054 Unknown column 'name'` — because the underlying `data_goals` table no longer has a `name` column but the create handler still tries to insert one. Until the migration ships, `view-goals` and existing goals work but new goal creation does not. Don't plan onboarding flows that depend on creating goals via MCP today.
-- **`manage-goals create` request body has a `name` field** that is silently ignored even when the SQL bug is fixed; goals are identified by `metric_external_id` + `integration_source_id`, not by name. The shape will likely drop `name` entirely once the migration lands.
+- Goal creation may not be available for every team or MCP server version. If `manage-goals action=create` is unavailable, use `view-goals` for existing goals and create new goals in the Whatagraph UI.
+- Goals are identified by `metric_external_id` + `integration_source_id`; do not rely on `name` as the unique identifier.
 ## Listing
 
 ```
