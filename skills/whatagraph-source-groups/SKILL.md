@@ -51,6 +51,19 @@ manage-source-groups action=create
 - `integration_source_ids` — array of source ids from `list-sources action=list`. All sources must be the same channel.
 - `currency` — optional. Display currency.
 
+#### Per-channel `output_name` reference
+
+Template names diverge across channels — Google Ads-flavoured names like `campaign_performance` are not portable. Verified examples:
+
+| Channel | Valid `output_name` (verified) |
+|---|---|
+| Google Ads | `campaign_performance`, `ad_group_performance`, `keyword_performance`, `geo_performance`, … |
+| Facebook Ads | `creatives_performance` (note: not `campaigns_performance` or `campaign_performance`) |
+| GA4 | TBD — not exercised in QA |
+| LinkedIn Ads | TBD — not exercised in QA |
+
+When in doubt, send a deliberately wrong `output_name` and read the rejection — the error response enumerates every valid template name for that channel.
+
 ## One config per group (strongly recommended)
 
 Build a source group with exactly **one** entry in `configs`. If the user needs campaign-level *and* keyword-level rollups from the same set of sources, build two separate source groups, one per report type. This keeps each group focused and makes widgets, filters, and blends easier to reason about.

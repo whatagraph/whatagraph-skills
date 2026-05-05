@@ -56,6 +56,7 @@ Widget types are integers. Prefer the modern types (`101+`) unless you have a sp
 | Table | `102` |
 | List | `103` |
 | Column chart | `104` |
+| Area chart | `105` |
 | Bar chart | `106` |
 | Line chart | `107` |
 | Pie chart | `108` |
@@ -87,6 +88,10 @@ Same attach-first rule: the source must be attached to the report via `manage-re
 
 ## Update a widget
 
+The persisted shape of a widget config is **not** the friendly `{metric, dimension}` payload some examples show — the renderer reads `configs[].options.integration-metrics` and `configs[].options.integration-levels` (dimensions). Sending bare top-level `metric` / `dimension` keys is silently dropped by the storage layer; on `list-widgets action=show` the saved widget comes back with `configs[].options: []` and the renderer shows `Edit title` placeholders.
+
+Use the storage shape directly:
+
 ```
 manage-widgets action=update
    report_id=<id>
@@ -95,16 +100,21 @@ manage-widgets action=update
    options={...}
    rows=[
      {
-       "id": <existing_row_id>,
-       "options": {...},
+       "options": {
+         "metrics": [
+           {"sort": 0, "identifier": 0, "external_id": "universal_metric_3"}
+         ]
+       },
        "configs": [
          {
-           "id": <existing_config_id>,
-           "channel_id": <channel_id>,
-           "source_id":  <report_local_source_id>,
-           "report_type": {"external_id": "campaign"},
-           "metric":    {"external_id": "universal_metric_3", "name": "Spend"},
-           "dimension": {"external_id": "universal_dimension_1137", "name": "Date"}
+           "integration_id": <channel_id>,
+           "source_id":      <report_local_source_id>,
+           "options": {
+             "integration-metrics":      [{"name": "Spend",  "identifier": 0, "external_id": "universal_metric_3"}],
+             "integration-levels":       [{"name": "Date",   "identifier": 0, "external_id": "universal_dimension_1137"}],
+             "integration-report-types": [{"external_id": "campaign"}],
+             "inputs": []
+           }
          }
        ]
      }
@@ -112,7 +122,13 @@ manage-widgets action=update
    date_range={"from":"2025-10-01","till":"2025-10-31","period":"custom","compare_type":"previous"}
 ```
 
-`id` on each row and on each existing config is required and must be an integer. To find them, call `list-widgets action=show widget_id=<id>` first; the response includes `rows[].id` and `rows[].configs[].id`. To add another row/config safely, duplicate an existing widget or create a new widget, then re-run `list-widgets action=show` after updates to discover the current `rows[].id` / `configs[].id` set.
+To find the current shape on an existing widget, call `list-widgets action=show widget_id=<id>` first; the response shows `rows[].id`, `rows[].configs[].id`, and the populated `options` arrays. When you pass row/config `id` fields, the platform updates that row/config in place. For the cleanest binding, omit `rows[].id` and `configs[].id` — the platform replaces the rows from scratch, which is the only path that reliably persists a fresh metric/dimension binding (see callout below).
+
+> **Binding metrics on a fresh widget is currently unreliable via `manage-widgets update`.** When a config still carries its original `id`, supplying a new `integration-metrics` payload sometimes leaves the previously bound metric in place — `list-widgets action=show` masks this because it echoes channel + source ids only, not the bound metric. Workarounds:
+>
+> 1. Omit the row's `id` and the config's `id` so the platform re-creates the rows from scratch and applies the new `options.integration-metrics`. Note this also creates a new report-local source mapping (see Common pitfalls).
+> 2. After the update, verify with `list-widgets action=csv_export` or `export-report` — if the CSV still shows the previous metric, delete and recreate the widget rather than trying to update it in place.
+> 3. On widgets pointed at a **virtual source** (blend / source group), the renderer may still ignore the bind even with the storage shape — finishing the configuration in the UI is currently required for those.
 
 ### `rows` → `configs` shape
 
@@ -120,6 +136,10 @@ manage-widgets action=update
 - Each row has one or more configs.
 - Each config pairs a metric with an optional dimension.
 - Replace-style: supplied `rows` replace previous rows.
+- Each row carries **two parallel metric arrays** that must agree:
+  - `rows[].options.metrics: [{sort, identifier, external_id}]` — drives the rendered label and the value the renderer prints.
+  - `rows[].configs[].options.integration-metrics: [{name, identifier, external_id}]` — drives the actual data binding.
+  - Both must be set; mismatched values between the two cause the widget to render the row's label with the config's data. The same parallelism applies for dimensions: `rows[].options.dimensions` (rendered label) vs. `configs[].options.integration-levels` (binding).
 
 ### `date_range`
 
@@ -131,7 +151,8 @@ Per-widget settings — legend, labels, sort, hide_footer, currency override, et
 
 Known `options` shapes:
 
-- **Comment / text widget** (`widget_type_id=21`): `{"text": "<html>", "comment": "<html>"}` — set both keys for best compatibility.
+- **Comment / text widget** (`widget_type_id=21`): on **write**, supply `{"comment_widget_text": {"text": "Hello\nWorld", "contentAlign": "top"}}` — `text` is a plain string, the platform converts it. The legacy `{"text": "<html>", "comment": "<html>"}` shape also works for older accounts.
+  - On **read**, `list-widgets action=show` returns the converted Tiptap document under `options.comment_widget_text.description` (a `{type: "doc", content: [...]}` tree). Do **not** round-trip the `description` shape on write — re-send the flat `text` string instead, otherwise the platform will refuse the payload or persist an empty comment.
 - **Image widget** (`widget_type_id=34`): `{"image_url": "<url>", "url": "<url>"}` — set both keys for best compatibility.
 - **Single-value KPI** (`widget_type_id=101`): `{"compare_type": "previous_period"}` to surface the trend delta vs. the comparison window inherited from the report.
 
@@ -163,16 +184,20 @@ manage-widgets action=batch_change_settings
 
 Use when swapping ~10+ widgets at once — much faster than per-widget updates.
 
-## Sizing rules (12-column grid)
+## Sizing rules (6-column report grid)
 
 These guidelines describe the layout you should aim for in the **UI**, not arguments you can pass to `manage-widgets`. The `update` action accepts content/config fields such as `name`, `options`, `rows`, and `date_range`; positioning and sizing are adjusted in the UI after the data layer is configured.
 
-- **KPI / single-value card** — 2×1 or 2×2 in the UI; never full width.
-- **Line / column chart** — 6×3 minimum readable; 12-wide for trend emphasis.
-- **Table** — full width (12×N); narrower tables truncate columns.
-- **Pie / donut** — 4×4 or 6×4; full-width pies waste space.
-- **Goal** — 3×2 to 4×3; matches KPI card sizing.
-- **Comment / image** — 12×small for section headers; 4–6 wide for sidebar callouts.
+The default Whatagraph report grid is **6 columns wide** — `manage-widgets` defaults `options.width` to `6`, and observed widgets across real reports stay within `width=1..6`.
+
+- **KPI / single-value card** — 2×1 or 2×2 in the UI; never full row. Three KPIs across a row = `2×1 × 3`.
+- **Line / column chart** — 4×3 minimum readable; 6-wide (full row) for trend emphasis. A common chart row is `4×3 + 2×3` (chart + side KPI/legend).
+- **Table** — full width (6×N); narrower tables truncate columns.
+- **Pie / donut** — 2×2 or 3×3; full-row pies waste space.
+- **Goal** — 2×2 to 3×2; matches KPI card sizing.
+- **Comment / image** — 6×small for section headers; 2–3 wide for sidebar callouts.
+
+If a customer's account uses a wider grid, inspect an existing widget on a real report via `list-widgets action=list` and use the largest observed `options.width` as the row width before sizing new widgets.
 
 ## Deleting widgets
 

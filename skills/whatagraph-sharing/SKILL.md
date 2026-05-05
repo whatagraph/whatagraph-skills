@@ -38,7 +38,9 @@ manage-sharing action=create
 - `disable_date_changing` boolean — required. When `true`, viewers cannot change the report's date range.
 - `options.iq_chat` — enable the in-share AI chat ("IQ") so the client can ask questions about their data.
 
-The response includes the public share URL (pattern: `https://live.whatagraph.com/client/<team_client_id>/live-report/<report_id>`). For a specific tab, append `#tab:<tab_id>`.
+The response includes a public share URL on the team's share domain (e.g. `https://reports.live/shared/<hash>` or, on white-labeled accounts, the team's custom share domain). For a specific tab, append `#tab:<tab_id>`.
+
+The logged-in **live** URL `https://live.whatagraph.com/client/<team_client_id>/live-report/<report_id>` is a separate surface — it requires team auth and is the URL teammates use to open the report inside the app, **not** what the share link returns. Don't substitute the live URL when forwarding a share to a client; the client won't be able to authenticate.
 
 ## Update an existing share
 

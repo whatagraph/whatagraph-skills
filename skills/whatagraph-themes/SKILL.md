@@ -26,6 +26,8 @@ list-themes action=list_themes report_id=<id>           # available themes for a
 list-themes action=list_colors report_id=<id>           # available palettes for a report
 ```
 
+Themes and palettes are stored at the team level, but the listing endpoint is scoped per-report — `report_id` is required, and the response is filtered to the themes/palettes available to that specific report given the team's plan tier. To see every team-level theme, list against any report on the team.
+
 ## Apply a theme to a report
 
 ```

@@ -90,11 +90,13 @@ manage-custom-dimensions action=create
    ]
 ```
 
-Supported `operator` values: `equals`, `contains`, `starts_with`, `ends_with`, `matches_regex`.
+Supported `operator` values: `equals`, `contains`, `starts_with`, `ends_with`, `matches_regex`, plus the negation forms `not_equals`, `not_contain`, `not_starts_with`, `not_ends_with` (verified: `not_contain` accepted on `data` dimensions May 2026; the saved value persists and round-trips through `list-custom-dimensions show`). When in doubt, run a quick create with the operator you want and let the API confirm — the same operator family is used by `manage-filters` (with the `_dimension` / `_metric` suffix added there).
 
 Each condition's `fields` entry has the same shape as a top-level `fields` entry: `{channel_id, field_external_id, report_type_external_id?}` at channel level, or `{integration_source_id, field_external_id, report_type_external_id?}` at source level. On a blend or source-group source, use the unprefixed `universal_dimension_*` form (e.g. `universal_dimension_1` for Campaign Name) — the platform-prefixed `aggregation_dimension_*` and `blend_dimension_*` ids returned by `list-sources action=list_dimensions_and_metrics` are *not* accepted on `manage-custom-dimensions create` even though they show up on read.
 
 ## Creating a `tag` dimension
+
+`tag` dimensions use a different field-name convention than the rest of the SKILL family — entries take `{name, sources}`, not `{tag, source_ids}`. Sending `{tag, source_ids}` returns a 500 with `Undefined array key "name"` (and once corrected to `name`, an `Undefined array key "sources"` follow-up). The working shape:
 
 ```
 manage-custom-dimensions action=create
@@ -102,8 +104,8 @@ manage-custom-dimensions action=create
    map_type="tag"
    transformation_level="source"
    tags=[
-     {"tag": "Jane", "source_ids": [<src1>, <src2>, <src5>]},
-     {"tag": "Mike", "source_ids": [<src3>, <src4>]}
+     {"name": "Jane", "sources": [<src1>, <src2>, <src5>]},
+     {"name": "Mike", "sources": [<src3>, <src4>]}
    ]
 ```
 

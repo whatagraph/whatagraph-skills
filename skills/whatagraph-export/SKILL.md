@@ -46,7 +46,7 @@ Widgets with their own `date_range` ignore this fallback.
 
 ## What's excluded
 
-Comment, calendar, image, and filter-control widgets have no tabular data and are skipped from the export.
+Comment, calendar, image, and filter-control widgets produce no tabular rows. They may still appear in the response with `exportable: true` and `csv: ""` — filter on a non-empty `csv` string when consuming the export, not on `exportable`.
 
 ## Other export paths
 

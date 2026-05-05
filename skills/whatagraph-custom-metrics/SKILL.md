@@ -190,7 +190,7 @@ fetch-data source_id=<source_id>
   from="2026-04-01" till="2026-04-15"
 ```
 
-The metric resolves on any source of the same channel where the required native fields exist. For source groups, preview the calculation on individual sources or verify the result through a widget/export.
+**Custom metrics on a source-group's virtual `integration_source_id` cannot be read via `fetch-data` on the group itself.** The platform aggregates sub-source data at the widget/export layer, not at the `fetch-data` boundary. To preview a custom metric on a source group, call `fetch-data` against each constituent source individually, or render the metric in a widget and read it via `list-widgets action=csv_export` / `export-report`. The error message returned by `fetch-data` on the group strips the `_metric_` infix, so the diagnostic looks like `Invalid metrics: universal_<id>` — that is *not* a hint that the legacy form would have worked; the metric simply does not resolve at the group level.
 
 ## What MCP can't do here
 

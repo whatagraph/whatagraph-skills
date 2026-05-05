@@ -25,6 +25,18 @@ list-report-tabs action=show report_id=<id> tab_id=<id>   # full widget list
 
 ## Create a tab
 
+Reports are created with one default tab whose `name` is `null`. Always run `list-report-tabs action=list` first, then `update` that default tab's name in place rather than calling `create` for the report's first named tab — otherwise you leave an unnamed default tab alongside the new one.
+
+```
+list-report-tabs action=list report_id=<id>
+# response: [{id: <default_tab_id>, name: null, …}]
+
+manage-report-tabs action=update report_id=<id>
+   tab_id=<default_tab_id> name="Overview"
+```
+
+Use `create` only for additional tabs beyond the first:
+
 ```
 manage-report-tabs action=create report_id=<id> name="Paid Social"
 ```
