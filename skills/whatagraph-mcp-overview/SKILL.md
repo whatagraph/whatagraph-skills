@@ -67,6 +67,7 @@ Users rarely say "data source"; they say things like "my Google Ads account". Tr
 | "client folder", "client", "folder" | a space — use `list-spaces` |
 | "account", "ad account", "property" | a data source — use `list-sources` |
 | "channel", "integration" | an integration (e.g. Google Ads, GA4) |
+| "sample data", "demo data" | a read-only placeholder source the platform provides per channel so a report can be built or previewed before real data is connected. Sample sources coexist with real sources of the same channel. In `list-reports action=list_sources` they appear under `sample_integrations` (separate from `integration_sources`). |
 | "page", "section" inside a report | a report tab |
 | "dashboard", "KPI dashboard", "measurement" | an overview (the UI now calls it "Measurement") |
 | "combined data", "aggregated accounts" | source group (same channel) or blend (multi-channel) |

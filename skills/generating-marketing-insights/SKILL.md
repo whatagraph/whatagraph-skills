@@ -124,6 +124,7 @@ If goals are set (check with `view-goals`):
 - **Low data volume**: For small datasets, warn that trends may not be statistically significant.
 - **Multiple attribution models**: When conversion numbers seem high, note potential multi-touch attribution overlap.
 - **Stale data**: Check if the source's last sync date is recent. Outdated data should be flagged.
+- **Duplicate KPI values**: if the source report has several KPIs displaying the same value (see the duplicate-KPI signal in `analyzing-reports`), do not produce an insight. Tell the user the report is misconfigured and offer to help diagnose. Insights written from a broken report mislead the customer.
 
 ## Tips
 

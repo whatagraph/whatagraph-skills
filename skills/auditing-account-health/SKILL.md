@@ -176,6 +176,7 @@ After completing the audit, present findings in this structure:
 
 ## Common Issues to Flag
 
+- **Plan over-utilisation**: when `sources_used > sources_total` (visible in `view-team action=show_subscription`), surface this first. It blocks new source connection and indicates the account is on a stale plan or in the middle of a migration. Recommend either upgrading or removing unused sources before anything else.
 - **Disconnected sources**: Sources with `has_error: true` are not collecting data. This is the highest priority issue.
 - **No automations**: If reports exist but have no scheduled delivery, clients may not be receiving their reports automatically.
 - **Orphan sources**: Sources not in any space may indicate incomplete setup.
@@ -189,3 +190,4 @@ After completing the audit, present findings in this structure:
 - Focus on actionable findings. Don't flag minor issues that don't impact the user's workflow.
 - For agencies with many spaces, sample a few representative ones rather than auditing every single space.
 - If the account is on a limited plan, note which features are restricted and whether upgrading would unlock value.
+- For accounts with >50 sources or >100 reports, do not enumerate one-by-one — use `list-sources action=list_usage source_ids=[...]` to find orphans and unused sources in a single call.
