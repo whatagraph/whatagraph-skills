@@ -55,10 +55,12 @@ manage-overviews action=create
      }
    ]
    dimensions=[
-     {"external_id": "campaign_name", "name": "Campaign", "sort": "asc"}
+     {"external_id": "campaign.name", "name": "Campaign", "sort": "asc"}
    ]
    comparison_display_type="percentage"              # or "absolute", "combined"
 ```
+
+> The `external_id` values shown above (`universal_metric_3`, `campaign.name`) are channel-specific. Always look up the actual id for your source via `list-sources action=list_dimensions_and_metrics` — Google Ads native fields use dot notation (`campaign.name`, `metrics.clicks`), source groups use `universal_*` prefixes, and blends use `aggregation_*` prefixes. See `whatagraph-sources-and-data` for the field-id family table.
 
 ### `metrics` structure
 

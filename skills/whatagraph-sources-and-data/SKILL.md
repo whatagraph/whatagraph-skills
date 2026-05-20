@@ -55,12 +55,14 @@ list-sources action=list_dimensions_and_metrics
 
 ## Fetching raw data
 
+Field ids in `metrics` and `dimensions` are the channel-native `external_id` returned by `list_dimensions_and_metrics` — not display names, not what the native platform's API calls them. For Google Ads campaign-level fetches that means `metrics.clicks`, `metrics.impressions`, `metrics.cost_micros`, and the dimension is `campaign.name` (dot, not underscore). For source groups and blends the ids are different again — see the family table below.
+
 ```
 fetch-data
-   source_id=<id>
+   source_id=<google_ads_source_id>
    report_type="campaign"
-   metrics=["spend","clicks","impressions"]
-   dimensions=["campaign_name"]
+   metrics=["metrics.clicks","metrics.impressions","metrics.cost_micros"]
+   dimensions=["campaign.name"]
    from="2025-10-01"
    till="2025-10-31"
    limit=100
@@ -68,7 +70,28 @@ fetch-data
 
 Response: rows of metric values grouped by dimensions.
 
-**`retry_after` handling:** when the response indicates data is being prepared (e.g. `{"status":"pending","retry_after":30}`), wait the indicated seconds and call again with the same parameters. Do NOT surface this as an error. Most integrations return in 5–30 seconds; some declarative connectors can take 2–3 minutes on first fetch.
+### Field-id family by source type
+
+| Source type | Metric id form | Dimension id form |
+|---|---|---|
+| Native source (Google Ads campaign) | `metrics.clicks`, `metrics.cost_micros` | `campaign.name`, `segments.date` |
+| Source group (channel rollup, channel_id=154) | `universal_metric_<n>` | `universal_dimension_<n>` |
+| Blend (cross-channel, channel_id=142) — fetch-data | `aggregation_metric_universal_metric_<n>` | `aggregation_dimension_universal_dimension_<n>` |
+| Blend — per-sub-source fields (rare in fetch) | `blend_metric_<id>` | `blend_dimension_<id>` |
+
+If `fetch-data` returns `Invalid metrics: X` or `Invalid dimensions: X`, do not retry with a variant spelling. Re-run `list_dimensions_and_metrics` and pick the value verbatim from the response — including dots and prefixes.
+
+### Handling "data is being processed"
+
+`fetch-data` may return a transient warmup error on the first call after creating a blend or source group, or after a long idle period:
+
+```
+{"success": false, "error": {"category": "internal", "message": "Your data is being processed... please wait...", "retryable": false}}
+```
+
+**Important:** `retryable: false` is misleading on this specific message — the condition is transient. Wait ~10–15 seconds and retry the same call once or twice. Most blends warm up within 30 seconds; declarative connectors can take 2–3 minutes on first fetch. The legacy pending response shape (`{"status":"pending","retry_after":30}`) is also seen on some integrations — same handling: wait the indicated seconds and retry.
+
+Do NOT surface the warmup error to the user as a hard failure. Treat any "data is being processed" / "please wait" / `retry_after` response as a retry-with-backoff signal regardless of the `retryable` flag.
 
 ## Listing integrations (channels)
 
