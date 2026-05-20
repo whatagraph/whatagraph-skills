@@ -56,7 +56,7 @@ manage-custom-dimensions action=create
 
 ## Creating a `data` (condition-based) dimension
 
-Each map has a result `value` (the bucket label) and one or more `conditions`. Each condition has an `operator`, a comparison `value`, and a `fields` array pointing at the source field(s) being matched against. Order matters — first matching map wins. Unmatched rows render blank; if you need a fallback bucket, add a final map whose conditions match anything reasonable for your data (there is no `default: true` shortcut on the API).
+Each map has a result `value` (the bucket label) and one or more `conditions`. Each condition has an `operator`, a comparison `value`, and a `fields` array pointing at the source field(s) being matched against. Order matters — first matching map wins. Unmatched rows render blank unless you provide a fallback map (see "Simplified maps shortcuts" below).
 
 ```
 manage-custom-dimensions action=create
@@ -91,6 +91,23 @@ manage-custom-dimensions action=create
 ```
 
 Supported `operator` values: `equals`, `contains`, `starts_with`, `ends_with`, `matches_regex`, plus the negation forms `not_equals`, `not_contain`, `not_starts_with`, `not_ends_with` (verified: `not_contain` accepted on `data` dimensions May 2026; the saved value persists and round-trips through `list-custom-dimensions show`). When in doubt, run a quick create with the operator you want and let the API confirm — the same operator family is used by `manage-filters` (with the `_dimension` / `_metric` suffix added there).
+
+### Simplified `maps` shortcuts (MCP-only)
+
+`manage-custom-dimensions create` and `update` accept a shorter `maps` shape in addition to the full `{value, conditions: [{operator, value, fields}]}` payload. The MCP layer expands these to the full API shape before saving:
+
+```
+maps=[
+  {"when": "contains", "value": "brand",       "then": "Branded"},
+  {"when": "contains", "value": "competitor",  "then": "Competitor"},
+  {"default": "Other"}    # catch-all fallback (verified May 2026)
+]
+```
+
+- `{when, value, then}` — single-condition map; `then` is the bucket label, `when`/`value` describe the operator + comparison value, fields default to the top-level `fields` array.
+- `{default: "<label>"}` — fallback bucket that catches anything not matched by earlier maps. Persists as a map with `operator: "contains", value: ""` on the underlying field, which matches every non-null value. Add it as the **last** entry; first match wins.
+
+Use the full shape when you need multiple conditions per bucket, cross-field comparisons, or to bind each map to a specific field different from the top-level `fields`. Use the simplified shape for the common "label by substring" pattern with an optional fallback.
 
 Each condition's `fields` entry has the same shape as a top-level `fields` entry: `{channel_id, field_external_id, report_type_external_id?}` at channel level, or `{integration_source_id, field_external_id, report_type_external_id?}` at source level. On a blend or source-group source, use the unprefixed `universal_dimension_*` form (e.g. `universal_dimension_1` for Campaign Name) — the platform-prefixed `aggregation_dimension_*` and `blend_dimension_*` ids returned by `list-sources action=list_dimensions_and_metrics` are *not* accepted on `manage-custom-dimensions create` even though they show up on read.
 
@@ -168,7 +185,7 @@ Batch delete by ID list. Run `list-custom-dimensions action=usage universal_dime
 
 - **Regex escaping** — JSON-escape backslashes (`"\\b"` not `"\b"`). Preview with `preview_ai` or a small test before wide rollout.
 - **Rule order** — first match wins. Put specific rules before general ones.
-- **`data` dimension expecting a `default` shortcut** — there is no `{default: "..."}` map shape on the API. Unmatched rows render blank. If you need a "Other / Unclassified" bucket, add an explicit final map whose conditions match the rows you want to label.
+- **`data` dimension expecting a `default` shortcut** — the MCP `maps` array does accept `{default: "<label>"}` as a fallback entry (see "Simplified maps shortcuts" above). Place it last in the `maps` array — first match wins, so any preceding map with matching conditions takes precedence. If you skip the fallback entirely, unmatched rows render blank.
 - **Tag dimension applied to source group's `source_id`** — applies to the group as a whole, not per-sub-source. For per-sub-source tagging, pass the individual source IDs.
 - **AI dimension prompt too open** — constrain outputs: "Return only one of: <list>". Unbounded prompts produce variant category names.
 - **Prompt-only without `fields`** — `ai` map_type still requires a source field via `fields` (or `integration_source_id` + `field_external_id` pair inside the preview call).
