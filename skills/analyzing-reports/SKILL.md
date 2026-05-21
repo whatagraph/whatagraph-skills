@@ -53,7 +53,7 @@ Report
    ```
    list-widgets action: show, report_id: <report_id>, widget_id: <id>
    ```
-   Shows full widget configuration including metrics, dimensions, filters, and display options.
+   Shows widget ids, layout, source binding, and row/config ids. It may not return every metric, dimension, filter, or display option; for data/config verification, use `list-widgets action=csv_export` or full-report `export-report`.
 
 5. **Export widget data as CSV** (for data verification):
    ```
@@ -103,6 +103,7 @@ Themes control visual styling (colors, fonts). Review which theme a report uses 
 
 When auditing reports, look for:
 
+- **Duplicate KPI values across cards**: when several single-value widgets on the same tab display the exact same number — especially a round-looking value like `107,285` — treat it as a misconfiguration signal. The widgets likely all ended up pointing at the source's default metric. Inspect the affected widgets via `list-widgets action: show` (or `csv_export`) and confirm each has the metric the title implies.
 - **Too many widgets per tab**: More than 10-12 widgets per tab can be overwhelming. Suggest splitting into multiple tabs.
 - **Missing date context**: Reports without date range widgets leave viewers guessing about the time period.
 - **Inconsistent sources**: Widgets on the same tab pulling from different sources without clear labeling.

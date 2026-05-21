@@ -45,7 +45,7 @@ list-integrations action: list_accounts, channel_id: <id>
 ### 3. Source Health Scan
 
 ```
-list-sources action: list, per_page: 50
+list-sources action: list, per_page: 128
 ```
 
 Check for:
@@ -87,14 +87,21 @@ Check:
 
 ### 6. Automation & Delivery Audit
 
+`list-automations` requires `report_id` — there is **no account-wide automation listing endpoint**. You can only enumerate automations by iterating the reports you already discovered in step 5.
+
+For full accounts, do not iterate every report — pick the important ones first (recent activity, named after clients, linked to templates) and sample those:
+
 ```
 list-automations action: list, report_id: <id>
 ```
+
+The response is minimal (id, frequency, send_time, delivery_day) and does **not** include receivers, timezone, or attachment settings. To verify how a specific automation is configured (recipient list, IANA timezone, PDF attachment, stop-on-issues), open the report in the UI — MCP does not expose those fields.
 
 Review:
 - Which reports have automated delivery scheduled?
 - Delivery frequency (weekly, monthly, etc.)
 - Are important reports missing automations?
+- Reports with high activity but no automation are usually the highest-value gap to flag.
 
 ### 7. Sharing Configuration
 
@@ -176,6 +183,7 @@ After completing the audit, present findings in this structure:
 
 ## Common Issues to Flag
 
+- **Plan over-utilisation**: when `sources_used > sources_total` (visible in `view-team action=show_subscription`), surface this first. It blocks new source connection and indicates the account is on a stale plan or in the middle of a migration. Recommend either upgrading or removing unused sources before anything else.
 - **Disconnected sources**: Sources with `has_error: true` are not collecting data. This is the highest priority issue.
 - **No automations**: If reports exist but have no scheduled delivery, clients may not be receiving their reports automatically.
 - **Orphan sources**: Sources not in any space may indicate incomplete setup.
@@ -189,3 +197,4 @@ After completing the audit, present findings in this structure:
 - Focus on actionable findings. Don't flag minor issues that don't impact the user's workflow.
 - For agencies with many spaces, sample a few representative ones rather than auditing every single space.
 - If the account is on a limited plan, note which features are restricted and whether upgrading would unlock value.
+- For accounts with >50 sources or >100 reports, do not enumerate one-by-one — use `list-sources action=list_usage source_ids=[...]` to find orphans and unused sources in a single call.

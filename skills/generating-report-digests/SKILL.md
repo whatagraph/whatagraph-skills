@@ -46,15 +46,11 @@ list-reports action: list, search: "{name fragment}"
    export-report report_id: {id}
    ```
 
-   This returns one envelope per widget containing the widget title, its configured source(s), the widget's date range (with `vs_from` / `vs_till` / `compare_type` when comparison is set), a structured `metrics` array, and a raw `csv` string.
+   This returns one envelope per widget containing the widget title (`title`), the widget id and `widget_type_id` / `widget_type_name`, the configured `sources`, the widget's `date_range`, `contains_sample_data`, `exportable`, and a raw `csv` string.
 
-   For each metric, the `metrics` array carries:
-   - `name`, `external_id`, `type`, `currency`
-   - `value` — current-period value
-   - `previous_value` — value over the comparison window (null when comparison is off)
-   - `absolute_change`, `percentage_change` — pre-computed deltas from the platform
+   The structured `metrics` array — with `name`, `external_id`, `type`, `currency`, `value`, `previous_value`, `absolute_change`, `percentage_change` — is **only present when the report has comparison configured** (`date_range.compare_type` ∈ `{previous, last_year, …}`). On reports without comparison (the most common case), the `metrics` array is not included on widget envelopes — parse the `csv` string instead.
 
-   Use the structured `metrics` block as the primary source for digests on **single-value, table, list, pie, and KPI-style widgets** — it's more reliable than parsing CSV.
+   When `metrics` is present, use it as the primary source for digests on **single-value, table, list, pie, and KPI-style widgets** — it's more reliable than parsing CSV, and `previous_value` is `null` only on metrics that genuinely have no comparison value (not as a stand-in for "comparison is off").
 
 3. **For time-series / chart widgets, read the `csv` string instead.** The `metrics` block on these widgets only reflects the first bucket. The CSV interleaves rows so previous-period values are visible alongside current-period ones:
    - Date dimensions: previous rows are emitted first with calendar-shifted dates (e.g. `2024-01-01` → `2025-01-01`), then current rows.
@@ -78,14 +74,14 @@ list-reports action: list, search: "{name fragment}"
 
 If the user asks for the same digest over a different date range ("same report but for last 30 days"), the right paths are:
 
-1. Tell the user to change the report's saved date range in Whatagraph and re-run the digest. Cache re-warms automatically after a date-range change.
+1. Tell the user to change the report's saved date range in Whatagraph and re-run the digest.
 2. Or duplicate the report in Whatagraph and run the digest against the duplicate (each report has its own saved range).
 
-Do **not** invent a different window via `from` / `till` and present the result as if it answered the user's question — most widgets will silently ignore the override and return data for their configured range.
+Do **not** invent a different window via `from` / `till` and present the result as if it answered the user's question — many widgets use their configured date range instead.
 
 ## Performance Expectations
 
-- First call on a cold report (one that hasn't been viewed recently) can take 30–90 seconds because every widget's data is pulled from BigQuery / provider APIs and cached.
+- First call on a report that has not been viewed recently can take 30–90 seconds while data is prepared.
 - Follow-up calls on the same `report_id` run in under ~20 seconds for most reports.
 - If a user is running a recurring digest (daily, weekly), encourage them to enable Scheduled Refresh on the report so it's pre-warmed; this dramatically improves latency and reliability for the digest workflow.
 - If the report's saved date range was just changed, the first `export-report` call after the change does the warming synchronously — expect a longer response.

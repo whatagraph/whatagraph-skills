@@ -21,8 +21,8 @@ Whatagraph exposes a normalized field catalog that differs from each platform's 
 | Wrong (native-API guess) | Actual Whatagraph field |
 |--------------------------|--------------------------|
 | `sessionDefaultChannelGroup` (GA4) | look it up — often `default_channel_group` |
-| `campaignName`, `campaign_name` | usually `campaign` |
-| `spend` (generic) | varies by channel — `cost`, `spend`, or a custom metric |
+| `campaignName`, `campaign_name` | varies — Google Ads exposes `campaign.name` (dot, not underscore); source groups expose `universal_dimension_<n>`; blends expose `aggregation_dimension_universal_dimension_<n>` |
+| `spend` (generic) | varies by channel — `metrics.cost_micros` on Google Ads, `spend` on Meta, `universal_metric_3` on source groups |
 | `date` (on sources without time dimension) | some report types don't support date at all — check first |
 | `universal_metric_N` | these are positional IDs, never stable — look up the actual name |
 
@@ -136,5 +136,6 @@ If the user's question doesn't imply a report type, default to the most granular
 - `Multiple report types are available.` — the source has multiple report types; you must pass `report_type`. See recovery pattern above.
 - `The dimensions and metrics are incompatible.` — this report type does not support that combination. Pick a different report type or drop the dimension (typically the finest-grained dimension).
 - `Invalid source_id.` — the source ID was fabricated or stale. Re-run `list-sources action: list` with a `search` term matching the user's words.
-- `Ahrefs API usage limit reached.` / `Error validating access token:` / other provider errors — these are account-level issues the user must resolve; tell them which source is broken and stop retrying.
+- Provider access or usage-limit errors are account-level issues the user must resolve; tell them which source needs attention and stop retrying.
 - `One or more GA4 metric names contain unsupported characters.` — you used a GA4-native field name. Switch to the Whatagraph normalized name via `list-sources action: list_dimensions_and_metrics`.
+- **`Your data is being processed... please wait...`** — transient warmup state. Common on blends and source groups the first time they're queried, or after a long idle period. The response often comes back with `retryable: false`, but **the condition is retryable**: wait 10–15 seconds and call again with the same parameters. Two retries with backoff (10s, 30s) is enough for almost every case; declarative connectors (e.g. some Fivetran-backed sources) can take up to ~3 minutes on first fetch. Do NOT surface this to the user as a hard failure or treat `retryable: false` as authoritative on this specific message. Same handling applies to the legacy `{"status":"pending","retry_after":<n>}` shape — wait the indicated seconds and retry.

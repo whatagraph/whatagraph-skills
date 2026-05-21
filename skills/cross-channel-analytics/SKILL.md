@@ -34,12 +34,27 @@ Help users analyze marketing performance across multiple channels by leveraging 
    This reveals which sources are blended and how metrics map across them.
 
 3. **Fetch cross-channel data from the blend**:
+
+   Blend field ids use the `aggregation_*` prefix family — they are different from native source field ids. Look them up before fetching:
+
    ```
-   fetch-data source_id: <blend_source_id>, report_type: "<type>",
-     metrics: ["impressions", "clicks", "spend"],
-     dimensions: ["date"],
+   list-sources action: list_dimensions_and_metrics, source_id: <blend_source_id>
+   # → metrics like aggregation_metric_universal_metric_1 (Impressions),
+   #   dimensions like aggregation_dimension_universal_dimension_1137 (Date)
+   ```
+
+   Then fetch with the verbatim ids from that response:
+
+   ```
+   fetch-data source_id: <blend_source_id>,
+     metrics: ["aggregation_metric_universal_metric_1",
+               "aggregation_metric_universal_metric_2",
+               "aggregation_metric_universal_metric_3"],
+     dimensions: ["aggregation_dimension_universal_dimension_1137"],
      from: "2026-03-01", till: "2026-03-31"
    ```
+
+   **First-call warmup:** blends often return `Your data is being processed... please wait...` with `retryable: false` on their first fetch. Treat this as transient — wait ~10–15 seconds and retry. See the "Handling Errors" section of `fetching-marketing-metrics` for the full retry pattern.
 
 4. **For channel-by-channel comparison**, fetch data from each source individually and present side by side:
    ```
