@@ -88,7 +88,7 @@ Same attach-first rule: the source must be attached to the report via `manage-re
 
 ## Update a widget
 
-The MCP tool reads metrics from `configs[].options.metrics` (array of objects or strings) and dimensions from `configs[].options.dimensions`. A singular `metric` / `dimension` string is also accepted and auto-wrapped. Do **not** use the internal storage keys `integration-metrics` or `integration-levels` — the tool does not read those and the binding will be silently empty.
+The MCP tool reads metrics from `configs[].options.metrics` (array of objects or strings) and dimensions from `configs[].options.dimensions`. A singular `metric` / `dimension` string is also accepted and auto-wrapped. Do **not** use the internal storage keys `integration-metrics` or `integration-dimensions` — the tool does not read those and the binding will be silently empty.
 
 ```
 manage-widgets action=update
@@ -222,7 +222,7 @@ Deletes are soft — a restore window exists. After a second delete or report-le
 - **Creating without `widget_type_id`** — required; verify via existing widgets on the tab.
 - **Passing a global `integration_sources.id` as `source_id`** — widgets only accept the report-local `sources.id`. Attach first via `manage-reports action=attach_source` and use the returned `source_id`.
 - **`metrics=[]` as a top-level param** — wrong shape. Metrics live inside `rows[].options.metrics` (row label) and `rows[].configs[].options.metrics` (data binding).
-- **Using `integration-metrics` / `integration-levels` in config options** — the MCP tool does not read those internal storage keys. Use `metrics` and `dimensions` instead.
+- **Using `integration-metrics` / `integration-dimensions` in config options** — the MCP tool does not read those internal storage keys. Use `metrics` and `dimensions` instead.
 - **Batch operations without `widget_ids`** — the array is required. Empty array = no-op, not "all widgets".
 - **Widget breaks after batch source swap** — the new source may not have the same report type or fields; always verify with `list-widgets action=show` after.
 - **`metric.external_id` change appears to no-op** — when the widget already has a config bound to a metric on a source group / blend, re-supplying a different `metric.external_id` in the same config sometimes leaves the original metric in place. The `list-widgets action=show` response masks this (it only echoes channel + source ids, not the metric). Always confirm via `list-widgets action=csv_export` or `export-report` after a metric swap; if the CSV still shows the previous metric name, delete and recreate the widget rather than trying to update it in place.
