@@ -35,16 +35,13 @@ manage-widgets action=create
    source_id=<report_local_source_id>  # omit for sample-data widget
 ```
 
-After creation, fill in configs via `manage-widgets action=update`.
+You can pass `rows` at create time to bind metrics and dimensions immediately — no separate update needed. If `rows` is omitted, the widget defaults to the first metric in the source catalog.
 
-### `source_id` — report-local sources only
+### `source_id` — global or report-local
 
-`manage-widgets` validates `source_id` against the **sources already attached to the report** (the report-local `sources.id`, not the global `integration_sources.id`). Attach the source first via `manage-reports`:
+`source_id` accepts either a **global** source `id` from `list-sources` or a **report-local** `source_id` from `list-widgets` / `list-reports action=list_sources`. When a global ID is passed, the tool auto-attaches it to the report — no separate `attach_source` step is needed.
 
-1. `manage-reports action=attach_source report_id=<id> integration_source_id=<global_source_id>` — returns the report-local `source_id`.
-2. `manage-widgets action=create ... source_id=<that report-local id>`.
-
-Discover already-attached sources via `list-reports action=list_sources report_id=<id>`. Source groups and blends are themselves data sources — attach them the same way using their `id` from `list-source-groups` / `list-blends`.
+Discover already-attached sources via `list-reports action=list_sources report_id=<id>`. Source groups and blends are themselves data sources — use their `id` from `list-source-groups` / `list-blends`.
 
 ### `widget_type_id` — widget types
 
@@ -84,7 +81,7 @@ manage-widgets action=create_premade
 
 `create_premade` requires an existing `widget_id` that the premade configuration is applied to. Create a blank widget first with the right `channel_id` and `widget_type_id`, then call `create_premade` with that widget's id.
 
-Same attach-first rule: the source must be attached to the report via `manage-reports action=attach_source` before referencing it here.
+Same auto-attach rule applies: pass a global or report-local `source_id`.
 
 ## Update a widget
 
@@ -178,7 +175,7 @@ manage-widgets action=batch_change_settings
    settings={"currency":"EUR","hide_footer":true}
 ```
 
-`batch_change_source` requires the new source to already be attached to the report. Attach it first via `manage-reports action=attach_source`.
+`batch_change_source` accepts both global and report-local source IDs — auto-attaches if needed.
 
 Use when swapping ~10+ widgets at once — much faster than per-widget updates.
 
@@ -220,7 +217,7 @@ Deletes are soft — a restore window exists. After a second delete or report-le
 - **Updating metrics on a widget that uses a source group** — after the group's sources change, the widget may need to re-save to pick up field definitions. Verify via `list-widgets action=show`.
 - **Creating without `channel_id`** — required at create time; channel_id = the source's channel.
 - **Creating without `widget_type_id`** — required; verify via existing widgets on the tab.
-- **Passing a global `integration_sources.id` as `source_id`** — widgets only accept the report-local `sources.id`. Attach first via `manage-reports action=attach_source` and use the returned `source_id`.
+- **Passing an invalid `source_id`** — the tool accepts both global and report-local IDs, but will error if the ID doesn't exist. Use `list-sources` or `list-reports action=list_sources` to find valid IDs.
 - **`metrics=[]` as a top-level param** — wrong shape. Metrics live inside `rows[].options.metrics` (row label) and `rows[].configs[].options.metrics` (data binding).
 - **Using `integration-metrics` / `integration-dimensions` in config options** — the MCP tool does not read those internal storage keys. Use `metrics` and `dimensions` instead.
 - **Batch operations without `widget_ids`** — the array is required. Empty array = no-op, not "all widgets".
