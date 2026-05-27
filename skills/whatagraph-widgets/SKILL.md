@@ -88,9 +88,7 @@ Same attach-first rule: the source must be attached to the report via `manage-re
 
 ## Update a widget
 
-The persisted shape of a widget config is **not** the friendly `{metric, dimension}` payload some examples show — the renderer reads `configs[].options.integration-metrics` and `configs[].options.integration-levels` (dimensions). Sending bare top-level `metric` / `dimension` keys is silently dropped by the storage layer; on `list-widgets action=show` the saved widget comes back with `configs[].options: []` and the renderer shows `Edit title` placeholders.
-
-Use the storage shape directly:
+The MCP tool reads metrics from `configs[].options.metrics` (array of objects or strings) and dimensions from `configs[].options.dimensions`. A singular `metric` / `dimension` string is also accepted and auto-wrapped. Do **not** use the internal storage keys `integration-metrics` or `integration-levels` — the tool does not read those and the binding will be silently empty.
 
 ```
 manage-widgets action=update
@@ -110,10 +108,9 @@ manage-widgets action=update
            "integration_id": <channel_id>,
            "source_id":      <report_local_source_id>,
            "options": {
-             "integration-metrics":      [{"name": "Spend",  "identifier": 0, "external_id": "universal_metric_3"}],
-             "integration-levels":       [{"name": "Date",   "identifier": 0, "external_id": "universal_dimension_1137"}],
-             "integration-report-types": [{"external_id": "campaign"}],
-             "inputs": []
+             "metrics":    [{"name": "Spend",  "identifier": 0, "external_id": "universal_metric_3"}],
+             "dimensions": [{"name": "Date",   "identifier": 0, "external_id": "universal_dimension_1137"}],
+             "report_type": "campaign"
            }
          }
        ]
@@ -124,9 +121,9 @@ manage-widgets action=update
 
 To find the current shape on an existing widget, call `list-widgets action=show widget_id=<id>` first; the response shows `rows[].id`, `rows[].configs[].id`, and the populated `options` arrays. When you pass row/config `id` fields, the platform updates that row/config in place. For the cleanest binding, omit `rows[].id` and `configs[].id` — the platform replaces the rows from scratch, which is the only path that reliably persists a fresh metric/dimension binding (see callout below).
 
-> **Binding metrics on a fresh widget is currently unreliable via `manage-widgets update`.** When a config still carries its original `id`, supplying a new `integration-metrics` payload sometimes leaves the previously bound metric in place — `list-widgets action=show` masks this because it echoes channel + source ids only, not the bound metric. Workarounds:
+> **Binding metrics on a fresh widget is currently unreliable via `manage-widgets update`.** When a config still carries its original `id`, supplying a new `metrics` payload sometimes leaves the previously bound metric in place — `list-widgets action=show` masks this because it echoes channel + source ids only, not the bound metric. Workarounds:
 >
-> 1. Omit the row's `id` and the config's `id` so the platform re-creates the rows from scratch and applies the new `options.integration-metrics`. Note this also creates a new report-local source mapping (see Common pitfalls).
+> 1. Omit the row's `id` and the config's `id` so the platform re-creates the rows from scratch and applies the new `options.metrics`. Note this also creates a new report-local source mapping (see Common pitfalls).
 > 2. After the update, verify with `list-widgets action=csv_export` or `export-report` — if the CSV still shows the previous metric, delete and recreate the widget rather than trying to update it in place.
 > 3. On widgets pointed at a **virtual source** (blend / source group), the renderer may still ignore the bind even with the storage shape — finishing the configuration in the UI is currently required for those.
 
@@ -138,8 +135,8 @@ To find the current shape on an existing widget, call `list-widgets action=show 
 - Replace-style: supplied `rows` replace previous rows.
 - Each row carries **two parallel metric arrays** that must agree:
   - `rows[].options.metrics: [{sort, identifier, external_id}]` — drives the rendered label and the value the renderer prints.
-  - `rows[].configs[].options.integration-metrics: [{name, identifier, external_id}]` — drives the actual data binding.
-  - Both must be set; mismatched values between the two cause the widget to render the row's label with the config's data. The same parallelism applies for dimensions: `rows[].options.dimensions` (rendered label) vs. `configs[].options.integration-levels` (binding).
+  - `rows[].configs[].options.metrics: [{name, identifier, external_id}]` — drives the actual data binding.
+  - Both must be set; mismatched values between the two cause the widget to render the row's label with the config's data. The same parallelism applies for dimensions: `rows[].options.dimensions` (rendered label) vs. `configs[].options.dimensions` (binding).
 
 ### `date_range`
 
@@ -224,8 +221,8 @@ Deletes are soft — a restore window exists. After a second delete or report-le
 - **Creating without `channel_id`** — required at create time; channel_id = the source's channel.
 - **Creating without `widget_type_id`** — required; verify via existing widgets on the tab.
 - **Passing a global `integration_sources.id` as `source_id`** — widgets only accept the report-local `sources.id`. Attach first via `manage-reports action=attach_source` and use the returned `source_id`.
-- **`metrics=[]` as a top-level param** — wrong shape. Metrics live inside `rows[].configs[].metric`.
-- **Passing plain metric strings in `configs`** — configs expect `{"metric": {"external_id": "..."}}` shape, not bare strings.
+- **`metrics=[]` as a top-level param** — wrong shape. Metrics live inside `rows[].options.metrics` (row label) and `rows[].configs[].options.metrics` (data binding).
+- **Using `integration-metrics` / `integration-levels` in config options** — the MCP tool does not read those internal storage keys. Use `metrics` and `dimensions` instead.
 - **Batch operations without `widget_ids`** — the array is required. Empty array = no-op, not "all widgets".
 - **Widget breaks after batch source swap** — the new source may not have the same report type or fields; always verify with `list-widgets action=show` after.
 - **`metric.external_id` change appears to no-op** — when the widget already has a config bound to a metric on a source group / blend, re-supplying a different `metric.external_id` in the same config sometimes leaves the original metric in place. The `list-widgets action=show` response masks this (it only echoes channel + source ids, not the metric). Always confirm via `list-widgets action=csv_export` or `export-report` after a metric swap; if the CSV still shows the previous metric name, delete and recreate the widget rather than trying to update it in place.
