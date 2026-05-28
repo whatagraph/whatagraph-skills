@@ -29,7 +29,7 @@ Ask clarifying questions to determine which category the issue falls into:
    ```
    list-sources action: show, source_id: <id>
    ```
-   Look for `has_error: true` — this indicates a connection problem.
+   Look for `status: "error"` — this indicates a connection problem.
 
 2. **Check the integration account**:
    ```

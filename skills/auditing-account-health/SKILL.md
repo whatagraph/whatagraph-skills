@@ -49,7 +49,7 @@ list-sources action: list, per_page: 128
 ```
 
 Check for:
-- **Error sources** (`has_error: true`) — these need reconnection or troubleshooting
+- **Error sources** (`status: "error"`) — these need reconnection or troubleshooting
 - **Orphan sources** (`team_clients: []`) — sources not assigned to any space
 - **Source count** vs. subscription limits
 
@@ -184,7 +184,7 @@ After completing the audit, present findings in this structure:
 ## Common Issues to Flag
 
 - **Plan over-utilisation**: when `sources_used > sources_total` (visible in `view-team action=show_subscription`), surface this first. It blocks new source connection and indicates the account is on a stale plan or in the middle of a migration. Recommend either upgrading or removing unused sources before anything else.
-- **Disconnected sources**: Sources with `has_error: true` are not collecting data. This is the highest priority issue.
+- **Disconnected sources**: Sources with `status: "error"` are not collecting data. This is the highest priority issue.
 - **No automations**: If reports exist but have no scheduled delivery, clients may not be receiving their reports automatically.
 - **Orphan sources**: Sources not in any space may indicate incomplete setup.
 - **Missing blends**: If multiple channels are connected but no blends exist, the user is missing out on cross-channel insights.
