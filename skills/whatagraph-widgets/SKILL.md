@@ -1,6 +1,6 @@
 ---
 name: whatagraph-widgets
-description: Create, update, duplicate, and batch-modify widgets on report tabs. Widgets are the visual data components — charts, tables, KPI cards, funnels, goals, maps, images, text. Use when building a report page, swapping metrics on an existing widget, or bulk-swapping data sources across many widgets at once.
+description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, positioning widgets on the grid, swapping metrics on an existing widget, or bulk-swapping data sources across many widgets at once.
 ---
 
 # Widgets
@@ -85,7 +85,7 @@ Same auto-attach rule applies: pass a global or report-local `source_id`.
 
 ## Update a widget
 
-The MCP tool reads metrics from `configs[].options.metrics` (array of objects or strings) and dimensions from `configs[].options.dimensions`. A singular `metric` / `dimension` string is also accepted and auto-wrapped. Do **not** use the internal storage keys `integration-metrics` or `integration-dimensions` — the tool does not read those and the binding will be silently empty.
+Supply metrics on `configs[].options.metrics` (array of objects or strings; singular `metric` is auto-wrapped). On write, the platform converts your `metrics` / `dimensions` payload to its internal storage shape `integration-metrics` / `integration-dimensions`, and `list-widgets action=show` will echo those keys back. That's expected — read paths return `integration-metrics`, write paths accept `metrics`. Do not hand-craft `integration-metrics` on input; supply `metrics` and let the platform convert.
 
 ```
 manage-widgets action=update
@@ -226,7 +226,7 @@ Deletes are soft — a restore window exists. Calling delete on an already-delet
 - **Creating without `widget_type_id`** — required; verify via existing widgets on the tab.
 - **Passing an invalid `source_id`** — the tool accepts both global and report-local IDs, but will error if the ID doesn't exist. Use `list-sources` or `list-reports action=list_sources` to find valid IDs.
 - **`metrics=[]` as a top-level param** — wrong shape. Metrics live inside `rows[].options.metrics` (row label) and `rows[].configs[].options.metrics` (data binding).
-- **Using `integration-metrics` / `integration-dimensions` in config options** — the MCP tool does not read those internal storage keys. Use `metrics` and `dimensions` instead.
+- **Hand-crafting `integration-metrics` / `integration-dimensions` on input** — supply `metrics` and `dimensions` instead; the platform converts to the internal storage keys automatically. `list-widgets action=show` echoes the internal keys back — that's expected, not an error.
 - **Batch operations without `widget_ids`** — the array is required. Empty array = no-op, not "all widgets".
 - **Widget breaks after batch source swap** — the new source may not have the same report type or fields; always verify with `list-widgets action=show` after.
 - **`metric.external_id` change appears to no-op** — when the widget already has a config bound to a metric on a source group / blend, re-supplying a different `metric.external_id` in the same config sometimes leaves the original metric in place. The `list-widgets action=show` response masks this (it only echoes channel + source ids, not the metric). Always confirm via `list-widgets action=csv_export` or `export-report` after a metric swap; if the CSV still shows the previous metric name, delete and recreate the widget rather than trying to update it in place.

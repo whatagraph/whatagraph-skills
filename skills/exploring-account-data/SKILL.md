@@ -74,6 +74,8 @@ When exploring such a source:
 
 Single-report-type sources (e.g., most social pages, email platforms) return exactly one entry from `list_report_types` and you can omit the param.
 
+**GA4 sources** sometimes return `report_types: []`. Always call `list-sources action=list_report_types source_id=<id>` first and check the `note` field. If `note` says "This data source does not support report types", leave `report_type` blank in subsequent calls; do not guess at GA4 native report-type names.
+
 ## Tips
 
 - Use `view-team` with `action: search` and a `search` parameter to find anything across the account — reports, overviews, and spaces.

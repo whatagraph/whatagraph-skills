@@ -92,7 +92,7 @@ manage-reports action=attach_sample_source report_id=<id>
    channel_id=<channel_id>
 ```
 
-Returns the report-local `source_id`. Widgets created against this id show realistic-looking sample numbers; swap to a real source later via `change_sources`.
+Returns the report-local `source_id` with `is_sample_data: true` and `integration_source_id: null`. The placeholder has no global integration source id — reference it via the report-local `source_id`. Use `is_sample_data` as the canonical signal when distinguishing real sources from placeholders in onboarding flows. Widgets created against this id show realistic-looking sample numbers; swap to a real source later via `change_sources`.
 
 ## Detach a data source from a report
 
