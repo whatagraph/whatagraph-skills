@@ -16,7 +16,7 @@ A report references data through **report-local sources**. Before a widget on th
 - Onboarding a new client — create a blank report or clone from template.
 - Rolling out the same report structure to 20 clients — use a template.
 - Attaching a data source to a report so widgets can use it — `attach_source`.
-- Attaching a sample-data placeholder for a channel — `attach_sample_source`.
+- Attaching a sample-data placeholder for a channel — `attach_source` with `channel_ids`.
 - Detaching a source the report no longer needs — `detach_source`.
 - Migrating a client from sample data to real data — `change_sources`.
 - Bulk-swapping a disconnected source for a fresh one — `change_sources`.
@@ -85,11 +85,11 @@ If the source is already attached, the existing report-local id is returned (ide
 
 ## Attach a sample-data source for a channel
 
-When a report should ship with sample data for a channel (template demos, blank reports during onboarding before the client connects), attach a sample placeholder for that channel:
+When a report should ship with sample data for a channel (template demos, blank reports during onboarding before the client connects), attach a sample placeholder for that channel using the `attach_source` action with `channel_ids` (plural array):
 
 ```
-manage-reports action=attach_sample_source report_id=<id>
-   channel_id=<channel_id>
+manage-reports action=attach_source report_id=<id>
+   channel_ids=[<channel_id>]
 ```
 
 Returns the report-local `source_id` with `is_sample_data: true` and `integration_source_id: null`. The placeholder has no global integration source id — reference it via the report-local `source_id`. Use `is_sample_data` as the canonical signal when distinguishing real sources from placeholders in onboarding flows. Widgets created against this id show realistic-looking sample numbers; swap to a real source later via `change_sources`.

@@ -45,6 +45,7 @@ manage-goals action=create
    period="monthly"                              # daily | weekly | monthly | quarterly | yearly | static
    repeat="1"                                    # "1" repeats, "0" one-off
    max_value=50000
+   name="Monthly Spend Cap"                      # optional, persisted and shown in list/show
 ```
 
 ### `condition`
