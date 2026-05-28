@@ -46,7 +46,6 @@ manage-blends action=create
      },
      {
        "integration_source_id": <meta_ads_source>,
-       "report_type": "campaigns",
        "dimensions": ["universal_dimension_1137", "campaign_name"],
        "metrics":    ["universal_metric_1", "universal_metric_3"]
      }

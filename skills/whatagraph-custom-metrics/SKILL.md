@@ -136,7 +136,7 @@ manage-custom-metrics action=create
    transformation_level="source"
    fields=[
      {"integration_source_id": <google_ads_source>, "field_external_id": "universal_metric_3", "report_type_external_id": "campaign"},
-     {"integration_source_id": <meta_ads_source>,   "field_external_id": "universal_metric_3", "report_type_external_id": "campaigns"},
+     {"integration_source_id": <meta_ads_source>,   "field_external_id": "universal_metric_3"},
      {"integration_source_id": <linkedin_ads_source>, "field_external_id": "universal_metric_3"}
    ]
 ```
