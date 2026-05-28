@@ -129,7 +129,7 @@ To find the current shape on an existing widget, call `list-widgets action=show 
 - Each widget has one or more rows.
 - Each row has one or more configs.
 - Each config pairs a metric with an optional dimension.
-- Replace-style: supplied `rows` replace previous rows.
+- Replace-style: supplied `rows` replace previous rows. Row metadata (`title`, `description`) from existing rows is preserved when the new row omits them.
 - Each row carries **two parallel metric arrays** that must agree:
   - `rows[].options.metrics: [{sort, identifier, external_id}]` — drives the rendered label and the value the renderer prints.
   - `rows[].configs[].options.metrics: [{name, identifier, external_id}]` — drives the actual data binding.
@@ -145,10 +145,10 @@ Per-widget settings — legend, labels, sort, hide_footer, currency override, et
 
 Known `options` shapes:
 
-- **Comment / text widget** (`widget_type_id=21`): on **write**, supply `{"comment_widget_text": {"text": "Hello\nWorld", "contentAlign": "top"}}` — `text` is a plain string, the platform converts it. The legacy `{"text": "<html>", "comment": "<html>"}` shape also works for older accounts.
+- **Comment / text widget** (`widget_type_id=21`): on **write**, supply `{"comment_widget_text": {"text": "Hello\nWorld", "contentAlign": "top"}}` in `rows[].options` — `text` is a plain string, the platform converts it. The tool auto-propagates this to `configs[].options.comment_widget_text.text`. The legacy `{"text": "<html>", "comment": "<html>"}` shape also works for older accounts.
   - On **read**, `list-widgets action=show` returns the converted Tiptap document under `options.comment_widget_text.description` (a `{type: "doc", content: [...]}` tree). Do **not** round-trip the `description` shape on write — re-send the flat `text` string instead, otherwise the platform will refuse the payload or persist an empty comment.
   - **Always pre-fetch the existing row and config IDs before updating a comment widget.** Run `list-widgets action=show widget_id=<id>` and capture `rows[0].id` and `rows[0].configs[0].id`, then pass both back in the `manage-widgets update` call. Omitting `id` on rows/configs of a comment widget triggers an INSERT path that fails with `SQLSTATE[23000]: Column 'integration_id' cannot be null` because the comment row's `integration_id` is implicit on the existing record but missing on a fresh insert. The "omit ids to rebuild from scratch" guidance in the metric-binding callout applies only to **data-bearing** widgets, not to comment / image / calendar widgets.
-- **Image widget** (`widget_type_id=34`): `{"image_url": "<url>", "url": "<url>"}` — set both keys for best compatibility.
+- **Image widget** (`widget_type_id=34`): supply `{"image_url": "<url>", "url": "<url>"}` in `rows[].options`. The tool auto-propagates this to the config-side canonical shape `configs[].options.images: [{url, title}]`. You can also supply the config shape directly in `rows[].configs[].options`.
 - **Single-value KPI** (`widget_type_id=101`): `{"compare_type": "previous_period"}` to surface the trend delta vs. the comparison window inherited from the report.
 
 ## Toggle breakdown on pie / donut / bar
@@ -179,20 +179,27 @@ manage-widgets action=batch_change_settings
 
 Use when swapping ~10+ widgets at once — much faster than per-widget updates.
 
-## Sizing rules (6-column report grid)
+## Layout grid model
 
-These guidelines describe the layout you should aim for in the **UI**, not arguments you can pass to `manage-widgets`. The `update` action accepts content/config fields such as `name`, `options`, `rows`, and `date_range`; positioning and sizing are adjusted in the UI after the data layer is configured.
+The report uses a **6-column grid**. Every widget occupies a rectangle defined by four properties:
 
-The default Whatagraph report grid is **6 columns wide** — `manage-widgets` defaults `options.width` to `6`, and observed widgets across real reports stay within `width=1..6`.
+| Property | Range | Default | Notes |
+|---|---|---|---|
+| `position_x` | 0..5 | 0 | Horizontal column (0-based). Must satisfy `position_x + width ≤ 6`. |
+| `position_y` | 0..∞ | next row below existing widgets | Vertical row (0-based, no upper limit). |
+| `options.width` | 1..6 | 2 | Width in grid columns. |
+| `options.height` | ≥1 | 2 | Height in grid rows. |
 
-- **KPI / single-value card** — 2×1 or 2×2 in the UI; never full row. Three KPIs across a row = `2×1 × 3`.
-- **Line / column chart** — 4×3 minimum readable; 6-wide (full row) for trend emphasis. A common chart row is `4×3 + 2×3` (chart + side KPI/legend).
+**Overlap rule:** On `create`, the server rejects widgets that overlap an existing widget at the same `(x, y, width, height)` rectangle. `duplicate` and `batch_duplicate` auto-position the copy at the next available row.
+
+### Sizing guidelines
+
+- **KPI / single-value card** — 2×1 or 2×2; never full row. Three KPIs across = `2×1 × 3`.
+- **Line / column chart** — 4×3 minimum readable; 6-wide (full row) for trend emphasis. Common: `4×3 + 2×3` (chart + side KPI).
 - **Table** — full width (6×N); narrower tables truncate columns.
 - **Pie / donut** — 2×2 or 3×3; full-row pies waste space.
 - **Goal** — 2×2 to 3×2; matches KPI card sizing.
-- **Comment / image** — 6×small for section headers; 2–3 wide for sidebar callouts.
-
-If a customer's account uses a wider grid, inspect an existing widget on a real report via `list-widgets action=list` and use the largest observed `options.width` as the row width before sizing new widgets.
+- **Comment / image** — 6×1 for section headers; 2–3 wide for sidebar callouts.
 
 ## Deleting widgets
 
@@ -202,7 +209,7 @@ delete-widgets action=batch_delete report_id=<id> widget_ids=[<id>, <id>, <id>]
 delete-widgets action=restore      report_id=<id> widget_id=<id>   # undo a soft-delete
 ```
 
-Deletes are soft — a restore window exists. After a second delete or report-level cleanup, they become permanent. Confirm with the user before deleting widgets that have unique configs (formulas, custom filters) that aren't easily recreated.
+Deletes are soft — a restore window exists. Calling delete on an already-deleted widget is idempotent (returns `already_deleted: true`). Confirm with the user before deleting widgets that have unique configs (formulas, custom filters) that aren't easily recreated.
 
 ## What MCP can't do here
 
