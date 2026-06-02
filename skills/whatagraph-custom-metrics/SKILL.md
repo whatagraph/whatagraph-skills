@@ -48,7 +48,7 @@ list-custom-metrics action=usage universal_metric_ids=[<id>, <id>]
 ```
 manage-custom-metrics action=create
    name="Google Ads CTR %"
-   description="clicks / impressions * 100"
+   description="clicks / impressions"
    map_type="data_formula"
    transformation_level="channel"
    fields=[
@@ -65,9 +65,10 @@ manage-custom-metrics action=create
        "identifier": "B"
      }
    ]
-   formula="A/B*100"
+   formula="A/B"
    formula_value_type="percent"
    accumulator="average"
+   summary_accumulator="average"
    aggregation_level="aggregate"
    formula_increase="positive"
 ```
@@ -80,10 +81,20 @@ The tool rejects `data_formula` creates without these four:
 |---|---|---|
 | `formula_value_type` | `int`, `percent`, `float`, `currency`, `seconds`, `milliseconds` | How the result renders |
 | `accumulator` | `sum`, `average`, `last`, `first` | How values roll up across rows/time |
+| `summary_accumulator` | `sum`, `average`, `last`, `first` | How the total/summary row is calculated (optional, defaults to `accumulator` value) |
 | `aggregation_level` | `aggregate`, `row` | `aggregate` = apply formula on totals; `row` = apply per row, then accumulate |
 | `formula_increase` | `positive`, `negative` | `positive` = higher is better (revenue, CTR); `negative` = lower is better (CPA, CPL) |
 
-All four must be set. If any is missing, the tool returns an error that names the missing parameter.
+`formula_value_type`, `accumulator`, `aggregation_level`, and `formula_increase` must be set. If any is missing, the tool returns an error that names the missing parameter. `summary_accumulator` is optional but recommended for ratio metrics.
+
+### Recommended settings per metric class
+
+| Metric class | Example | `formula_value_type` | `accumulator` | `summary_accumulator` | `aggregation_level` | `formula_increase` |
+|---|---|---|---|---|---|---|
+| Rate / percentage | CTR, ACoS, conversion rate | `percent` | `average` | `average` | `aggregate` | `positive` |
+| Cost-per-action | CPA, CPL, CPM | `currency` | `average` | `average` | `aggregate` | `negative` |
+| Return ratio | ROAS | `float` | `average` | `average` | `aggregate` | `positive` |
+| Summable total | Total spend, total clicks | `currency` / `int` | `sum` | `sum` | `row` | varies |
 
 ### Which `field_external_id` works where
 
@@ -106,7 +117,7 @@ The same applies to `manage-custom-dimensions` — accepts `universal_dimension_
 
 Required for `data_formula`. Values: `int`, `percent`, `float`, `currency`, `seconds`, `milliseconds`.
 
-- Use `percent` for CTR, ACoS, conversion rate.
+- Use `percent` for CTR, ACoS, conversion rate. **The `percent` type automatically scales the raw value ×100 for display — write the formula as a raw ratio (`A/B`), NOT `A/B*100`.** Using `*100` with `percent` double-scales and produces results 100× too high.
 - Use `currency` for CPA, CPL, revenue-per-X.
 - Use `float` for ROAS.
 - Use `int` for whole-number counts (rare for formulas).
@@ -124,6 +135,12 @@ Required for `data_formula`. How the value rolls up over time:
 | `first` | First data point only |
 
 For ratio metrics (ROAS, CPA, CTR): use `average`. For summable metrics: `sum`.
+
+### `summary_accumulator`
+
+Optional. Controls how the total/summary row is calculated, independent of per-row accumulation. Accepts the same values as `accumulator`: `sum`, `average`, `last`, `first`. Defaults to the `accumulator` value if omitted.
+
+Set `summary_accumulator="average"` for ratio/rate metrics (CTR, ROAS, CPA) so the summary row shows a weighted average rather than a sum of per-row values.
 
 ## Creating a `data_aggregation` metric
 
@@ -199,6 +216,7 @@ fetch-data source_id=<source_id>
 
 ## Common pitfalls
 
+- **`formula="A/B*100"` with `formula_value_type="percent"`** — double-scales! `percent` already ×100 for display. Write `formula="A/B"` instead. A ThruPlay Rate of 7.09% would show as 708.9% with `*100`.
 - **Using `{placeholder}` tokens in formulas** — wrong. Use `A/B` style identifiers only.
 - **Passing metric display names as `field_external_id`** — field IDs come from `list-sources action=list_dimensions_and_metrics`, not display names.
 - **Missing any of `accumulator`, `aggregation_level`, `formula_increase`, `formula_value_type` on a `data_formula` create** — all four are required.
