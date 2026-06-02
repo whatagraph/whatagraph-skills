@@ -190,6 +190,8 @@ The report uses a **6-column grid**. Every widget occupies a rectangle defined b
 | `options.width` | 1..6 | 2 | Width in grid columns. |
 | `options.height` | ≥1 | 2 | Height in grid rows. |
 
+> **Input/output asymmetry:** On **input** (create/update), pass `width` and `height` inside `options`. On **output**, they appear as **top-level** fields (`width`, `height`). When using `fields` filtering, use the top-level names: `fields="width,height"` — not `options.width`.
+
 **Overlap rule:** On `create`, the server rejects widgets that overlap an existing widget at the same `(x, y, width, height)` rectangle. `duplicate` and `batch_duplicate` auto-position the copy at the next available row.
 
 ### Sizing guidelines

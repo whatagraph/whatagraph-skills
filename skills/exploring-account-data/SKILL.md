@@ -63,7 +63,7 @@ Help users discover and navigate the data available in their Whatagraph account.
 
 ## Report Types: Required for Most Paid Channels
 
-Most paid advertising sources (Google Ads, Bing/Microsoft Ads, Facebook Ads, etc.) and several analytics sources (Google Search Console, Ahrefs) expose **multiple report types** — one per entity level (account, campaign, ad group, ad, keyword, …) or per search type (web, image, video). Each report type has its own catalog of dimensions and metrics.
+Most paid advertising sources (Google Ads, Bing/Microsoft Ads, etc.) and several analytics sources (Google Search Console, Ahrefs) expose **multiple report types** — one per entity level (account, campaign, ad group, ad, keyword, …) or per search type (web, image, video). Each report type has its own catalog of dimensions and metrics.
 
 When exploring such a source:
 
@@ -74,7 +74,7 @@ When exploring such a source:
 
 Single-report-type sources (e.g., most social pages, email platforms) return exactly one entry from `list_report_types` and you can omit the param.
 
-**GA4 sources** sometimes return `report_types: []`. Always call `list-sources action=list_report_types source_id=<id>` first and check the `note` field. If `note` says "This data source does not support report types", leave `report_type` blank in subsequent calls; do not guess at GA4 native report-type names.
+**Some sources return `report_types: []`** (zero report types) — notably Facebook Ads and GA4. Always call `list-sources action=list_report_types source_id=<id>` first and check the `note` field. If `note` says "This data source does not support report types", omit `report_type` entirely in subsequent calls; do not guess at report-type names.
 
 ## Tips
 

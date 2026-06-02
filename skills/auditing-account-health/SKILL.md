@@ -50,7 +50,7 @@ list-sources action: list, per_page: 128
 
 Check for:
 - **Error sources** (`status: "error"`) — these need reconnection or troubleshooting
-- **Orphan sources** (`team_clients: []`) — sources not assigned to any space
+- **Orphan sources** (`space_ids: []`) — sources not assigned to any space
 - **Source count** vs. subscription limits
 
 For sources with errors:

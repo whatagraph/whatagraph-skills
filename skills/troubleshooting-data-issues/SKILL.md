@@ -41,7 +41,7 @@ Ask clarifying questions to determine which category the issue falls into:
    ```
    list-sources action: show, source_id: <id>
    ```
-   Check the `team_clients` array — empty means the source isn't in any space.
+   Check the `space_ids` array — empty means the source isn't in any space.
 
 4. **Common causes**: Expired connections, revoked permissions, API quota limits, or the external account being deleted/renamed.
 
