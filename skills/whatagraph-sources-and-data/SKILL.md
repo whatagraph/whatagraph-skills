@@ -23,7 +23,7 @@ A **data source** is one connected account (one Google Ads account, one GA4 prop
 list-sources action=list                                      # paginated list
 list-sources action=list search="Acme"                        # filter by name
 list-sources action=list channels=[2]                         # only Google Ads
-list-sources action=list team_clients=[<space_id>]            # sources in one space
+list-sources action=list space_ids=[<space_id>]               # sources in one space
 list-sources action=list status="issue"                       # broken sources only
 list-sources action=list only_untagged=true                   # sources without tags
 list-sources action=list currencies=["EUR","USD"]             # by currency
@@ -51,7 +51,7 @@ list-sources action=list_dimensions_and_metrics
 # → {"dimensions":[...],"metrics":[...]}
 ```
 
-**Always run `list_report_types` first** when you don't know the report type. `list_dimensions_and_metrics` requires `report_type` when a source has multiple. If you pass an invalid report type, the error lists valid options — use that list.
+**Always run `list_report_types` first** when you don't know the report type. `list_dimensions_and_metrics` requires `report_type` when a source has multiple. Some sources (e.g. Facebook Ads, GA4) return zero report types — omit `report_type` entirely for those. If you pass an invalid report type, the error lists valid options — use that list.
 
 ## Fetching raw data
 
@@ -154,7 +154,7 @@ Batch delete. High-impact — always run `list-sources action=list_usage source_
 - **"My data isn't showing"** — run `list-sources action=show source_id=<id>` and check `status`. If `issue`, the source needs re-authorization in the UI.
 - **Numbers don't match the channel** — verify currency and timezone on `show`. Common mismatch sources.
 - **Passing metric names instead of ids** — `fetch-data` expects the `external_id` (e.g. `spend`), not the display name ("Spend"). Use `list_dimensions_and_metrics` to discover correct ids.
-- **Too many sources with similar names** — narrow with `search` + `channels` + `team_clients`.
+- **Too many sources with similar names** — narrow with `search` + `channels` + `space_ids`.
 - **Missing historical data after connect** — backfill can take hours. `fetch-data` returns empty for missing days until ETL finishes.
 - **`manage-sources action=set_currency` when `currency="USD"` already** — no-op, does not convert existing rows.
 - **Tag values on the wrong dimension** — each tag value belongs to one tag dimension. Cross-dimension values are rejected.

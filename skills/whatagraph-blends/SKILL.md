@@ -74,7 +74,7 @@ manage-blends action=create
 ### `items` — each sub-source
 
 - `integration_source_id` — id from `list-sources action=list`.
-- `report_type` — the source's report type external id. Auto-resolved when source has exactly one report type; required otherwise.
+- `report_type` — the source's report type external id. Auto-resolved when source has exactly one report type; required when multiple exist. **Omit entirely** when the source has zero report types (e.g. Facebook Ads, GA4) — run `list-sources action=list_report_types` to check.
 - `dimensions` — array of dimension external ids.
 - `metrics` — array of metric external ids.
 
