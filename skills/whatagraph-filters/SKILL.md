@@ -103,9 +103,22 @@ delete-filters filter_id=<id>
 
 This tool takes only `filter_id` — no `action` parameter. Soft-delete. Widgets referencing the filter lose the filter behavior but keep rendering.
 
+## Attaching a filter
+
+After creating a filter, attach it to a widget or to a report-level source:
+
+```
+# Attach to a widget
+manage-filters action=attach filter_id=<id> widget_config_id=<id>
+
+# Attach to a report-level source (applies to all widgets using that source)
+manage-filters action=attach filter_id=<id> source_id=<id>
+```
+
+Use `list-widgets action: show` to find `widget_config_id` values, and `list-sources action: list` to find `source_id` values.
+
 ## What MCP can't do here
 
-- Attach a filter to a widget or report via MCP — do it through the UI, or create the filter inline on the widget via `manage-widgets`.
 - Reorder row groups — UI only.
 
 ## Common pitfalls

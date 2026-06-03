@@ -59,7 +59,7 @@ Help users discover and navigate the data available in their Whatagraph account.
 | `list-themes` | `list_themes`, `list_colors` | Report visual themes and palettes |
 | `list-overviews` | `list`, `show` | KPI tracking dashboards |
 | `view-goals` | `list`, `show` | Metric targets and progress |
-| `view-team` | `show`, `search`, `roles`, `show_subscription`, `list_plans` | Account settings, global search, subscription |
+| `view-team` | `show`, `search`, `roles`, `show_subscription`, `list_plans` | Account settings, overview search, subscription |
 
 ## Report Types: Required for Most Paid Channels
 
@@ -78,7 +78,7 @@ Single-report-type sources (e.g., most social pages, email platforms) return exa
 
 ## Tips
 
-- Use `view-team` with `action: search` and a `search` parameter to find anything across the account — reports, overviews, and spaces.
+- `view-team action: search` searches **overview names only** — it does not search reports, spaces, or sources. To find reports by name use `list-reports action: list, search: "<term>"`; for spaces use `list-spaces action: list, search: "<term>"`; for sources use `list-sources action: list, search: "<term>"`.
 - When a user asks "what data do I have?", start with `list-integrations` (action: `list_grouped`) for the big picture, then drill into specific sources.
 - Source IDs are needed for data fetching. Always confirm the source ID before calling `fetch-data`.
 - The `list_usage` action on `list-sources` shows which reports and widgets reference a source — useful for understanding data dependencies.

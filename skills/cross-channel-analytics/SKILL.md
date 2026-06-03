@@ -35,26 +35,29 @@ Help users analyze marketing performance across multiple channels by leveraging 
 
 3. **Fetch cross-channel data from the blend**:
 
-   Blend field ids use the `aggregation_*` prefix family — they are different from native source field ids. Look them up before fetching:
+   Blend field ids use one of two prefix families — always look them up before fetching:
 
    ```
    list-sources action: list_dimensions_and_metrics, source_id: <blend_source_id>
-   # → metrics like aggregation_metric_universal_metric_1 (Impressions),
-   #   dimensions like aggregation_dimension_universal_dimension_1137 (Date)
    ```
 
-   Then fetch with the verbatim ids from that response:
+   Depending on how the blend was configured you will see either:
+   - **`aggregation_*` prefixes** — universal blends: `aggregation_metric_universal_metric_1`, `aggregation_dimension_universal_dimension_1137`
+   - **`blend_*` prefixes** — channel-native blends: `blend_metric_spend`, `blend_dimension_date`
+
+   Use the verbatim ids from that response in `fetch-data`:
 
    ```
    fetch-data source_id: <blend_source_id>,
      metrics: ["aggregation_metric_universal_metric_1",
-               "aggregation_metric_universal_metric_2",
-               "aggregation_metric_universal_metric_3"],
+               "aggregation_metric_universal_metric_2"],
      dimensions: ["aggregation_dimension_universal_dimension_1137"],
      from: "2026-03-01", till: "2026-03-31"
    ```
 
    **First-call warmup:** blends often return `Your data is being processed... please wait...` with `retryable: false` on their first fetch. Treat this as transient — wait ~10–15 seconds and retry. See the "Handling Errors" section of `fetching-marketing-metrics` for the full retry pattern.
+
+   **Incorrect blend setup error:** if `fetch-data` returns an error categorised as `setup_error` (e.g. "Incorrect blend setup"), the blend itself is misconfigured — not the fetch call. Use `list-blends action: show, blend_id: <id>` to inspect the source mapping. Common causes: a source was removed after the blend was created, or a required metric mapping is missing. The fix is in the UI blend editor — reconnect the missing source or re-map the metrics.
 
 4. **For channel-by-channel comparison**, fetch data from each source individually and present side by side:
    ```
