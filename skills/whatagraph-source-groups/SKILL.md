@@ -1,29 +1,31 @@
 ---
 name: whatagraph-source-groups
-description: Combine multiple data sources of the SAME channel (e.g. five Google Ads sub-accounts) into one virtual aggregated source. Use when an agency manages many sub-accounts under one platform and wants unified reporting without building a blend.
+description: Combine multiple data sources into one virtual aggregated source — same-channel (e.g. five Google Ads sub-accounts) or cross-channel (e.g. Meta + Google + Reddit + TikTok). Use when an agency wants unified reporting without building a blend.
 ---
 
 # Source groups
 
 Tools covered: `list-source-groups`, `manage-source-groups`, `delete-source-groups`.
 
-A **source group** aggregates multiple sources of the same channel (e.g. multiple Google Ads accounts) into one virtual source. The group gets its own integration source id that widgets, blends, and custom metrics can reference as if it were a single source.
+A **source group** aggregates multiple sources into one virtual source. Sources can be from the same channel (e.g. multiple Google Ads accounts) or from different channels (e.g. Meta Ads + Google Ads + Reddit Ads + TikTok — cross-channel aggregation). The group gets its own integration source id that widgets, blends, and custom metrics can reference as if it were a single source.
 
 ## Use this when
 
 - Agency has 3 Google Ads sub-accounts under one client MCC — roll up to one "Google Ads" source.
 - Property manager has 20 GBP locations — one aggregated source for reporting.
 - Franchise brand has multiple Meta ad accounts per region — one virtual source per brand.
+- Cross-channel rollup — combine Meta Ads + Google Ads + Reddit Ads + TikTok into one aggregated source with unified metrics (impressions, clicks, spend).
 
 ## Source group vs blend vs custom metric
 
 | Goal | Use |
 |---|---|
-| 5 Google Ads accounts → 1 virtual "Google Ads Total" | Source group |
-| Google Ads + Meta Ads joined on campaign | Blend |
+| 5 Google Ads accounts → 1 virtual "Google Ads Total" | Source group (same-channel) |
+| Meta + Google + Reddit + TikTok → 1 aggregated source with unified metrics | Source group (cross-channel) |
+| Google Ads + Meta Ads joined/matched on campaign name | Blend |
 | Sum of `spend` across Google + Meta without joining | Custom metric `data_aggregation` |
 
-**Rule**: if the sources share a channel, source group is cheaper and simpler than blending. If they don't share a channel, you must blend or aggregate via a custom metric.
+**Rule**: source groups handle both same-channel and cross-channel aggregation and are simpler than blending. Use a blend only when you need to **join** rows across channels on a shared dimension (e.g. matching campaign names between Google Ads and Meta Ads). Use a custom metric `data_aggregation` for a single summed field across sources without creating a full group.
 
 ## Listing
 
@@ -48,7 +50,7 @@ manage-source-groups action=create
 
 - `name` — group display name.
 - `configs` — required. Each entry `{output_name: "<level>"}` where `<level>` is the granularity the group should expose: campaign performance, ad / ad-group performance, keyword performance, audience performance, geo performance, etc. Pick the level that matches the widgets you'll build on top — one config per level, and prefer one config per group (see "One config per group" below). The exact string is the **source-group template name** for that channel, *not* the channel-native report type external id you see in `list-sources action=list_report_types`. For most channels the template name is the report type with a `_performance` suffix — e.g. Google Ads `campaign` → `campaign_performance`, `ad_group` → `ad_group_performance`, `geo_view` → `geo_performance` — but Facebook Ads and others diverge (see the per-channel reference table below). If the API rejects an `output_name`, the error response lists every valid template name for that channel; copy one verbatim.
-- `integration_source_ids` — array of source ids from `list-sources action=list`. All sources must be the same channel.
+- `integration_source_ids` — array of source ids from `list-sources action=list`. Sources can be from the same channel or different channels (cross-channel aggregation is supported).
 - `currency` — optional. Display currency.
 
 #### Per-channel `output_name` reference
@@ -152,11 +154,10 @@ Widgets and custom metrics that point at the group's virtual source will break. 
 ## What MCP can't do here
 
 - Remove one sub-source from the group without providing the full replacement list — use `update` with the full new `integration_source_ids` list.
-- Change the channel of a group — not supported; create a new group.
 
 ## Common pitfalls
 
-- **Mixing channels** — source groups require all sources from the SAME channel. Google Ads + Meta Ads → use a blend instead.
+- **Cross-channel `output_name` selection** — when mixing channels (e.g. Google Ads + Meta Ads + TikTok), use `list-source-groups action=list_output_names source_ids=[...]` to find template names that work across all supplied channels. Not every template is valid for every channel combination.
 - **`output_name` is the source-group template name, not the channel-native report type** — e.g. `campaign_performance` for Google Ads, not `campaign`. The channel-native report type (`campaign`) is what you pass to `fetch-data` and `report_type_external_id` on the *original* sources, but the template name (`campaign_performance`) is what `manage-source-groups create configs` accepts. The two diverge on every paid-ads channel.
 - **Empty group after creation** — freshly-created groups need time for ETL to populate; data may be empty for a few minutes for small accounts, longer for high-volume ones.
 - **Group not appearing in widget picker immediately** — refresh the report; new groups can take a few seconds to appear.
