@@ -87,13 +87,15 @@ Check:
 
 ### 6. Automation & Delivery Audit
 
-`list-automations` requires `report_id` — there is **no account-wide automation listing endpoint**. You can only enumerate automations by iterating the reports you already discovered in step 5.
-
-For full accounts, do not iterate every report — pick the important ones first (recent activity, named after clients, linked to templates) and sample those:
+Use `list_all` to get an account-wide view of all automation schedules in a single call:
 
 ```
-list-automations action: list, report_id: <id>
+list-automations action: list_all, per_page: 100
 ```
+
+You can narrow the results with optional filters:
+- `search: "<report name>"` — filter by report name
+- `frequency: "monthly"` — filter by delivery frequency
 
 The response is minimal (id, frequency, send_time, delivery_day) and does **not** include receivers, timezone, or attachment settings. To verify how a specific automation is configured (recipient list, IANA timezone, PDF attachment, stop-on-issues), open the report in the UI — MCP does not expose those fields.
 

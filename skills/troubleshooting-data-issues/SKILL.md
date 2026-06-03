@@ -29,7 +29,7 @@ Ask clarifying questions to determine which category the issue falls into:
    ```
    list-sources action: show, source_id: <id>
    ```
-   Look for `status: "error"` — this indicates a connection problem.
+   Look for `status: "error"` — this indicates a connection problem. Note that `show` confirms the error status but does **not** expose the error message or failure reason — MCP has no field for that. To read the actual error description, open the source in the Whatagraph UI (Settings → Sources) where the specific error is displayed.
 
 2. **Check the integration account**:
    ```
@@ -43,7 +43,7 @@ Ask clarifying questions to determine which category the issue falls into:
    ```
    Check the `space_ids` array — empty means the source isn't in any space.
 
-4. **Common causes**: Expired connections, revoked permissions, API quota limits, or the external account being deleted/renamed.
+4. **Common causes**: Expired connections, revoked permissions, API quota limits, or the external account being deleted/renamed. For all of these, the user must reconnect or fix permissions in the UI — MCP cannot trigger a reconnection.
 
 ## Workflow: Data Discrepancies
 
