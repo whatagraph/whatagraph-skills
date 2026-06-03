@@ -24,7 +24,7 @@ Whatagraph exposes a normalized field catalog that differs from each platform's 
 | `campaignName`, `campaign_name` | varies — Google Ads exposes `campaign.name` (dot, not underscore); source groups expose `universal_dimension_<n>`; blends expose `aggregation_dimension_universal_dimension_<n>` |
 | `spend` (generic) | varies by channel — `metrics.cost_micros` on Google Ads, `spend` on Meta, `universal_metric_3` on source groups |
 | `date` (on sources without time dimension) | some report types don't support date at all — check first |
-| `universal_metric_N` | these are positional IDs, never stable — look up the actual name |
+| `universal_metric_N` | these appear on **source groups and blends**, not on native channel sources. On native sources (Google Ads, Meta, etc.) use the channel-native name from `list_dimensions_and_metrics`. On source groups the catalog returns `universal_metric_N` / `universal_dimension_N` ids; on blends it returns `aggregation_metric_universal_metric_N` / `aggregation_dimension_universal_dimension_N` (or `blend_*` prefixes). Never guess the number — look it up each time. |
 
 If `fetch-data` returns `Invalid metrics: X` or `Invalid dimensions: X`, do not retry with a variant spelling. Re-run `list-sources action: list_dimensions_and_metrics` with the correct `source_id` and `report_type` and pick a name from the response verbatim.
 

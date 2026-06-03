@@ -79,6 +79,14 @@ If the user asks for the same digest over a different date range ("same report b
 
 Do **not** invent a different window via `from` / `till` and present the result as if it answered the user's question — many widgets use their configured date range instead.
 
+### Date range discrepancy: digest data vs. what the user sees
+
+If the digest data doesn't match what the user sees in the Whatagraph UI, the most common cause is **per-widget date range overrides**. Individual widgets can have their own date range that differs from the report-level range shown in `list-reports action: show`. When this happens:
+
+- The `export-report` envelope for each widget includes a `date_range` field — check it to see the actual window that widget used.
+- Widgets with overrides will show a different `date_range` than the report-level `date_range.from` / `date_range.till`.
+- There is no MCP way to change a widget's configured range — the user must update it in the Whatagraph report editor.
+
 ## Performance Expectations
 
 - First call on a report that has not been viewed recently can take 30–90 seconds while data is prepared.

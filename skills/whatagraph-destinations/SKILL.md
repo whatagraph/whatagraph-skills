@@ -62,3 +62,4 @@ list-destinations action=list_jobs transfer_id=<id> config_id=<id>
 - **Confusing destinations with data sources** — destinations push data out; data sources pull in. Different tool.
 - **Assuming MCP can create a transfer** — only viewing is supported. The UI handles transfer setup and scheduling.
 - **`issue=account` vs `issue=source`** — `account` means the authenticated integration account expired; `source` means the sub-source is failing. Different fixes.
+- **Stale `running` jobs on stopped transfers** — if a transfer was paused or stopped while jobs were in flight, those jobs can remain in `running` state indefinitely without ever completing. They are not actually executing. Always check the transfer's overall status (`list-destinations action=show`) before interpreting job states — a `running` job under a stopped transfer is effectively stuck, not in-progress.

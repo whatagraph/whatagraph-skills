@@ -12,6 +12,13 @@ description: >-
 
 Transform raw marketing data into meaningful narratives, executive summaries, and actionable recommendations. This skill combines data fetching with analytical interpretation to deliver business-ready insights.
 
+## Decision Point: Report Digest vs. Raw Data Insights
+
+Before starting, check whether the user already has a Whatagraph report covering the relevant data:
+
+- **User references a specific report or pastes a live-report URL** → use the `generating-report-digests` skill. It reads the report's pre-built widgets, date range, and comparison period in one call — no need to re-fetch raw data. Use the digest as the fact base and layer analytical narrative on top.
+- **No existing report / user wants data not in any report** → proceed with the fetch-based workflow below.
+
 ## Insight Generation Workflow
 
 ### Step 1: Gather Context
