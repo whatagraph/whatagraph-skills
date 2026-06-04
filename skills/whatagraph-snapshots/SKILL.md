@@ -1,6 +1,9 @@
 ---
 name: whatagraph-snapshots
 description: Save (create) and restore the structural state of a report — tabs, widgets, layout. Use when a user wants a checkpoint before a risky edit, to revert to a prior version, or to view snapshot history.
+required_tools:
+  - manage-snapshots
+  - delete-snapshots
 ---
 
 # Snapshots

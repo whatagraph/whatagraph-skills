@@ -1,6 +1,9 @@
 ---
 name: whatagraph-sources-and-data
 description: Discover and query Whatagraph data sources — find which accounts are connected, list available metrics and dimensions, pull raw numbers, and check where a source is being used. Use this before any reporting task to establish what data is available.
+required_tools:
+  - manage-sources
+  - delete-sources
 ---
 
 # Data sources and fetching data
