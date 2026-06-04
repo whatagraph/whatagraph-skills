@@ -1,6 +1,9 @@
 ---
 name: whatagraph-widgets
 description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, positioning widgets on the grid, swapping metrics on an existing widget, or bulk-swapping data sources across many widgets at once.
+required_tools:
+  - manage-widgets
+  - delete-widgets
 ---
 
 # Widgets
