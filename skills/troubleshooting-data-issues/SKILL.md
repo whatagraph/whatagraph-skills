@@ -29,7 +29,7 @@ Ask clarifying questions to determine which category the issue falls into:
    ```
    list-sources action: show, source_id: <id>
    ```
-   Look for `status: "error"` — this indicates a connection problem. Note that `show` confirms the error status but does **not** expose the error message or failure reason — MCP has no field for that. To read the actual error description, open the source in the Whatagraph UI (Settings → Sources) where the specific error is displayed.
+   Look for `status: "issue"` (the value and the `list-sources` filter are `issue`, not `error`) — this indicates a connection problem. Note that `show` confirms the error status but does **not** expose the error message or failure reason — MCP has no field for that. To read the actual error description, open the source in the Whatagraph UI (Settings → Sources) where the specific error is displayed.
 
 2. **Check the integration account**:
    ```
