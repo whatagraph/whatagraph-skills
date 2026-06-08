@@ -88,7 +88,7 @@ delete-report-tabs action=delete  report_id=<id> tab_id=<id>
 delete-report-tabs action=restore report_id=<id> tab_id=<id>   # soft-delete undo
 ```
 
-A deleted tab's widgets are soft-deleted along with it. Restore puts them back. Always confirm with the user before deleting a tab with many widgets.
+A deleted tab's widgets are soft-deleted along with it. Restore puts them back. Always confirm with the user before deleting a tab with many widgets. A report must keep **at least one tab** — deleting the last remaining tab is rejected; add or duplicate a replacement tab first.
 
 ## What MCP can't do here
 
