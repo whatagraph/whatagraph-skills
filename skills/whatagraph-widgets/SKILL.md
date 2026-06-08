@@ -150,15 +150,20 @@ Known `options` shapes:
 
 - **Comment / text widget** (`widget_type_id=21`): on **write**, supply `{"comment_widget_text": {"text": "Hello\nWorld", "contentAlign": "top"}}` in `rows[].options` — `text` is a plain string, the platform converts it. The tool auto-propagates this to `configs[].options.comment_widget_text.text`. The legacy `{"text": "<html>", "comment": "<html>"}` shape also works for older accounts.
   - On **read**, `list-widgets action=show` returns the converted Tiptap document under `options.comment_widget_text.description` (a `{type: "doc", content: [...]}` tree). Do **not** round-trip the `description` shape on write — re-send the flat `text` string instead, otherwise the platform will refuse the payload or persist an empty comment.
+  - The `text` string supports **markdown** (headings, bold, lists, links) — it's converted to the Tiptap document on save. A text/font **colour** baked into the comment content overrides the theme's `text_color` (CSS specificity), so applying a palette won't recolour comment text — set the colour in the content itself for white-on-dark headers, or leave it uncoloured to inherit the theme.
   - **Always pre-fetch the existing row and config IDs before updating a comment widget.** Run `list-widgets action=show widget_id=<id>` and capture `rows[0].id` and `rows[0].configs[0].id`, then pass both back in the `manage-widgets update` call. Omitting `id` on rows/configs of a comment widget triggers an INSERT path that fails with `SQLSTATE[23000]: Column 'integration_id' cannot be null` because the comment row's `integration_id` is implicit on the existing record but missing on a fresh insert. The "omit ids to rebuild from scratch" guidance in the metric-binding callout applies only to **data-bearing** widgets, not to comment / image / calendar widgets.
 - **Image widget** (`widget_type_id=34`): supply `{"image_url": "<url>", "url": "<url>"}` in `rows[].options`. The tool auto-propagates this to the config-side canonical shape `configs[].options.images: [{url, title}]`. You can also supply the config shape directly in `rows[].configs[].options`.
 - **Single-value KPI** (`widget_type_id=101`): `{"compare_type": "previous_period"}` to surface the trend delta vs. the comparison window inherited from the report.
+- **Funnel** (`widget_type_id=115`): each funnel **stage is its own row** with a single metric — one metric per row, in stage order. Putting multiple metrics in one config renders a single 100% stage instead of a multi-stage funnel.
+- **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads.
 
 ## Toggle breakdown on pie / donut / bar
 
 ```
 manage-widgets action=toggle_breakdown report_id=<id> widget_id=<id>
 ```
+
+This flips the display-only breakdown flag and **preserves the widget's metric/dimension bindings** — it does not rebuild the config from a template.
 
 ## Duplicate
 
@@ -221,12 +226,14 @@ Deletes are soft — a restore window exists. Calling delete on an already-delet
 - Move widgets to another tab — use `manage-report-tabs action=move_widgets`.
 - Set widget-level permissions — UI only.
 - Cross-report widget copy — duplicate within report only.
+- **AI-generated text / "Magic Item" content** — the AI summary settings (custom prompt, summary type, length, language) and the generated text live outside the widget config and cannot be authored or edited via MCP. Create the Comment/text widget, then have the user generate or edit the AI content in the UI.
 
 ## Common pitfalls
 
 - **Full-width single-value widgets** — looks like a section header; use 2×2 or 2×1 instead.
 - **Table summary row sums percentages** — the footer sums percent columns as numbers (25% + 30% = 55%); disable footer for percent-heavy tables.
 - **Updating metrics on a widget that uses a source group** — after the group's sources change, the widget may need to re-save to pick up field definitions. Verify via `list-widgets action=show`.
+- **Metric-only update drops the binding ("Unavailable report type")** — when updating a config in place, always carry its `integration_id`, `source_id`, and `report_type` alongside the new `metrics`/`dimensions`. Omitting them on a source-group or report-type-bound widget can rebuild the config without its report-type binding and leave the widget blank. Prefer name/position-only edits on those widgets, and verify data with `csv_export` after any metric change.
 - **Creating without `channel_id`** — required at create time; channel_id = the source's channel.
 - **Creating without `widget_type_id`** — required; verify via existing widgets on the tab.
 - **Passing an invalid `source_id`** — the tool accepts both global and report-local IDs, but will error if the ID doesn't exist. Use `list-sources` or `list-reports action=list_sources` to find valid IDs.

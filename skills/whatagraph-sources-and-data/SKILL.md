@@ -1,6 +1,6 @@
 ---
 name: whatagraph-sources-and-data
-description: Discover and query Whatagraph data sources — find which accounts are connected, list available metrics and dimensions, pull raw numbers, and check where a source is being used. Use this before any reporting task to establish what data is available.
+description: Discover and query Whatagraph data sources — find which accounts are connected, list report types and the available metrics and dimensions (narrowing large catalogs with the filter parameter), pull raw numbers via fetch-data, and check where a source is used. Covers native channels, source groups, and blends. Use this before any reporting task to establish what data is available.
 required_tools:
   - manage-sources
   - delete-sources
@@ -25,7 +25,7 @@ A **data source** is one connected account (one Google Ads account, one GA4 prop
 ```
 list-sources action=list                                      # paginated list
 list-sources action=list search="Acme"                        # filter by name
-list-sources action=list channels=[2]                         # only Google Ads
+list-sources action=list channels=[<integration_id>]          # one channel — resolve the id via list-integrations, never hardcode
 list-sources action=list space_ids=[<space_id>]               # sources in one space
 list-sources action=list status="issue"                       # broken sources only
 list-sources action=list only_untagged=true                   # sources without tags
@@ -55,6 +55,19 @@ list-sources action=list_dimensions_and_metrics
 ```
 
 **Always run `list_report_types` first** when you don't know the report type. `list_dimensions_and_metrics` requires `report_type` when a source has multiple. Some sources (e.g. Facebook Ads, GA4) return zero report types — omit `report_type` entirely for those. If you pass an invalid report type, the error lists valid options — use that list.
+
+### Narrowing a large field catalog — use `filter`
+
+Big channels return hundreds of fields per report type, and `list_dimensions_and_metrics` is cursor-paginated and capped (~50 KB). When you already know the field the user named, filter instead of pulling and scanning everything:
+
+```
+list-sources action=list_dimensions_and_metrics source_id=<id> report_type="campaign" filter="cost"
+# → only fields whose name or external_id contains "cost"
+```
+
+- **`filter`** — case-insensitive substring on the display name **and** the `external_id`. Make it your default first move whenever the user named the metric/dimension ("spend", "roas", "sessions", "conversions").
+- **`is_universal=true`** — only the unified `universal_*` fields (source groups / blends); `false` — only channel-native fields; omit for all.
+- This call is **paginated**: decide whether to continue with `page.has_more` (not `estimated_total`, which is commonly `null` on this action), passing `page.cursor`. Prefer `filter` / `is_universal` / `per_page` over paging the whole catalog.
 
 ## Fetching raw data
 

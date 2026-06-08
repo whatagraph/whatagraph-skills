@@ -29,7 +29,7 @@ Ask clarifying questions to determine which category the issue falls into:
    ```
    list-sources action: show, source_id: <id>
    ```
-   Look for `status: "error"` — this indicates a connection problem. Note that `show` confirms the error status but does **not** expose the error message or failure reason — MCP has no field for that. To read the actual error description, open the source in the Whatagraph UI (Settings → Sources) where the specific error is displayed.
+   Look for `status: "issue"` (the value and the `list-sources` filter are `issue`, not `error`) — this indicates a connection problem. Note that `show` confirms the error status but does **not** expose the error message or failure reason — MCP has no field for that. To read the actual error description, open the source in the Whatagraph UI (Settings → Sources) where the specific error is displayed.
 
 2. **Check the integration account**:
    ```
@@ -141,3 +141,4 @@ If the issue cannot be diagnosed with read-only tools:
 - Time zone differences are the #1 cause of "small" data discrepancies (1-5% off).
 - When comparing data, use the `date` dimension to get daily breakdowns — this makes it easier to spot where discrepancies occur.
 - Source groups with many sources (50+) may have performance-related delays. Check individual source health.
+- **Use `error.category` to decide how to react.** `data_not_ready` (data still processing) and `rate_limited` are **transient — retry with backoff** (a `rate_limited` response carries a `retry_after`; wait that many seconds), not real failures. `validation` / `not_found` mean fix your input; `permission_denied` / `auth` are account-level — tell the user. Read-only tools (`list-*` / `view-*` / `load-skill`) have a separate, higher rate-limit bucket, so discovery rarely throttles — pace write calls instead.

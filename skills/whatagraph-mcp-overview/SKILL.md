@@ -1,6 +1,6 @@
 ---
 name: whatagraph-mcp-overview
-description: Orientation skill for the Whatagraph MCP server. Read first when working on any Whatagraph task. Explains the mental model (spaces → reports → tabs → widgets; data sources and source groups; blends; overviews; templates) and which specialized skill to reach for next.
+description: Orientation skill for the Whatagraph MCP server. Read first when working on any Whatagraph task. Explains the mental model (spaces → reports → tabs → widgets; data sources, source groups, blends; overviews; templates) and routes to the right specialized skill — both the configuration skills and the read-only analysis/insight skills (fetching metrics, report digests, marketing insights, account-health audits, troubleshooting).
 ---
 
 # Whatagraph MCP overview
@@ -25,7 +25,7 @@ Data flows into widgets from:
 
 | If the user is working on… | Reach for this skill |
 |---|---|
-| Finding what data is connected, what metrics/dimensions are available, pulling raw numbers | `whatagraph-sources-and-data` |
+| Finding what data is connected, what metrics/dimensions are available; pulling raw numbers | `whatagraph-sources-and-data`, `fetching-marketing-metrics` |
 | Client folders, organizing reports under clients | `whatagraph-spaces` |
 | Creating/editing reports, tabs, widgets | `whatagraph-reports`, `whatagraph-report-tabs`, `whatagraph-widgets` |
 | Combining multiple accounts from the same channel | `whatagraph-source-groups` |
@@ -45,6 +45,25 @@ Data flows into widgets from:
 | Inviting teammates, roles, subscription | `whatagraph-team-and-members` |
 | Connecting a new integration account to the team | `whatagraph-integrations-admin` |
 | Patterns that cross multiple domains | `whatagraph-customer-patterns` |
+
+## Analysis, insight & troubleshooting tasks
+
+These read-only workflow skills sit on top of the domain skills above — reach for them when the goal is to **understand** data rather than **configure** the platform:
+
+| If the user wants to… | Reach for this skill |
+|---|---|
+| Pull specific numbers / answer "how did X perform?" (ad-hoc metrics) | `fetching-marketing-metrics` |
+| Orient in an unfamiliar account — what's connected, what's available | `exploring-account-data` |
+| Summarize / digest an existing report (often from a live-report URL) | `generating-report-digests` |
+| Turn data into an executive narrative or insights write-up | `generating-marketing-insights` |
+| Audit or critique an existing report's structure and widgets | `analyzing-reports` |
+| Compare/analyze across channels using blends & source groups | `cross-channel-analytics` |
+| Health-check the whole account (connections, sharing, goals, usage) | `auditing-account-health` |
+| Diagnose wrong/missing numbers, broken sources, blend/filter issues | `troubleshooting-data-issues` |
+
+**Three discovery-flavored skills overlap — pick by intent:** ad-hoc numbers → `fetching-marketing-metrics`; account orientation ("what do I have?") → `exploring-account-data`; the source/field reference and raw-fetch mechanics → `whatagraph-sources-and-data`. All three teach the `filter` parameter for narrowing large field catalogs.
+
+> To find a skill, call `list-skills action=search` with the key term for the task (e.g. `filter`, `blend`, `digest`, `audit`).
 
 ## Ground rules for every MCP call
 

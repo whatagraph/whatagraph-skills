@@ -24,7 +24,7 @@ A **space** is a top-level container that organizes reports and data sources. In
 list-spaces action=list                                  # paginated; top-level only
 list-spaces action=list include_home=true                # include home
 list-spaces action=show client_id=<id>                   # report/measurement counts
-list-spaces action=children client_id=<id>               # sub-spaces
+list-spaces action=children client_id=<id>               # sub-spaces (each child includes its parent_id)
 ```
 
 ## Create a space

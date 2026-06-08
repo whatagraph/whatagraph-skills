@@ -71,6 +71,20 @@ manage-reports action=update report_id=<id>
    name="..."
 ```
 
+## Update the report date range
+
+```
+manage-reports action=update report_id=<id>
+   date_range={
+     "from": "2026-05-01", "till": "2026-05-31",
+     "period": "custom",            # or a named period
+     "compare_type": "previous",    # or "last_year"; omit for none
+     "vs_from": "2026-04-01", "vs_till": "2026-04-30"   # optional explicit comparison window
+   }
+```
+
+The report-level date range is the baseline **every widget inherits** unless it sets its own `date_range`. Set it when replicating a report into a new period so the widgets — and the comparison deltas — use the right window. `list-reports action=show` returns the current `period`, `compare_type`, `vs_from`, and `vs_till` alongside `from`/`till`.
+
 ## Attach a data source to a report
 
 Before creating a widget that points at a data source, attach the source to the report. This mirrors picking a source in the report builder side panel.

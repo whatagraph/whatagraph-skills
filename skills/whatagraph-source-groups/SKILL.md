@@ -96,6 +96,10 @@ manage-source-groups action=update group_id=<id>
 
 Replace-style — full lists replace previous values.
 
+**Always edit a group with `update`, never delete-and-recreate.** A rebuild mints a **new** virtual `source_id`, which silently detaches every source-level custom metric, widget, and report binding that pointed at the old one. `update` preserves the group's virtual `source_id`, so dependents stay attached.
+
+When a config supplies explicit `dimensions`/`metrics`, each field is attached only to the integrations that actually expose it — channel-native fields are skipped for channels that don't own them, and `universal_*` fields apply across all. A cross-channel group won't break a channel by assigning it a field it can't fetch.
+
 ## Duplicating
 
 ```
@@ -111,6 +115,8 @@ list-source-groups action=source_issues group_id=<id>        # view affected sou
 manage-source-groups action=resolve_issues group_id=<id>
    integration_source_ids=[<affected_source_ids>]
 ```
+
+`resolve_issues` re-enables and **restarts the ETL transfer** on the sources you list. If one of those sources is **shared with other groups or reports**, restarting it re-syncs them too — they'll briefly show "downloading historical data" until the transfer catches up. Scope `integration_source_ids` to the sources that actually need it, and expect a transient re-sync on anything sharing them.
 
 ## Using the group in widgets
 
@@ -162,6 +168,8 @@ Widgets and custom metrics that point at the group's virtual source will break. 
 
 - **Cross-channel `output_name` selection** — when mixing channels (e.g. Google Ads + Meta Ads + TikTok), use `list-source-groups action=list_output_names source_ids=[...]` to find template names that work across all supplied channels. Not every template is valid for every channel combination.
 - **`output_name` is the source-group template name, not the channel-native report type** — e.g. `campaign_performance` for Google Ads, not `campaign`. The channel-native report type (`campaign`) is what you pass to `fetch-data` and `report_type_external_id` on the *original* sources, but the template name (`campaign_performance`) is what `manage-source-groups create configs` accepts. The two diverge on every paid-ads channel.
+- **Editing a group? Use `update`, never delete+recreate** — a rebuild changes the virtual `source_id` and orphans source-level custom metrics and widget bindings.
+- **`resolve_issues` on a shared source re-syncs other groups** — scope `integration_source_ids` narrowly and expect a transient re-download on anything sharing those sources.
 - **Empty group after creation** — freshly-created groups need time for ETL to populate; data may be empty for a few minutes for small accounts, longer for high-volume ones.
 - **Group not appearing in widget picker immediately** — refresh the report; new groups can take a few seconds to appear.
 - **Very large groups (hundreds of sub-sources)** — query performance can slow down. For very large rollups, consider a custom metric `data_aggregation` instead of a group.

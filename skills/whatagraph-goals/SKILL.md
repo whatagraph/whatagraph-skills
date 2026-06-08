@@ -91,6 +91,7 @@ The widget type "Goal" is how a goal renders in a report. Create via `manage-wid
 
 ```
 delete-goals action=delete goal_id=<id>
+delete-goals action=delete goal_ids=[<id>, <id>, ...]   # bulk delete in one call
 ```
 
 Any goal widgets referencing the deleted goal will show an empty state until re-attached.
