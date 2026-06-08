@@ -1,11 +1,13 @@
 ---
 name: fetching-marketing-metrics
 description: >-
-  Fetch and analyze raw marketing performance data from Whatagraph sources with
-  proper metric and dimension selection, date ranges, and data interpretation.
-  Use when the user asks for specific numbers, wants to see performance data,
-  asks "how did my Google Ads perform last month?", needs data comparisons,
-  or wants raw metric values from any connected source.
+  Fetch and analyze raw marketing performance data from any connected Whatagraph
+  source via fetch-data — pick the right report type, metrics, and dimensions,
+  narrow large field catalogs efficiently with the filter parameter, set date
+  ranges, and interpret the results. Use when the user asks for specific numbers
+  or performance ("how did Google Ads do last month?", spend, ROAS, CPA, CPC,
+  sessions, conversions, opens), wants period-over-period comparisons, or needs
+  raw metric values from a channel, source group, or blend.
 ---
 
 # Fetching Marketing Metrics
@@ -35,6 +37,21 @@ Always confirm these three things before calling `fetch-data`:
 1. **Source ID** — Use `list-sources` to find the correct source. Users often refer to sources by name (e.g., "my Google Ads account"), so match by `service` and `standard_name`.
 2. **Report type** — Many sources expose multiple report types (e.g., Google Ads has `ACCOUNT`, `CAMPAIGN`, `AD_GROUP`, `AD`; Bing Ads has `customer`, `campaign`, `ad_group`, etc.). Always call `list-sources` with `action: list_report_types` before fetching. If the source has more than one report type, `fetch-data` **will error** unless you pass `report_type`.
 3. **Available metrics and dimensions** — Call `list-sources` with `action: list_dimensions_and_metrics` with both `source_id` **and** `report_type` to see what fields are available. The response is specific to that report type — switching report types changes the catalog.
+
+### Narrowing a large field catalog — use `filter` first
+
+Big channels expose **hundreds** of fields per report type (Google Ads `campaign` has 500+), and this response is cursor-paginated and capped (~50 KB) — so a bare `list_dimensions_and_metrics` call returns a truncated, mostly-config list you then have to scan. When you already know the metric or dimension the user named, **filter the catalog in one call** instead of pulling and paginating the whole thing:
+
+```
+list-sources action: list_dimensions_and_metrics, source_id: <id>, report_type: "campaign", filter: "cost"
+→ only fields whose name or external_id contains "cost"
+  (e.g. metrics.cost_micros, metrics.cost_per_conversion, metrics.average_cost)
+```
+
+- **`filter`** is a case-insensitive substring match on both the display name and the `external_id`. Make it your **default first move** whenever the user named the field — "spend", "roas", "conversions", "sessions", "clicks". It turns a 500-field scan into a handful of fields in one call.
+- **`is_universal: true`** returns only the platform-unified `universal_*` fields (useful on source groups and blends); `is_universal: false` returns only channel-native fields; omit for all.
+- This call is **paginated**: decide whether to fetch more with `page.has_more` (not `estimated_total`, which is commonly `null` on this action), passing `page.cursor` to continue. Prefer `filter` / `is_universal` / `per_page` over paging through the full catalog.
+- To narrow *sources* (not fields) to a single channel, pass `channels: [<integration_id>]` to `list-sources action: list` — but **resolve the integration id from `list-integrations` for this team first; never hardcode a channel id from memory** (guessing one returns the wrong sources or none).
 
 ### Recovering from "Multiple report types are available"
 

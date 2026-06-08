@@ -1,11 +1,12 @@
 ---
 name: exploring-account-data
 description: >-
-  Navigate and discover data sources, integrations, metrics, dimensions, spaces,
-  reports, and the overall account structure in a Whatagraph account. Use when
-  the user asks what data is available, wants to understand their account setup,
-  needs to find specific sources or integrations, or asks questions like "what
-  channels do I have connected?" or "show me my reports."
+  Navigate and discover data sources, integrations, report types, metrics,
+  dimensions, spaces, reports, and the overall account structure in a Whatagraph
+  account — including narrowing large field catalogs with the filter parameter.
+  Use when the user asks what data is available, wants to understand their account
+  setup, needs to find specific sources or integrations, or asks questions like
+  "what channels do I have connected?" or "show me my reports."
 ---
 
 # Exploring Account Data
@@ -30,7 +31,7 @@ Help users discover and navigate the data available in their Whatagraph account.
    - Call `list-sources` with `action: list` to see all sources
    - Filter by integration type using `channels` (array of integration IDs)
    - Use `action: list_report_types` on a source to see its available report types
-   - Use `action: list_dimensions_and_metrics` to discover available fields for a source
+   - Use `action: list_dimensions_and_metrics` to discover available fields for a source — and when you already know the field the user named, narrow the catalog in one call with `filter: "<keyword>"` (case-insensitive substring on name/`external_id`) instead of paging through hundreds of fields; `is_universal: true` limits the result to the unified `universal_*` fields
 
 3. **Explore the account structure**:
    - Call `list-spaces` with `action: list` to see client folders
@@ -83,3 +84,4 @@ Single-report-type sources (e.g., most social pages, email platforms) return exa
 - Source IDs are needed for data fetching. Always confirm the source ID before calling `fetch-data`.
 - The `list_usage` action on `list-sources` shows which reports and widgets reference a source — useful for understanding data dependencies.
 - Never fabricate source IDs from memory. If `list-sources` / `fetch-data` responds with `Invalid source_id`, rerun `list-sources action: list` with a `search` term rather than guessing.
+- When narrowing sources by `channels`, resolve integration ids from `list-integrations` for **this** team — don't hardcode a channel id from memory. On `list_dimensions_and_metrics`, prefer `filter`/`is_universal` to narrow, and use `page.has_more` (not `estimated_total`, often `null`) to decide whether to paginate.
