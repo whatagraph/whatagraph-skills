@@ -6,6 +6,12 @@ description: >-
   asks for insights, wants a performance summary, needs help writing report
   commentary, asks "how did we do this month?", "give me the highlights",
   or wants data-driven recommendations for their marketing strategy.
+required_tools:
+  - list-integrations
+  - list-overviews
+  - list-reports
+  - view-goals
+  - fetch-data
 ---
 
 # Generating Marketing Insights

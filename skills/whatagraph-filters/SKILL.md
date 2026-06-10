@@ -2,6 +2,9 @@
 name: whatagraph-filters
 description: Create saved filter configurations for a channel. Filters are per-channel conditions on a dimension or metric that can be attached to widgets or reports via the UI. Use when a user wants reusable "only this audience / only this campaign / only above $X" filtering.
 required_tools:
+  - list-filters
+  - list-sources
+  - list-widgets
   - manage-filters
   - delete-filters
 ---

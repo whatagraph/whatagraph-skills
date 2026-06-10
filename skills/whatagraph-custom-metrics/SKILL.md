@@ -2,7 +2,14 @@
 name: whatagraph-custom-metrics
 description: Create calculated or unified metrics on top of one or more data sources — formulas (ROAS, CPA, CPL), aggregations (total paid spend across channels), and metric aliases. Use when a standard channel metric isn't enough or when a derived metric needs to exist across multiple sources.
 required_tools:
+  - list-custom-metrics
+  - list-sources
+  - list-widgets
+  - export-report
+  - fetch-data
+  - manage-custom-dimensions
   - manage-custom-metrics
+  - manage-widgets
   - delete-custom-metrics
 ---
 

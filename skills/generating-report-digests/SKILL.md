@@ -8,6 +8,11 @@ description: >-
   running summary of the same report. Distinct from fetching-marketing-metrics
   (which builds answers from raw sources) — this skill reads the already-built
   report as-is, including its widgets, date range, and comparison period.
+required_tools:
+  - list-reports
+  - list-widgets
+  - export-report
+  - fetch-data
 ---
 
 # Generating Report Digests

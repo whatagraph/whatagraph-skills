@@ -1,6 +1,11 @@
 ---
 name: whatagraph-export
 description: Export a whole report (all tabs + widgets) or a single tab / specific widgets as CSV in one call. Use when a user wants raw data out of a report as spreadsheet rows.
+required_tools:
+  - list-sources
+  - list-widgets
+  - export-report
+  - manage-sharing
 ---
 
 # Export report to CSV

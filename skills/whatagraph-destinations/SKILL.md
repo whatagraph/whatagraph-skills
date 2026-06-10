@@ -1,6 +1,8 @@
 ---
 name: whatagraph-destinations
 description: View configured data transfers that push Whatagraph-ingested data to external destinations (BigQuery, LookerStudio, local storage, Whatagraph storage) and inspect their job history. Read-only via MCP.
+required_tools:
+  - list-destinations
 ---
 
 # Destinations & data transfers (read-only)

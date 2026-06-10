@@ -8,6 +8,10 @@ description: >-
   or performance ("how did Google Ads do last month?", spend, ROAS, CPA, CPC,
   sessions, conversions, opens), wants period-over-period comparisons, or needs
   raw metric values from a channel, source group, or blend.
+required_tools:
+  - list-integrations
+  - list-sources
+  - fetch-data
 ---
 
 # Fetching Marketing Metrics

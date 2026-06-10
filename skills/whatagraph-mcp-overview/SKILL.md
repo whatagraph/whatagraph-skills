@@ -1,6 +1,21 @@
 ---
 name: whatagraph-mcp-overview
 description: Orientation skill for the Whatagraph MCP server. Read first when working on any Whatagraph task. Explains the mental model (spaces → reports → tabs → widgets; data sources, source groups, blends; overviews; templates) and routes to the right specialized skill — both the configuration skills and the read-only analysis/insight skills (fetching metrics, report digests, marketing insights, account-health audits, troubleshooting).
+required_tools:
+  - list-reports
+  - list-skills
+  - list-sources
+  - list-spaces
+  - list-widgets
+  - view-team
+  - export-report
+  - fetch-data
+  - manage-automations
+  - manage-report-tabs
+  - manage-reports
+  - manage-sharing
+  - manage-themes
+  - manage-widgets
 ---
 
 # Whatagraph MCP overview

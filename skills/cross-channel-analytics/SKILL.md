@@ -6,6 +6,13 @@ description: >-
   compare channels, see unified cross-platform metrics, understand blended data,
   asks "how do all my channels compare?", "what's my total spend across
   platforms?", or needs help with cross-channel attribution and reporting.
+required_tools:
+  - list-blends
+  - list-custom-dimensions
+  - list-custom-metrics
+  - list-source-groups
+  - list-sources
+  - fetch-data
 ---
 
 # Cross-Channel Analytics
