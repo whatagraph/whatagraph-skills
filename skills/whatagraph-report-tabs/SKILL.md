@@ -2,7 +2,9 @@
 name: whatagraph-report-tabs
 description: Create, duplicate, rename, and reorder tabs within a report. Each tab is a page of widgets. Use when a report needs a new section (e.g. "Paid Search", "Social", "Organic") or when existing tabs need to be re-ordered or duplicated.
 required_tools:
+  - list-report-tabs
   - manage-report-tabs
+  - manage-widgets
   - delete-report-tabs
 ---
 

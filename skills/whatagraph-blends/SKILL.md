@@ -2,7 +2,16 @@
 name: whatagraph-blends
 description: Combine data from different channels (Google Ads + Meta + GA4) into one virtual source by joining on shared dimensions (date, campaign name, etc.). Use when a widget needs to show cross-channel rows side-by-side or a computed metric needs numerator/denominator from separate sources.
 required_tools:
+  - list-blends
+  - list-sources
+  - fetch-data
   - manage-blends
+  - manage-custom-dimensions
+  - manage-custom-metrics
+  - manage-reports
+  - manage-source-groups
+  - manage-sources
+  - manage-widgets
   - delete-blends
 ---
 

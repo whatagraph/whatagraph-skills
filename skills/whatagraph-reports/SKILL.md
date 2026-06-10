@@ -2,7 +2,15 @@
 name: whatagraph-reports
 description: Create, duplicate, and update reports. Reports live in spaces and contain one or more tabs of widgets. Use when a user wants a new client deliverable, to clone an existing report, or to bulk-swap the data sources a report points at.
 required_tools:
+  - list-blends
+  - list-reports
+  - list-source-groups
+  - list-sources
+  - list-spaces
+  - list-templates
+  - manage-report-tabs
   - manage-reports
+  - manage-widgets
   - delete-reports
 ---
 

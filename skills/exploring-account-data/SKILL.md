@@ -7,6 +7,22 @@ description: >-
   Use when the user asks what data is available, wants to understand their account
   setup, needs to find specific sources or integrations, or asks questions like
   "what channels do I have connected?" or "show me my reports."
+required_tools:
+  - list-blends
+  - list-custom-dimensions
+  - list-custom-metrics
+  - list-integrations
+  - list-overviews
+  - list-report-tabs
+  - list-reports
+  - list-source-groups
+  - list-sources
+  - list-spaces
+  - list-themes
+  - list-widgets
+  - view-goals
+  - view-team
+  - fetch-data
 ---
 
 # Exploring Account Data

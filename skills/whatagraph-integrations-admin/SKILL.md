@@ -2,8 +2,12 @@
 name: whatagraph-integrations-admin
 description: Browse available integrations, connect sources from already-authenticated accounts, and assign sources to spaces. Use when onboarding a new client (adding their sub-accounts into Whatagraph) or when reallocating existing sources across client folders.
 required_tools:
+  - list-integrations
+  - list-sources
+  - list-spaces
   - manage-integrations
   - manage-sources
+  - delete-sources
   - remove-integrations
 ---
 

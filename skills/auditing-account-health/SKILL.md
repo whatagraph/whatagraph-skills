@@ -7,6 +7,20 @@ description: >-
   for an account review, wants to check if everything is connected properly,
   asks "is my account set up correctly?", needs a health check, or wants to
   understand their subscription and usage.
+required_tools:
+  - list-automations
+  - list-blends
+  - list-custom-dimensions
+  - list-custom-metrics
+  - list-integrations
+  - list-overviews
+  - list-reports
+  - list-source-groups
+  - list-sources
+  - list-spaces
+  - view-goals
+  - view-sharing
+  - view-team
 ---
 
 # Auditing Account Health

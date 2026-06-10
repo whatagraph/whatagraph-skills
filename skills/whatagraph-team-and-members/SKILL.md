@@ -2,8 +2,11 @@
 name: whatagraph-team-and-members
 description: View team settings and subscription, update team name/localization, and invite or update team member invitations. Use when a user wants to onboard a new team member, change roles, update team timezone/currency defaults, or inspect plan limits.
 required_tools:
-  - manage-team
+  - list-automations
+  - view-team
   - manage-members
+  - manage-sources
+  - manage-team
   - remove-members
 ---
 

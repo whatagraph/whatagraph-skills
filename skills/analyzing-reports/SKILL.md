@@ -6,6 +6,17 @@ description: >-
   their reports, wants to understand report layout, asks "what's in my report?",
   wants to review widget configurations, check sharing settings, see report
   templates, or optimize their report structure.
+required_tools:
+  - list-automations
+  - list-report-tabs
+  - list-reports
+  - list-snapshots
+  - list-sources
+  - list-templates
+  - list-themes
+  - list-widgets
+  - view-sharing
+  - export-report
 ---
 
 # Analyzing Reports

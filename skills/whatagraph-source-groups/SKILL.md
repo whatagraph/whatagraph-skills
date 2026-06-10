@@ -2,7 +2,12 @@
 name: whatagraph-source-groups
 description: Combine multiple data sources into one virtual aggregated source — same-channel (e.g. five Google Ads sub-accounts) or cross-channel (e.g. Meta + Google + Reddit + TikTok). Use when an agency wants unified reporting without building a blend.
 required_tools:
+  - list-source-groups
+  - list-sources
+  - fetch-data
+  - manage-reports
   - manage-source-groups
+  - manage-widgets
   - delete-source-groups
 ---
 
@@ -55,6 +60,10 @@ manage-source-groups action=create
 - `configs` — required. Each entry `{output_name: "<level>"}` where `<level>` is the granularity the group should expose: campaign performance, ad / ad-group performance, keyword performance, audience performance, geo performance, etc. Pick the level that matches the widgets you'll build on top — one config per level, and prefer one config per group (see "One config per group" below). The exact string is the **source-group template name** for that channel, *not* the channel-native report type external id you see in `list-sources action=list_report_types`. For most channels the template name is the report type with a `_performance` suffix — e.g. Google Ads `campaign` → `campaign_performance`, `ad_group` → `ad_group_performance`, `geo_view` → `geo_performance` — but Facebook Ads and others diverge (see the per-channel reference table below). If the API rejects an `output_name`, the error response lists every valid template name for that channel; copy one verbatim.
 - `integration_source_ids` — array of source ids from `list-sources action=list`. Sources can be from the same channel or different channels (cross-channel aggregation is supported).
 - `currency` — optional. Display currency.
+- `configs[].dimensions` — optional. Array of `{external_id, name}` objects to select specific dimensions. When omitted, all template dimensions are used.
+- `configs[].metrics` — optional. Array of `{external_id, name}` objects to select specific metrics. When omitted, all template metrics are used. Use `list-sources action=list_dimensions_and_metrics` with `is_universal=true` to discover valid universal field IDs.
+
+> **Date dimension is auto-included.** Every source group config automatically includes the Date dimension (`universal_dimension_1137`). Do **not** pass it in the `dimensions` array — doing so creates a duplicate Date entry in the unified fields.
 
 #### Per-channel `output_name` reference
 
@@ -63,9 +72,10 @@ Template names diverge across channels — Google Ads-flavoured names like `camp
 | Channel | Valid `output_name` (verified) |
 |---|---|
 | Google Ads | `campaign_performance`, `ad_group_performance`, `keyword_performance`, `geo_performance`, … |
-| Facebook Ads | `creatives_performance` (note: not `campaigns_performance` or `campaign_performance`) |
+| Facebook Ads | `campaign_performance`, `ad_group_performance`, `ad_performance`, `creatives_performance`, `age_performance`, `gender_performance`, `geo_performance`, `device_performance` |
+| LinkedIn Ads | `campaign_performance` |
+| Snapchat | `campaign_performance` |
 | GA4 | TBD — not exercised in QA |
-| LinkedIn Ads | TBD — not exercised in QA |
 
 When in doubt, send a deliberately wrong `output_name` and read the rejection — the error response enumerates every valid template name for that channel.
 

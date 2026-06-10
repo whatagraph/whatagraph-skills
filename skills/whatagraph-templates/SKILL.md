@@ -2,6 +2,8 @@
 name: whatagraph-templates
 description: Convert an existing report into a reusable template and apply templates to new reports. Use when a user wants to standardize a report layout across many clients, roll out a monthly report across 20 accounts, or let auto-syncing keep client reports in step with a master template.
 required_tools:
+  - list-templates
+  - manage-reports
   - manage-templates
   - delete-templates
 ---

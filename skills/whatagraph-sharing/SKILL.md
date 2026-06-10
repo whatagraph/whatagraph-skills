@@ -2,6 +2,7 @@
 name: whatagraph-sharing
 description: Create and update public share links for reports with optional password protection, generate PDFs, and export reports to Excel. Use when a user wants to give a client a view-only link, generate a PDF, or download report data as a spreadsheet.
 required_tools:
+  - view-sharing
   - manage-sharing
   - delete-sharing
 ---

@@ -6,6 +6,16 @@ description: >-
   reports incorrect numbers, missing data, broken sources, discrepancies between
   Whatagraph and native platforms, blend errors, source group sync problems,
   or asks "why is my data wrong?" or "my source isn't working."
+required_tools:
+  - list-blends
+  - list-filters
+  - list-integrations
+  - list-source-groups
+  - list-sources
+  - list-widgets
+  - export-report
+  - fetch-data
+  - load-skill
 ---
 
 # Troubleshooting Data Issues

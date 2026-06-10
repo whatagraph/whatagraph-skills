@@ -2,6 +2,8 @@
 name: whatagraph-themes
 description: Apply themes (logos, fonts, header/footer) and color palettes (chart series colors, widget chrome, report canvas) to reports, and create or update reusable palettes and themes. Use when branding a report for a client, applying consistent colors across widgets, or fixing off-brand or black-rendering charts. Covers the exact palette schema (widget_colors object, bare-hex chart_colors, additional_colors).
 required_tools:
+  - list-themes
+  - list-widgets
   - manage-themes
   - delete-themes
 ---
