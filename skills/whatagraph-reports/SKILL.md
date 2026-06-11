@@ -61,7 +61,7 @@ manage-reports action=create_from_template
 
 Creates a new report **linked** to the template — structural changes on the template propagate to the report until unlinked.
 
-Afterward, remap sources using `change_sources`.
+The response reports the sample-data state (verified Jun 2026): `uses_sample_data` (boolean), `sample_data_channels` (which channels are on placeholders), and a next-step hint pointing at `change_sources`. When `uses_sample_data` is `true`, remap sources with `change_sources` before handing the report over.
 
 ## Duplicate an existing report
 
@@ -148,6 +148,8 @@ Keys are the **global** `integration_source_id` of the source being replaced (`"
 
 Use `list-reports action=list_sources report_id=<id>` to discover current source ids.
 
+> **Verify the build.** After building or bulk-swapping, `export-report report_id=<id>` (or `list-widgets action=csv_export` per widget) and confirm every widget's `data_status` is `ready` with non-empty rows and expected metric names. `list-widgets action=show` is NOT sufficient — it echoes ids, not loaded data.
+
 ## Deleting a report
 
 Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: soft-delete (support-restorable within a retention window, not via MCP), pre-check `list-templates action=linked_reports` if it might be template-linked.
@@ -159,7 +161,6 @@ The `detach_source` action above is also destructive when called with `delete_wi
 - Share a report — see `whatagraph-sharing`.
 - Change a report's space after creation — duplicate into the new space instead.
 - Unlink a template-linked report via MCP — UI only.
-- Set or override date range on the whole report via MCP — use `manage-widgets` per widget for widget-level ranges; report-level date lives in options via UI.
 
 ## Common pitfalls
 

@@ -26,11 +26,14 @@ Themes and palettes live at the team level. They're applied per-report.
 ## Listing
 
 ```
-list-themes action=list_themes report_id=<id>           # available themes for a report
-list-themes action=list_colors report_id=<id>           # available palettes for a report
+list-themes action=list_themes                          # team-level themes
+list-themes action=list_colors                          # team-level palettes
+list-themes action=list_themes report_id=<id>           # report + team themes, with active status
+list-themes action=list_colors report_id=<id>           # report + team palettes, with active status
+list-themes action=show_theme report_id=<id> theme_id=<id>   # one theme: name, header, footer, style options
 ```
 
-Themes and palettes are stored at the team level, but the listing endpoint is scoped per-report — `report_id` is required, and the response is filtered to the themes/palettes available to that specific report given the team's plan tier. To see every team-level theme, list against any report on the team.
+Themes and palettes are stored at the team level. `report_id` is optional on the list actions (verified Jun 2026) — omit it for team-level items only; pass it to also see report-level items and which one is active on that report. `show_theme` requires both `report_id` and `theme_id`.
 
 ## Apply a theme to a report
 
@@ -126,6 +129,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **Palette with fewer colors than chart series** — colors repeat in cycle. Provide 8–12 colors to avoid visible repetition on large charts.
 - **Charts rendering black** — `chart_colors` were supplied with a leading `#`. Use **bare hex** in `chart_colors` (`C0392B`, not `#C0392B`); `widget_colors` / `additional_colors` keep the `#`.
 - **Theme vs palette confusion** — theme controls logos/fonts/layout; palette controls chart colors. A report can use theme A + palette B.
+- **Passing a palette's `theme_id` field to `enable_theme`** — palettes returned by `list_colors` carry a `theme_id` attribute (the theme they're bound to); that is **not** the palette's own id and the palette's id is not a theme id. `enable_theme` takes a theme id from `list_themes`; `enable_color` takes a palette id from `list_colors`. Mixing them up enables the wrong asset or errors.
 - **Logo URL not publicly accessible** — shared-link viewers won't see it. Use a CDN-backed public URL.
 - **Brand colors with low contrast** — charts become unreadable. Test against white + dark report backgrounds.
 - **Creating a palette without `theme_id`** — palette still works but isn't bound to a specific theme; any theme can use it.

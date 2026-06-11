@@ -40,7 +40,7 @@ list-widgets action=csv_export report_id=<id> widget_id=<id>
 manage-widgets action=create
    report_id=<id>
    tab_id=<tab_id>
-   channel_id=<channel_id>
+   channel_id=<channel_id>             # integer ID or slug, e.g. 5 or "google-ads"
    widget_type_id=<widget_type>        # prefer 101+ (new architecture)
    source_id=<report_local_source_id>  # omit for sample-data widget
 ```
@@ -77,21 +77,21 @@ Widget types are integers. Prefer the modern types (`101+`) unless you have a sp
 
 Comment, image, and calendar widgets are the only widget types that take `channel_id=7` and no `source_id`. Every data-bearing widget needs a `channel_id` matching the source's channel and a report-local `source_id`.
 
-## Create a premade widget
+## Apply a premade widget
 
-Adds a template widget pre-configured by Whatagraph for the channel (common KPI sets, common chart shapes). Faster than building from scratch.
+Adds a template widget pre-configured by Whatagraph for the channel (common KPI sets, common chart shapes). Faster than building from scratch. Discover premade IDs first — `list_premade` requires a `channel_id` (integer or slug):
 
 ```
-manage-widgets action=create_premade
+list-widgets action=list_premade channel_id=<id>   # or slug, e.g. "google-ads"
+
+manage-widgets action=apply_premade                # alias: create_premade
    report_id=<id>
    tab_id=<tab_id>
-   widget_id=<existing_widget_id>      # required
-   source_id=<report_local_source_id>  # omit for sample-data premade
+   widget_id=<premade_widget_id>                   # from list_premade — NOT an existing report widget
+   source_id=<report_local_source_id>              # omit for sample-data premade
 ```
 
-`create_premade` requires an existing `widget_id` that the premade configuration is applied to. Create a blank widget first with the right `channel_id` and `widget_type_id`, then call `create_premade` with that widget's id.
-
-Same auto-attach rule applies: pass a global or report-local `source_id`.
+`widget_id` here is the **premade's ID** from `list-widgets action=list_premade`, not a widget you created. A source whose channel doesn't match the premade's channel is rejected (verified Jun 2026) — scope `list_premade` to the source's own channel. Supports `position_x`/`position_y` and `options` (width, height). Same auto-attach rule applies: pass a global or report-local `source_id`.
 
 ## Update a widget
 
@@ -166,6 +166,10 @@ Known `options` shapes:
 
 ## Breakdown vs non-breakdown (pie / donut / bar)
 
+Breakdown is supported **only** on column (`104`), bar (`106`), pie (`108`), and donut (`109`) charts — on every other widget type `breakdowns_enabled` is ignored.
+
+> **Time-series charts are different.** On area (`105`) and line (`107`) charts the X-axis is always the date — a categorical dimension bound on its own renders an **empty chart**. To split a time series by a category (e.g. clicks per campaign over time), bind the dimension AND set `options.breakdowns_enabled: true`; for a share-of-total view, use a breakdown donut/pie instead.
+
 Pie, donut, bar, and column charts have two distinct modes that determine how slices/segments are generated:
 
 **Breakdown mode** (`breakdowns_enabled: true`) — a single row with one metric and one dimension. The dimension values drive the slices (e.g. "clicks by ad group name"). Do not add multiple rows. Always set `breakdowns_show: true` when `breakdowns_enabled` is `true`.
@@ -223,6 +227,24 @@ manage-widgets action=toggle_breakdown report_id=<id> widget_id=<id>
 
 > **Warning:** `toggle_breakdown` **deletes all existing rows** and reinitializes them from the integration's default template. Any custom metric, dimension, or report type bindings are lost and replaced with defaults. Only use this on widgets with default configs. For widgets with custom bindings, set `breakdowns_enabled` via `options` at create time or via `manage-widgets action=update` instead. (One of the destructive modes catalogued in `whatagraph-deleting`.)
 
+## AI text on comment widgets
+
+Configure AI-generated text (summary, wins, issues, recommendations, or a custom prompt) on a comment widget:
+
+```
+manage-widgets action=update_ai_text report_id=<id> widget_id=<id>
+   ai_text={
+     "types": ["summary"],          # summary | wins | issues | recommendations | custom (≥1 required)
+     "load_type": "report_page",    # or "full_report"
+     "language": "English",
+     "summary_length": "short",     # or "long"
+     "custom_prompt": "...",        # required when types includes "custom"
+     "auto_update": false           # false triggers immediate generation; true regenerates automatically
+   }
+```
+
+Only comment widgets (`widget_type_id=21`) are supported. Unless `auto_update` is `true`, the call also triggers an immediate summary generation.
+
 ## Duplicate
 
 ```
@@ -258,7 +280,7 @@ The report uses a **6-column grid**. Every widget occupies a rectangle defined b
 
 > **Input/output asymmetry:** On **input** (create/update), pass `width` and `height` inside `options`. On **output**, they appear as **top-level** fields (`width`, `height`). When using `fields` filtering, use the top-level names: `fields="width,height"` — not `options.width`.
 
-**Overlap rule:** On `create`, the server rejects widgets that overlap an existing widget at the same `(x, y, width, height)` rectangle. `duplicate` and `batch_duplicate` auto-position the copy at the next available row.
+**Overlap rule:** On `create`, the server rejects widgets that overlap an existing widget at the same `(x, y, width, height)` rectangle — unless `auto_place=true`, which picks the nearest free slot instead (the response then carries `auto_placed: true` with the chosen position). When `position_x`/`position_y` are omitted entirely, auto-placement is the default. `duplicate` and `batch_duplicate` auto-position the copy at the next available row.
 
 ### Sizing guidelines
 
@@ -278,7 +300,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - Move widgets to another tab — use `manage-report-tabs action=move_widgets`.
 - Set widget-level permissions — UI only.
 - Cross-report widget copy — duplicate within report only.
-- **AI-generated text / "Magic Item" content** — the AI summary settings (custom prompt, summary type, length, language) and the generated text live outside the widget config and cannot be authored or edited via MCP. Create the Comment/text widget, then have the user generate or edit the AI content in the UI.
+- **Edit the generated AI text itself** — `update_ai_text` configures the settings and triggers generation, but the produced text can only be hand-edited in the UI.
 
 ## Common pitfalls
 

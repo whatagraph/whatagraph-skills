@@ -95,7 +95,7 @@ manage-custom-dimensions action=create
    ]
 ```
 
-Supported `operator` values: `equals`, `contains`, `starts_with`, `ends_with`, `matches_regex`, plus the negation forms `not_equals`, `not_contain`, `not_starts_with`, `not_ends_with` (verified: `not_contain` accepted on `data` dimensions May 2026; the saved value persists and round-trips through `list-custom-dimensions show`). When in doubt, run a quick create with the operator you want and let the API confirm — the same operator family is used by `manage-filters` (with the `_dimension` / `_metric` suffix added there).
+Supported `operator` values (verified Jun 2026): `contains`, `includes`, `not_contain`, `exactly_matches`, `not_exactly_matches`, `starts_with`, `not_starts_with`, `ends_with`, `not_ends_with`, `matches_regex`, `not_matches_regex`. There is no `equals` — use `exactly_matches`. A condition's `value` also accepts an **array** for multi-value matching (e.g. `"operator": "includes", "value": ["Brand_US", "Brand_EU"]`) — one condition instead of one map per value. The same operator family is used by `manage-filters` (with the `_dimension` / `_metric` suffix added there).
 
 ### Simplified `maps` shortcuts (MCP-only)
 

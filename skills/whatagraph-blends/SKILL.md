@@ -182,6 +182,8 @@ One row per date (or per join-key value) with the unified metrics summed across 
 
 To preview per-sub-source values, call `fetch-data` on each sub-source's integration source id individually with its own native or universal field ids.
 
+> **Verify the build.** After building or bulk-swapping, `export-report report_id=<id>` (or `list-widgets action=csv_export` per widget) and confirm every widget's `data_status` is `ready` with non-empty rows and expected metric names. `list-widgets action=show` is NOT sufficient — it echoes ids, not loaded data.
+
 ## Deleting a blend
 
 Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: no usage guard in the tool, widgets referencing the blend break, pre-check `list-blends action=show blend_id=<id>` → `widgets_count`.

@@ -53,6 +53,8 @@ manage-automations action=create
 | `monthly`, `bi_monthly` | `"first_day_month"`, `"last_day_month"`, or a specific day like `"day_5"` |
 | `quarterly`, `yearly` | same day syntax |
 
+> **Warning:** an automation emails real recipients on a schedule. When setting one up on a user's behalf, test with your own (or the user's own) address first, or set `needs_approval=true` so nothing goes out without review. Create and update responses echo the saved `receivers` (verified Jun 2026) — check them before calling it done.
+
 ### Key parameter naming
 
 - `time_zone` (with underscore) — IANA format, e.g. `"Europe/Vilnius"`.

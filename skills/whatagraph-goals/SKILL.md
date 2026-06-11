@@ -97,6 +97,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 
 - Bulk create goals — one at a time.
 - Custom pacing schedules — linear only; for seasonal/custom pacing, reach out to support.
+- Read goal progress/attainment — `view-goals` returns the goal's **configuration only**, no current values. To show progress, render a Goal widget (`widget_type_id=123`) and read it via `export-report`, or `fetch-data` the underlying metric and compare it to `max_value` yourself.
 
 ## Common pitfalls
 
