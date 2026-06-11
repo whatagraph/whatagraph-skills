@@ -5,12 +5,11 @@ required_tools:
   - list-report-tabs
   - manage-report-tabs
   - manage-widgets
-  - delete-report-tabs
 ---
 
 # Report tabs (pages)
 
-Tools covered: `list-report-tabs`, `manage-report-tabs`, `delete-report-tabs`.
+Tools covered: `list-report-tabs`, `manage-report-tabs`.
 
 A **tab** is a page inside a report. Each tab holds its own widgets. Reports can have one or many tabs; tabs appear in the top navigation of the report.
 
@@ -83,14 +82,11 @@ manage-report-tabs action=move_widgets
 
 Widgets retain their configs and sources; only their tab assignment changes.
 
+> **Verify the build.** After building or bulk-swapping, `export-report report_id=<id>` (or `list-widgets action=csv_export` per widget) and confirm every widget's `data_status` is `ready` with non-empty rows and expected metric names. `list-widgets action=show` is NOT sufficient — it echoes ids, not loaded data.
+
 ## Deleting / restoring a tab
 
-```
-delete-report-tabs action=delete  report_id=<id> tab_id=<id>
-delete-report-tabs action=restore report_id=<id> tab_id=<id>   # soft-delete undo
-```
-
-A deleted tab's widgets are soft-deleted along with it. Restore puts them back. Always confirm with the user before deleting a tab with many widgets. A report must keep **at least one tab** — deleting the last remaining tab is rejected; add or duplicate a replacement tab first.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: soft-delete with a `restore` action, the tab's widgets soft-delete and restore with it, a report must keep at least one tab.
 
 ## What MCP can't do here
 
@@ -100,7 +96,7 @@ A deleted tab's widgets are soft-deleted along with it. Restore puts them back. 
 ## Common pitfalls
 
 - **`sort` with a partial list** — must include every tab id. Missing ids cause rejection.
-- **Leftover empty "New tab"** — the UI auto-creates an empty tab on new reports; clean up with an update or delete in UI.
+- **Leftover empty "New tab"** — the UI auto-creates an empty tab on new reports; rename it with `manage-report-tabs action=update`, or delete it (see `whatagraph-deleting`).
 - **Duplicate tab with widgets on disconnected sources** — duplication preserves broken state; `change_sources` on the report after duplicating.
 - **Too many tabs (10+)** — client-facing reports with 10+ tabs overwhelm readers. Consolidate into a few themes.
 - **Moving widgets across reports** — not supported; widgets are scoped to their report. Duplicate the widget in target report, delete original.

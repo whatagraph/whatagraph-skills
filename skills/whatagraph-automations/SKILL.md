@@ -5,12 +5,11 @@ required_tools:
   - list-automations
   - list-sources
   - manage-automations
-  - delete-automations
 ---
 
 # Automations (scheduled report delivery)
 
-Tools covered: `list-automations`, `manage-automations`, `delete-automations`.
+Tools covered: `list-automations`, `manage-automations`.
 
 An **automation** = one report + a schedule + a list of email recipients. Multiple automations per report are allowed (e.g. weekly to the ops team, monthly to executives).
 
@@ -54,6 +53,8 @@ manage-automations action=create
 | `monthly`, `bi_monthly` | `"first_day_month"`, `"last_day_month"`, or a specific day like `"day_5"` |
 | `quarterly`, `yearly` | same day syntax |
 
+> **Warning:** an automation emails real recipients on a schedule. When setting one up on a user's behalf, test with your own (or the user's own) address first, or set `needs_approval=true` so nothing goes out without review. Create and update responses echo the saved `receivers` (verified Jun 2026) — check them before calling it done.
+
 ### Key parameter naming
 
 - `time_zone` (with underscore) — IANA format, e.g. `"Europe/Vilnius"`.
@@ -87,11 +88,7 @@ Pass via `options.pdf_settings={...}` for advanced PDF options. Check `list-auto
 
 ## Deleting an automation
 
-```
-delete-automations action=delete report_id=<id> automation_id=<id>
-```
-
-Stops future deliveries immediately. Confirm with the user first if recipients are relying on the schedule.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: needs both `report_id` and `automation_id`, stops future deliveries immediately, confirm first if recipients rely on the schedule.
 
 ## What MCP can't do here
 

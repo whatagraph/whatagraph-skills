@@ -8,12 +8,11 @@ required_tools:
   - manage-reports
   - manage-source-groups
   - manage-widgets
-  - delete-source-groups
 ---
 
 # Source groups
 
-Tools covered: `list-source-groups`, `manage-source-groups`, `delete-source-groups`.
+Tools covered: `list-source-groups`, `manage-source-groups`.
 
 A **source group** aggregates multiple sources into one virtual source. Sources can be from the same channel (e.g. multiple Google Ads accounts) or from different channels (e.g. Meta Ads + Google Ads + Reddit Ads + TikTok — cross-channel aggregation). The group gets its own integration source id that widgets, blends, and custom metrics can reference as if it were a single source.
 
@@ -45,6 +44,14 @@ list-source-groups action=source_issues group_id=<id> # sources with disabled ET
 
 ## Creating a source group
 
+**Discover valid `output_name` values first** — they vary by channel and channel combination:
+
+```
+list-source-groups action=list_output_names source_ids=[<src1>, <src2>]
+```
+
+Premade output templates routinely come back with `name: null` — **`output_name` is the identifier; a null display name does NOT mean the entry is invalid** (verified Jun 2026). Pick the `output_name` matching the granularity you need, then create:
+
 ```
 manage-source-groups action=create
    name="Acme — Google Ads Rollup"
@@ -57,7 +64,7 @@ manage-source-groups action=create
 ### Parameters
 
 - `name` — group display name.
-- `configs` — required. Each entry `{output_name: "<level>"}` where `<level>` is the granularity the group should expose: campaign performance, ad / ad-group performance, keyword performance, audience performance, geo performance, etc. Pick the level that matches the widgets you'll build on top — one config per level, and prefer one config per group (see "One config per group" below). The exact string is the **source-group template name** for that channel, *not* the channel-native report type external id you see in `list-sources action=list_report_types`. For most channels the template name is the report type with a `_performance` suffix — e.g. Google Ads `campaign` → `campaign_performance`, `ad_group` → `ad_group_performance`, `geo_view` → `geo_performance` — but Facebook Ads and others diverge (see the per-channel reference table below). If the API rejects an `output_name`, the error response lists every valid template name for that channel; copy one verbatim.
+- `configs` — required. Each entry `{output_name: "<level>"}` where `<level>` is the granularity the group should expose: campaign performance, ad / ad-group performance, keyword performance, audience performance, geo performance, etc. Pick the level that matches the widgets you'll build on top — one config per level, and prefer one config per group (see "One config per group" below). The exact string is the **source-group template name** for that channel, *not* the channel-native report type external id you see in `list-sources action=list_report_types`. For most channels the template name is the report type with a `_performance` suffix — e.g. Google Ads `campaign` → `campaign_performance`, `ad_group` → `ad_group_performance`, `geo_view` → `geo_performance` — but Facebook Ads and others diverge (see the per-channel reference table below). Discover the valid set with `list-source-groups action=list_output_names source_ids=[...]`.
 - `integration_source_ids` — array of source ids from `list-sources action=list`. Sources can be from the same channel or different channels (cross-channel aggregation is supported).
 - `currency` — optional. Display currency.
 - `configs[].dimensions` — optional. Array of `{external_id, name}` objects to select specific dimensions. When omitted, all template dimensions are used.
@@ -77,7 +84,7 @@ Template names diverge across channels — Google Ads-flavoured names like `camp
 | Snapchat | `campaign_performance` |
 | GA4 | TBD — not exercised in QA |
 
-When in doubt, send a deliberately wrong `output_name` and read the rejection — the error response enumerates every valid template name for that channel.
+Prefer `list-source-groups action=list_output_names source_ids=[...]` to discover the valid set for your exact sources. As a last resort only, a rejected `output_name` returns an error that enumerates every valid template name for that channel.
 
 ## One config per group (strongly recommended)
 
@@ -164,11 +171,7 @@ Notes:
 
 ## Deleting a source group
 
-```
-delete-source-groups action=delete group_id=<id>
-```
-
-Widgets and custom metrics that point at the group's virtual source will break. Run `list-source-groups action=show group_id=<id>` first and check usage; rebuild widgets to reference individual sources before deleting.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: permanent (the virtual source is removed), widgets and custom metrics pointing at the group break, pre-check `list-source-groups action=show group_id=<id>`. To *change* a group, always use `update` — never delete-and-recreate (see above).
 
 ## What MCP can't do here
 

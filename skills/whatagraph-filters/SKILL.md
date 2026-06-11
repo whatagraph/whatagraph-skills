@@ -6,12 +6,11 @@ required_tools:
   - list-sources
   - list-widgets
   - manage-filters
-  - delete-filters
 ---
 
 # Filters
 
-Tools covered: `list-filters`, `manage-filters`, `delete-filters`.
+Tools covered: `list-filters`, `manage-filters`.
 
 A **filter** belongs to a channel and is a reusable set of dimension or metric conditions. Filters are organized as row groups; within a row group conditions use OR, across row groups conditions use AND.
 
@@ -103,11 +102,7 @@ Update applies to ALL rows in the filter — useful for renaming a value or swit
 
 ## Deleting a filter
 
-```
-delete-filters filter_id=<id>
-```
-
-This tool takes only `filter_id` — no `action` parameter. Soft-delete. Widgets referencing the filter lose the filter behavior but keep rendering.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: soft delete, requires `action=delete` + `filter_id`, widgets referencing the filter keep rendering (unfiltered).
 
 ## Attaching a filter
 

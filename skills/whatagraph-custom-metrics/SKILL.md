@@ -10,12 +10,11 @@ required_tools:
   - manage-custom-dimensions
   - manage-custom-metrics
   - manage-widgets
-  - delete-custom-metrics
 ---
 
 # Custom metrics
 
-Tools covered: `list-custom-metrics`, `manage-custom-metrics`, `delete-custom-metrics`.
+Tools covered: `list-custom-metrics`, `manage-custom-metrics`.
 
 A **custom metric** is a calculated field that behaves like any other metric. Use it in a widget, in a blend, in a goal, or in an overview.
 
@@ -204,6 +203,10 @@ list-custom-metrics action=usage universal_metric_ids=[<id>]
 ```
 
 Returns the number of widgets/reports affected.
+
+## Deleting custom metrics
+
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: permanent, batch-only (`metric_ids` array, all-or-nothing ID validation), pre-check `list-custom-metrics action=usage`.
 
 ## Using a custom metric in `fetch-data`
 

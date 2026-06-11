@@ -96,6 +96,8 @@ Are all the sources the same channel (e.g. all Google Ads)?
 11. `manage-sharing action=create report_id=<id> require_password=true password="<share_password>"` — generate the client share link.
 12. `manage-automations action=create` — schedule monthly delivery.
 
+> **Verify the build.** After building or bulk-swapping, `export-report report_id=<id>` (or `list-widgets action=csv_export` per widget) and confirm every widget's `data_status` is `ready` with non-empty rows and expected metric names. `list-widgets action=show` is NOT sufficient — it echoes ids, not loaded data.
+
 ### 2. Cross-channel paid media report
 
 Inputs: Google Ads, Meta Ads, LinkedIn Ads sources; GA4 for revenue.

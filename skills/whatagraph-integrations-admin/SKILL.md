@@ -7,13 +7,11 @@ required_tools:
   - list-spaces
   - manage-integrations
   - manage-sources
-  - delete-sources
-  - remove-integrations
 ---
 
 # Integrations & sources admin
 
-Tools covered: `list-integrations`, `manage-integrations`, `manage-sources`, `remove-integrations`.
+Tools covered: `list-integrations`, `manage-integrations`, `manage-sources`.
 
 An **integration** (also called a channel) is an OAuth-authenticated connection to a third-party platform. Each integration has one or more **accounts** (authenticated user/admin accounts). Each account exposes **sources** (sub-accounts, properties, ad accounts). Sources are what show up in the source picker.
 
@@ -73,17 +71,15 @@ Find `tag_id` and `tag_value_ids` via `list-sources action=list_metadata`.
 
 ## Removing sources or an entire account
 
-```
-remove-integrations action=remove_sources account_id=<id> source_ids=[<id>, <id>]
-remove-integrations action=delete_account  account_id=<id>
-```
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Pick the right scope first:
 
-- `remove_sources` — drop specific sources from an authenticated account. Other sources on the same account stay connected.
-- `delete_account` — disconnect the entire authenticated account. All its sources go with it.
+| You want to… | Use |
+|---|---|
+| Detach sources from this team only (account untouched, other teams unaffected) | `delete-sources` |
+| Drop specific sources from an authenticated account | `remove-integrations action=remove_sources` |
+| Disconnect the entire authenticated account (all its sources go; OAuth re-connect to re-add) | `remove-integrations action=delete_account` |
 
-Both operations are high-impact. Always check `list-sources action=list_usage source_ids=[...]` first — widgets, blends, source groups, and measurements referencing the removed sources break.
-
-To delete sources without touching the account (e.g., clean up individual sources at the team level), see `delete-sources` in `whatagraph-sources-and-data`.
+All three are high-impact: always check `list-sources action=list_usage source_ids=[...]` first — widgets, blends, source groups, and measurements referencing the removed sources break.
 
 ## What MCP can't do here
 

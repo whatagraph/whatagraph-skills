@@ -6,12 +6,11 @@ required_tools:
   - manage-integrations
   - manage-members
   - manage-spaces
-  - delete-spaces
 ---
 
 # Spaces (client folders)
 
-Tools covered: `list-spaces`, `manage-spaces`, `delete-spaces`.
+Tools covered: `list-spaces`, `manage-spaces`.
 
 A **space** is a top-level container that organizes reports and data sources. In the UI it's labeled as a space or folder. Every team has a "Home" space by default (not editable).
 
@@ -57,11 +56,7 @@ Cannot update the Home space.
 
 ## Deleting a space
 
-```
-delete-spaces action=delete client_id=<id>
-```
-
-The parameter is `client_id` (same as on create/update). Reports and measurements inside the space are soft-deleted with it; support can restore within the retention window. Cannot delete the Home space. Always confirm with the user — deleting a client folder is visible to the whole team.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: the parameter is `client_id`, reports and measurements inside soft-delete with it (support-restorable), the Home space cannot be deleted.
 
 ## What MCP can't do here
 

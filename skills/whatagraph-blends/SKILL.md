@@ -12,12 +12,11 @@ required_tools:
   - manage-source-groups
   - manage-sources
   - manage-widgets
-  - delete-blends
 ---
 
 # Blends
 
-Tools covered: `list-blends`, `manage-blends`, `delete-blends`.
+Tools covered: `list-blends`, `manage-blends`.
 
 A **blend** joins 2+ sources into a single virtual source. The blend has its own integration source id, so widgets and custom metrics can treat the blend like any other source.
 
@@ -183,13 +182,11 @@ One row per date (or per join-key value) with the unified metrics summed across 
 
 To preview per-sub-source values, call `fetch-data` on each sub-source's integration source id individually with its own native or universal field ids.
 
+> **Verify the build.** After building or bulk-swapping, `export-report report_id=<id>` (or `list-widgets action=csv_export` per widget) and confirm every widget's `data_status` is `ready` with non-empty rows and expected metric names. `list-widgets action=show` is NOT sufficient — it echoes ids, not loaded data.
+
 ## Deleting a blend
 
-```
-delete-blends action=delete blend_id=<id>
-```
-
-Before deleting, check for usage — `list-blends action=show blend_id=<id>` returns `widgets_count`. Widgets referencing the blend will need to be updated after delete.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: no usage guard in the tool, widgets referencing the blend break, pre-check `list-blends action=show blend_id=<id>` → `widgets_count`.
 
 ## Common pitfalls
 

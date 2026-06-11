@@ -7,12 +7,11 @@ required_tools:
   - manage-members
   - manage-sources
   - manage-team
-  - remove-members
 ---
 
 # Team & members
 
-Tools covered: `view-team`, `manage-team`, `manage-members`, `remove-members`.
+Tools covered: `view-team`, `manage-team`, `manage-members`.
 
 ## View team info and subscription
 
@@ -74,11 +73,7 @@ manage-members action=resend_invite invite_id=<id>
 
 ## Cancelling a pending invitation
 
-```
-remove-members action=cancel_invite invite_id=<id>
-```
-
-Only cancels a *pending* invite. Once the person has accepted and is an active member, use the UI to revoke their seat — MCP does not expose member removal.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: `remove-members` only cancels *pending* invites, `invite_id` comes from `manage-members`, accepted members can only be removed in the UI.
 
 ## What MCP can't do here
 

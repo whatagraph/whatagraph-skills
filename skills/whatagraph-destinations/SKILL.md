@@ -52,12 +52,16 @@ list-destinations action=list_jobs transfer_id=<id> config_id=<id>
 
 `state` values: `queued`, `running`, `completed`, `issue`.
 
+## Deleting a transfer
+
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: `delete-destinations action=delete transfer_id=<id>`, stops the outbound transfer, already-delivered data in the destination is untouched.
+
 ## What MCP can't do here
 
 - Create a new transfer — UI only.
 - Update or pause a transfer — UI only.
 - Trigger a manual sync — UI only.
-- Delete a transfer or reset its jobs — UI only.
+- Reset a transfer's jobs — UI only.
 
 ## Common pitfalls
 
