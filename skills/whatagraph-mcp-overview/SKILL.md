@@ -59,6 +59,7 @@ Data flows into widgets from:
 | Pushing data to BigQuery / data warehouse | `whatagraph-destinations` |
 | Inviting teammates, roles, subscription | `whatagraph-team-and-members` |
 | Connecting a new integration account to the team | `whatagraph-integrations-admin` |
+| Deleting, removing, disconnecting, revoking anything | `whatagraph-deleting` |
 | Patterns that cross multiple domains | `whatagraph-customer-patterns` |
 
 ## Analysis, insight & troubleshooting tasks
@@ -85,7 +86,7 @@ These read-only workflow skills sit on top of the domain skills above — reach 
 1. **Never guess IDs.** Always discover them with a `list-*` or `view-*` tool first. Every write tool (`manage-*`, `delete-*`) takes IDs returned by the corresponding read tool.
 2. **Respect `retry_after` on `fetch-data`.** When the response indicates data is being prepared, wait that many seconds and retry with the same parameters. Do not escalate to the user as an error.
 3. **Read before writing.** Before a `manage-*` call, run the matching `list-*` / `show` action to confirm the asset exists and see its current shape.
-4. **Confirm destructive actions.** For `delete-*` tools, always confirm intent with the user first. Deletes are not reversible from the MCP surface.
+4. **Confirm destructive actions.** Always confirm intent with the user before any `delete-*` / `remove-*` call — there is no `confirm` parameter; the confirmation is you asking. Recovery varies: widgets and report tabs have a `restore` action, reports and spaces are restorable by support within a retention window, custom metrics/dimensions, source groups, and snapshots are permanently gone. Load `whatagraph-deleting` before any delete or removal.
 5. **Check `show` after a write.** After a create/update, re-fetch via `show` to confirm the change landed as expected.
 6. **Attach a source to the report before pointing a widget at it.** `manage-widgets` only accepts the report-local `sources.id`. Use `manage-reports action=attach_source integration_source_id=<global_id>` first — the response includes the report-local `source_id` to pass into `manage-widgets`. The same flow works for source groups and blends (they are data sources too). When updating a widget config without supplying the existing `config.id`, the platform creates a fresh report-local source mapping rather than reusing the existing one — leading to duplicate report-local sources for the same global integration source. Either always pass the existing `config.id` (recommended) or run `list-reports action=list_sources` after each such update to detect orphans.
 7. **Some write/delete tools require access.** If a `manage-*` / `delete-*` call is not available for a team, continue with the available read tools and explain which action needs enablement.
