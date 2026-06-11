@@ -165,13 +165,64 @@ Known `options` shapes:
 - **Funnel** (`widget_type_id=115`): each funnel **stage is its own row** with a single metric — one metric per row, in stage order. Putting multiple metrics in one config renders a single 100% stage instead of a multi-stage funnel.
 - **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads.
 
-## Toggle breakdown on pie / donut / bar
+## Breakdown vs non-breakdown (pie / donut / bar)
+
+Pie, donut, bar, and column charts have two distinct modes that determine how slices/segments are generated:
+
+**Breakdown mode** (`breakdowns_enabled: true`) — a single row with one metric and one dimension. The dimension values drive the slices (e.g. "clicks by ad group name"). Do not add multiple rows. Always set `breakdowns_show: true` when `breakdowns_enabled` is `true`.
+
+```
+manage-widgets action=create
+   report_id=<id>
+   tab_id=<tab_id>
+   channel_id=<channel_id>
+   widget_type_id=109                    # donut, pie, bar, column
+   source_id=<report_local_source_id>
+   options={"width": 4, "height": 3, "breakdowns_enabled": true, "breakdowns_show": true}
+   rows=[
+     {
+       "options": {"title": "Clicks", "metrics": [...], "dimensions": [...]},
+       "configs": [{"options": {"metrics": [...], "dimensions": [...], "report_type": "..."}}]
+     }
+   ]
+```
+
+**Non-breakdown mode** (`breakdowns_enabled: false`) — multiple rows, each with a different metric and **no dimensions**. Each row becomes a slice (e.g. "impressions vs clicks"). Set `breakdowns_show: true` to allow users to toggle breakdown on in the UI.
+
+```
+manage-widgets action=create
+   report_id=<id>
+   tab_id=<tab_id>
+   channel_id=<channel_id>
+   widget_type_id=109
+   source_id=<report_local_source_id>
+   options={"width": 4, "height": 3, "breakdowns_enabled": false, "breakdowns_show": true}
+   rows=[
+     {
+       "options": {"title": "Impressions", "metrics": [...]},
+       "configs": [{"options": {"metrics": [...], "report_type": "..."}}]
+     },
+     {
+       "options": {"title": "Clicks", "metrics": [...]},
+       "configs": [{"options": {"metrics": [...], "report_type": "..."}}]
+     }
+   ]
+```
+
+| | Breakdown | Non-breakdown |
+|---|---|---|
+| Slices driven by | Dimension values | Multiple metric rows |
+| Rows | 1 row: 1 metric + 1 dimension | N rows: 1 metric each, no dimensions |
+| `breakdowns_enabled` | `true` | `false` |
+| Use case | "Show clicks split by ad group" | "Compare impressions vs clicks" |
+
+### Toggle breakdown (use with caution)
 
 ```
 manage-widgets action=toggle_breakdown report_id=<id> widget_id=<id>
 ```
 
-This flips the display-only breakdown flag and **preserves the widget's metric/dimension bindings** — it does not rebuild the config from a template.
+> **Warning:** `toggle_breakdown` **deletes all existing rows** and reinitializes them from the integration's default template. Any custom metric, dimension, or report type bindings are lost and replaced with defaults. Only use this on widgets with default configs. For widgets with custom bindings, set `breakdowns_enabled` via `options` at create time or via `manage-widgets action=update` instead.
 
 ## Duplicate
 
