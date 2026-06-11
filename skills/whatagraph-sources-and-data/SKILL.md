@@ -7,13 +7,11 @@ required_tools:
   - fetch-data
   - manage-integrations
   - manage-sources
-  - delete-sources
-  - remove-integrations
 ---
 
 # Data sources and fetching data
 
-Tools covered: `list-sources`, `list-integrations`, `fetch-data`, `manage-sources`, `delete-sources`.
+Tools covered: `list-sources`, `list-integrations`, `fetch-data`, `manage-sources`.
 
 A **data source** is one connected account (one Google Ads account, one GA4 property, one Shopify store). A **channel** (or integration) is the type of account (Google Ads, GA4, Shopify). Users often say "my Facebook account" when they mean a Facebook Ads data source.
 
@@ -158,11 +156,7 @@ manage-sources action=tag
 
 ## Deleting sources
 
-```
-delete-sources action=delete source_ids=[<id>, <id>]
-```
-
-Batch delete. High-impact — always run `list-sources action=list_usage source_ids=[...]` first. Widgets, blends, source groups, and measurements that reference the source break after delete. To disconnect at the account level instead (leaves the source in other teams untouched), see `remove-integrations action=remove_sources` in `whatagraph-integrations-admin`.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: team-level detach (other teams unaffected, reconnect to restore), dependent widgets/blends/groups/measurements break, pre-check `list-sources action=list_usage source_ids=[...]`.
 
 ## What MCP can't do here
 

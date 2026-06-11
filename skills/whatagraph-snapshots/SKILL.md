@@ -7,12 +7,11 @@ required_tools:
   - manage-reports
   - manage-sharing
   - manage-snapshots
-  - delete-snapshots
 ---
 
 # Snapshots
 
-Tools covered: `list-snapshots`, `manage-snapshots`, `delete-snapshots`.
+Tools covered: `list-snapshots`, `manage-snapshots`.
 
 A **snapshot** captures a report's structure (tabs, widget configs, layout, theme) at a point in time. Data values are not stored — they re-query at view time against current sources.
 
@@ -47,11 +46,7 @@ Restore rewrites the report's tabs, widgets, and layout to the snapshot state. *
 
 ## Deleting a snapshot
 
-```
-delete-snapshots action=delete report_id=<id> snapshot_id=<id>
-```
-
-Irreversible — the saved state is gone. Keep at least one recent snapshot before cleanup if the report is under active editing.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: permanent (no restore of any kind), needs both `report_id` and `snapshot_id`, keep at least one recent snapshot on actively edited reports.
 
 ## What MCP can't do here
 

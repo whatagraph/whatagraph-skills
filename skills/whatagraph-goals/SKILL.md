@@ -6,12 +6,11 @@ required_tools:
   - view-goals
   - manage-goals
   - manage-widgets
-  - delete-goals
 ---
 
 # Goals
 
-Tools covered: `view-goals`, `manage-goals`, `delete-goals`.
+Tools covered: `view-goals`, `manage-goals`.
 
 A **goal** is a target value on a metric for a specific period (daily, weekly, monthly, quarterly, yearly, or static). Goals can be hit (`target`), capped (`limit`), or bound to a range.
 
@@ -92,12 +91,7 @@ The widget type "Goal" is how a goal renders in a report. Create via `manage-wid
 
 ## Deleting a goal
 
-```
-delete-goals action=delete goal_id=<id>
-delete-goals action=delete goal_ids=[<id>, <id>, ...]   # bulk delete in one call
-```
-
-Any goal widgets referencing the deleted goal will show an empty state until re-attached.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: single (`goal_id`) or bulk (`goal_ids`), goal widgets show an empty state until re-attached, IDs come from `view-goals`.
 
 ## What MCP can't do here
 

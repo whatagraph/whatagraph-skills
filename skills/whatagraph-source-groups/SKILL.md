@@ -8,12 +8,11 @@ required_tools:
   - manage-reports
   - manage-source-groups
   - manage-widgets
-  - delete-source-groups
 ---
 
 # Source groups
 
-Tools covered: `list-source-groups`, `manage-source-groups`, `delete-source-groups`.
+Tools covered: `list-source-groups`, `manage-source-groups`.
 
 A **source group** aggregates multiple sources into one virtual source. Sources can be from the same channel (e.g. multiple Google Ads accounts) or from different channels (e.g. Meta Ads + Google Ads + Reddit Ads + TikTok — cross-channel aggregation). The group gets its own integration source id that widgets, blends, and custom metrics can reference as if it were a single source.
 
@@ -164,11 +163,7 @@ Notes:
 
 ## Deleting a source group
 
-```
-delete-source-groups action=delete group_id=<id>
-```
-
-Widgets and custom metrics that point at the group's virtual source will break. Run `list-source-groups action=show group_id=<id>` first and check usage; rebuild widgets to reference individual sources before deleting.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: permanent (the virtual source is removed), widgets and custom metrics pointing at the group break, pre-check `list-source-groups action=show group_id=<id>`. To *change* a group, always use `update` — never delete-and-recreate (see above).
 
 ## What MCP can't do here
 

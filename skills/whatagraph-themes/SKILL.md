@@ -5,12 +5,11 @@ required_tools:
   - list-themes
   - list-widgets
   - manage-themes
-  - delete-themes
 ---
 
 # Themes & color palettes
 
-Tools covered: `list-themes`, `manage-themes`, `delete-themes`.
+Tools covered: `list-themes`, `manage-themes`.
 
 Two concepts:
 - **Theme** — logo, fonts, header/footer layout, overall visual skin.
@@ -116,12 +115,7 @@ Same shapes as `create_color` — `widget_colors`/`additional_colors` are object
 
 ## Deleting a theme or palette
 
-```
-delete-themes action=delete_theme theme_id=<id>
-delete-themes action=delete_color color_id=<id>
-```
-
-Reports currently using the theme/palette fall back to the team default. Switch the affected reports to a replacement first (`manage-themes action=enable_theme` / `enable_color`) before deleting the source asset.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: two actions (`delete_theme` / `delete_color`), affected reports fall back to the team default, switch them to a replacement first via `enable_theme` / `enable_color`.
 
 ## What MCP can't do here
 

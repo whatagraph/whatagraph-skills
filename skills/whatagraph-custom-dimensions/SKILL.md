@@ -6,12 +6,11 @@ required_tools:
   - list-sources
   - manage-custom-dimensions
   - manage-filters
-  - delete-custom-dimensions
 ---
 
 # Custom dimensions
 
-Tools covered: `list-custom-dimensions`, `manage-custom-dimensions`, `delete-custom-dimensions`.
+Tools covered: `list-custom-dimensions`, `manage-custom-dimensions`.
 
 A **custom dimension** is a derived field that groups, labels, or aliases existing dimension values. Once created, it appears in `list-sources action=list_dimensions_and_metrics` and can be used in widgets, blends, filters, and overviews.
 
@@ -181,11 +180,7 @@ list-custom-dimensions action=usage universal_dimension_ids=[<id>]
 
 ## Deleting custom dimensions
 
-```
-delete-custom-dimensions action=delete dimension_ids=[<id>, <id>]
-```
-
-Batch delete by ID list. Run `list-custom-dimensions action=usage universal_dimension_ids=[<id>]` first — widgets and filters relying on the dimension will show blank values after deletion.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: permanent (mappings, tags, and fields go with it), dependent widgets/filters show blank values, pre-check `list-custom-dimensions action=usage`.
 
 ## Common pitfalls
 

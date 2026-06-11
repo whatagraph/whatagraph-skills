@@ -4,12 +4,11 @@ description: Create and update public share links for reports with optional pass
 required_tools:
   - view-sharing
   - manage-sharing
-  - delete-sharing
 ---
 
 # Sharing, PDF, Excel
 
-Tools covered: `view-sharing`, `manage-sharing`, `delete-sharing`.
+Tools covered: `view-sharing`, `manage-sharing`.
 
 A **share** is a public, view-only URL for a report. Anyone with the link (and optional password) can view; no login required.
 
@@ -90,7 +89,7 @@ Returns an Excel file with the report's widget data.
 delete-sharing action=delete report_id=<id> share_id=<id>
 ```
 
-Invalidates the public URL immediately — anyone with the old link gets a 404. Use when a client relationship ends or a password leaked. Do this before regenerating a share so stale links don't linger.
+Invalidates the public URL immediately — anyone with the old link gets a 404. Use when a client relationship ends or a password leaked. Do this before regenerating a share so stale links don't linger. To invalidate viewer sessions while keeping the link, change the password via `update` instead — see `whatagraph-deleting` for the full destructive-action playbook.
 
 ## What MCP can't do here
 

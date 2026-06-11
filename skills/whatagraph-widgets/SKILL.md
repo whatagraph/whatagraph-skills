@@ -11,12 +11,11 @@ required_tools:
   - export-report
   - manage-report-tabs
   - manage-widgets
-  - delete-widgets
 ---
 
 # Widgets
 
-Tools covered: `list-widgets`, `manage-widgets`, `delete-widgets`.
+Tools covered: `list-widgets`, `manage-widgets`.
 
 A **widget** is a visual data component on a tab. Widgets are typed (KPI card, line chart, table, pie chart, etc.) and each has a data source (or no source for comment/image widgets). Widgets expose rows and configs — a row groups metrics and dimensions; configs define the data.
 
@@ -222,7 +221,7 @@ manage-widgets action=create
 manage-widgets action=toggle_breakdown report_id=<id> widget_id=<id>
 ```
 
-> **Warning:** `toggle_breakdown` **deletes all existing rows** and reinitializes them from the integration's default template. Any custom metric, dimension, or report type bindings are lost and replaced with defaults. Only use this on widgets with default configs. For widgets with custom bindings, set `breakdowns_enabled` via `options` at create time or via `manage-widgets action=update` instead.
+> **Warning:** `toggle_breakdown` **deletes all existing rows** and reinitializes them from the integration's default template. Any custom metric, dimension, or report type bindings are lost and replaced with defaults. Only use this on widgets with default configs. For widgets with custom bindings, set `breakdowns_enabled` via `options` at create time or via `manage-widgets action=update` instead. (One of the destructive modes catalogued in `whatagraph-deleting`.)
 
 ## Duplicate
 
@@ -272,13 +271,7 @@ The report uses a **6-column grid**. Every widget occupies a rectangle defined b
 
 ## Deleting widgets
 
-```
-delete-widgets action=delete       report_id=<id> widget_id=<id>
-delete-widgets action=batch_delete report_id=<id> widget_ids=[<id>, <id>, <id>]
-delete-widgets action=restore      report_id=<id> widget_id=<id>   # undo a soft-delete
-```
-
-Deletes are soft — a restore window exists. Calling delete on an already-deleted widget is idempotent (returns `already_deleted: true`). Confirm with the user before deleting widgets that have unique configs (formulas, custom filters) that aren't easily recreated.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: soft-delete with a `restore` action, batch via `batch_delete`, idempotent on already-deleted widgets. Note that delete-and-recreate is the documented workaround when a metric `external_id` update no-ops (see Common pitfalls).
 
 ## What MCP can't do here
 

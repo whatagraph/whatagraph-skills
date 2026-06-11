@@ -5,12 +5,11 @@ required_tools:
   - list-automations
   - list-sources
   - manage-automations
-  - delete-automations
 ---
 
 # Automations (scheduled report delivery)
 
-Tools covered: `list-automations`, `manage-automations`, `delete-automations`.
+Tools covered: `list-automations`, `manage-automations`.
 
 An **automation** = one report + a schedule + a list of email recipients. Multiple automations per report are allowed (e.g. weekly to the ops team, monthly to executives).
 
@@ -87,11 +86,7 @@ Pass via `options.pdf_settings={...}` for advanced PDF options. Check `list-auto
 
 ## Deleting an automation
 
-```
-delete-automations action=delete report_id=<id> automation_id=<id>
-```
-
-Stops future deliveries immediately. Confirm with the user first if recipients are relying on the schedule.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: needs both `report_id` and `automation_id`, stops future deliveries immediately, confirm first if recipients rely on the schedule.
 
 ## What MCP can't do here
 

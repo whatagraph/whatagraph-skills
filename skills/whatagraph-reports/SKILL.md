@@ -11,12 +11,11 @@ required_tools:
   - manage-report-tabs
   - manage-reports
   - manage-widgets
-  - delete-reports
 ---
 
 # Reports
 
-Tools covered: `list-reports`, `manage-reports`, `delete-reports`.
+Tools covered: `list-reports`, `manage-reports`.
 
 A **report** is a named container of tabs and widgets, scoped to a single **space** (client folder). Reports can be created blank, from a template (linked, auto-updating), or duplicated from an existing report.
 
@@ -151,11 +150,9 @@ Use `list-reports action=list_sources report_id=<id>` to discover current source
 
 ## Deleting a report
 
-```
-delete-reports action=delete report_id=<id>
-```
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: soft-delete (support-restorable within a retention window, not via MCP), pre-check `list-templates action=linked_reports` if it might be template-linked.
 
-Soft-delete — the report disappears from the space but can be restored by support for a retention window. Always confirm with the user, and check `list-templates action=linked_reports` first if the report is linked to a template.
+The `detach_source` action above is also destructive when called with `delete_widgets=true` — that behavior stays documented here because it's core to source migration; `whatagraph-deleting` covers it under "Deletes hiding in manage tools".
 
 ## What MCP can't do here
 

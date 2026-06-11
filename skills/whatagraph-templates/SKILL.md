@@ -5,12 +5,11 @@ required_tools:
   - list-templates
   - manage-reports
   - manage-templates
-  - delete-templates
 ---
 
 # Templates
 
-Tools covered: `list-templates`, `manage-templates`, `delete-templates`, plus `manage-reports action=create_from_template`.
+Tools covered: `list-templates`, `manage-templates`, plus `manage-reports action=create_from_template`.
 
 A **template** is a reusable report blueprint. Reports created `from_template` are **linked** — structural changes to the template automatically propagate into the linked reports.
 
@@ -74,11 +73,7 @@ Returns the list of reports that will auto-update when the template changes. Rev
 
 ## Deleting a template
 
-```
-delete-templates action=delete template_id=<id>
-```
-
-Reports linked to the template stay in place but lose future auto-updates. Run `list-templates action=linked_reports template_id=<id>` first — deleting a widely-used template stops an agency's standardization pipeline.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: linked reports survive but lose future auto-updates (benign cascade), pre-check `list-templates action=linked_reports template_id=<id>`.
 
 ## What MCP can't do here
 
