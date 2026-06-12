@@ -83,7 +83,7 @@ These read-only workflow skills sit on top of the domain skills above — reach 
 
 ## Ground rules for every MCP call
 
-1. **Never guess IDs.** Always discover them with a `list-*` or `view-*` tool first. Every write tool (`manage-*`, `delete-*`) takes IDs returned by the corresponding read tool.
+1. **Never guess IDs.** Always discover them with a `list-*` or `view-*` tool first. Every write tool (`manage-*`, `delete-*`) takes IDs returned by the corresponding read tool. Channel (integration) ids are no exception — resolve them via `list-sources action=list_metadata scope=integrations` instead of reusing numbers remembered from examples or other accounts; wherever a `channel_id` is accepted, the channel slug (e.g. `"google-ads"`) also works and is safer than a bare number (verified Jun 2026).
 2. **Respect `retry_after` on `fetch-data`.** When the response indicates data is being prepared, wait that many seconds and retry with the same parameters. Do not escalate to the user as an error.
 3. **Read before writing.** Before a `manage-*` call, run the matching `list-*` / `show` action to confirm the asset exists and see its current shape.
 4. **Confirm destructive actions.** Always confirm intent with the user before any `delete-*` / `remove-*` call — there is no `confirm` parameter; the confirmation is you asking. Recovery varies: widgets and report tabs have a `restore` action, reports and spaces are restorable by support within a retention window, custom metrics/dimensions, source groups, and snapshots are permanently gone. Load `whatagraph-deleting` before any delete or removal.
