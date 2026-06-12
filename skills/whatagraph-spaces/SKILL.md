@@ -68,4 +68,4 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **`space_id` vs `client_id`** — MCP uses `client_id`. The UI says "space/folder"; the code says `team_client`. All point at the same thing.
 - **Nesting too deep** — 1–2 levels is manageable; 4+ creates a clicky navigation.
 - **Assuming a space owns sources** — sources are assigned to spaces via `manage-integrations action=sync_to_clients`, not at source creation.
-- **Deleting in UI breaks reports** — reports that live in the space are soft-deleted with it; they can be restored via support but not MCP.
+- **Deleting a space cascades to its reports** — reports that live in the space are soft-deleted with it; they can be restored via support but not MCP.

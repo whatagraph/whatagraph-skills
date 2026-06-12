@@ -46,10 +46,11 @@ list-reports action=list_sources report_id=<id>             # sources used by wi
 manage-reports action=create
    client_id=<space_id>
    name="Acme — October 2025"
+   tab_name="Overview"          # optional — names the default tab
 ```
 
 - `client_id` = space id (the `team_client` id). Find via `list-spaces action=list`.
-- The report starts with zero tabs — add tabs via `manage-report-tabs action=create`.
+- A default tab is always created with the report (verified Jun 2026) — pass `tab_name` to name it, otherwise it's unnamed. Add further tabs via `manage-report-tabs action=create`.
 
 ## Create from a template (linked)
 
@@ -91,6 +92,14 @@ manage-reports action=update report_id=<id>
 ```
 
 The report-level date range is the baseline **every widget inherits** unless it sets its own `date_range`. Set it when replicating a report into a new period so the widgets — and the comparison deltas — use the right window. `list-reports action=show` returns the current `period`, `compare_type`, `vs_from`, and `vs_till` alongside `from`/`till`.
+
+## Move a report to another space
+
+```
+manage-reports action=move report_id=<id> client_id=<target_space_id>
+```
+
+`keep_sources` defaults to `true` — attached sources travel with the report. Pass `keep_sources=false` to reset the report to sample data after the move (verified against the served schema, Jun 2026).
 
 ## Attach a data source to a report
 
@@ -159,7 +168,6 @@ The `detach_source` action above is also destructive when called with `delete_wi
 ## What MCP can't do here
 
 - Share a report — see `whatagraph-sharing`.
-- Change a report's space after creation — duplicate into the new space instead.
 - Unlink a template-linked report via MCP — UI only.
 
 ## Common pitfalls

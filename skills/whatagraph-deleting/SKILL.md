@@ -61,6 +61,7 @@ Tools covered: every `delete-*` tool, `remove-integrations`, `remove-members`, p
 | **Permanent** | `delete-custom-metrics`, `delete-custom-dimensions` (and all their related mappings, tags, and fields), `delete-source-groups`, `delete-snapshots` | none |
 | Team-level detach (rows survive globally) | `delete-sources` (detaches from this team only; other teams unaffected) | reconnect the source |
 | Immediate revoke | `delete-sharing` (old link → 404) | create a new share |
+| Everything else (blends, goals, overviews, automations, themes, templates, transfers) | per-entity reference below | no restore path via MCP — treat as permanent and pre-check usage |
 
 ## Check usage first
 
@@ -179,14 +180,13 @@ delete-filters action=delete filter_id=<id>
 
 The schema **requires `action=delete`** alongside `filter_id` (verified Jun 2026). Soft delete — widgets referencing the filter lose the filtering but keep rendering.
 
-**Goals** — single or bulk; IDs come from `view-goals` (there is no `list-goals`):
+**Goals** — batch-only; IDs come from `view-goals` (there is no `list-goals`):
 
 ```
-delete-goals action=delete goal_id=<id>
-delete-goals action=delete goal_ids=[<id>, <id>]
+delete-goals action=delete goal_ids=[<id>, <id>]   # one goal? still a one-element array
 ```
 
-Goal widgets referencing a deleted goal show an empty state until re-attached.
+The schema has no singular `goal_id` (verified Jun 2026). Goal widgets referencing a deleted goal show an empty state until re-attached.
 
 **Overviews (Measurements)** — the parameter is `measurement_id`, not `overview_id`:
 
@@ -227,7 +227,7 @@ Linked reports **survive** — they stay in place and keep their content; they o
 delete-destinations action=delete transfer_id=<id>
 ```
 
-Stops the outbound data transfer (e.g. to BigQuery). The already-delivered data in the destination is untouched.
+Stops the outbound data transfer (e.g. to BigQuery). The transfer config is removed; previously delivered rows in the destination are outside Whatagraph's control.
 
 ### Sharing
 
@@ -278,5 +278,6 @@ These `manage-*` actions are destructive even though their tool names aren't:
 - **Treating `remove-members` as member removal** — it only cancels pending invites.
 - **Treating `delete-sources` as global destruction** — it detaches from your team only; the source survives for other teams and can be reconnected.
 - **One bad ID in a batch delete** — `delete-sources` and `delete-custom-metrics` validate all IDs before deleting anything; one unknown ID fails the entire call (the error lists the missing IDs). Nothing is partially deleted.
+- **Passing `goal_id` to `delete-goals`** — the schema is batch-only; pass `goal_ids`, even for a single goal (one-element array).
 - **Deleting the last tab or the Home space** — both are rejected by invariant; create a replacement tab first / Home is permanent.
 - **Re-running a widget delete after a timeout** — safe: `delete-widgets action=delete` is idempotent and returns `already_deleted: true`.

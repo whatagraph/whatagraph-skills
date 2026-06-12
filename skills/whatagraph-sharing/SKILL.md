@@ -89,7 +89,7 @@ Returns an Excel file with the report's widget data.
 delete-sharing action=delete report_id=<id> share_id=<id>
 ```
 
-Invalidates the public URL immediately — anyone with the old link gets a 404. Use when a client relationship ends or a password leaked. Do this before regenerating a share so stale links don't linger. To invalidate viewer sessions while keeping the link, change the password via `update` instead — see `whatagraph-deleting` for the full destructive-action playbook.
+Invalidates the public URL immediately — anyone with the old link gets a 404. Use when a client relationship ends or a password leaked. Do this before regenerating a share so stale links don't linger. To invalidate viewer sessions while keeping the link, change the password via `update` instead — see `whatagraph-deleting` for the full destructive-action playbook. If `delete-sharing` isn't exposed on this server, load `whatagraph-deleting` to check what is available.
 
 ## What MCP can't do here
 

@@ -75,6 +75,8 @@ manage-themes action=update_theme
 
 Updates an existing custom theme's `name` and/or `options` (header/footer/branding). Fetch the current shape via `list-themes action=list_themes` first and submit the full `options` you want to keep.
 
+> **Warning:** if the theme has `header.apply_to_footer: true` (or `footer.apply_to_header: true`), every `update_theme` mirrors that section onto the other — images included, so editing the header can silently delete the footer's images. To edit them independently, set the flag to `false` in the same update.
+
 ## Create a custom color palette
 
 ```
@@ -134,3 +136,4 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **Brand colors with low contrast** — charts become unreadable. Test against white + dark report backgrounds.
 - **Creating a palette without `theme_id`** — palette still works but isn't bound to a specific theme; any theme can use it.
 - **Enabling a theme without also enabling its companion palette** — colors fall back to the team default, producing off-brand output.
+- **Editing one section silently rewrites the other** — with `header.apply_to_footer: true` (or `footer.apply_to_header: true`), every `update_theme` mirrors that section onto the other, images included. Set the flag to `false` in the same update to edit them independently.
