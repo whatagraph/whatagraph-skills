@@ -250,7 +250,6 @@ The only action is `cancel_invite` — despite the tool name, it can NOT remove 
 These `manage-*` actions are destructive even though their tool names aren't:
 
 - `manage-reports action=detach_source delete_widgets=true` — deletes the dependent widgets along with the source. The default mode (no flag) remaps widgets to another attached source of the same channel instead, and the response discloses `remapped_to` including `is_sample_data` — check it: a remap to sample data is rarely what the user wants.
-- `manage-widgets action=toggle_breakdown` — rebuilds all widget rows from the integration's default template; custom metric, dimension, and report-type bindings are **lost**. Set `breakdowns_enabled` via `options` on create/update instead for widgets with custom bindings.
 - `manage-integrations action=sync_to_clients client_ids=[]` — an empty array wipes all of the source's space assignments.
 - `manage-snapshots action=restore` — destructive overwrite of the report's current structure; take a fresh `manage-snapshots action=create` first.
 

@@ -337,14 +337,6 @@ manage-widgets action=create
 | `breakdowns_enabled` | `true` | `false` |
 | Use case | "Show clicks split by ad group" | "Compare impressions vs clicks" |
 
-### Toggle breakdown (use with caution)
-
-```
-manage-widgets action=toggle_breakdown report_id=<id> widget_id=<id>
-```
-
-> **Warning:** `toggle_breakdown` **deletes all existing rows** and reinitializes them from the integration's default template. Any custom metric, dimension, or report type bindings are lost and replaced with defaults. Only use this on widgets with default configs. For widgets with custom bindings, set `breakdowns_enabled` via `options` at create time or via `manage-widgets action=update` instead. (One of the destructive modes catalogued in `whatagraph-deleting`.)
-
 ## AI text on comment widgets
 
 Configure AI-generated text (summary, wins, issues, recommendations, or a custom prompt) on a comment widget:
