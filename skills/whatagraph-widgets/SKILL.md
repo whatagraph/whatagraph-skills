@@ -73,9 +73,16 @@ Widget types are integers. Prefer the modern types (`101+`) unless you have a sp
 | Comment / text | `21` (channel_id `7` = Custom data; no `source_id` needed) |
 | Image | `34` (channel_id `7`; no `source_id`) |
 | Calendar / date control | `22` (channel_id `7`; no `source_id`) |
+| Media compact (creative preview) | `110` |
 | Media expanded (creative preview) | `111` |
+| Stacked bar chart | `118` |
+| Stacked column chart | `119` |
+| Heatmap | `138` |
+| Gauge (dial-style single value) | `139` |
+| GeoMap (geographic map, BETA) | `140` |
+| Filter control (dimension dropdown) | `137` |
 
-Comment, image, and calendar widgets are the only widget types that take `channel_id=7` and no `source_id`. Every data-bearing widget needs a `channel_id` matching the source's channel and a report-local `source_id`.
+Comment, image, and calendar widgets are the only widget types that take `channel_id=7` and no `source_id`. Filter control (`137`) needs a `channel_id` and `source_id` but does not load data — it renders as a dimension dropdown that filters other widgets on the tab. Every other data-bearing widget needs a `channel_id` matching the source's channel and a report-local `source_id`.
 
 ## Apply a premade widget
 
@@ -134,6 +141,28 @@ To find the current shape on an existing widget, call `list-widgets action=show 
 > 2. After the update, verify with `list-widgets action=csv_export` or `export-report` — if the CSV still shows the previous metric, delete and recreate the widget rather than trying to update it in place.
 > 3. On widgets pointed at a **virtual source** (blend / source group), the renderer may still ignore the bind even with the storage shape — finishing the configuration in the UI is currently required for those.
 
+### Row-level `options` (chart widgets)
+
+For multi-row chart widgets (Column, Line, Area, Bar), rows support additional options that control per-row rendering:
+
+| Row option | Type | Notes |
+|---|---|---|
+| `type` | string | Chart series type for this row: `column`, `line`, `area`, `spline`, `splineArea`. Use to create mixed/combo charts (e.g. one row as column, another as line). |
+| `axis` | `left` \| `right` | Which Y-axis this row binds to. Use with dual-axis charts. |
+| `cumulative` | boolean | Show cumulative values for this row. |
+| `trend_line` | string | Trend line type. |
+| `trend_line_period` | integer | Trend line period. |
+| `sort` | `asc` \| `desc` | Sort direction on this row's metric. |
+| `icon` | string | Row icon (for List and SingleValue widgets). |
+
+Example — mixed column + line chart:
+```
+rows=[
+  {"options": {"type": "column", "axis": "left", "metrics": [...]}, "configs": [...]},
+  {"options": {"type": "line", "axis": "right", "metrics": [...]}, "configs": [...]}
+]
+```
+
 ### `rows` → `configs` shape
 
 - Each widget has one or more rows.
@@ -151,7 +180,70 @@ Overrides the report-level date for this widget. Fields: `from`, `till`, `period
 
 ### `options`
 
-Per-widget settings — legend, labels, sort, hide_footer, currency override, etc. Structure varies by widget type. `list-widgets action=show` may not return every display option. When exact display settings matter, verify the rendered result with `list-widgets action=csv_export`, `export-report`, or the UI.
+Per-widget settings passed inside `options` on create/update. Structure varies by widget type. `list-widgets action=show` may not return every display option. When exact display settings matter, verify the rendered result with `list-widgets action=csv_export`, `export-report`, or the UI.
+
+#### Display toggles
+
+| Option | Type | Applies to |
+|---|---|---|
+| `hide_title` | boolean | Most data widgets (not SingleValue, Calendar, Comment, Image) |
+| `hide_footer` | boolean | All data widgets |
+| `hide_legend` | boolean | All chart types |
+| `show_icons` | boolean | List, MediaCompact |
+| `show_zebra_lines` | boolean | List, Table, Pie, Donut, Funnel |
+| `show_list_row_numbers` | boolean | List |
+| `show_totals` | boolean | Table (summary row) |
+| `show_summary_column` | boolean | Table (only when column dimensions exist) |
+| `show_chart_labels` | boolean | All chart types, Goal, Heatmap |
+| `show_funnel_line_conversions` | boolean | Funnel (individual conversion rate) |
+| `show_funnel_overall_conversions` | boolean | Funnel (total conversion rate) |
+| `content_scrollable` | boolean | Table, Media (vertical scroll) |
+| `content_horizontal_scrollable` | boolean | Table only |
+| `display_dimensions_as_columns` | boolean | Table only |
+| `wrap_text` | boolean | Table only |
+
+#### Value formatting
+
+| Option | Type | Applies to |
+|---|---|---|
+| `decimal_place` | integer 0–5 | Most data widgets |
+| `currency` | string (e.g. `"USD"`) | Data widgets with currency metrics |
+| `shorten_numbers` | boolean | SingleValue |
+| `comparison_display_type` | `percentage` \| `absolute` \| `combined` | SingleValue, List, Table |
+| `value_display_type` | `value` \| `percentage` \| `combined` | Pie, Donut |
+
+#### Chart label settings (when `show_chart_labels` is true)
+
+| Option | Type | Notes |
+|---|---|---|
+| `chart_label_position` | string | `top`, `bottom`, `left`, `right`, `insideTop`, `insideTopLeft`, `insideTopRight`, `insideBottom`, `insideBottomLeft`, `insideBottomRight`, `insideLeft`, `insideRight`. Default: `insideRight` for bar types, `top` for vertical charts |
+| `chart_label_rotation` | `horizontal` \| `vertical` | |
+| `chart_label_size` | integer | 10 (very small), 12 (small), 14 (medium), 16 (large) |
+| `chart_label_distance` | integer 0–15 | |
+| `chart_label_bg_enabled` | boolean | |
+| `chart_label_bg_opacity` | integer 0–100 | Only when `chart_label_bg_enabled` is true |
+
+#### Axis and grouping (charts)
+
+| Option | Type | Notes |
+|---|---|---|
+| `histogram` | string | Data grouping: `auto`, `1 day`, `1 week`, `1 month`, `1 quarter`, `1 year` |
+| `left_axis_value` | object | `{"from": <number>, "to": <number>}`. Set to `null` to reset to Auto |
+| `right_axis_value` | object | Same shape; restricted when breakdown is on |
+
+#### Text alignment (SingleValue only)
+
+| Option | Type | Values |
+|---|---|---|
+| `vertical_text_alignment` | string | `start`, `center`, `end` |
+| `horizontal_text_alignment` | string | `left`, `center`, `end` |
+
+#### Type-specific options
+
+| Option | Type | Widget type |
+|---|---|---|
+| `geo_map_region` | string | GeoMap (`140`). Values: `world`, `north-america`, `south-america`, `europe`, `asia`, `africa`, `oceania`, `emea`, `apac`, `latam`, `mena`, `noram`, `eu-eea`, `nordics`, `baltics`, `dach`, `benelux`, `iberia`, `uk-ireland`, `anz` |
+| `goal_date_range` | object | Goal (`123`). `{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD", "visible_time_line": true}` |
 
 Known `options` shapes:
 
@@ -180,9 +272,14 @@ Known `options` shapes:
     ```
   - On **read**, `list-widgets action=show` returns the Tiptap document under `options.comment_widget_text.description`. A text/font **colour** baked into the comment content overrides the theme's `text_color` (CSS specificity), so applying a palette won't recolour comment text — set the colour via a `textStyle` mark for white-on-dark headers, or leave it uncoloured to inherit the theme.
   - **Always pre-fetch the existing row and config IDs before updating a comment widget.** Run `list-widgets action=show widget_id=<id>` and capture `rows[0].id` and `rows[0].configs[0].id`, then pass both back in the `manage-widgets update` call. Omitting `id` on rows/configs of a comment widget triggers an INSERT path that fails with `SQLSTATE[23000]: Column 'integration_id' cannot be null` because the comment row's `integration_id` is implicit on the existing record but missing on a fresh insert. The "omit ids to rebuild from scratch" guidance in the metric-binding callout applies only to **data-bearing** widgets, not to comment / image / calendar widgets.
-- **Image widget** (`widget_type_id=34`): supply `{"image_url": "<url>", "url": "<url>"}` in `rows[].options`. The tool auto-propagates this to the config-side canonical shape `configs[].options.images: [{url, title}]`. You can also supply the config shape directly in `rows[].configs[].options`.
+- **Image widget** (`widget_type_id=34`): supply `{"image_url": "<url>"}` in `rows[].options`. The tool auto-propagates this to the config-side canonical shape `configs[].options.images: [{url, title}]`. You can also supply the config shape directly in `rows[].configs[].options`. Additional display options: `background_size` (`auto_fit` | `scale_to_fit` | `scale_to_fill`) and `alignment` (`left` | `center` | `right`) — pass these in row options alongside `image_url`.
 - **Single-value KPI** (`widget_type_id=101`): `{"compare_type": "previous_period"}` to surface the trend delta vs. the comparison window inherited from the report.
 - **Funnel** (`widget_type_id=115`): each funnel **stage is its own row** with a single metric — one metric per row, in stage order. Putting multiple metrics in one config renders a single 100% stage instead of a multi-stage funnel.
+- **Goal widget** (`widget_type_id=123`): set `options.goal_date_range` with `start_date`, `end_date`, and `visible_time_line` (boolean — controls the "Time passed" indicator line). Each row represents a goal line and requires `options.title` (goal name), `options.start_value` (baseline, typically 0), and `options.end_value` (target number). `end_value` must be greater than `start_value`. The metric in `configs[].options.metrics` tracks progress toward the target.
+- **Filter control** (`widget_type_id=137`): bind a **dimension** (not a metric) via rows — the widget renders as a dropdown filter that other widgets on the tab respond to. No date range is needed. Does not load data itself.
+- **Gauge** (`widget_type_id=139`): dial-style single metric display. Same configuration as SingleValue (`101`) but different visual rendering — use when a circular dial is more appropriate than a plain number. Supports `start_value` and `end_value` in row options to set the gauge range.
+- **Heatmap** (`widget_type_id=138`): heat-colored grid showing metric values across time/dimension. Same configuration as SingleValue (`101`).
+- **GeoMap** (`widget_type_id=140`, BETA): geographic map. Set `options.geo_map_region` to control the displayed region (see Type-specific options table above). Bind a dimension with country/region data.
 - **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads.
 
 ## Breakdown vs non-breakdown (pie / donut / bar)
@@ -322,6 +419,8 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - Set widget-level permissions — UI only.
 - Cross-report widget copy — duplicate within report only.
 - **Edit the generated AI text itself** — `update_ai_text` configures the settings and triggers generation, but the produced text can only be hand-edited in the UI.
+- **Comment widget background images** — the UI supports background images on comment widgets; MCP has no path for this yet.
+- **Image upload from local file** — MCP accepts external URLs for image widgets but cannot upload binary image files directly (no multipart upload equivalent).
 
 ## Common pitfalls
 
