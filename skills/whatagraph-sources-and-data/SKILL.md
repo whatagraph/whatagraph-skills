@@ -94,8 +94,8 @@ Response: rows of metric values grouped by dimensions.
 | Source type | Metric id form | Dimension id form |
 |---|---|---|
 | Native source (Google Ads campaign) | `metrics.clicks`, `metrics.cost_micros` | `campaign.name`, `segments.date` |
-| Source group (channel rollup, channel_id=154) | `universal_metric_<n>` | `universal_dimension_<n>` |
-| Blend (cross-channel, channel_id=142) — fetch-data | `aggregation_metric_universal_metric_<n>` | `aggregation_dimension_universal_dimension_<n>` |
+| Source group (channel rollup, channel_id=154 — verified Jun 2026) | `universal_metric_<n>` | `universal_dimension_<n>` |
+| Blend (cross-channel, channel_id=142 — verified Jun 2026) — fetch-data | `aggregation_metric_universal_metric_<n>` | `aggregation_dimension_universal_dimension_<n>` |
 | Blend — per-sub-source fields (rare in fetch) | `blend_metric_<id>` | `blend_dimension_<id>` |
 
 If `fetch-data` returns `Invalid metrics: X` or `Invalid dimensions: X`, do not retry with a variant spelling. Re-run `list_dimensions_and_metrics` and pick the value verbatim from the response — including dots and prefixes.

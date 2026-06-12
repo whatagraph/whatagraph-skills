@@ -1,11 +1,11 @@
 ---
 name: whatagraph-destinations
-description: View configured data transfers that push Whatagraph-ingested data to external destinations (BigQuery, LookerStudio, local storage, Whatagraph storage) and inspect their job history. Read-only via MCP.
+description: View configured data transfers that push Whatagraph-ingested data to external destinations (BigQuery, LookerStudio, local storage, Whatagraph storage) and inspect their job history. Read-only except deletion (see whatagraph-deleting).
 required_tools:
   - list-destinations
 ---
 
-# Destinations & data transfers (read-only)
+# Destinations & data transfers (read-only except deletion)
 
 Tool covered: `list-destinations`.
 
@@ -54,7 +54,7 @@ list-destinations action=list_jobs transfer_id=<id> config_id=<id>
 
 ## Deleting a transfer
 
-Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: `delete-destinations action=delete transfer_id=<id>`, stops the outbound transfer, already-delivered data in the destination is untouched.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: needs `transfer_id`, stops the outbound transfer, previously delivered rows in the destination are outside Whatagraph's control.
 
 ## What MCP can't do here
 

@@ -156,8 +156,29 @@ Per-widget settings — legend, labels, sort, hide_footer, currency override, et
 Known `options` shapes:
 
 - **Comment / text widget** (`widget_type_id=21`): on **write**, supply `{"comment_widget_text": {"text": "Hello\nWorld", "contentAlign": "top"}}` in `rows[].options` — `text` is a plain string, the platform converts it. The tool auto-propagates this to `configs[].options.comment_widget_text.text`. The legacy `{"text": "<html>", "comment": "<html>"}` shape also works for older accounts.
-  - On **read**, `list-widgets action=show` returns the converted Tiptap document under `options.comment_widget_text.description` (a `{type: "doc", content: [...]}` tree). Do **not** round-trip the `description` shape on write — re-send the flat `text` string instead, otherwise the platform will refuse the payload or persist an empty comment.
-  - The `text` string supports **markdown** (headings, bold, lists, links) — it's converted to the Tiptap document on save. A text/font **colour** baked into the comment content overrides the theme's `text_color` (CSS specificity), so applying a palette won't recolour comment text — set the colour in the content itself for white-on-dark headers, or leave it uncoloured to inherit the theme.
+  - **Three formatting layers** — supply `text` OR `description` inside `comment_widget_text`, never both (verified Jun 2026):
+    1. Plain `text` string → paragraphs.
+    2. `text` with **markdown** → headings, bold, italic, lists, links (converted to a Tiptap document on save).
+    3. A prebuilt **Tiptap doc** via `description` → `textStyle` marks (`color`, `fontSize`), `textAlign` attrs, `underline`, `highlight`, `link`. This is the **only** path to text colour, font size, and alignment — markdown has no syntax for them. The doc persists intact through update and round-trips through `list-widgets action=show`.
+
+    ```
+    "comment_widget_text": {
+      "description": {
+        "type": "doc",
+        "content": [{
+          "type": "paragraph",
+          "attrs": {"textAlign": "center"},
+          "content": [{
+            "type": "text",
+            "text": "Q2 Revenue",
+            "marks": [{"type": "textStyle", "attrs": {"color": "#1A73E8", "fontSize": "24px"}}]
+          }]
+        }]
+      },
+      "contentAlign": "top"
+    }
+    ```
+  - On **read**, `list-widgets action=show` returns the Tiptap document under `options.comment_widget_text.description`. A text/font **colour** baked into the comment content overrides the theme's `text_color` (CSS specificity), so applying a palette won't recolour comment text — set the colour via a `textStyle` mark for white-on-dark headers, or leave it uncoloured to inherit the theme.
   - **Always pre-fetch the existing row and config IDs before updating a comment widget.** Run `list-widgets action=show widget_id=<id>` and capture `rows[0].id` and `rows[0].configs[0].id`, then pass both back in the `manage-widgets update` call. Omitting `id` on rows/configs of a comment widget triggers an INSERT path that fails with `SQLSTATE[23000]: Column 'integration_id' cannot be null` because the comment row's `integration_id` is implicit on the existing record but missing on a fresh insert. The "omit ids to rebuild from scratch" guidance in the metric-binding callout applies only to **data-bearing** widgets, not to comment / image / calendar widgets.
 - **Image widget** (`widget_type_id=34`): supply `{"image_url": "<url>", "url": "<url>"}` in `rows[].options`. The tool auto-propagates this to the config-side canonical shape `configs[].options.images: [{url, title}]`. You can also supply the config shape directly in `rows[].configs[].options`.
 - **Single-value KPI** (`widget_type_id=101`): `{"compare_type": "previous_period"}` to surface the trend delta vs. the comparison window inherited from the report.

@@ -31,6 +31,7 @@ A **goal** is a target value on a metric for a specific period (daily, weekly, m
   {"category":"conflict","message":"A goal already exists for metric universal_metric_3 on source ID 632871"}
   ```
   Always call `view-goals action=list source_id=<id>` first and check whether the metric is already covered. To change a target, update the existing goal via `manage-goals action=update goal_id=<id>` rather than creating a new one. To track the same metric on multiple sources, create one goal per source — the constraint is per (metric, source), not per metric overall.
+
 ## Listing
 
 ```
@@ -91,7 +92,7 @@ The widget type "Goal" is how a goal renders in a report. Create via `manage-wid
 
 ## Deleting a goal
 
-Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: single (`goal_id`) or bulk (`goal_ids`), goal widgets show an empty state until re-attached, IDs come from `view-goals`.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: batch-only (`goal_ids` array, one-element for a single goal), goal widgets show an empty state until re-attached, IDs come from `view-goals`.
 
 ## What MCP can't do here
 

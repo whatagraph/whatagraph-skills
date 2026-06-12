@@ -116,7 +116,7 @@ manage-filters action=attach filter_id=<id> widget_config_id=<id>
 manage-filters action=attach filter_id=<id> source_id=<id>
 ```
 
-Use `list-widgets action: show` to find `widget_config_id` values, and `list-sources action: list` to find `source_id` values.
+Use `list-widgets action=show` to find `widget_config_id` values, and `list-sources action=list` to find `source_id` values.
 
 ## What MCP can't do here
 
