@@ -47,6 +47,47 @@ manage-widgets action=create
 
 You can pass `rows` at create time to bind metrics and dimensions immediately — no separate update needed. If `rows` is omitted, the widget defaults to the first metric in the source catalog.
 
+### Dimension requirements by widget type
+
+The tool validates that the correct dimensions are provided based on the widget type. **Dimensions must be in `rows[].configs[].options.dimensions`** (data binding), not in row-level options (which are display labels only).
+
+| Widget type | Dimension requirement |
+|---|---|
+| Time-series charts (104–107, 118–119) | **1 dimension required** — must be the integration's date dimension (e.g. `date`, `segments.date`, `ga:date`). Without it the chart renders a single aggregated value instead of time-series data points. When `breakdowns_enabled=true`, column/bar/stacked accept up to 2 dimensions. |
+| Table (102) | **At least 1 dimension required** — any dimension. |
+| Heatmap (138) | **Exactly 2 dimensions required**. |
+| GeoMap (140) | **1 geographic dimension required**. |
+| Media (110, 111) | **At least 1 dimension required** — typically `creative_thumbnail_url` or similar. |
+| Pie/Donut (108, 109) | **No dimension** unless `breakdowns_enabled=true` (then exactly 1). |
+| SingleValue (101), Gauge (139), List (103), Funnel (115), Goal (123) | **No dimension needed**. |
+| Comment (21), Calendar (22), Image (34) | **Skipped** — utility widgets with no data binding. |
+
+Use `list-sources action=list_dimensions_and_metrics` to find the correct dimension external_ids for a source. The date dimension external_id varies by integration — always look it up rather than guessing.
+
+**Time-series chart example** (area chart with date dimension):
+```
+manage-widgets action=create
+   report_id=<id> tab_id=<tab_id>
+   channel_id="google-ads" widget_type_id=105 source_id=<id>
+   rows=[{"configs": [{"options": {"report_type": "campaign", "metrics": ["impressions"], "dimensions": ["segments.date"]}}]}]
+```
+
+**Table example** (with categorical dimension):
+```
+manage-widgets action=create
+   report_id=<id> tab_id=<tab_id>
+   channel_id="google-ads" widget_type_id=102 source_id=<id>
+   rows=[{"configs": [{"options": {"report_type": "campaign", "metrics": ["impressions", "clicks"], "dimensions": ["campaign_name"]}}]}]
+```
+
+**SingleValue example** (no dimension needed):
+```
+manage-widgets action=create
+   report_id=<id> tab_id=<tab_id>
+   channel_id="google-ads" widget_type_id=101 source_id=<id>
+   rows=[{"configs": [{"options": {"report_type": "campaign", "metrics": ["impressions"]}}]}]
+```
+
 ### `source_id` — global or report-local
 
 `source_id` accepts either a **global** source `id` from `list-sources` or a **report-local** `source_id` from `list-widgets` / `list-reports action=list_sources`. When a global ID is passed, the tool auto-attaches it to the report — no separate `attach_source` step is needed.
