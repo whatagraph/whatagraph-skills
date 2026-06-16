@@ -34,6 +34,14 @@ list-destinations action=list issue="job"                    # only transfers wi
 
 `issue` values: `job`, `account`, `source`.
 
+## Available destination types
+
+```
+list-destinations action=list_destination_types
+```
+
+Returns the destination types you can target — BigQuery (`1`), Looker Studio (`3`), Whatagraph Storage (`4`) — each with its required `components` (e.g. `oauth`, `name`, `projectId`, `dataset`, `location`, `configs`) and, for BigQuery, the full set of supported regions. Use it to discover which destinations exist and what each needs before inspecting transfers. Only connectable types are returned, so LocalStorage (`destination_id=2`, a legacy/internal type) does not appear here even though it is a valid `destination_id` filter on `action=list`.
+
 ## Inspecting one transfer
 
 ```
