@@ -403,6 +403,8 @@ manage-widgets action=duplicate   report_id=<id> widget_id=<id>
 manage-widgets action=batch_duplicate report_id=<id> widget_ids=[<id1>, <id2>, <id3>]
 ```
 
+Copies are packed into the next free grid slots and tile across the 6 columns, so duplicating a widget many times fills a clean grid. Duplicate a full row of widgets together (not one widget repeatedly) to keep the layout balanced.
+
 ## Batch operations
 
 ```
