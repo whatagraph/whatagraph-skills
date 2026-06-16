@@ -1,6 +1,6 @@
 ---
 name: whatagraph-widgets
-description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, positioning widgets on the grid, swapping metrics on an existing widget, or bulk-swapping data sources across many widgets at once.
+description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, or bulk-swapping data sources across many widgets at once.
 required_tools:
   - list-blends
   - list-report-tabs
@@ -435,12 +435,62 @@ The report uses a **6-column grid**. Every widget occupies a rectangle defined b
 
 ### Sizing guidelines
 
-- **KPI / single-value card** — 2×1 or 2×2; never full row. Three KPIs across = `2×1 × 3`.
-- **Line / column chart** — 4×3 minimum readable; 6-wide (full row) for trend emphasis. Common: `4×3 + 2×3` (chart + side KPI).
-- **Table** — full width (6×N); narrower tables truncate columns.
-- **Pie / donut** — 2×2 or 3×3; full-row pies waste space.
-- **Goal** — 2×2 to 3×2; matches KPI card sizing.
-- **Comment / image** — 6×1 for section headers; 2–3 wide for sidebar callouts.
+Size every widget deliberately — don't lean on the default. These are the sizes that read well on the 6-column grid:
+
+| Widget concept | Typical size(s) | Notes |
+|---|---|---|
+| KPI / SingleValue / Gauge / Goal | `2×2` (or `2×1`) | Lay **three across a row** at `x=0,2,4`. Never full-row — a 6-wide single value looks like a header. |
+| List | `2×3` | Vertical metric list; sits well beside a chart. |
+| Pie / Donut | `3×3` (two per row) or `2×2` | Full-row pies waste space. |
+| Funnel | `3×3` (or `4×3`) | |
+| Bar / Column chart | `3×2` when compact, `6×3` full-width | Pair two compact charts in a row: `3×2 + 3×2`. |
+| Line / Area / any time-series chart | `6×2` full-width | Trends need width. A time-series chart also needs its **date dimension** bound (see "Dimension requirements") or it collapses to one value. |
+| Table / MultiSource / Heatmap | `6×3`+ full-width | Narrower tables truncate columns. |
+| Media / creative preview | `2×3`–`3×3`, grouped in a row | A row of three ad creatives = `width 2 × 3` at `x=0,2,4`. |
+| GeoMap | `4×3` | |
+| Comment — section header | `6×1` full-width | Use as a divider/title between groups of widgets. |
+| Comment — AI text block | `6×2`–`6×5` | Height grows with the number of insight types (summary / wins / issues / recommendations). |
+
+### Designing a tab layout
+
+A tab reads well when you plan it as a stack of **rows** before placing anything — not widget-by-widget. Work top to bottom:
+
+1. **Decide the row structure.** Group the questions into rows: a KPI band, then a chart + table pair, then a full-width table, then a media grid, etc. Each row's widths must sum to ≤ 6.
+2. **Size each widget** from the table above, then **set `position_x` / `position_y` explicitly** so the row is intentional. Track the running `y`: a row of height-2 widgets at `y=0` means the next row starts at `y=2`.
+3. **Pack densely — no gaps, no overlaps.** Fill each row across the full 6 columns where it makes sense (three `2×2` KPIs, or `3×3 + 3×3`, or one `6×3` table). Avoid stray half-empty rows.
+4. **Section with comment headers.** A `6×1` comment widget makes a clean divider/title between groups (e.g. "Spend overview", "Top ads").
+5. **Build, then verify.** After creating the widgets, `export-report` (or `list-widgets action=csv_export`) to confirm both the layout and that every widget loaded data — `list-widgets action=show` echoes positions but not rendered data.
+
+`auto_place=true` (the default when you omit position) is a safety net that drops a widget in the nearest free slot — fine for a one-off add, but for a *designed* layout set `position_x` / `position_y` / `width` / `height` on every widget so rows land where you intend.
+
+#### Replicating a reference report (PDF / screenshot / existing report)
+
+Match the structure rather than guessing:
+
+- **Count the widgets per row** and mirror their relative widths. A row of 3 ⇒ `width 2` each (`x=0,2,4`); a row of 2 ⇒ `width 3` each (`x=0,3`); one full-width element ⇒ `width 6`.
+- **Recreate every element** you see — KPIs, charts, tables, funnels, and ad/creative tiles (use Media widgets `110` / `111` for ad previews). Don't collapse a varied report into a wall of uniform tiles.
+- **Preserve vertical order and spacing** — keep the same top-to-bottom sequence; leave an empty row where the reference shows a visible gap.
+- **Ignore account / source names** printed in the reference (e.g. "Account: …") — that's metadata, not a filter.
+
+#### Worked example — KPI band + breakdown pair + detail table + 3-up ad grid
+
+```
+# Row 0 (y=0): section header
+manage-widgets action=create … widget_type_id=21  position_x=0 position_y=0 options={"width":6,"height":1}   # "Spend overview"
+# Row 1 (y=1): three KPIs across
+… widget_type_id=101 position_x=0 position_y=1 options={"width":2,"height":2}   # Spend
+… widget_type_id=101 position_x=2 position_y=1 options={"width":2,"height":2}   # Revenue
+… widget_type_id=101 position_x=4 position_y=1 options={"width":2,"height":2}   # ROAS
+# Row 2 (y=3): donut + table pair
+… widget_type_id=109 position_x=0 position_y=3 options={"width":3,"height":3}   # Revenue by country (donut)
+… widget_type_id=102 position_x=3 position_y=3 options={"width":3,"height":3}   # Country performance (table)
+# Row 3 (y=6): full-width detail table
+… widget_type_id=102 position_x=0 position_y=6 options={"width":6,"height":3}   # Product performance
+# Row 4 (y=9): three ad creatives across
+… widget_type_id=110 position_x=0 position_y=9 options={"width":2,"height":3}
+… widget_type_id=110 position_x=2 position_y=9 options={"width":2,"height":3}
+… widget_type_id=110 position_x=4 position_y=9 options={"width":2,"height":3}
+```
 
 ## Deleting widgets
 
