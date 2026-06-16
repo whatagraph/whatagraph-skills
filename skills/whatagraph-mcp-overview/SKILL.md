@@ -116,7 +116,7 @@ Users rarely say "data source"; they say things like "my Google Ads account". Tr
 2. `list-spaces action=list` — see client folders.
 3. `list-sources action=list` (optionally filtered by a space) — see what's connected.
 4. Decide whether you need to aggregate same-channel accounts (`source-groups`) or combine different channels (`blends`).
-5. Build a report: `manage-reports create` → `manage-report-tabs create` → `manage-reports attach_source` (one call per data source the report needs) → `manage-widgets create` (using the report-local `source_id` returned by attach). There is no default report structure — derive the tab's layout from the user's intent, or replicate the report they referenced/uploaded; don't reach for the same arrangement every time. Load `whatagraph-widgets` for the layout playbook and the reference-replication steps.
+5. Build a report: `manage-reports create` → `manage-report-tabs create` → `manage-reports attach_source` (one call per data source the report needs) → `manage-widgets create` (using the report-local `source_id` returned by attach). There is no default report structure — replicate the report they referenced/uploaded, build to the intent they described, or (when there's neither) decide yourself which metrics/dimensions/KPIs are worth showing and the best visualization for each, composing by analytical priority. Don't reach for the same arrangement every time. Load `whatagraph-widgets` for the layout playbook.
 6. Apply a theme with `manage-themes enable_theme`.
 7. Share with `manage-sharing create` and schedule with `manage-automations create`.
 

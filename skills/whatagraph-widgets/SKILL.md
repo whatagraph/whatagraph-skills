@@ -433,14 +433,31 @@ The report uses a **6-column grid**. Every widget occupies a rectangle defined b
 
 **Overlap rule:** On `create`, the server rejects widgets that overlap an existing widget at the same `(x, y, width, height)` rectangle — unless `auto_place=true`, which picks the nearest free slot instead (the response then carries `auto_placed: true` with the chosen position). When `position_x`/`position_y` are omitted entirely, auto-placement is the default. `duplicate` and `batch_duplicate` auto-position the copy at the next available row.
 
-### The layout comes from the user, not from a default
+### The layout comes from the data and the user, not from a default
 
-**There is no house layout, and no default report structure.** The single most important rule: the tab's shape comes from what the user wants — never reach for the same skeleton every time. Two cases:
+**There is no house layout, and no default report structure.** The tab's shape is decided fresh each time, in this order of priority:
 
-- **A reference was provided** — a PDF, screenshot, live-report URL, or an existing report → **replicate its structure** (see below). This is the priority. Do not normalize it to a layout you prefer.
-- **No reference** → derive the structure from the user's intent and the data they have. A weekly paid-media review, an SEO keyword deep-dive, a one-screen exec summary, and a social-engagement recap are four different shapes — let the request and the metrics decide. If you notice yourself producing the same arrangement regardless of the ask, stop and re-read the request.
+1. **A reference was provided** — a PDF, screenshot, live-report URL, or an existing report → **replicate its structure** (see "Replicating a reference report"). Don't normalize it to a layout you prefer.
+2. **The user described what they want** → build to that intent: the metrics, breakdowns, and emphasis they asked for.
+3. **No reference and no specific ask** → *you* decide what's worth showing and how. This is a judgment call, not a fallback skeleton: look at the data that's actually available (which metrics, which dimensions), pick the most meaningful KPIs, choose the best visualization for each (see below), and arrange them in a sensible information hierarchy. Different sources and metrics should produce different reports — if every report you build looks the same, you've defaulted to a template.
 
-Sizing and positioning (below) only make *whatever structure you chose* render cleanly — they are not a recipe for what to build.
+Sizing and positioning (further down) only make *whatever you chose* render cleanly — they are not a recipe for what to build.
+
+### Choosing a visualization for each metric / dimension
+
+When you're deciding what to show — case 3 above, or filling gaps in a loose request — match each piece of data to the visualization that fits its shape. Let the data pick the widget, not habit:
+
+- **A headline total / the single most important number** → SingleValue KPI (Gauge for a dial feel; Goal when there's a target to pace against).
+- **A metric over time (trend)** → Line or Area chart — bind the date dimension.
+- **A metric split by a category, as share of a whole** → Donut or Pie (breakdown).
+- **Comparing one metric across categories** → Bar or Column chart.
+- **A detailed, multi-metric breakdown by a dimension (rankings, "top X")** → Table — the workhorse when a dimension has many values and several metrics matter.
+- **Sequential steps / a conversion path** → Funnel.
+- **A geographic dimension** → GeoMap.
+- **Ad / creative performance with thumbnails** → Media.
+- **Narration or context** → a Comment (AI-text comment for an auto summary) — only when it adds value.
+
+Compose by analytical priority: surface the few numbers that matter most first, then the main trend, then the breakdowns and detail. But the **selection, mix, and count** of widgets follow from what the data supports — so they vary from report to report. Don't force a fixed set or a minimum count.
 
 ### Sizing — driven by content, not a fixed table
 
