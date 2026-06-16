@@ -1,6 +1,6 @@
 ---
 name: whatagraph-widgets
-description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, positioning widgets on the grid, swapping metrics on an existing widget, or bulk-swapping data sources across many widgets at once.
+description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, or bulk-swapping data sources across many widgets at once.
 required_tools:
   - list-blends
   - list-report-tabs
@@ -433,14 +433,77 @@ The report uses a **6-column grid**. Every widget occupies a rectangle defined b
 
 **Overlap rule:** On `create`, the server rejects widgets that overlap an existing widget at the same `(x, y, width, height)` rectangle — unless `auto_place=true`, which picks the nearest free slot instead (the response then carries `auto_placed: true` with the chosen position). When `position_x`/`position_y` are omitted entirely, auto-placement is the default. `duplicate` and `batch_duplicate` auto-position the copy at the next available row.
 
-### Sizing guidelines
+### The layout comes from the data and the user, not from a default
 
-- **KPI / single-value card** — 2×1 or 2×2; never full row. Three KPIs across = `2×1 × 3`.
-- **Line / column chart** — 4×3 minimum readable; 6-wide (full row) for trend emphasis. Common: `4×3 + 2×3` (chart + side KPI).
-- **Table** — full width (6×N); narrower tables truncate columns.
-- **Pie / donut** — 2×2 or 3×3; full-row pies waste space.
-- **Goal** — 2×2 to 3×2; matches KPI card sizing.
-- **Comment / image** — 6×1 for section headers; 2–3 wide for sidebar callouts.
+**There is no house layout, and no default report structure.** The tab's shape is decided fresh each time, in this order of priority:
+
+1. **A reference was provided** — a PDF, screenshot, live-report URL, or an existing report → **replicate its structure** (see "Replicating a reference report"). Don't normalize it to a layout you prefer.
+2. **The user described what they want** → build to that intent: the metrics, breakdowns, and emphasis they asked for.
+3. **No reference and no specific ask** → *you* decide what's worth showing and how. This is a judgment call, not a fallback skeleton: look at the data that's actually available (which metrics, which dimensions), pick the most meaningful KPIs, choose the best visualization for each (see below), and arrange them in a sensible information hierarchy. Different sources and metrics should produce different reports — if every report you build looks the same, you've defaulted to a template.
+
+Sizing and positioning (further down) only make *whatever you chose* render cleanly — they are not a recipe for what to build.
+
+### Choosing a visualization for each metric / dimension
+
+When you're deciding what to show — case 3 above, or filling gaps in a loose request — match each piece of data to the visualization that fits its shape. Let the data pick the widget, not habit:
+
+- **A headline total / the single most important number** → SingleValue KPI (Gauge for a dial feel; Goal when there's a target to pace against).
+- **A metric over time (trend)** → Line or Area chart — bind the date dimension.
+- **A metric split by a category, as share of a whole** → Donut or Pie (breakdown).
+- **Comparing one metric across categories** → Bar or Column chart.
+- **A detailed, multi-metric breakdown by a dimension (rankings, "top X")** → Table — the workhorse when a dimension has many values and several metrics matter.
+- **Sequential steps / a conversion path** → Funnel.
+- **A geographic dimension** → GeoMap.
+- **Ad / creative performance with thumbnails** → Media.
+- **Narration or context** → a Comment (AI-text comment for an auto summary) — only when it adds value.
+
+Compose by analytical priority: surface the few numbers that matter most first, then the main trend, then the breakdowns and detail. But the **selection, mix, and count** of widgets follow from what the data supports — so they vary from report to report. Don't force a fixed set or a minimum count.
+
+### Sizing — driven by content, not a fixed table
+
+Pick each widget's size from what its content needs to be legible, then fit it into the row you're building. These are affordances, not defaults:
+
+- **KPI / SingleValue / Gauge / Goal** — just a number; keep it small so several share a row. A full-row single value reads as a header.
+- **Table / MultiSource / Heatmap** — needs width or columns truncate; usually most or all of the row, taller as rows grow.
+- **Line / Area / time-series chart** — needs width for the trend to be legible (often the full row). Also needs its **date dimension** bound (see "Dimension requirements") or it collapses to a single value.
+- **Bar / Column chart** — compact when paired with a sibling, full-width when it's the focus.
+- **Pie / Donut** — roughly square; a full-row pie wastes space.
+- **List / Funnel** — narrow-to-medium; sit well beside a chart.
+- **Media / creative preview** — one tile per creative, grouped across a row.
+- **Comment** — full-row as a section header/divider, or taller for an AI text block (height grows with how much text it holds).
+- **GeoMap** — medium.
+
+**Hard constraints (always):** `width` 1..6, `height` ≥ 1, `position_x + width ≤ 6`, and no two widgets overlap.
+
+### Placing widgets cleanly
+
+Once you know the structure, lay it out top to bottom:
+
+1. **Work in rows.** Each row's widths sum to ≤ 6. Track the running `y` — a row of height-2 widgets at `y=0` means the next row starts at `y=2`.
+2. **Set `position_x` / `position_y` / `width` / `height` explicitly** on every widget so rows land where you intend. `auto_place=true` (the default when you omit position) just drops a widget in the next free slot — fine for a one-off add, not for a designed or replicated layout.
+3. **Pack to match your intent** — no gaps and no overlaps, but mirror the *reference's* density: don't tighten a deliberately sparse page, don't pad a dense one.
+4. **Build, then verify** with `export-report` (or `list-widgets action=csv_export`) — confirm the layout and that every widget loaded data. `list-widgets action=show` echoes positions but not rendered data.
+
+### Replicating a reference report (the priority when one is given)
+
+Reproduce the reference faithfully — do not substitute a default arrangement:
+
+- **Recreate every element**, in the same top-to-bottom order — KPIs, charts, tables, funnels, ad/creative tiles (Media `110` / `111`), comments/text. Don't drop or invent widgets.
+- **Match per-row counts and proportions.** Count how many widgets share each row and split the 6 columns to mirror their relative widths: 3 across ⇒ `width 2` each; 2 across ⇒ `width 3` each; one full-width ⇒ `6`; an uneven pair (wide chart + narrow KPI) ⇒ e.g. `4 + 2`.
+- **Match the widget type to what's shown** — a donut stays a donut, a funnel stays a funnel; don't swap in your preferred type.
+- **Preserve spacing and density** — same sequence, and leave an empty row where the reference shows a gap.
+- **Ignore account / source names** printed on the reference (e.g. "Account: …") — that's metadata, not a filter.
+
+### Examples — illustrations of range, NOT templates
+
+Different requests produce different shapes. **Copy the user's intent or reference — never copy these.** They exist only to show that the structure should vary:
+
+- **Dense paid-media page (varied, many widgets):** a `6×1` header comment; a row of three KPIs `2×2`; a donut `3×3` beside a table `3×3`; a full-width detail table `6×3`; a row of three ad creatives `2×3`. (Coordinates for this one shape: comment `x0 y0 6×1`; KPIs `x0/x2/x4 y1 2×2`; donut `x0 y3 3×3` + table `x3 y3 3×3`; table `x0 y6 6×3`; media `x0/x2/x4 y9 2×3`.)
+- **Lean summary (sparse, few widgets):** three KPIs `2×2` across the top, then one full-width trend chart `6×3`. Nothing more — don't pad it out.
+- **Exec narrative (text-led):** an AI-summary comment `6×3` at the top, then two supporting visuals `3×3 + 3×3`.
+- **Uneven split:** a wide trend chart `4×3` beside a tall KPI list `2×3`.
+
+If your output looks like the same example every time, you've defaulted to a template — go back to the user's request or reference.
 
 ## Deleting widgets
 
