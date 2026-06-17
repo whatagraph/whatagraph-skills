@@ -189,7 +189,7 @@ For multi-row chart widgets (Column, Line, Area, Bar), rows support additional o
 | Row option | Type | Notes |
 |---|---|---|
 | `type` | string | Chart series type for this row: `column`, `line`, `area`, `spline`, `splineArea`. Use to create mixed/combo charts (e.g. one row as column, another as line). |
-| `axis` | `left` \| `right` | Which Y-axis this row binds to. Use with dual-axis charts. |
+| `axis` | `left` \| `right` | Which Y-axis this row binds to. **Set it on every row of a combined chart (column/line/area)** — use `left` unless you specifically want a dual-axis split. A row left without `axis` still binds its metric, but the widget editor groups rows onto the Left/Right axis by exact match, so an axis-less row shows on neither and the Edit panel looks empty. |
 | `cumulative` | boolean | Show cumulative values for this row. |
 | `trend_line` | string | Trend line type. |
 | `trend_line_period` | integer | Trend line period. |
@@ -203,6 +203,17 @@ rows=[
   {"options": {"type": "line", "axis": "right", "metrics": [...]}, "configs": [...]}
 ]
 ```
+
+Example — cross-channel column chart (compare one metric across sources, no date dimension):
+```
+rows=[
+  {"options": {"type": "column", "axis": "left", "title": "Source A", "metrics": [{"sort": 0, "identifier": 0, "external_id": "<metric>"}]},
+   "configs": [{"source_id": <A>, "integration_id": <channel>, "options": {"metrics": [{"identifier": 0, "external_id": "<metric>"}], "report_type": "<rt>"}}]},
+  {"options": {"type": "column", "axis": "left", "title": "Source B", "metrics": [{"sort": 0, "identifier": 0, "external_id": "<metric>"}]},
+   "configs": [{"source_id": <B>, "integration_id": <channel>, "options": {"metrics": [{"identifier": 0, "external_id": "<metric>"}], "report_type": "<rt>"}}]}
+]
+```
+> One row per source, each with a single config (its source) and the **same** metric, and **no** dimension — the sources become the columns. Set `axis: "left"` on every row; without it the editor's Left/Right axis sections render empty even though the data is bound.
 
 ### `rows` → `configs` shape
 
