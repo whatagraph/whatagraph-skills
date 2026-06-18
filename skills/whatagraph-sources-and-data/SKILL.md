@@ -43,6 +43,14 @@ Deep-dive a single source:
 list-sources action=show source_id=<id>
 ```
 
+### Trimming the response — `fields`
+
+`list` and `show` accept `fields` (comma-separated) to return only the attributes you need and stay under the ~50 KB cap. For sources the selectable paths are:
+
+`id, name, external_id, channel_id, channel_name, account_id, currency, status, space_ids, tag_ids`
+
+`channel` and `integration` are accepted as aliases for `channel_id`. The set is per-tool and not uniform — if you pass an unknown path the call is rejected and the error lists the valid paths; read that list and retry once instead of guessing. Don't assume nested paths such as `options.currency` exist.
+
 ## Available report types, metrics, dimensions
 
 Most sources expose multiple **report types** (e.g. "campaign", "ad", "keyword"). Each report type has its own metrics and dimensions.
@@ -131,13 +139,15 @@ list-sources action=list_usage source_ids=[<id>, <id>]
 
 Returns usage counts across reports, blends, source groups, transfers, and overviews (measurements). Critical before disconnecting or replacing a source — shows what breaks.
 
-## Metadata discovery (tag dimensions, tag values, etc.)
+## Metadata discovery and per-channel counts
 
-```
-list-sources action=list_metadata
-```
+`list-sources action=list_metadata` returns reference metadata for source management, scoped by `scope`:
 
-Returns available tag dimensions and their allowed values — use to build `manage-sources action=tag` calls.
+- `integrations` (default) — the integrations this team can use, each with `has_accounts_for_current_user`. This is the **catalog of what can be connected**, not a count of connected sources per channel.
+- `accounts`, `spaces`, `users`, `tags`, `categories` — the matching option lists. Use `scope=tags` for tag dimensions and their allowed values when building `manage-sources action=tag` calls.
+- `all` — every scope at once; may exceed the size cap on large accounts, so prefer a single scope.
+
+To count **connected** sources per channel, page `list-sources action=list` (use `fields=id,channel_id` to stay small) and aggregate by `channel_id`; `list-integrations action=list_grouped` gives a category-level overview.
 
 ## Modifying sources
 
@@ -148,7 +158,7 @@ manage-sources action=set_currency
 
 manage-sources action=tag
    source_ids=[<id>]
-   tag_id=<tag_dimension_id>        # from list_metadata
+   tag_id=<tag_dimension_id>        # from list_metadata scope=tags
    tag_value_ids=[<value_id>, ...]  # empty array = remove all tag values in that dimension
 ```
 
