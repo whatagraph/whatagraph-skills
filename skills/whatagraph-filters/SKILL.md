@@ -50,8 +50,9 @@ Valid `dimension_operator`:
 - `contain_dimension`, `not_contain_dimension`
 - `exactly_matches_dimension`, `not_exactly_matches_dimension`
 - `includes`, `excludes`
-- `starts_with_dimension`, `ends_with_dimension`
-- `matches_regex_dimension`
+- `starts_with_dimension`, `not_starts_with_dimension`
+- `ends_with_dimension`, `not_ends_with_dimension`
+- `matches_regex_dimension`, `not_matches_regex_dimension`
 - `empty_dimension`, `not_empty_dimension` (no `value` needed)
 
 ## Creating a metric filter

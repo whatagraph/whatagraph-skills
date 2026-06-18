@@ -51,19 +51,19 @@ manage-members action=invite
    spaces=[{"id": <space_id_1>}, {"id": <space_id_2>}]
 ```
 
-- `role` — discover available roles via `view-team action=roles`. Common values: `admin`, `editor`, `viewer`.
+- `role` — discover available roles via `view-team action=roles`. Values: `admin`, `manager`, `editor`.
 - `spaces` — required for `editor` role; restricts the editor to listed spaces.
-- Omit `spaces` for `admin` and `viewer`.
+- Omit `spaces` for `admin` and `manager`.
 
 ## Update a pending invitation
 
 ```
 manage-members action=update_invite
    invite_id=<id>
-   role="viewer"
+   role="manager"
 ```
 
-Changes role on a pending (not-yet-accepted) invitation. Once the user accepts, their role can only be changed via the UI.
+Changes role on a pending (not-yet-accepted) invitation.
 
 ## Resend an invitation
 
@@ -79,14 +79,14 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 
 - Remove an accepted member — UI only.
 - Change role on an accepted member — UI only.
-- Set custom permissions beyond admin/editor/viewer — UI only (Enterprise plans).
+- Set custom permissions beyond admin/manager/editor — UI only (Enterprise plans).
 - View audit log of member actions — UI only.
 
 ## Common pitfalls
 
 - **`editor` role without `spaces`** — rejected; editors are space-scoped and must list allowed spaces.
 - **Invite same email twice** — second invite either no-ops or replaces the first; use `resend_invite` if the user didn't get the email.
-- **Role name casing** — use lowercase (`admin`, `editor`, `viewer`) as returned by `action=roles`.
+- **Role name casing** — use lowercase (`admin`, `manager`, `editor`) as returned by `action=roles`.
 - **Admin role is powerful** — grants full platform access. Prefer `editor` + specific spaces for everyday users.
 - **Changing team timezone retroactively** — existing automations keep their schedule in the old timezone. Review `list-automations` after timezone changes.
 - **Seat limits** — `view-team action=show_subscription` returns used/available seats. Invites may fail when the team is over the limit.

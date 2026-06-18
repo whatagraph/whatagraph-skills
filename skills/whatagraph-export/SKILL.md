@@ -51,7 +51,9 @@ Widgets with their own `date_range` ignore this fallback.
 
 ## What's excluded
 
-Comment, calendar, image, and filter-control widgets produce no tabular rows. They may still appear in the response with `exportable: true` and `csv: ""` — filter on a non-empty `csv` string when consuming the export, not on `exportable`.
+Comment, calendar, image, and filter-control widgets are skipped entirely — they are filtered out server-side and do **not** appear in the response at all (so you don't need to filter them out of the result yourself).
+
+A widget envelope with `exportable: true` and `csv: ""` is therefore a **data** widget that simply returned no rows (disconnected source, empty date range, no data) — not a skipped utility widget. When consuming the export, treat an empty `csv` as "no data for this widget". (A widget that hit an export error instead comes back with `exportable: false`.)
 
 ## Other export paths
 
@@ -68,5 +70,5 @@ Comment, calendar, image, and filter-control widgets produce no tabular rows. Th
 
 - **Empty CSV blocks** — disconnected source or empty date range returns an empty CSV section. Verify source with `list-sources action=show`.
 - **Huge exports** — very large reports can stall. Use `tab_id` or `widget_ids` to narrow scope.
-- **Image / comment widgets** — produce metadata-only rows. Filter them out of your widget_ids list when you want only tabular data.
+- **Image / comment / calendar / filter widgets** — skipped entirely, so they never appear in the export. Passing their IDs in `widget_ids` just yields nothing for them (no error).
 - **Fallback dates without both `from` and `till`** — both must be provided together.

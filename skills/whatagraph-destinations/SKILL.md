@@ -1,13 +1,14 @@
 ---
 name: whatagraph-destinations
-description: View configured data transfers that push Whatagraph-ingested data to external destinations (BigQuery, LookerStudio, local storage, Whatagraph storage) and inspect their job history. Read-only except deletion (see whatagraph-deleting).
+description: View configured data transfers that push Whatagraph-ingested data to external destinations (BigQuery, LookerStudio, local storage, Whatagraph storage), inspect their job history, and control existing transfers (stop, resume, resync, update). Creating a new transfer is UI-only.
 required_tools:
   - list-destinations
+  - manage-destinations
 ---
 
-# Destinations & data transfers (read-only except deletion)
+# Destinations & data transfers
 
-Tool covered: `list-destinations`.
+Tools covered: `list-destinations`, `manage-destinations`.
 
 A **destination** = a configured transfer that pushes data from Whatagraph-ingested integration sources out to an external system (BigQuery, LookerStudio, etc.). This is the opposite direction of a data source (source = pulls in; destination = pushes out).
 
@@ -60,6 +61,19 @@ list-destinations action=list_jobs transfer_id=<id> config_id=<id>
 
 `state` values: `queued`, `running`, `completed`, `issue`.
 
+## Controlling a transfer
+
+```
+manage-destinations action=stop   transfer_id=<id>                       # pause syncing new data
+manage-destinations action=resume transfer_id=<id>                       # re-activate + backfill missed dates
+manage-destinations action=resync transfer_id=<id> from=<date> to=<date> # re-fetch a date range (transfer must be ACTIVE)
+manage-destinations action=update transfer_id=<id> name="New name"       # rename and/or change backfill window
+manage-destinations action=update transfer_id=<id> backfill_until=<date>
+```
+
+- `resync` requires the transfer to be ACTIVE — resume a stopped transfer first. It also rejects when a backfill is still in progress; wait for it to finish.
+- `update` needs at least one of `name` / `backfill_until`. Moving `backfill_until` further back queues additional ETL jobs for the newly-covered dates.
+
 ## Deleting a transfer
 
 Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: needs `transfer_id`, stops the outbound transfer, previously delivered rows in the destination are outside Whatagraph's control.
@@ -67,13 +81,11 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 ## What MCP can't do here
 
 - Create a new transfer — UI only.
-- Update or pause a transfer — UI only.
-- Trigger a manual sync — UI only.
 - Reset a transfer's jobs — UI only.
 
 ## Common pitfalls
 
 - **Confusing destinations with data sources** — destinations push data out; data sources pull in. Different tool.
-- **Assuming MCP can create a transfer** — only viewing is supported. The UI handles transfer setup and scheduling.
+- **Assuming MCP can create a transfer** — existing transfers can be controlled (`stop`/`resume`/`resync`/`update`), but initial transfer setup and scheduling is UI-only.
 - **`issue=account` vs `issue=source`** — `account` means the authenticated integration account expired; `source` means the sub-source is failing. Different fixes.
 - **Stale `running` jobs on stopped transfers** — if a transfer was paused or stopped while jobs were in flight, those jobs can remain in `running` state indefinitely without ever completing. They are not actually executing. Always check the transfer's overall status (`list-destinations action=show`) before interpreting job states — a `running` job under a stopped transfer is effectively stuck, not in-progress.

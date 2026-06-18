@@ -25,12 +25,12 @@ A **goal** is a target value on a metric for a specific period (daily, weekly, m
 ## Known limitations
 
 - Goal creation may not be available for every team or MCP server version. If `manage-goals action=create` is unavailable, use `view-goals` for existing goals and create new goals in the Whatagraph UI.
-- Goals are identified by `metric_external_id` + `integration_source_id`; do not rely on `name` as the unique identifier.
-- **One goal per (metric, source) pair.** Creating a second goal for the same `metric_external_id` on the same `integration_source_id` returns a conflict error:
+- Goals are identified by `metric_external_id` + `integration_source_id` (+ `report_type_external_id` + `dimension_key`); do not rely on `name` as the unique identifier.
+- **One goal per (metric, source, report type, dimension filter) combination.** Creating a second goal with the same `metric_external_id`, `integration_source_id`, `report_type_external_id`, and `dimension_key` returns a conflict error:
   ```
   {"category":"conflict","message":"A goal already exists for metric universal_metric_3 on source ID 632871"}
   ```
-  Always call `view-goals action=list source_id=<id>` first and check whether the metric is already covered. To change a target, update the existing goal via `manage-goals action=update goal_id=<id>` rather than creating a new one. To track the same metric on multiple sources, create one goal per source — the constraint is per (metric, source), not per metric overall.
+  The `dimension_key` is part of the key: a dimension-filtered goal and an unfiltered goal on the same metric+source coexist (e.g. an overall spend goal plus a "Search campaigns only" spend goal), and two goals on the same metric with *different* dimension filters coexist too. Always call `view-goals action=list source_id=<id>` first and check whether the exact combination is already covered. To change a target, update the existing goal via `manage-goals action=update goal_id=<id>` rather than creating a duplicate. To track the same metric on multiple sources, create one goal per source.
 
 ## Listing
 
