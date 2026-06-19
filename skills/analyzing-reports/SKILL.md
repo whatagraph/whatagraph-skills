@@ -1,5 +1,6 @@
 ---
 name: analyzing-reports
+type: workflow
 description: >-
   Examine existing Whatagraph report structure, widgets, tabs, templates, themes,
   sharing settings, snapshots, and automations. Use when the user asks about

@@ -1,5 +1,6 @@
 ---
 name: whatagraph-deleting
+type: meta
 description: Safe deletion, removal, and revocation across all Whatagraph entities — what each delete tool actually does, what cascades, what is recoverable, and when NOT to delete. Use when the user asks to delete, remove, disconnect, revoke, clean up, or undo anything, or before calling any delete-* / remove-* tool.
 required_tools:
   - list-blends

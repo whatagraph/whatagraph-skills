@@ -1,5 +1,6 @@
 ---
 name: cross-channel-analytics
+type: workflow
 description: >-
   Analyze marketing performance across multiple channels using Whatagraph blends,
   source groups, and custom metrics/dimensions. Use when the user wants to

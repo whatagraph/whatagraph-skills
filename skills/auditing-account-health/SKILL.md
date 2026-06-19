@@ -1,5 +1,6 @@
 ---
 name: auditing-account-health
+type: workflow
 description: >-
   Review the overall health of a Whatagraph account including source connections,
   integration status, automation schedules, sharing configurations, goals,

@@ -1,5 +1,6 @@
 ---
 name: generating-marketing-insights
+type: workflow
 description: >-
   Generate executive summaries, trend analysis, performance narratives, and
   actionable recommendations from Whatagraph marketing data. Use when the user

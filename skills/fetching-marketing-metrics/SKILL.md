@@ -1,5 +1,6 @@
 ---
 name: fetching-marketing-metrics
+type: workflow
 description: >-
   Fetch and analyze raw marketing performance data from any connected Whatagraph
   source via fetch-data — pick the right report type, metrics, and dimensions,
@@ -42,7 +43,11 @@ Always confirm these three things before calling `fetch-data`:
 2. **Report type** — Many sources expose multiple report types (e.g., Google Ads has `ACCOUNT`, `CAMPAIGN`, `AD_GROUP`, `AD`; Bing Ads has `customer`, `campaign`, `ad_group`, etc.). Always call `list-sources` with `action: list_report_types` before fetching. If the source has more than one report type, `fetch-data` **will error** unless you pass `report_type`.
 3. **Available metrics and dimensions** — Call `list-sources` with `action: list_dimensions_and_metrics` with both `source_id` **and** `report_type` to see what fields are available. The response is specific to that report type — switching report types changes the catalog.
 
-### Narrowing a large field catalog — use `filter` first
+### Finding a field by name — try `resolve_fields` first
+
+To get the `external_id` for a metric or dimension the user named, make `list-sources action: resolve_fields` your **first** move: it takes `source_id` + a natural-language `query` (e.g. "how much did we spend" → Cost) and returns the best-matching fields ranked by relevance, so you skip guessing the exact spelling. Pass `report_type` too when the source has multiple report types. Only fall back to `list_dimensions_and_metrics` with `filter` (below) when `resolve_fields` returns nothing.
+
+### Narrowing a large field catalog — use `filter`
 
 Big channels expose **hundreds** of fields per report type (Google Ads `campaign` has 500+), and this response is cursor-paginated and capped (~50 KB) — so a bare `list_dimensions_and_metrics` call returns a truncated, mostly-config list you then have to scan. When you already know the metric or dimension the user named, **filter the catalog in one call** instead of pulling and paginating the whole thing:
 
@@ -52,7 +57,7 @@ list-sources action: list_dimensions_and_metrics, source_id: <id>, report_type: 
   (e.g. metrics.cost_micros, metrics.cost_per_conversion, metrics.average_cost)
 ```
 
-- **`filter`** is a case-insensitive substring match on both the display name and the `external_id`. Make it your **default first move** whenever the user named the field — "spend", "roas", "conversions", "sessions", "clicks". It turns a 500-field scan into a handful of fields in one call.
+- **`filter`** is a case-insensitive substring match on both the display name and the `external_id`. When you do reach for `list_dimensions_and_metrics`, make it your **default** whenever the user named the field — "spend", "roas", "conversions", "sessions", "clicks". It turns a 500-field scan into a handful of fields in one call.
 - **`premade_only: true`** returns only the curated headline metrics/dimensions (~20 fields: cost, clicks, impressions, conversions, etc.) instead of the full 500+ catalog. Use this as the default when the user asks a general question ("how did we do?") and you don't yet know which specific fields to fetch.
 - **`is_universal: true`** returns only the platform-unified `universal_*` fields (useful on source groups and blends); `is_universal: false` returns only channel-native fields; omit for all.
 - **`per_page: 500`** — when you do need the full catalog (rare), set `per_page: 500` to minimize pagination round-trips instead of the default 100.

@@ -1,5 +1,6 @@
 ---
 name: whatagraph-sources-and-data
+type: domain
 description: Discover and query Whatagraph data sources — find which accounts are connected, list report types and the available metrics and dimensions (narrowing large catalogs with the filter parameter), pull raw numbers via fetch-data, and check where a source is used. Covers native channels, source groups, and blends. Use this before any reporting task to establish what data is available.
 required_tools:
   - list-integrations
@@ -66,6 +67,15 @@ list-sources action=list_dimensions_and_metrics
 ```
 
 **Always run `list_report_types` first** when you don't know the report type. `list_dimensions_and_metrics` requires `report_type` when a source has multiple. Some sources (e.g. Facebook Ads, GA4) return zero report types — omit `report_type` entirely for those. If you pass an invalid report type, the error lists valid options — use that list.
+
+### Finding a field by name — try `resolve_fields` first
+
+To get the `external_id` for a metric or dimension the user named, make `resolve_fields` your first move — it takes `source_id` + a natural-language `query` (e.g. "how much did we spend" → Cost) and returns the best-matching fields ranked by relevance, no exact spelling needed. Pass `report_type` too when the source has multiple report types. Fall back to `list_dimensions_and_metrics` with `filter` (below) only when `resolve_fields` returns nothing.
+
+```
+list-sources action=resolve_fields source_id=<id> query="how much did we spend"
+# → best-matching fields (e.g. metrics.cost_micros) ranked by relevance
+```
 
 ### Narrowing a large field catalog — use `filter`
 

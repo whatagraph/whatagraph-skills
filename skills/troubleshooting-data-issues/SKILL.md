@@ -1,5 +1,6 @@
 ---
 name: troubleshooting-data-issues
+type: workflow
 description: >-
   Diagnose data discrepancies, source connection problems, blend and source group
   issues, filter behavior, and missing data in Whatagraph. Use when the user
