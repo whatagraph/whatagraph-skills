@@ -22,15 +22,15 @@ Retrieve marketing performance data from connected sources using the `fetch-data
 
 **Every metric and dimension name you pass to `fetch-data` must come from a `list-sources` `action: list_dimensions_and_metrics` response for the exact same `source_id` + `report_type` combination. Never rely on your prior knowledge of the native platform's API.**
 
-Whatagraph exposes a normalized field catalog that differs from each platform's native API. The following guesses are common and all fail:
+Whatagraph exposes a field catalog whose id format varies by channel — some channels keep the platform's native names, others normalize them. The format you can't predict, so look it up; these are common mistakes:
 
-| Wrong (native-API guess) | Actual Whatagraph field |
+| Wrong (guess) | Actual Whatagraph field |
 |--------------------------|--------------------------|
-| `sessionDefaultChannelGroup` (GA4) | look it up — often `default_channel_group` |
+| `sessionDefaultChannelGroup` (GA4, wrong suffix) | GA4 keeps its native camelCase API names verbatim — the real id is `sessionDefaultChannelGrouping` (and `sessions`, `sessionSourceMedium`, `defaultChannelGrouping` all work as-is). Look up the exact spelling. |
 | `campaignName`, `campaign_name` | varies — Google Ads exposes `campaign.name` (dot, not underscore); source groups expose `universal_dimension_<n>`; blends expose `aggregation_dimension_universal_dimension_<n>` |
 | `spend` (generic) | varies by channel — `metrics.cost_micros` on Google Ads, `spend` on Meta, `universal_metric_3` on source groups |
 | `date` (on sources without time dimension) | some report types don't support date at all — check first |
-| `universal_metric_N` | these appear on **source groups and blends**, not on native channel sources. On native sources (Google Ads, Meta, etc.) use the channel-native name from `list_dimensions_and_metrics`. On source groups the catalog returns `universal_metric_N` / `universal_dimension_N` ids; on blends it returns `aggregation_metric_universal_metric_N` / `aggregation_dimension_universal_dimension_N` (or `blend_*` prefixes). Never guess the number — look it up each time. |
+| `universal_metric_N` | these appear on **source groups and blends**, not on native channel sources. On native sources (Google Ads, Meta, GA4, etc.) use the channel-native id from `list_dimensions_and_metrics`. On source groups the catalog returns `universal_metric_N` / `universal_dimension_N` ids; on blends it returns `aggregation_metric_universal_metric_N` / `aggregation_dimension_universal_dimension_N` (or `blend_*` prefixes). Never guess the number — look it up each time. |
 
 If `fetch-data` returns `Invalid metrics: X` or `Invalid dimensions: X`, do not retry with a variant spelling. Re-run `list-sources action: list_dimensions_and_metrics` with the correct `source_id` and `report_type` and pick a name from the response verbatim.
 
@@ -142,6 +142,8 @@ If the user's question doesn't imply a report type, default to the most granular
 | "Year to date" | January 1 of current year | Today |
 | "Last week" | Monday of previous week | Sunday of previous week |
 
+Alternatively, pass a `period` preset instead of `from`/`till` and let the source compute the range. A wide set is supported — among them `today`, `yesterday`, `last7Days`/`last14Days`/`last30Days`/`last90Days`, `lastWeek`, `lastMonth`, `lastQuarter`, `lastYear`, `thisWeek`/`thisMonth`/`thisQuarter`/`thisYear`, the `full*` variants (`fullWeek`, `fullMonth`, `fullQuarter`, `fullYear` — the most recent fully-completed period), and the `*ExclToday` variants (`thisWeekExclToday`, `thisMonthExclToday`, …). If you pass an invalid key the error lists every valid period — copy one from there.
+
 ## Interpreting Results
 
 - **Null or missing values**: Some metrics may return null for certain date ranges if no data was collected. This is normal — explain it to the user rather than treating it as an error.
@@ -154,7 +156,7 @@ If the user's question doesn't imply a report type, default to the most granular
 - Start with fewer metrics and dimensions, then expand. Large requests may be slower.
 - Always include a `date` dimension when users want to see trends over time.
 - If a metric returns unexpected results, check if the report type is correct — different report types expose different metrics.
-- Keep requests to **≤ 10 metrics per call** — larger requests are rejected with `Requests are limited to 10 metrics.`
+- Keep each call focused — fetch the metrics you actually need rather than the whole catalog. There is no hard cap on the number of metrics, but large requests are slower and the response is byte-capped (~50 KB) and paginated. The `limit` parameter caps the number of **rows** returned (default 100, max 1000), not metrics.
 - For period-over-period comparisons, make two `fetch-data` calls with different date ranges and compare the results side by side. (If the user has a Whatagraph report with a built-in comparison period, prefer the `generating-report-digests` skill, which surfaces comparison metrics directly.)
 
 ## Handling Errors (read before retrying)
@@ -164,5 +166,5 @@ If the user's question doesn't imply a report type, default to the most granular
 - `The dimensions and metrics are incompatible.` — this report type does not support that combination. Pick a different report type or drop the dimension (typically the finest-grained dimension).
 - `Invalid source_id.` — the source ID was fabricated or stale. Re-run `list-sources action: list` with a `search` term matching the user's words.
 - Provider access or usage-limit errors are account-level issues the user must resolve; tell them which source needs attention and stop retrying.
-- `One or more GA4 metric names contain unsupported characters.` — you used a GA4-native field name. Switch to the Whatagraph normalized name via `list-sources action: list_dimensions_and_metrics`.
+- `One or more GA4 metric names contain unsupported characters.` — the GA4 field id you passed isn't a valid one (GA4 ids are the native camelCase names like `sessions`, `sessionSourceMedium` — valid names work as-is, so this means the spelling is wrong, not that GA4 names need rewriting). Re-check the exact `external_id` via `list-sources action: list_dimensions_and_metrics`.
 - **`Your data is being processed... please wait...`** — transient warmup state. Common on blends and source groups the first time they're queried, or after a long idle period. The response often comes back with `retryable: false`, but **the condition is retryable**: wait 10–15 seconds and call again with the same parameters. Two retries with backoff (10s, 30s) is enough for almost every case; declarative connectors (e.g. some Fivetran-backed sources) can take up to ~3 minutes on first fetch. Do NOT surface this to the user as a hard failure or treat `retryable: false` as authoritative on this specific message. Same handling applies to the legacy `{"status":"pending","retry_after":<n>}` shape — wait the indicated seconds and retry.

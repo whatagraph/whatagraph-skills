@@ -85,13 +85,22 @@ Optional. Same shape as metrics but no `visualize`/`sort_type`.
 
 Default `percentage`. Values: `percentage`, `absolute`, `combined`.
 
+## Updating an overview
+
+```
+manage-overviews action=update overview_id=<id>
+   name="..." source_id=<id> metrics=[...] dimensions=[...]
+```
+
+`update` **fully replaces** the overview's configuration — supply the complete desired `name`, `source_id`, `metrics`, and any `dimensions`; fields you omit are not kept. Passing a different `space_id` moves the overview; omitting it leaves it in place. (Note the update parameter is `overview_id`, while list/show/delete use `measurement_id` — both refer to the same overview.)
+
 ## Deleting an overview
 
-Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: the parameter is `measurement_id` (not `overview_id`), no restore, delete + recreate is the only modify path (there is no update action).
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: the parameter is `measurement_id` (not `overview_id`), no restore.
 
 ## What MCP can't do here
 
-- Update or duplicate an overview — to modify, delete + recreate (see `whatagraph-deleting`) or use the UI.
+- Duplicate an overview — UI only (use `action=update` to modify an existing one).
 - Sharing — overviews inherit sharing from their space; share the space (UI) instead.
 - Set a target value on an overview metric — use `whatagraph-goals` to track goals alongside.
 
@@ -102,4 +111,4 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **Forgetting `report_type_external_id`** when the source has multiple report types — leads to missing data or an error.
 - **Too many metrics** — 6–8 is readable; more makes the dashboard noisy.
 - **Mixed-currency metrics** — overview does not auto-convert. Normalize via source-level currency override (`manage-sources action=set_currency`) before building the overview.
-- **`measurement_id` vs `overview_id`** — tool parameters use `measurement_id`. The UI says "Measurement"; the tool name says "overview". Both refer to the same thing.
+- **`measurement_id` vs `overview_id`** — `list`/`show`/`delete` use `measurement_id`; `manage-overviews action=update` uses `overview_id`. The UI says "Measurement"; the tool name says "overview". Both refer to the same thing.

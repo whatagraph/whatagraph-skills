@@ -150,6 +150,7 @@ manage-widgets action=create report_id=<id> tab_id=<tab_id>
 When picking metrics/dimensions on the widget, use the blend-level ids returned by `list-sources action=list_dimensions_and_metrics source_id=<blend_id>`:
 
 - **Aggregated universal fields** — `aggregation_metric_universal_metric_<id>` and `aggregation_dimension_universal_dimension_<id>` — one row per unified field across all sub-sources.
+- **Aggregated native fields** — when the same channel-native (non-universal) metric is present on multiple sub-sources, the blend also exposes `aggregation_metric_blend_metric_<id>`, and a join-key dimension chained across sub-sources is exposed as `aggregation_dimension_join_key_<id>`. These are the aggregated read forms for native fields that have no universal slot — use them like the `aggregation_*_universal_*` forms.
 - **Per-sub-source fields** — `blend_metric_<id>` and `blend_dimension_<id>` — keep each sub-source's metric distinct (useful when you want `Google Spend` and `Meta Spend` as separate columns).
 
 ## Field-id families on a blend — which form goes where
@@ -159,7 +160,7 @@ When picking metrics/dimensions on the widget, use the blend-level ids returned 
 | Field id family | `manage-custom-metrics create` | `manage-custom-dimensions create` | `fetch-data` on the blend | UI widget picker |
 |---|---|---|---|---|
 | `universal_metric_<n>` / `universal_dimension_<n>` (cross-channel canonical) | ✓ (`map_type=data_aggregation`) | ✓ (`map_type=data`) | ✗ | (resolves on sub-source, not blend) |
-| `aggregation_metric_universal_metric_<n>` / `aggregation_dimension_universal_dimension_<n>` (aggregated unified output) | ✗ | ✗ | ✓ | ✓ aggregated |
+| `aggregation_metric_universal_metric_<n>` / `aggregation_dimension_universal_dimension_<n>` (aggregated unified output; native-field equivalents `aggregation_metric_blend_metric_<n>` / `aggregation_dimension_join_key_<n>` behave the same) | ✗ | ✗ | ✓ | ✓ aggregated |
 | `blend_metric_<n>` / `blend_dimension_<n>` (per-sub-source) | ✓ (`map_type=data_aggregation`) | ✗ | ✗ | ✓ per-sub-source |
 
 Rule of thumb: use `universal_*` to **build** custom fields, `aggregation_*` to **read** the unified output, and `blend_*` to **build** custom fields keyed off one specific sub-source.

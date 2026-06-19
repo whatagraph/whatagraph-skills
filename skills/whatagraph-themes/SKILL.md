@@ -1,6 +1,6 @@
 ---
 name: whatagraph-themes
-description: Apply themes (logos, fonts, header/footer) and color palettes (chart series colors, widget chrome, report canvas) to reports, and create or update reusable palettes and themes. Use when branding a report for a client, applying consistent colors across widgets, or fixing off-brand or black-rendering charts. Covers the exact palette schema (widget_colors object, bare-hex chart_colors, additional_colors).
+description: Apply themes (logos, fonts, header/footer) and color palettes (chart series colors, widget chrome, report canvas) to reports, and create or update reusable palettes and themes. Use when branding a report for a client, applying consistent colors across widgets, or fixing off-brand charts. Covers the exact palette schema (widget_colors object, chart_colors array, additional_colors).
 required_tools:
   - list-themes
   - list-widgets
@@ -104,7 +104,7 @@ manage-themes action=create_color
 ```
 
 - **`widget_colors`** is an **object with named keys** — NOT a flat array. Keys: `widget_background`, `text_color`, `positive_color`, `negative_color`, `accent_fill_color`, `accent_text_color`, `icon_symbol`, `icon_background`, `neutral_color`, `neutral_bg`, `list_odd_fill`, `list_even_fill`, `chart_axis_text`, `chart_grid_lines`, `font_family`. These values may keep the leading `#`.
-- **`chart_colors`** is an array of **bare hex with NO leading `#`** (6-digit `"C0392B"` or 8-digit-with-alpha `"6366f1ff"`). ⚠️ A `#`-prefixed value passes validation but **renders every chart series black** — always strip the `#` in `chart_colors`. Provide 8–12 colors to avoid repetition on large charts.
+- **`chart_colors`** is an array of hex values, stored **without** the leading `#` (6-digit `"C0392B"` or 8-digit-with-alpha `"6366f1ff"`). A `#`-prefixed value is accepted and the `#` is stripped automatically, so either form is safe; non-hex values are rejected. Provide 8–12 colors to avoid repetition on large charts.
 - **`additional_colors`** is an **object** controlling the report canvas: `background`, `report_accent`, `report_text_color`, `report_title_color`. Set these to drive the report background and title color; omit to keep the theme default.
 - Tie a palette to a theme via `theme_id` in `colors`.
 
@@ -113,10 +113,10 @@ manage-themes action=create_color
 ```
 manage-themes action=update_color
    color_id=<id>
-   colors={"widget_colors": {...}, "chart_colors": [...bare hex...], "additional_colors": {...}}
+   colors={"widget_colors": {...}, "chart_colors": [...hex...], "additional_colors": {...}}
 ```
 
-Same shapes as `create_color` — `widget_colors`/`additional_colors` are objects, `chart_colors` stay **bare hex**. After updating a palette already enabled on a report, re-check the report render (`list-widgets action=csv_export` or the UI) to confirm the change propagated.
+Same shapes as `create_color` — `widget_colors`/`additional_colors` are objects, `chart_colors` is the hex array (leading `#` stripped automatically). Note `chart_colors` is an indexed array and is replaced entirely on update — pass the full desired list. After updating a palette already enabled on a report, re-check the report render (`list-widgets action=csv_export` or the UI) to confirm the change propagated.
 
 ## Deleting a theme or palette
 
@@ -129,7 +129,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 ## Common pitfalls
 
 - **Palette with fewer colors than chart series** — colors repeat in cycle. Provide 8–12 colors to avoid visible repetition on large charts.
-- **Charts rendering black** — `chart_colors` were supplied with a leading `#`. Use **bare hex** in `chart_colors` (`C0392B`, not `#C0392B`); `widget_colors` / `additional_colors` keep the `#`.
+- **`chart_colors` are stored without the `#`** — a leading `#` is stripped automatically, so both `C0392B` and `#C0392B` are accepted; `widget_colors` / `additional_colors` keep the `#`.
 - **Theme vs palette confusion** — theme controls logos/fonts/layout; palette controls chart colors. A report can use theme A + palette B.
 - **Passing a palette's `theme_id` field to `enable_theme`** — palettes returned by `list_colors` carry a `theme_id` attribute (the theme they're bound to); that is **not** the palette's own id and the palette's id is not a theme id. `enable_theme` takes a theme id from `list_themes`; `enable_color` takes a palette id from `list_colors`. Mixing them up enables the wrong asset or errors.
 - **Logo URL not publicly accessible** — shared-link viewers won't see it. Use a CDN-backed public URL.
