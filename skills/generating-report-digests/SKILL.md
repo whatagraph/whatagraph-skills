@@ -1,5 +1,6 @@
 ---
 name: generating-report-digests
+type: workflow
 description: >-
   Produce a digest or summary of an existing Whatagraph report from a report
   URL or report ID. Use when the user pastes a live-report link

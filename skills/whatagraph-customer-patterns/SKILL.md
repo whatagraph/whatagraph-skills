@@ -1,28 +1,8 @@
 ---
 name: whatagraph-customer-patterns
+type: meta
 description: Common multi-tool flows and decision trees across Whatagraph skills. Load alongside domain skills when working on end-to-end capabilities like "onboard a new client", "build a cross-channel report", "fix a data mismatch", or "set up a client portal".
-required_tools:
-  - list-filters
-  - list-integrations
-  - list-reports
-  - list-sources
-  - list-templates
-  - list-widgets
-  - view-team
-  - export-report
-  - fetch-data
-  - manage-automations
-  - manage-blends
-  - manage-custom-metrics
-  - manage-integrations
-  - manage-overviews
-  - manage-report-tabs
-  - manage-reports
-  - manage-sharing
-  - manage-sources
-  - manage-spaces
-  - manage-themes
-  - manage-widgets
+required_tools: []
 ---
 
 # Customer patterns — end-to-end flows

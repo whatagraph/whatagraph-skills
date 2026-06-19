@@ -1,6 +1,7 @@
 ---
 name: whatagraph-spaces
-description: Create and manage spaces (also called client folders). Spaces are the top-level containers for reports and data sources. Use when onboarding a new client, organizing reports into folders, or nesting folders for multi-brand/agency hierarchies.
+type: domain
+description: Create and manage spaces (also called client folders). Spaces are the top-level containers for reports and data sources. Use when onboarding a new client, organizing reports into folders, or nesting folders for multi-brand/agency hierarchies. Handles asks like "create a folder for a new client", "organize my reports into folders", or "set up a sub-folder under this client".
 required_tools:
   - list-spaces
   - manage-integrations

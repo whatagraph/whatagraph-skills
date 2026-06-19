@@ -1,5 +1,6 @@
 ---
 name: exploring-account-data
+type: workflow
 description: >-
   Navigate and discover data sources, integrations, report types, metrics,
   dimensions, spaces, reports, and the overall account structure in a Whatagraph
@@ -47,7 +48,8 @@ Help users discover and navigate the data available in their Whatagraph account.
    - Call `list-sources` with `action: list` to see all sources
    - Filter by integration type using `channels` (array of integration IDs)
    - Use `action: list_report_types` on a source to see its available report types
-   - Use `action: list_dimensions_and_metrics` to discover available fields for a source — and when you already know the field the user named, narrow the catalog in one call with `filter: "<keyword>"` (case-insensitive substring on name/`external_id`) instead of paging through hundreds of fields; `is_universal: true` limits the result to the unified `universal_*` fields
+   - To find the `external_id` for a field the user named, try `action: resolve_fields` first — it takes `source_id` + a natural-language `query` (e.g. "how much did we spend" → Cost) and returns the best-matching fields ranked by relevance; pass `report_type` too when the source has multiple report types
+   - Fall back to `action: list_dimensions_and_metrics` to discover available fields for a source when `resolve_fields` returns nothing — and when you already know the field the user named, narrow the catalog in one call with `filter: "<keyword>"` (case-insensitive substring on name/`external_id`) instead of paging through hundreds of fields; `is_universal: true` limits the result to the unified `universal_*` fields
 
 3. **Explore the account structure**:
    - Call `list-spaces` with `action: list` to see client folders
