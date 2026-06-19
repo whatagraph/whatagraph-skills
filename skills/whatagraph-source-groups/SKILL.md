@@ -24,7 +24,7 @@ A **source group** aggregates multiple sources into one virtual source. Sources 
 - Franchise brand has multiple Meta ad accounts per region — one virtual source per brand.
 - Cross-channel rollup — combine Meta Ads + Google Ads + Reddit Ads + TikTok into one aggregated source with unified metrics (impressions, clicks, spend).
 
-## Source group vs blend vs custom metric
+## Source group vs blend
 
 | Goal | Use |
 |---|---|
