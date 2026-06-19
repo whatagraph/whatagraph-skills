@@ -11,17 +11,19 @@ Multi-tool patterns that keep coming up. Use alongside the domain skills.
 
 ## Decision trees
 
-### Same-channel rollup vs cross-channel join vs summed metric
+### Same-channel rollup vs cross-channel rollup vs join
 
-"I want combined numbers":
+"I want combined numbers across sources":
 
 ```
-Do the sources share a channel (all Google Ads, all Meta)?
-├── Yes → Source group. See whatagraph-source-groups.
-└── No  → Does the widget need to join them on a shared dimension (campaign_name, date)?
-         ├── Yes → Blend. See whatagraph-blends.
-         └── No  → Custom metric, map_type=data_aggregation. See whatagraph-custom-metrics.
+Do you need rows JOINED on a shared key (campaign_name, date) for side-by-side comparison?
+├── Yes → Blend. See whatagraph-blends.
+└── No  → Source group — one virtual aggregated source. See whatagraph-source-groups.
+         • All sources same channel (all Google Ads) → same-channel source group.
+         • Different channels (Google + Meta + TikTok) → cross-channel source group.
 ```
+
+Combining across sources is always a **source group** or **blend** — never a custom metric (a custom metric only computes on the source it is attached to). For a combined **ratio** (blended ROAS/CPA), build the source group/blend first, then a `data_formula` metric on top of it.
 
 ### Filter scope
 

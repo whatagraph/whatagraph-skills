@@ -1,7 +1,7 @@
 ---
 name: whatagraph-custom-metrics
 type: domain
-description: Create calculated or unified metrics on top of one or more data sources — formulas (ROAS, CPA, CPL), aggregations (total paid spend across channels), and metric aliases. Use when a standard channel metric isn't enough or when a derived metric needs to exist across multiple sources.
+description: Create calculated or unified metrics on top of a data source — formulas (ROAS, CPA, CPL) and metric aliases / unified names. Use when a standard channel metric isn't enough. To total or combine a metric ACROSS sources, use a source group or blend (see whatagraph-source-groups / whatagraph-blends), not a custom metric.
 required_tools:
   - list-custom-metrics
   - list-sources
@@ -22,17 +22,19 @@ A **custom metric** is a calculated field that behaves like any other metric. Us
 ## Use this when
 
 - User asks for ROAS, CPA, CPL, CPM, CTR — any formula not native to the channel.
-- "Total spend" across Google Ads + Meta Ads + LinkedIn needs to be one metric.
-- Renaming a native metric for a client-facing report.
+- Renaming a native metric for a client-facing report (alias / unified name).
 - Expressing "Budget remaining" as `A - B`.
 
-## Three metric types — pick the right one
+**Not this:** to total or combine a metric across multiple sources/channels (e.g. one "Total Spend" across Google + Meta + LinkedIn), build a **source group** or **blend** — those aggregate across sources. A custom metric does not aggregate across sources by itself; it computes on the source it is attached to. Build a cross-source **ratio** (blended ROAS/CPA) as a `data_formula` on top of the source group/blend.
+
+## Two metric types — pick the right one
 
 | `map_type` | What it does | Example |
 |---|---|---|
-| `metadata` | 1:1 mapping (alias of an existing field) | Rename "Spend" to "Ad Cost" |
-| `data_aggregation` | Sum one field across many sources | Total Paid Spend across Google + Meta + LinkedIn |
 | `data_formula` | Formula with field identifiers A, B, C… | `A/B` for ROAS |
+| `metadata` | 1:1 mapping — alias / unified name for an existing field | Rename "Spend" to "Ad Cost"; unify "Cost" (Google) and "Amount spent" (Meta) under one name |
+
+To combine the **same** metric across multiple sources into one total, don't use a custom metric — use a **source group** (rollup) or **blend** (join), which aggregate across sources. See `whatagraph-source-groups` and `whatagraph-blends`.
 
 ## Transformation level
 
@@ -152,23 +154,11 @@ Optional. Controls how the total/summary row is calculated, independent of per-r
 
 Set `summary_accumulator="average"` for ratio/rate metrics (CTR, ROAS, CPA) so the summary row shows a weighted average rather than a sum of per-row values.
 
-## Creating a `data_aggregation` metric
+## Combining a metric across multiple sources
 
-Sums one field across multiple sources.
+A custom metric does **not** aggregate across sources on its own. To get one "Total Spend" (or any combined metric) across multiple sources or channels, build a **source group** (rollup into one virtual source) or a **blend** (join sources on a shared dimension). The group/blend exposes the combined value directly — on a source group as `universal_metric_*`, on a blend as `aggregation_metric_*`. See `whatagraph-source-groups` and `whatagraph-blends`.
 
-```
-manage-custom-metrics action=create
-   name="Total Paid Spend"
-   map_type="data_aggregation"
-   transformation_level="source"
-   fields=[
-     {"integration_source_id": <google_ads_source>, "field_external_id": "universal_metric_3", "report_type_external_id": "campaign"},
-     {"integration_source_id": <meta_ads_source>,   "field_external_id": "universal_metric_3"},
-     {"integration_source_id": <linkedin_ads_source>, "field_external_id": "universal_metric_3"}
-   ]
-```
-
-Pick `transformation_level=source` when aggregating across specific sources.
+For a cross-source **ratio** (blended ROAS, blended CPA), build the source group/blend first, then add a `data_formula` metric on top of it whose `A`/`B` identifiers reference the aggregated fields.
 
 ## Creating a `metadata` alias
 
@@ -225,7 +215,7 @@ fetch-data source_id=<source_id>
 
 ## What MCP can't do here
 
-- Only `metadata`, `data_aggregation`, and `data_formula` map types are exposed.
+- Custom metrics use `data_formula` (calculations) and `metadata` (alias / unified name). To total a metric across sources, use a source group or blend — not a custom metric (see above).
 - `transformation_level=widget` — build widget-local formulas via `manage-widgets` instead.
 
 ## Common pitfalls
@@ -235,6 +225,6 @@ fetch-data source_id=<source_id>
 - **Passing metric display names as `field_external_id`** — field IDs come from `list-sources action=list_dimensions_and_metrics`, not display names.
 - **Missing any of `accumulator`, `aggregation_level`, `formula_increase`, `formula_value_type` on a `data_formula` create** — all four are required.
 - **`transformation_level=channel` with `integration_source_id` fields** — use `channel_id` at channel level; use `integration_source_id` at source level.
-- **Cross-channel aggregation without unified field names** — if Google Ads calls it `metrics.cost_micros` and Meta calls it `spend`, you still pick each per-source native field; the aggregation happens on the metric's output, not on the input names.
+- **Trying to combine across sources with a custom metric** — a custom metric computes on its own source; it does not sum across sources. Unify the field names first (a `metadata` unified-name metric, or the platform's pre-made unified metrics), then aggregate with a source group or blend.
 - **Division by zero** → empty cell, not infinity.
 - **Formula spaces** — `A / B` with spaces is rejected. Write `A/B`.
