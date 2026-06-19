@@ -30,10 +30,10 @@ A **source group** aggregates multiple sources into one virtual source. Sources 
 |---|---|
 | 5 Google Ads accounts → 1 virtual "Google Ads Total" | Source group (same-channel) |
 | Meta + Google + Reddit + TikTok → 1 aggregated source with unified metrics | Source group (cross-channel) |
-| Google Ads + Meta Ads joined/matched on campaign name | Blend |
-| Sum of `spend` across Google + Meta without joining | Custom metric `data_aggregation` |
+| Sum of `spend` across Google + Meta into one total, no row-level join | Source group (cross-channel) |
+| Google Ads + Meta Ads joined/matched on campaign name (side-by-side rows) | Blend |
 
-**Rule**: source groups handle both same-channel and cross-channel aggregation and are simpler than blending. Use a blend only when you need to **join** rows across channels on a shared dimension (e.g. matching campaign names between Google Ads and Meta Ads). Use a custom metric `data_aggregation` for a single summed field across sources without creating a full group.
+**Rule**: source groups handle both same-channel and cross-channel aggregation and are simpler than blending — think of a source group as the templated, stored, auto-summarized version of a blend. Use a blend only when you need to **join** rows across channels on a shared dimension (e.g. matching campaign names between Google Ads and Meta Ads).
 
 ## Listing
 
@@ -186,7 +186,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **`resolve_issues` on a shared source re-syncs other groups** — scope `integration_source_ids` narrowly and expect a transient re-download on anything sharing those sources.
 - **Empty group after creation** — freshly-created groups need time for ETL to populate; data may be empty for a few minutes for small accounts, longer for high-volume ones.
 - **Group not appearing in widget picker immediately** — refresh the report; new groups can take a few seconds to appear.
-- **Very large groups (hundreds of sub-sources)** — query performance can slow down. For very large rollups, consider a custom metric `data_aggregation` instead of a group.
+- **Very large groups (hundreds of sub-sources)** — query performance can slow down. For very large rollups, keep one config per group and split into focused groups by report type rather than one sprawling group.
 - **Adding source groups can affect plan usage** — check the team's plan limits before bulk-creating groups.
 - **`source_ids` vs `integration_source_ids`** — MCP expects `integration_source_ids`. `source_ids` is rejected.
 - **Widget creation against a fresh group failing** — re-run `list-source-groups action=show` to verify `integration_source_id` exists and data has arrived before attaching widgets.

@@ -28,7 +28,7 @@ An **overview** (UI name: "Measurement") is a KPI dashboard that tracks selected
 |---|---|
 | One-page KPI dashboard with trend arrows and sparklines | Overview |
 | Multi-tab detailed breakdown with many widgets and filters | Report |
-| Cross-channel summary of 6–8 KPIs | Overview (with custom aggregation metrics for cross-channel KPIs) |
+| Cross-channel summary of 6–8 KPIs | Overview pointed at a cross-channel source group or blend |
 
 ## Listing overviews
 
@@ -107,7 +107,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 
 ## Common pitfalls
 
-- **One source per overview** — each overview is bound to one source. For cross-channel KPIs, first create a custom metric of type `data_aggregation` or a blend (see `whatagraph-custom-metrics`, `whatagraph-blends`), then point the overview at that source.
+- **One source per overview** — each overview is bound to one source. For cross-channel KPIs, first build a cross-channel source group or a blend (see `whatagraph-source-groups`, `whatagraph-blends`), then point the overview at that virtual source.
 - **Metric IDs as display names** — `external_id` must be the field ID from `list_dimensions_and_metrics`, not the display name.
 - **Forgetting `report_type_external_id`** when the source has multiple report types — leads to missing data or an error.
 - **Too many metrics** — 6–8 is readable; more makes the dashboard noisy.
