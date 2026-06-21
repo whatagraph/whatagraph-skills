@@ -484,7 +484,7 @@ Pick each widget's size from what its content needs to be legible, then fit it i
 - **Pie / Donut** — roughly square; a full-row pie wastes space.
 - **List / Funnel** — narrow-to-medium; sit well beside a chart.
 - **Media / creative preview** — one tile per creative, grouped across a row.
-- **Comment** — full-row as a section header/divider, or taller for an AI text block (height grows with how much text it holds).
+- **Comment** — full-row as a section header/divider, or taller for an AI text block. **Size the height to the text it holds:** `height: 1` fits only a single short heading line; a sentence or two needs `height: 2`; a full paragraph `height: 3`; a multi-paragraph AI summary `4+`. Under-sizing clips or overflows the text in the rendered report, so when in doubt give it more height — and prefer splitting a long block across widgets (or trimming the copy) over cramming it into a short box.
 - **GeoMap** — medium.
 
 **Hard constraints (always):** `width` 1..6, `height` ≥ 1, `position_x + width ≤ 6`, and no two widgets overlap.
