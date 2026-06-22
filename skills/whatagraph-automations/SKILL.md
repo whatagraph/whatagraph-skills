@@ -47,12 +47,17 @@ manage-automations action=create
 
 ### Frequency + delivery_day
 
+`delivery_day` is a **named key**, not a number. The valid keys depend on `frequency` — numeric forms like `"day_5"` and a "last day of month" key do **not** exist, and an unrecognized value is rejected.
+
 | `frequency` | `delivery_day` |
 |---|---|
-| `daily` | not used |
-| `weekly`, `bi_weekly`, `tri_weekly` | `"monday"` … `"sunday"` |
-| `monthly`, `bi_monthly` | `"first_day_month"`, `"last_day_month"`, or a specific day like `"day_5"` |
-| `quarterly`, `yearly` | same day syntax |
+| `daily` | `"daily"` |
+| `weekly`, `bi_weekly`, `tri_weekly` | a weekday name `"monday"` … `"sunday"` |
+| `monthly`, `bi_monthly` | an ordinal day `"first_day_month"`, `"second_day_month"` … `"tenth_day_month"`, or `"fifteenth_day_month"`; or a weekday-of-month `"first_monday_month"`/`"second_monday_month"`/`"third_monday_month"`, `"first_tuesday_month"` … `"first_sunday_month"` |
+| `quarterly` | `"first_day_quarter"` … `"tenth_day_quarter"` |
+| `yearly` | `"first_day_year"` … `"tenth_day_year"` |
+
+To deliver on the 2nd of every month, use `delivery_day="second_day_month"` — not `"day_2"`. There is no key for the 11th–14th, 16th–31st, or the last day of the month; pick the nearest supported ordinal.
 
 > **Warning:** an automation emails real recipients on a schedule. When setting one up on a user's behalf, test with your own (or the user's own) address first, or set `needs_approval=true` so nothing goes out without review. Create and update responses echo the saved `receivers` (verified Jun 2026) — check them before calling it done.
 
