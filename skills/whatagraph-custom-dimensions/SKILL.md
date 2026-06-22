@@ -181,7 +181,7 @@ list-custom-dimensions action=usage universal_dimension_ids=[<id>]
 
 ## Deleting custom dimensions
 
-Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: permanent (mappings, tags, and fields go with it), dependent widgets/filters show blank values, pre-check `list-custom-dimensions action=usage`.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: permanent (mappings, tags, and fields go with it). A dimension still used by widgets or filters is **blocked** — the call returns a conflict listing the affected widgets, reports, and filters. Remove those references first (`manage-widgets` / `manage-filters`), or re-run with `force=true` to delete anyway. Pre-check with `list-custom-dimensions action=usage`.
 
 ## Common pitfalls
 

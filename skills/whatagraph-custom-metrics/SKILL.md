@@ -197,7 +197,7 @@ Returns the number of widgets/reports affected.
 
 ## Deleting custom metrics
 
-Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: permanent, batch-only (`metric_ids` array, all-or-nothing ID validation), pre-check `list-custom-metrics action=usage`.
+Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: permanent, batch-only (`metric_ids` array, all-or-nothing ID validation). A metric still used by widgets or filters is **blocked** — the call returns a conflict listing the affected widgets, reports, and filters. Remove those references first (`manage-widgets` / `manage-filters`), or re-run with `force=true` to delete anyway. Pre-check with `list-custom-metrics action=usage`.
 
 ## Using a custom metric in `fetch-data`
 

@@ -519,6 +519,20 @@ Different requests produce different shapes. **Copy the user's intent or referen
 
 If your output looks like the same example every time, you've defaulted to a template — go back to the user's request or reference.
 
+## Filtering a widget
+
+Filters are **not** set inline on a widget. `manage-widgets` has no `filters`/`filter` field — pass one and the call is rejected with a pointer back here, because a silently-dropped filter would leave the widget showing unfiltered data. Apply a filter in two steps with the `whatagraph-filters` skill:
+
+```
+manage-filters action=create channel_id=<id> dimension="campaign.name" dimension_operator="contain_dimension" value="brand" name="Branded"
+manage-filters action=attach filter_id=<new id> widget_config_id=<this widget's config id>
+```
+
+- `widget_config_id` (from `list-widgets action=show`) filters this one widget; `source_id` filters every widget on that source.
+- `source_filter_off` (a `manage-widgets` `create`/`update` parameter) only **toggles** existing source-level filters on/off for the widget — it does not author them.
+
+Load `whatagraph-filters` for the full operator list and row-group (AND/OR) semantics.
+
 ## Deleting widgets
 
 Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: soft-delete with a `restore` action, batch via `batch_delete`, idempotent on already-deleted widgets. Note that delete-and-recreate is the documented workaround when a metric `external_id` update no-ops (see Common pitfalls).
