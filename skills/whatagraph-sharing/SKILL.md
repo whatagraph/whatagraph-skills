@@ -13,6 +13,8 @@ Tools covered: `view-sharing`, `manage-sharing`.
 
 A **share** is a public, view-only URL for a report. Anyone with the link (and optional password) can view; no login required.
 
+> **These tools are available to you — use them directly.** `view-sharing` and `manage-sharing` are part of the write toolset: if your connection can create or edit reports, it can create share links too. When asked for a share link, create it programmatically with `manage-sharing action=create` and return the `share_url` — do **not** fall back to telling the user to share manually in the app. If `manage-sharing` is genuinely absent from your available tools, the MCP connector needs to be re-added or refreshed to pick up the write tools (a freshly added connector can lag) — tell the user that specific step instead of only giving UI instructions.
+
 ## Use this when
 
 - A client asks for a link to their report.
