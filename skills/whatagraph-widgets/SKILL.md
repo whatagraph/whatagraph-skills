@@ -54,7 +54,7 @@ The tool validates that the correct dimensions are provided based on the widget 
 
 | Widget type | Dimension requirement |
 |---|---|
-| Time-series charts (104–107, 118–119) | **1 dimension required** — must be the integration's date dimension (e.g. `date`, `segments.date`, `ga:date`). Without it the chart renders a single aggregated value instead of time-series data points. When `breakdowns_enabled=true`, column/bar/stacked accept up to 2 dimensions. |
+| Time-series charts (104–107, 118–119) | **1 dimension required** — must be the integration's date dimension (e.g. `date`, `segments.date`, `ga:date`). Binding a non-date dimension while `breakdowns_enabled` is off is **rejected at create/update** (left unchecked it renders an empty/aggregated chart, and hard-errors on some sources such as Google Sheets). To split a bar/column chart by a category instead, set `breakdowns_enabled=true` (see Breakdown vs non-breakdown below) — then column/bar/stacked accept a categorical dimension (up to 2). |
 | Table (102) | **At least 1 dimension required** — any dimension. |
 | Heatmap (138) | **Exactly 2 dimensions required**. |
 | GeoMap (140) | **1 geographic dimension required**. |
@@ -64,6 +64,8 @@ The tool validates that the correct dimensions are provided based on the widget 
 | Comment (21), Calendar (22), Image (34) | **Skipped** — utility widgets with no data binding. |
 
 Use `list-sources action=list_dimensions_and_metrics` to find the correct dimension external_ids for a source. The date dimension external_id varies by integration — always look it up rather than guessing.
+
+> **A single value (101) always aggregates the whole dataset into one total** — it has no dimension and cannot rank or isolate a single entity. It will **not** show the "best" or "worst" campaign: a `sort` passed on its row/metric options is silently ignored (the tool returns a warning saying so). To surface a top/bottom performer, use a **Table (102)** with the entity dimension bound and the metric sorted desc/asc, or a saved filter (`whatagraph-filters`) pinning the specific entity.
 
 **Time-series chart example** (area chart with date dimension):
 ```

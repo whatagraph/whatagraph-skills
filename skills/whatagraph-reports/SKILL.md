@@ -117,6 +117,8 @@ Source groups and blends are themselves data sources — pass their `id` from `l
 
 If the source is already attached, the existing report-local id is returned (idempotent).
 
+**The source must belong to the report's space.** A report lives in one space; a real source can only be attached if it is assigned to that space, or to no space at all ("All folders"). Attaching a source assigned only to *other* spaces is rejected (the report builder never offers it there, and such a binding gets reset to sample data on the next space sync). Check a source's `space_ids` via `list-sources action=show`; if the report's space isn't listed, assign it first with `manage-integrations action=sync_to_clients` (see `whatagraph-integrations-admin`). The same rule applies to the `to` side of `change_sources`.
+
 ## Attach a sample-data source for a channel
 
 When a report should ship with sample data for a channel (template demos, blank reports during onboarding before the client connects), attach a sample placeholder for that channel using the `attach_source` action with `channel_ids` (plural array):
@@ -180,4 +182,5 @@ The `detach_source` action above is also destructive when called with `delete_wi
 - **Creating from a template without re-mapping sources** — the report inherits whatever sources the template defined (often sample data); call `change_sources` immediately after creation.
 - **Forgetting that linked reports auto-update** — edits to the template ripple into the linked report. Fine for standardization, surprising for one-off tweaks. If the client needs bespoke changes, duplicate instead of linking.
 - **`create_from_template` on a template that's not yet filled out** — the resulting report inherits empty/sample widgets. Verify template via `list-templates action=show` before rolling out.
+- **Attaching a source that isn't in the report's space** — `attach_source` (and the `to` side of `change_sources`) rejects a real source assigned only to other spaces. Assign it to the report's space first with `manage-integrations action=sync_to_clients`, or use a source set to "All folders".
 - **Asking to update tabs via `manage-reports`** — tabs have their own tool: `manage-report-tabs`.
