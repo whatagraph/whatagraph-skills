@@ -169,7 +169,7 @@ delete-custom-metrics    action=delete metric_ids=[<id>, <id>]
 delete-custom-dimensions action=delete dimension_ids=[<id>, <id>]
 ```
 
-Batch-only arrays. **Permanent** — custom dimensions go with all their related mappings, tags, and fields. All-or-nothing ID validation (one unknown ID fails the whole call). Pre-check with `list-custom-metrics action=usage` / `list-custom-dimensions action=usage` — dependent widgets and filters show blank values after deletion.
+Batch-only arrays. **Permanent** — custom dimensions go with all their related mappings, tags, and fields. All-or-nothing ID validation (one unknown ID fails the whole call). A field still used by widgets or filters is **blocked**: the call returns a conflict listing the affected widgets, reports, and filters (filter usage is detected too, not just widgets). Remove those references first (`manage-widgets` / `manage-filters`), or pass `force=true` to delete anyway and accept the breakage. Pre-check with `list-custom-metrics action=usage` / `list-custom-dimensions action=usage`.
 
 ### Config objects
 

@@ -116,7 +116,7 @@ Replace-style — full lists replace previous values.
 
 **Always edit a group with `update`, never delete-and-recreate.** A rebuild mints a **new** virtual `source_id`, which silently detaches every source-level custom metric, widget, and report binding that pointed at the old one. `update` preserves the group's virtual `source_id`, so dependents stay attached.
 
-When a config supplies explicit `dimensions`/`metrics`, each field is attached only to the integrations that actually expose it — channel-native fields are skipped for channels that don't own them, and `universal_*` fields apply across all. A cross-channel group won't break a channel by assigning it a field it can't fetch.
+When a config supplies explicit `dimensions`/`metrics`, each field is attached only to the channels that actually expose it. Channel-native fields are skipped for channels that don't own them, and a `universal_*` (custom) field is attached only to the channels it actually maps to — the same applicability rule the UI uses to prune per-channel fields, **not** blanket-applied to every channel in the group. A custom field that maps to none of the group's channels is attached nowhere — so don't expect, say, a Facebook-only custom metric to show up on the Google columns of a cross-channel group; map it to those channels first. A cross-channel group won't break a channel by assigning it a field it can't fetch.
 
 ## Duplicating
 

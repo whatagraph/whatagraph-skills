@@ -15,6 +15,8 @@ Tools covered: `list-filters`, `manage-filters`.
 
 A **filter** belongs to a channel and is a reusable set of dimension or metric conditions. Filters are organized as row groups; within a row group conditions use OR, across row groups conditions use AND.
 
+This is the **only** way to filter a widget — there is no inline filter field on `manage-widgets`. The flow is always `create` here, then `attach` to a `widget_config_id` (one widget) or a `source_id` (every widget on that source). See "Attaching a filter" below.
+
 ## Use this when
 
 - "Show only campaigns with 'brand' in the name."
