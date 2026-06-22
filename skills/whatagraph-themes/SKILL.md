@@ -85,29 +85,41 @@ manage-themes action=create_color
    name="Acme — Primary"
    colors={
      "widget_colors": {
-       "widget_background": "#FFFFFF", "text_color": "#2B2B2B",
-       "positive_color": "#5FA873",   "negative_color": "#D64545",
-       "accent_fill_color": "#EAE6D8","accent_text_color": "#C0392B",
-       "icon_symbol": "#FFFFFF",       "icon_background": "#C0392B",
-       "neutral_color": "#9BA5B0",     "neutral_bg": "#F7FAFC",
-       "list_odd_fill": "transparent", "list_even_fill": "#F6F5EC",
-       "chart_axis_text": "#8A857A",   "chart_grid_lines": "#E6E3D6",
-       "font_family": "inter"
+       "text_color": "2B2B2B",         "neutral_color": "9BA5B0",
+       "positive_color": "5FA873",     "negative_color": "D64545",
+       "accent_fill_color": "EAE6D8",  "accent_text_color": "C0392B",
+       "chart_axis_text": "8A857A",    "chart_grid_lines": "E6E3D6",
+       "neutral_bg": "F7FAFC",         "font_family": "inter",
+       "widget_background": "#FFFFFF", "icon_symbol": "#FFFFFF",
+       "icon_background": "#C0392B",   "list_odd_fill": "transparent",
+       "list_even_fill": "#F6F5EC"
      },
      "chart_colors": ["C0392B","8FA876","E0A33E","D67B5C","6E8B6B","7C9B9A","E8C49A","A0504A"],
      "additional_colors": {
-       "background": "#F0F0E3", "report_accent": "#C0392B",
-       "report_text_color": "#2B2B2B", "report_title_color": "#C0392B"
+       "background": "#F0F0E3", "report_accent": "C0392B",
+       "report_text_color": "2B2B2B", "report_title_color": "C0392B"
      },
      "theme_id": <theme_id>
    }
    options={"parent_id": <optional>, "parent_name": "<optional>"}
 ```
 
-- **`widget_colors`** is an **object with named keys** — NOT a flat array. Keys: `widget_background`, `text_color`, `positive_color`, `negative_color`, `accent_fill_color`, `accent_text_color`, `icon_symbol`, `icon_background`, `neutral_color`, `neutral_bg`, `list_odd_fill`, `list_even_fill`, `chart_axis_text`, `chart_grid_lines`, `font_family`. These values may keep the leading `#`.
-- **`chart_colors`** is an array of hex values, stored **without** the leading `#` (6-digit `"C0392B"` or 8-digit-with-alpha `"6366f1ff"`). A `#`-prefixed value is accepted and the `#` is stripped automatically, so either form is safe; non-hex values are rejected. Provide 8–12 colors to avoid repetition on large charts.
-- **`additional_colors`** is an **object** controlling the report canvas: `background`, `report_accent`, `report_text_color`, `report_title_color`. Set these to drive the report background and title color; omit to keep the theme default.
+- **`widget_colors`** is an **object with named keys** — NOT a flat array. Keys: `text_color`, `positive_color`, `negative_color`, `accent_fill_color`, `accent_text_color`, `neutral_color`, `neutral_bg`, `chart_axis_text`, `chart_grid_lines`, `widget_background`, `icon_symbol`, `icon_background`, `list_odd_fill`, `list_even_fill`, `font_family`.
+- **Hex format matters — two groups of keys:**
+  - **Text / accent / chart-line colors are bare hex (NO `#`):** `text_color`, `neutral_color`, `neutral_bg`, `positive_color`, `negative_color`, `accent_fill_color`, `accent_text_color`, `chart_axis_text`, `chart_grid_lines`, and `additional_colors.report_accent` / `report_text_color` / `report_title_color`. The renderer prepends the `#` itself, so a value stored **with** a `#` becomes `##RRGGBB` — an invalid color — and the element falls back to a default (commonly **dark, unreadable text/numbers**). Pass `"2B2B2B"`, not `"#2B2B2B"`.
+  - **Backgrounds / fills / icons are raw CSS values (KEEP the `#`, or use `rgba()` / `transparent` / a gradient):** `widget_background`, `icon_symbol`, `icon_background`, `list_odd_fill`, `list_even_fill`, and `additional_colors.background`.
+- **`chart_colors`** is an array of bare hex values (6-digit `"C0392B"` or 8-digit-with-alpha `"6366f1ff"`). A leading `#` is stripped automatically; non-hex values are rejected. Provide 8–12 colors to avoid repetition on large charts.
+- **`additional_colors`** is an **object** controlling the report canvas: `background` (raw CSS), `report_accent`, `report_text_color`, `report_title_color` (bare hex). Set these to drive the report background and title color; omit to keep the theme default.
 - Tie a palette to a theme via `theme_id` in `colors`.
+
+### Dark themes — set the full key set
+
+When the background is dark you must darken the foreground keys too, or widgets keep their light defaults and text disappears:
+
+- **Set `text_color`, `neutral_color`, `report_text_color`, `report_title_color` to a light/near-white bare hex** (e.g. `"F5F7FA"`) — not the default dark.
+- **Set `list_even_fill` (and `list_odd_fill`) to a dark or `"transparent"` value.** These are the alternating "zebra" row fills for list / table / funnel widgets. If you omit them, the renderer applies a hardcoded **light** even-row fill, so on a dark theme the even rows show a pale band with invisible light text. Use `list_odd_fill: "transparent"`, `list_even_fill: "#1F2430"` (a slightly lighter shade of `widget_background`), keeping the `#` since these are raw-CSS keys.
+- Set `widget_background` and `additional_colors.background` to your dark colors (raw CSS, keep `#`).
+- After applying a dark palette, re-check a report that contains a **list, table, or funnel** widget — those are where missing zebra fills bite, not the single-value scorecards.
 
 ## Update a palette
 
@@ -130,7 +142,8 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 ## Common pitfalls
 
 - **Palette with fewer colors than chart series** — colors repeat in cycle. Provide 8–12 colors to avoid visible repetition on large charts.
-- **`chart_colors` are stored without the `#`** — a leading `#` is stripped automatically, so both `C0392B` and `#C0392B` are accepted; `widget_colors` / `additional_colors` keep the `#`.
+- **Putting a `#` on a text/accent color** — `text_color`, `neutral_color`, `positive_color`, `negative_color`, `accent_fill_color`, `accent_text_color`, `chart_axis_text`, `chart_grid_lines`, `report_accent`, `report_text_color`, `report_title_color` and `chart_colors` are **bare hex**; the renderer prepends the `#`, so a stored `#RRGGBB` becomes `##RRGGBB` and the text/numbers silently render in a dark default. Only the raw-CSS keys (`widget_background`, `icon_symbol`, `icon_background`, `list_odd_fill`, `list_even_fill`, `background`) keep the `#` (or take `rgba()`/`transparent`/gradient).
+- **Dark theme with default zebra fills** — omitting `list_even_fill` on a dark palette leaves the hardcoded light default, so list/table/funnel even-rows become unreadable. Set `list_even_fill`/`list_odd_fill` explicitly (see "Dark themes" above).
 - **Theme vs palette confusion** — theme controls logos/fonts/layout; palette controls chart colors. A report can use theme A + palette B.
 - **Passing a palette's `theme_id` field to `enable_theme`** — palettes returned by `list_colors` carry a `theme_id` attribute (the theme they're bound to); that is **not** the palette's own id and the palette's id is not a theme id. `enable_theme` takes a theme id from `list_themes`; `enable_color` takes a palette id from `list_colors`. Mixing them up enables the wrong asset or errors.
 - **Logo URL not publicly accessible** — shared-link viewers won't see it. Use a CDN-backed public URL.
