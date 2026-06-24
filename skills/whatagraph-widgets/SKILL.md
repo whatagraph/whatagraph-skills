@@ -228,6 +228,7 @@ rows=[
   - `rows[].options.metrics: [{sort, identifier, external_id}]` — drives the rendered label and the value the renderer prints.
   - `rows[].configs[].options.metrics: [{name, identifier, external_id}]` — drives the actual data binding.
   - Both must be set; mismatched values between the two cause the widget to render the row's label with the config's data. The same parallelism applies for dimensions: `rows[].options.dimensions` (rendered label) vs. `configs[].options.dimensions` (binding).
+  - **The tool rejects updates where row-level metrics/dimensions are provided but the config has no matching `options.metrics`/`options.dimensions`.** Row-level fields are display labels only — the actual data binding lives in config options. If you get this error, move your metrics/dimensions into `rows[].configs[].options.metrics` (and `options.dimensions`).
 
 ### `date_range`
 
@@ -419,6 +420,19 @@ manage-widgets action=batch_duplicate report_id=<id> widget_ids=[<id1>, <id2>, <
 
 Copies are packed into the next free grid slots and tile across the 6 columns, so duplicating a widget many times fills a clean grid. Duplicate a full row of widgets together (not one widget repeatedly) to keep the layout balanced.
 
+## Add / remove rows
+
+Multi-row widgets (combo charts, funnels, non-breakdown pie/donut) have one row per series or stage. Use `add_row` and `remove_row` to manage them without rebuilding the entire `rows` array.
+
+```
+manage-widgets action=add_row    report_id=<id> widget_id=<id>
+manage-widgets action=remove_row report_id=<id> widget_id=<id> row_id=<row_id>
+```
+
+- `add_row` copies the last row's config (integration, source, report type) into a new row. Update the new row's metric afterwards with a regular `update`.
+- `remove_row` deletes the row and all its config children (metrics, dimensions, report types). Cannot remove the last remaining row.
+- Find row IDs with `list-widgets action=show`.
+
 ## Batch operations
 
 ```
@@ -523,15 +537,44 @@ If your output looks like the same example every time, you've defaulted to a tem
 
 ## Filtering a widget
 
-Filters are **not** set inline on a widget. `manage-widgets` has no `filters`/`filter` field — pass one and the call is rejected with a pointer back here, because a silently-dropped filter would leave the widget showing unfiltered data. Apply a filter in two steps with the `whatagraph-filters` skill:
+There are three ways to filter a widget. Pick the simplest one that fits:
 
+**Option 1 — Create directly on the target** (recommended):
+```
+# Filter one widget config
+manage-filters action=create channel_id=<id> dimension="campaign.name" dimension_operator="contain_dimension" value="brand" name="Branded" widget_config_id=<config id>
+
+# Filter all widgets on a source
+manage-filters action=create channel_id=<id> dimension="campaign.name" dimension_operator="contain_dimension" value="brand" name="Branded" source_id=<source id>
+```
+One call, no orphaned team filter, no attach step. The channel must match the target's channel. Replaces any existing filter on that target. Cannot pass both `widget_config_id` and `source_id`.
+
+**Option 2 — Inline `filter_id` on `manage-widgets`** (use when a team-level filter already exists):
+```
+manage-widgets action=create|update ... rows=[{configs: [{filter_id: <team filter id>}]}]
+```
+Pass `filter_id` in `rows[].configs[]` to attach an existing team-level filter. Pass `filter_id: null` to detach. The filter's channel must match the config's channel.
+
+**Option 3 — Two-step create + attach** (use when attaching the same filter to multiple targets):
 ```
 manage-filters action=create channel_id=<id> dimension="campaign.name" dimension_operator="contain_dimension" value="brand" name="Branded"
-manage-filters action=attach filter_id=<new id> widget_config_id=<this widget's config id>
+manage-filters action=attach filter_id=<new id> widget_config_id=<config id>
 ```
 
-- `widget_config_id` (from `list-widgets action=show`) filters this one widget; `source_id` filters every widget on that source.
+### Filter precedence
+
+A widget applies **one** filter, not both:
+- If a **widget_config filter** exists, it is used.
+- Otherwise, if the config's **source** has a filter, that source filter is used.
+- Widget-config filters always take priority over source-level filters.
+
+> **Avoid source-level filters unless explicitly requested.** A source filter applies to **every widget using that source across all reports** — not just the current report. It can also cause errors when the filter references a dimension or metric that doesn't exist in every report type the source's widgets use. Default to `widget_config_id` for per-widget filtering. Only use `source_id` when the user specifically wants all data from that source filtered (e.g. "I only want US data from this source").
+
+`list-widgets action=show` returns all filters in `inline_filters` with a `scope` field (`widget_config` or `source`) so you can see what's configured, but only one applies at runtime per the precedence above.
+
+Other notes:
 - `source_filter_off` (a `manage-widgets` `create`/`update` parameter) only **toggles** existing source-level filters on/off for the widget — it does not author them.
+- Passing `filters`, `filter`, or `inline_filters` on `manage-widgets` is rejected — use `filter_id` or the `manage-filters` tool instead.
 
 Load `whatagraph-filters` for the full operator list and row-group (AND/OR) semantics.
 
