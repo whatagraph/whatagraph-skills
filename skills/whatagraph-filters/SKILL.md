@@ -15,7 +15,20 @@ Tools covered: `list-filters`, `manage-filters`.
 
 A **filter** belongs to a channel and is a reusable set of dimension or metric conditions. Filters are organized as row groups; within a row group conditions use OR, across row groups conditions use AND.
 
-This is the **only** way to filter a widget — there is no inline filter field on `manage-widgets`. The flow is always `create` here, then `attach` to a `widget_config_id` (one widget) or a `source_id` (every widget on that source). See "Attaching a filter" below.
+There are three ways to filter a widget:
+
+1. **Direct create on target** (recommended) — pass `widget_config_id` or `source_id` on `manage-filters action=create`. Creates the filter directly on the target, no separate `attach` step, no orphaned team-level filter. Cannot pass both.
+2. **Inline `filter_id` on `manage-widgets`** — pass `filter_id` (a team-level filter ID) in `rows[].configs[]` during `create` or `update`. Copies the team filter onto the config. Pass `filter_id: null` to detach.
+3. **Create + attach** (two-step) — `manage-filters action=create` (team-level), then `manage-filters action=attach` to a `widget_config_id` or `source_id`.
+
+### Filter precedence
+
+A widget applies **one** filter at runtime, not both:
+- If a **widget_config filter** exists, it is used.
+- Otherwise, if the config's **source** has a filter, that is used.
+- Widget-config filters always take priority over source-level filters.
+
+> **Avoid source-level filters unless explicitly requested.** A source filter applies to **every widget using that source across all reports** — not just the current report. This is a broad, account-wide change. It can also cause errors: the filter may reference a dimension or metric that doesn't exist in every report type the source's widgets use (e.g. a metric filter on a source where some widgets use a report type that lacks that metric). Default to `widget_config_id` for per-widget filtering. Only use `source_id` when the user specifically wants all data from that source filtered (e.g. "I only want US data from this source" or "filter this source to only show organic traffic").
 
 ## Use this when
 
@@ -36,6 +49,7 @@ list-filters action=show filter_id=<id>        # structure, values
 ## Creating a dimension filter
 
 ```
+# Team-level reusable filter (default)
 manage-filters action=create
    channel_id=<channel_id>
    dimension="campaign.name"
@@ -43,7 +57,27 @@ manage-filters action=create
    value="brand"
    group="AND"
    name="Branded campaigns"
+
+# Direct on a widget config (no attach needed, no team-level filter created)
+manage-filters action=create
+   channel_id=<channel_id>
+   dimension="campaign.name"
+   dimension_operator="contain_dimension"
+   value="brand"
+   name="Branded campaigns"
+   widget_config_id=<widget_config_id>
+
+# Direct on a source (applies to all widgets using this source)
+manage-filters action=create
+   channel_id=<channel_id>
+   dimension="campaign.name"
+   dimension_operator="contain_dimension"
+   value="brand"
+   name="Branded campaigns"
+   source_id=<source_id>
 ```
+
+When `widget_config_id` or `source_id` is provided, the filter is created directly on that target with `team_available=false`. Any existing filter on the target is replaced. The channel must match the target's channel. Cannot pass both `widget_config_id` and `source_id`.
 
 > **Important — filter dimension ids are channel-native, not universal.** The dimension ids accepted by `manage-filters` are the channel's raw dotted-path ids (Google Ads `campaign.name`, `segments.day_of_week`, `ad_group.status`; Facebook Ads `campaign_name`, `adset_name`; etc.) — **not** the `universal_dimension_*` ids returned by `list-sources action=list_dimensions_and_metrics`. If you pass a `universal_dimension_*` value the API rejects it and lists every valid filter dimension for the channel in the error message; copy the right one from there. The set of filterable dimensions is also smaller than the set of reportable dimensions on each channel.
 
