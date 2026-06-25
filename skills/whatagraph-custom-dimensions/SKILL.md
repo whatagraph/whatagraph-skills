@@ -45,8 +45,11 @@ A **custom dimension** is a derived field that groups, labels, or aliases existi
 list-custom-dimensions action=list
 list-custom-dimensions action=list_with_premades
 list-custom-dimensions action=show dimension_id=<id>
+list-custom-dimensions action=list_tags dimension_id=<id>
 list-custom-dimensions action=usage universal_dimension_ids=[<id>]
 ```
+
+`show` returns compact summaries for tag dimensions: `tag_count` and `source_count` instead of the full tags array. Use `list_tags` to get paginated tag details with assigned source IDs. Both `list_tags` and `list` support cursor pagination via `cursor` and `per_page` parameters.
 
 ## Creating a `metadata` alias
 
@@ -132,11 +135,27 @@ manage-custom-dimensions action=create
    ]
 ```
 
-Add more tags later:
+Manage tags after creation:
 
 ```
+# Add a tag
 manage-custom-dimensions action=add_tag dimension_id=<id>
    tag="Alex" source_ids=[<src6>]
+
+# Assign/replace sources on an existing tag
+manage-custom-dimensions action=assign_tag_sources dimension_id=<id>
+   tag="Alex" source_ids=[<src7>, <src8>]
+
+# Clear all sources from a tag (pass empty array)
+manage-custom-dimensions action=assign_tag_sources dimension_id=<id>
+   tag="Alex" source_ids=[]
+
+# Remove a tag entirely
+manage-custom-dimensions action=remove_tag dimension_id=<id>
+   tag="Alex"
+
+# List tags with pagination
+list-custom-dimensions action=list_tags dimension_id=<id> per_page=50
 ```
 
 ## Creating an `ai` dimension
@@ -193,3 +212,5 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **Prompt-only without `fields`** — `ai` map_type still requires a source field via `fields` (or `integration_source_id` + `field_external_id` pair inside the preview call).
 - **`channel_id` vs `integration_source_id`** — channel-level fields use `channel_id`; source-level fields use `integration_source_id`. Match to `transformation_level`.
 - **Universal / organized dimensions** — their `field_external_id` starts with `universal_` prefix; pass exactly as returned by `list-sources action=list_dimensions_and_metrics`.
+- **Compact tag responses** — `create`, `update`, and `show` return `tag_count`/`source_count` instead of full tag arrays to stay under MCP transport limits. Use `list_tags` to get individual tag details with source IDs.
+- **`assign_tag_sources` replaces, not appends** — the `source_ids` array replaces the tag's entire source list. To add a source, include all existing source IDs plus the new one. Pass an empty array to clear all sources.
