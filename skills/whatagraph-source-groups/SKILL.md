@@ -45,78 +45,126 @@ list-source-groups action=source_issues group_id=<id> # sources with disabled ET
 
 ## Creating a source group
 
-**Discover valid `output_name` values first** — they vary by channel and channel combination:
+Creation is a **strict, ordered pipeline** that mirrors how the app builds a group: resolve fields → **verify with a real fetch** → build one ETL config per channel → create the group from those configs. Do **not** skip a step, and do **not** advance until the current step fully succeeds. A group built on fields a channel can't actually return will look fine and then come back empty.
+
+A **channel** = the integration a source belongs to. Steps 1–3 run once **per channel**, each time using one representative source for that channel.
+
+### Step 0 — Pick sources, group them by channel
+
+Choose the `integration_source_ids` (`list-sources action=list`). Group them by channel: a same-channel group has one channel, a cross-channel group has several. Note one representative source per channel.
+
+### Step 1 — Resolve report type and fields (universal-first), per channel
+
+For each channel's representative source, resolve:
+
+- the **report type** (channel-native) — `list-sources action=list_report_types source_id=<src>`
+- the **fields** — `list-sources action=list_dimensions_and_metrics source_id=<src> is_universal=true`
+
+**Always prefer universal / unified fields** (`universal_metric_*`, `universal_dimension_*`) so the group aggregates cleanly across channels. Fall back to a channel's **native** fields only when no universal field fits. Resolve fields **per channel** — a universal field counts for a channel only if it maps to that channel, and native fields belong only to their own channel. Include the Date dimension (`universal_dimension_1137`) so the group has a time axis.
+
+### Step 2 — Verify the selection actually fetches (per channel) — MANDATORY
+
+Before creating anything, prove each channel's source returns data with the resolved fields, for **yesterday**:
 
 ```
-list-source-groups action=list_output_names source_ids=[<src1>, <src2>]
+fetch-data source_id=<representative source for the channel>
+   report_type="<channel-native report type>"
+   metrics=[<resolved metric external_ids>]
+   dimensions=[<resolved dimension external_ids>]
+   from="<yesterday>" till="<yesterday>"
 ```
 
-Premade output templates routinely come back with `name: null` — **`output_name` is the identifier; a null display name does NOT mean the entry is invalid** (verified Jun 2026). Pick the `output_name` matching the granularity you need, then create:
+- **Pass = `success: true`.** Zero rows is still a pass — the account may just have no activity yesterday.
+- **Anything else is a failure.** A `data_not_ready` result means the source is still processing — **wait and re-run the same fetch**; never treat it as success and never proceed on it. `upstream_error` / `validation` are also failures — fix the inputs or retry.
+- Repeat for every channel. **Continue only when every channel's verify fetch passes.**
+
+### Step 3 — Create one team-internal ETL config per channel
+
+For each channel, create its ETL config from the **verified** report type + fields:
+
+```
+manage-source-groups action=create_config
+   integration_source_id=<representative source for the channel>
+   name="<group name> — <channel>"
+   report_types=[{"external_id": "<channel-native report type>"}]
+   dimensions=[{"external_id": "...", "name": "..."}, ...]
+   metrics=[{"external_id": "...", "name": "..."}, ...]
+```
+
+The channel is derived from the source — you don't pass it. Each call returns an `etl_config_id`. **Collect one `etl_config_id` per channel.** Continue only when every channel's config is created.
+
+> Some channels have **no report types** (e.g. Facebook Ads — `list_report_types` returns none). For those, omit `report_types` entirely (and omit `report_type` in the step-2 verify fetch too).
+
+### Step 4 — Create the source group
+
+Create the group with all sources and a **single config** holding every channel's `etl_config_id`:
 
 ```
 manage-source-groups action=create
-   name="Acme — Google Ads Rollup"
-   description="All Acme Google Ads sub-accounts"
-   currency="USD"
-   configs=[{"output_name": "campaign_performance"}]
-   integration_source_ids=[<src1>, <src2>, <src3>]
+   name="<group name>"
+   description="..."        # optional
+   currency="USD"          # optional
+   configs=[{ "name": "<group name>", "etl_config_ids": [<all channel etl_config_ids>] }]
+   integration_source_ids=[<all selected sources>]
 ```
 
-### Parameters
-
-- `name` — group display name.
-- `configs` — required. Each entry `{output_name: "<level>"}` where `<level>` is the granularity the group should expose: campaign performance, ad / ad-group performance, keyword performance, audience performance, geo performance, etc. Pick the level that matches the widgets you'll build on top — one config per level, and prefer one config per group (see "One config per group" below). The exact string is the **source-group template name** for that channel, *not* the channel-native report type external id you see in `list-sources action=list_report_types`. For most channels the template name is the report type with a `_performance` suffix — e.g. Google Ads `campaign` → `campaign_performance`, `ad_group` → `ad_group_performance`, `geo_view` → `geo_performance` — but Facebook Ads and others diverge (see the per-channel reference table below). Discover the valid set with `list-source-groups action=list_output_names source_ids=[...]`.
-- `integration_source_ids` — array of source ids from `list-sources action=list`. Sources can be from the same channel or different channels (cross-channel aggregation is supported).
-- `currency` — optional. Display currency.
-- `configs[].dimensions` — optional. Array of `{external_id, name}` objects to select specific dimensions. When omitted, all template dimensions are used.
-- `configs[].metrics` — optional. Array of `{external_id, name}` objects to select specific metrics. When omitted, all template metrics are used. Use `list-sources action=list_dimensions_and_metrics` with `is_universal=true` to discover valid universal field IDs.
-
-> **Date dimension is auto-included.** Every source group config automatically includes the Date dimension (`universal_dimension_1137`). Do **not** pass it in the `dimensions` array — doing so creates a duplicate Date entry in the unified fields.
-
-#### Per-channel `output_name` reference
-
-Template names diverge across channels — Google Ads-flavoured names like `campaign_performance` are not portable. Verified examples:
-
-| Channel | Valid `output_name` (verified) |
-|---|---|
-| Google Ads | `campaign_performance`, `ad_group_performance`, `keyword_performance`, `geo_performance`, … |
-| Facebook Ads | `campaign_performance`, `ad_group_performance`, `ad_performance`, `creatives_performance`, `age_performance`, `gender_performance`, `geo_performance`, `device_performance` |
-| LinkedIn Ads | `campaign_performance` |
-| Snapchat | `campaign_performance` |
-| GA4 | TBD — not exercised in QA |
-
-Prefer `list-source-groups action=list_output_names source_ids=[...]` to discover the valid set for your exact sources. As a last resort only, a rejected `output_name` returns an error that enumerates every valid template name for that channel.
+- Pass **one** config. Its `etl_config_ids` must contain **exactly one ETL config per channel** present in `integration_source_ids` — that's why step 3 runs once per channel. Miss a channel and creation is rejected.
+- `configs[].name` defaults to the group `name` when omitted.
+- The response returns the group's virtual `integration_source_id` (use it in widgets) plus a `warmup_hint` — data takes a few minutes to populate.
 
 ## One config per group (strongly recommended)
 
-Build a source group with exactly **one** entry in `configs`. If the user needs campaign-level *and* keyword-level rollups from the same set of sources, build two separate source groups, one per report type. This keeps each group focused and makes widgets, filters, and blends easier to reason about.
-
-```
-configs=[{"output_name": "campaign_performance"}]    # one config — preferred
-```
-
-Avoid putting multiple report types in one group:
-
-```
-configs=[
-  {"output_name": "campaign_performance"},
-  {"output_name": "keyword_performance"},
-  {"output_name": "ad_group_performance"}
-]
-```
+A source group exposes **one** report-type level (e.g. campaign performance). If the user needs campaign-level *and* keyword-level rollups from the same sources, build **two separate source groups**, one per level. Per group that means one entry in `configs`, with one `etl_config_id` per channel inside it. This keeps each group focused and makes widgets, filters, and blends easier to reason about.
 
 ## Updating
 
+How much you do depends on **what changes**. There are two cases.
+
+### A — Simple update (no field changes)
+
+Renaming, changing description/currency, or adding/removing sources of channels the group **already covers** — pass only what changes and **omit `configs`** entirely. No fetching, no config work.
+
 ```
 manage-source-groups action=update group_id=<id>
-   name="..."  integration_source_ids=[...]  configs=[...]
+   name="..."                 # any of these, all optional
+   description="..."
+   currency="EUR"
+   integration_source_ids=[<full new source list>]   # replace-style — full list
 ```
 
-Replace-style — full lists replace previous values.
+`integration_source_ids` is replace-style (the full list replaces the old one). Adding a source of a **brand-new channel** is not simple — it needs a config for that channel (case B).
+
+### B — Changing fields, or adding a new channel
+
+Mirror creation, but reuse what exists. First read current state:
+
+```
+list-source-groups action=show group_id=<id>
+# returns each config's `id` and `etl_config_ids` (+ the integration per id)
+```
+
+1. **Per existing channel whose fields change** — verify-fetch (yesterday) the new selection (only `success:true` proceeds), then PATCH that channel's config (its `etl_config_id` from `show`):
+   ```
+   manage-source-groups action=update_config
+      etl_config_id=<existing id>
+      integration_source_id=<a representative source of that channel>
+      report_types=[...]  dimensions=[...]  metrics=[...]
+   ```
+   The id comes back unchanged. **Skip any channel whose fields don't change.**
+2. **Per new channel added** — verify-fetch → `create_config` → new `etl_config_id` (as in creation step 3).
+3. **Update the group** with the existing config `id` and the **full** id set:
+   ```
+   manage-source-groups action=update group_id=<id>
+      configs=[{ id:<existing source_group_config id>,
+                 etl_config_ids:[<every channel's id — unchanged + patched + new>] }]
+      integration_source_ids=[<all sources, incl. any new ones>]
+   ```
+
+- **Reuse the existing config `id`** (from `show`) — never omit it; a missing id makes a new config and orphans dependents.
+- The single config's `etl_config_ids` must still cover **every** channel in `integration_source_ids` (one id per channel), exactly like create. Don't drop unchanged channels' ids — re-pass them as-is.
+- Channels you didn't touch are **not** re-fetched.
 
 **Always edit a group with `update`, never delete-and-recreate.** A rebuild mints a **new** virtual `source_id`, which silently detaches every source-level custom metric, widget, and report binding that pointed at the old one. `update` preserves the group's virtual `source_id`, so dependents stay attached.
-
-When a config supplies explicit `dimensions`/`metrics`, each field is attached only to the channels that actually expose it. Channel-native fields are skipped for channels that don't own them, and a `universal_*` (custom) field is attached only to the channels it actually maps to — the same applicability rule the UI uses to prune per-channel fields, **not** blanket-applied to every channel in the group. A custom field that maps to none of the group's channels is attached nowhere — so don't expect, say, a Facebook-only custom metric to show up on the Google columns of a cross-channel group; map it to those channels first. A cross-channel group won't break a channel by assigning it a field it can't fetch.
 
 ## Duplicating
 
@@ -151,7 +199,7 @@ manage-widgets action=create report_id=<id> tab_id=<tab_id>
    widget_type_id=<...>
 ```
 
-The group's metrics and dimensions are the union of what the sub-sources expose — e.g. for a Google Ads group with one `campaign_performance` config, you get every Google Ads campaign-level metric and dimension.
+The group's metrics and dimensions are the union of what its ETL configs expose.
 
 ## Reading data from a group directly
 
@@ -159,7 +207,7 @@ You don't need a widget to preview data from a source group. Use `fetch-data` on
 
 ```
 fetch-data source_id=<group integration_source_id>
-  report_type="<platform report type>"
+  report_type="<the report type the group exposes>"
   metrics=["universal_metric_1", "universal_metric_2", "universal_metric_3"]
   dimensions=["universal_dimension_1137"]
   from="2026-04-01" till="2026-04-15"
@@ -167,7 +215,7 @@ fetch-data source_id=<group integration_source_id>
 
 Notes:
 
-- **`report_type`** is the source-group template name the group exposes (e.g. `campaign_performance` for a Google Ads campaign rollup), not the original source's channel-native report type (`campaign`). It usually matches the `output_name` you supplied when creating the group. Run `list-sources action=list_report_types source_id=<group integration_source_id>` to see the exact string to pass.
+- **`report_type`** is the report type the group exposes — run `list-sources action=list_report_types source_id=<group integration_source_id>` to see the exact string. This is the group's own report type, not the original sources' channel-native report type you passed to `create_config`.
 - **Field ids** use the `universal_metric_*` / `universal_dimension_*` form on the group's source. The platform aggregates sub-sources automatically.
 
 ## Deleting a source group
@@ -180,13 +228,14 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 
 ## Common pitfalls
 
-- **Cross-channel `output_name` selection** — when mixing channels (e.g. Google Ads + Meta Ads + TikTok), use `list-source-groups action=list_output_names source_ids=[...]` to find template names that work across all supplied channels. Not every template is valid for every channel combination.
-- **`output_name` is the source-group template name, not the channel-native report type** — e.g. `campaign_performance` for Google Ads, not `campaign`. The channel-native report type (`campaign`) is what you pass to `fetch-data` and `report_type_external_id` on the *original* sources, but the template name (`campaign_performance`) is what `manage-source-groups create configs` accepts. The two diverge on every paid-ads channel.
+- **Skipping the verify fetch (step 2)** — never create configs or a group on fields you haven't proven fetch. `data_not_ready` is **not** success: wait and re-run the same fetch until it returns `success: true` (zero rows is fine), then proceed.
+- **Missing a channel's ETL config** — the single create config's `etl_config_ids` must cover **every** channel in `integration_source_ids` (one config per channel from `create_config`). Miss one and `create` is rejected.
+- **Resolving fields once for all channels** — a universal field applies to a channel only if it maps to that channel, and native fields are channel-specific. Resolve per channel (step 1).
 - **Editing a group? Use `update`, never delete+recreate** — a rebuild changes the virtual `source_id` and orphans source-level custom metrics and widget bindings.
 - **`resolve_issues` on a shared source re-syncs other groups** — scope `integration_source_ids` narrowly and expect a transient re-download on anything sharing those sources.
-- **Empty group after creation** — freshly-created groups need time for ETL to populate; data may be empty for a few minutes for small accounts, longer for high-volume ones.
+- **Empty group right after creation** — ETL needs a few minutes to populate; the create response includes a `warmup_hint` and `retry_after_seconds`. Wait before fetching from the group.
 - **Group not appearing in widget picker immediately** — refresh the report; new groups can take a few seconds to appear.
-- **Very large groups (hundreds of sub-sources)** — query performance can slow down. For very large rollups, keep one config per group and split into focused groups by report type rather than one sprawling group.
-- **Adding source groups can affect plan usage** — check the team's plan limits before bulk-creating groups.
-- **`source_ids` vs `integration_source_ids`** — MCP expects `integration_source_ids`. `source_ids` is rejected.
+- **Very large groups (hundreds of sub-sources)** — query performance can slow down. Keep one report-type level per group and split into focused groups rather than one sprawling group.
+- **Adding source groups can affect plan usage** — creating or expanding a group consumes source credits; check the team's plan limits before bulk-creating.
+- **`source_ids` vs `integration_source_ids`** — `create` expects `integration_source_ids`; `create_config` expects a single `integration_source_id`.
 - **Widget creation against a fresh group failing** — re-run `list-source-groups action=show` to verify `integration_source_id` exists and data has arrived before attaching widgets.
