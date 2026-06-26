@@ -92,7 +92,8 @@ manage-themes action=create_color
        "neutral_bg": "F7FAFC",         "font_family": "inter",
        "widget_background": "#FFFFFF", "icon_symbol": "#FFFFFF",
        "icon_background": "#C0392B",   "list_odd_fill": "transparent",
-       "list_even_fill": "#F6F5EC"
+       "list_even_fill": "#F6F5EC",
+       "shades": ["6CD094","FEC644","34587C","ECADAD","76D18A","94D1EB"]
      },
      "chart_colors": ["C0392B","8FA876","E0A33E","D67B5C","6E8B6B","7C9B9A","E8C49A","A0504A"],
      "additional_colors": {
@@ -104,7 +105,8 @@ manage-themes action=create_color
    options={"parent_id": <optional>, "parent_name": "<optional>"}
 ```
 
-- **`widget_colors`** is an **object with named keys** — NOT a flat array. Keys: `text_color`, `positive_color`, `negative_color`, `accent_fill_color`, `accent_text_color`, `neutral_color`, `neutral_bg`, `chart_axis_text`, `chart_grid_lines`, `widget_background`, `icon_symbol`, `icon_background`, `list_odd_fill`, `list_even_fill`, `font_family`.
+- **`widget_colors`** is an **object with named keys** — NOT a flat array. Keys: `text_color`, `positive_color`, `negative_color`, `accent_fill_color`, `accent_text_color`, `neutral_color`, `neutral_bg`, `chart_axis_text`, `chart_grid_lines`, `widget_background`, `icon_symbol`, `icon_background`, `list_odd_fill`, `list_even_fill`, `font_family`, `shades`.
+- **Required on `create_color`:** `font_family` (e.g. `"inherit"`), `accent_text_color`, `positive_color`, `negative_color` (bare hex), and `shades` (array of 6 bare hex strings — a legacy field no longer rendered by the UI, but still required by frontend validation when users edit palettes). Pick 6 diverse colors that complement the palette.
 - **Hex format matters — two groups of keys:**
   - **Text / accent / chart-line colors are bare hex (NO `#`):** `text_color`, `neutral_color`, `neutral_bg`, `positive_color`, `negative_color`, `accent_fill_color`, `accent_text_color`, `chart_axis_text`, `chart_grid_lines`, and `additional_colors.report_accent` / `report_text_color` / `report_title_color`. The renderer prepends the `#` itself, so a value stored **with** a `#` becomes `##RRGGBB` — an invalid color — and the element falls back to a default (commonly **dark, unreadable text/numbers**). Pass `"2B2B2B"`, not `"#2B2B2B"`.
   - **Backgrounds / fills / icons are raw CSS values (KEEP the `#`, or use `rgba()` / `transparent` / a gradient):** `widget_background`, `icon_symbol`, `icon_background`, `list_odd_fill`, `list_even_fill`, and `additional_colors.background`.
