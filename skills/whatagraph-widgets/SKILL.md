@@ -257,6 +257,8 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 | `content_horizontal_scrollable` | boolean | Table only |
 | `display_dimensions_as_columns` | boolean | Table only |
 | `wrap_text` | boolean | Table only |
+| `show_search_bar` | boolean | Table, List (shows a row search box) |
+| `active_theme_color_id` | integer | Any widget — overrides the theme color for this widget. Get available color IDs from the report's theme via `list-themes` |
 
 #### Value formatting
 
@@ -327,8 +329,9 @@ Known `options` shapes:
     }
     ```
   - On **read**, `list-widgets action=show` returns the Tiptap document under `options.comment_widget_text.description`. A text/font **colour** baked into the comment content overrides the theme's `text_color` (CSS specificity), so applying a palette won't recolour comment text — set the colour via a `textStyle` mark for white-on-dark headers, or leave it uncoloured to inherit the theme.
+  - **Background image**: set `background_image_url` (public http/https URL) or `background_image_data` (base64-encoded JPG/PNG, max 10 MB) with optional `background_image_filename` in `rows[].options`. This adds a full-bleed background behind the comment text.
   - **Updating a comment widget with omitted row/config IDs now works.** `manage-widgets update` carries forward the existing config's `integration_id` (and `source_id` / `report_type`) when you omit it, so a comment-widget rows-update that leaves out `rows[].id` / `configs[].id` succeeds rather than erroring on a missing `integration_id`. Pre-fetching the IDs via `list-widgets action=show` (capture `rows[0].id` and `rows[0].configs[0].id` and pass them back) is still the cleanest way to update one specific row in place and avoid replacing the rows — but it is no longer required to avoid a failure.
-- **Image widget** (`widget_type_id=34`): supply `{"image_url": "<url>"}` in `rows[].options`. The tool auto-propagates this to the config-side canonical shape `configs[].options.images: [{url, title}]`. You can also supply the config shape directly in `rows[].configs[].options`. Additional display options: `background_size` (`auto_fit` | `scale_to_fit` | `scale_to_fill`) and `alignment` (`left` | `center` | `right`) — pass these in row options alongside `image_url`.
+- **Image widget** (`widget_type_id=34`): supply `{"image_url": "<url>"}` or `{"image_data": "<base64 JPG/PNG>"}` (max 10 MB) with optional `image_filename` in `rows[].options`. `image_data` accepts a base64-encoded image directly — no multipart upload needed. The tool auto-propagates this to the config-side canonical shape `configs[].options.images: [{url, title}]`. You can also supply the config shape directly in `rows[].configs[].options`. Additional display options: `background_size` (`auto_fit` | `scale_to_fit` | `scale_to_fill`) and `alignment` (`left` | `center` | `right`) — pass these in row options alongside `image_url`.
 - **Single-value KPI** (`widget_type_id=101`): set `{"comparison_display_type": "combined"}` (or `"percentage"` / `"absolute"`) to surface the trend delta vs. the comparison window inherited from the report. `compare_type` is not a valid widget option key — it is a date-range field and the widget rejects it.
 - **Funnel** (`widget_type_id=115`): each funnel **stage is its own row** with a single metric — one metric per row, in stage order. Putting multiple metrics in one config renders a single 100% stage instead of a multi-stage funnel.
 - **Goal widget** (`widget_type_id=123`): set `options.goal_date_range` with `start_date`, `end_date`, and `visible_time_line` (boolean — controls the "Time passed" indicator line). Each row represents a goal line and requires `options.title` (goal name), `options.start_value` (baseline, typically 0), and `options.end_value` (target number). `end_value` must be greater than `start_value`. The metric in `configs[].options.metrics` tracks progress toward the target.
@@ -420,6 +423,8 @@ manage-widgets action=batch_duplicate report_id=<id> widget_ids=[<id1>, <id2>, <
 
 Copies are packed into the next free grid slots and tile across the 6 columns, so duplicating a widget many times fills a clean grid. Duplicate a full row of widgets together (not one widget repeatedly) to keep the layout balanced.
 
+**Cross-tab duplication**: pass `target_tab_id=<tab_id>` to duplicate widgets to a different tab in the same report — no `manage-report-tabs` needed. The target tab must belong to the same report. Cross-report duplication is not supported.
+
 ## Add / remove rows
 
 Multi-row widgets (combo charts, funnels, non-breakdown pie/donut) have one row per series or stage. Use `add_row` and `remove_row` to manage them without rebuilding the entire `rows` array.
@@ -442,11 +447,38 @@ manage-widgets action=batch_change_source
 manage-widgets action=batch_change_settings
    report_id=<id> widget_ids=[...]
    settings={"currency":"EUR","hide_footer":true}
+
+manage-widgets action=batch_change_date_range
+   report_id=<id> widget_ids=[...]
+   date_range={"from":"2025-01-01","till":"2025-03-31","period":"custom"}
+
+manage-widgets action=batch_delete_date_range
+   report_id=<id> widget_ids=[...]
+
+manage-widgets action=batch_change_filter_visibility
+   report_id=<id> widget_ids=[...] source_filter_off=true
 ```
 
-`batch_change_source` accepts both global and report-local source IDs — auto-attaches if needed.
+`batch_change_source` accepts both global and report-local source IDs — auto-attaches if needed. `batch_change_date_range` sets a widget-level date range override on all specified widgets. `batch_delete_date_range` removes date range overrides (widgets revert to the report date). `batch_change_filter_visibility` toggles `source_filter_off` across many widgets — set `true` to disable source-level filters, `false` to re-enable them.
 
 Use when swapping ~10+ widgets at once — much faster than per-widget updates.
+
+## Currency conversion
+
+Convert money metrics on a widget to a different currency. Requires the Data Transformation premium feature.
+
+```
+list-widgets action=currency_exchange report_id=<id> widget_id=<id>
+# → lists convertible money metrics with external_id, original_currency, exchange_currency
+
+manage-widgets action=convert_currency report_id=<id> widget_id=<id>
+   currency_conversions=[{"external_id": "<metric_external_id>", "exchange_currency": "USD"}]
+
+manage-widgets action=restore_currency report_id=<id> widget_id=<id>
+# → reverts all converted money metrics back to their original currency
+```
+
+Use `currency_exchange` first to discover which metrics are convertible and their current `external_id` (a converted metric's id becomes `universal_metric_*`).
 
 ## Layout grid model
 
@@ -586,13 +618,16 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 
 - Move widgets to another tab — use `manage-report-tabs action=move_widgets`.
 - Set widget-level permissions — UI only.
-- Cross-report widget copy — duplicate within report only.
+- Cross-report widget copy — duplicate within the same report only (use `target_tab_id` for cross-tab duplication).
 - **Edit the generated AI text itself** — `update_ai_text` configures the settings and triggers generation, but the produced text can only be hand-edited in the UI.
-- **Comment widget background images** — the UI supports background images on comment widgets; MCP has no path for this yet.
-- **Image upload from local file** — MCP accepts external URLs for image widgets but cannot upload binary image files directly (no multipart upload equivalent).
+
+## Idempotency
+
+`create`, `apply_premade`, and `create_premade` accept an optional `idempotency_key` (a client-generated UUID). If a timeout or network error leaves the result uncertain, resend the same call with the same key — the original result is returned instead of creating a duplicate. Use a fresh key for each distinct operation.
 
 ## Common pitfalls
 
+- **Date dimension ambiguity** — a source may expose more than one date-typed dimension (e.g. `universal_dimension_1137` "Date" and `universal_dimension_150` "Date OLD"). Prefer the plainly-named current one and verify with `csv_export`. This is integration-dependent.
 - **Full-width single-value widgets** — looks like a section header; use 2×2 or 2×1 instead.
 - **Table summary row sums percentages** — the footer sums percent columns as numbers (25% + 30% = 55%); disable footer for percent-heavy tables.
 - **Updating metrics on a widget that uses a source group** — after the group's sources change, the widget may need to re-save to pick up field definitions. Verify via `list-widgets action=show`.
