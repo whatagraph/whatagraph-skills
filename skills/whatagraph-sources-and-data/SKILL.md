@@ -113,10 +113,26 @@ Response: rows of metric values grouped by dimensions.
 |---|---|---|
 | Native source (Google Ads campaign) | `metrics.clicks`, `metrics.cost_micros` | `campaign.name`, `segments.date` |
 | Source group (channel rollup, channel_id=154 — verified Jun 2026) | `universal_metric_<n>` | `universal_dimension_<n>` |
+| Source group — per channel (one channel's sub-total) | `universal_metric_<n>_integration_<integrationId>` | — |
+| Source group — per source (one sub-source's contribution) | `universal_metric_<n>_integration_source_<sourceId>` | `universal_dimension_1130` (Channel name) / `1131` (Source name) split the aggregate |
 | Blend (cross-channel, channel_id=142 — verified Jun 2026) — fetch-data | `aggregation_metric_universal_metric_<n>` | `aggregation_dimension_universal_dimension_<n>` |
 | Blend — per-sub-source fields (rare in fetch) | `blend_metric_<id>` | `blend_dimension_<id>` |
 
 If `fetch-data` returns `Invalid metrics: X` or `Invalid dimensions: X`, do not retry with a variant spelling. Re-run `list_dimensions_and_metrics` and pick the value verbatim from the response — including dots and prefixes.
+
+### Source-group breakdown metrics — pick the variant, don't filter
+
+Every universal metric on a source group exists in **three tiers**:
+
+- **Aggregate** — `universal_metric_<n>` — every source of every channel, summed.
+- **Per channel** — `universal_metric_<n>_integration_<integrationId>` — all sources of one channel, summed (e.g. all Google Ads accounts in the group).
+- **Per source** — `universal_metric_<n>_integration_source_<sourceId>` — one sub-source's contribution.
+
+Two SYSTEM dimensions break the aggregate into rows instead: `universal_dimension_1130` (Channel name) and `universal_dimension_1131` (Source name).
+
+When the user wants **one channel's or one source's** number out of a group — "show all Spend for Google Ads channels in this group", "just the X account's clicks" — **pick the matching `_integration_<id>` / `_integration_source_<id>` metric variant**. Do **not** add a channel/source filter, and do **not** fetch the full aggregate and try to subset it — the variant already isolates it. The user never types these ids; you resolve them: each field returned by `list_dimensions_and_metrics` carries a `group` attribute (`integration_6`, `integration_source_4038`, …) naming the channel/source it belongs to — match on that, never hand-construct the id.
+
+Caveats: the per-source variants exist only on **multi-source** groups, and are dropped on very large (consolidated) groups — there, break out by `universal_dimension_1131` (Source name) instead.
 
 ### Handling "data is being processed"
 

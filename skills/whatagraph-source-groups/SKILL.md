@@ -218,6 +218,26 @@ Notes:
 - **`report_type`** is the report type the group exposes — run `list-sources action=list_report_types source_id=<group integration_source_id>` to see the exact string. This is the group's own report type, not the original sources' channel-native report type you passed to `create_config`.
 - **Field ids** use the `universal_metric_*` / `universal_dimension_*` form on the group's source. The platform aggregates sub-sources automatically.
 
+## Drilling into sub-sources
+
+The plain `universal_metric_*` / `universal_dimension_*` form returns the group **aggregate** (one rolled-up total). The group also exposes the contribution of each channel and each sub-source — the main reason to use a group over a blend. Two ways:
+
+- **Break the aggregate into rows** — add `universal_dimension_1130` (Channel name) or `universal_dimension_1131` (Source name) to a normal group fetch; you get one row per channel / per sub-source instead of one total.
+- **Pick a single channel's or source's metric** — every universal metric also exists as `..._integration_<integrationId>` (one channel's sub-total) and `..._integration_source_<sourceId>` (one sub-source's contribution).
+
+```
+fetch-data source_id=<group integration_source_id>
+  report_type="<the report type the group exposes>"
+  metrics=["universal_metric_1"]
+  dimensions=["universal_dimension_1131", "universal_dimension_1137"]   # Source name + Date
+  from="2026-04-01" till="2026-04-15"
+```
+
+`whatagraph-sources-and-data` ("Source-group breakdown metrics") owns the exact id forms and the rule for choosing a variant over a filter — load it for those. Group-specific notes:
+
+- **Don't hand-construct the ids.** List them with `list-sources action=list_dimensions_and_metrics source_id=<group integration_source_id>` and pick the `_integration_source_<id>` / `_integration_<id>` variants; each field's `group` attribute names its channel/source.
+- The per-source variants exist only on **multi-source** groups, and are dropped on very large (consolidated) groups — break out by `universal_dimension_1131` there instead.
+
 ## Deleting a source group
 
 Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: permanent (the virtual source is removed), widgets and custom metrics pointing at the group break, pre-check `list-source-groups action=show group_id=<id>`. To *change* a group, always use `update` — never delete-and-recreate (see above).
@@ -239,3 +259,4 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **Adding source groups can affect plan usage** — creating or expanding a group consumes source credits; check the team's plan limits before bulk-creating.
 - **`source_ids` vs `integration_source_ids`** — `create` expects `integration_source_ids`; `create_config` expects a single `integration_source_id`.
 - **Widget creation against a fresh group failing** — re-run `list-source-groups action=show` to verify `integration_source_id` exists and data has arrived before attaching widgets.
+- **Per-source metrics missing on a huge group** — the `universal_metric_<id>_integration_source_<subId>` family is generated only for multi-source groups and is **not** available on very large (consolidated) groups, where it's dropped to avoid query blow-up. Break out by `universal_dimension_1131` (Source name) instead.
