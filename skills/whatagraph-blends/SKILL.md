@@ -108,6 +108,88 @@ All conditions in one join are ANDed together. For more complex joins, add multi
 
 Most blends should use `full` — it avoids excluding rows that only exist in one source. `inner` is a common source of "my data disappeared after blending" questions.
 
+## Write-time validation
+
+`manage-blends` validates join topology when you `create` or `update` (not just at fetch time). A blend that breaks these rules is rejected up front with a specific message. Below is each rule, the error you get, and the fix.
+
+### Allowed topologies
+
+| Topology | OK? | Format to use |
+|---|---|---|
+| 2 distinct sources, 1 join | ✓ | `conditions` (simplified) |
+| 3+ distinct sources, chained | ✓ | one join object per adjacent pair: `joins=[{A–B},{B–C}]` |
+| Self-join (same source twice) | ✓ | `groups/keys` only (see below) |
+| One join spanning 3+ sources | ✗ | split into one join per pair |
+| A sub-source with no join | ✗ | must connect into the chain (unless a `cross` join is present) |
+
+### Shape minimums
+
+`create` requires at least **2 items** and at least **1 join**. Each `groups/keys` group needs at least **2 keys** (one per side).
+
+### Self-join requires `groups/keys` (not `conditions`)
+
+A self-join uses the **same `integration_source_id` in two different items** (e.g. one source compared this-month vs last-month). The simplified `conditions` format keys a join by source id alone, so with the source repeated it can't tell which item you mean. The `groups/keys` format carries `col_index` (the 0-based position in `items`), which disambiguates.
+
+- **Error (using `conditions` with a duplicated source):** *"Multiple items reference the same `integration_source_id`. The simplified `conditions` format cannot disambiguate which item to join. Use the legacy `groups/keys` format with explicit `col_index` instead."*
+- **Fix — use `groups/keys`:**
+
+```
+joins=[
+  {
+    "type": "inner",
+    "groups": [
+      { "keys": [
+        { "col_index": 0, "integration_source_id": <S>, "external_id": "<dim>" },
+        { "col_index": 1, "integration_source_id": <S>, "external_id": "<dim>" }
+      ] }
+    ]
+  }
+]
+```
+
+`col_index` 0 and 1 point at the first and second item that both carry source `<S>`.
+
+### One join connects exactly one pair of sources
+
+Each join relates **two different** sub-sources. A single join cannot span three or more.
+
+- **Error (a join condition touches the same source on both sides or only one source):** *"Each join condition must connect exactly two different sub-sources..."*
+- **Error (one join spans 3+ sources):** *"A single join can only relate one pair of sub-sources, but join N spans more than two — this blend would be saved but every data fetch would fail with 'Incorrect blend setup'."*
+- **Fix:** one join object per pair. To chain A–B–C: `joins=[{A–B join},{B–C join}]`.
+
+### Every sub-source must be connected
+
+All sub-sources must link (directly or transitively) into one chain.
+
+- **Error:** *"Sub-source X is not connected to the rest of the blend by any join. Every sub-source must be linked into a single chain — add a join condition relating it to an already-connected sub-source."*
+- **Fix:** add a join tying the orphaned source to one already in the chain. Exception: a `cross` join in the blend skips this connectivity check.
+
+### Date dimensions join only to date dimensions
+
+A temporal dimension (date, datetime, month, week, …) cannot be matched against a non-temporal one.
+
+- **Error:** *"Join N matches incompatible dimension types: `<dim>` (date) on source A cannot be joined to `<dim>` (string) on source B. A date/time dimension must be joined to another date/time dimension."*
+- **Fix:** join date→date and the other key (campaign name, etc.) separately. Keys whose type can't be resolved are skipped, not rejected. (Note: this check currently runs on `create` only.)
+
+### Join keys must be declared dimensions
+
+Every dimension named in a join must also appear in that sub-source's `dimensions` array.
+
+- **Error:** *"Join condition references dimension `D` which is not declared in the `dimensions` of source ID S..."*
+- **Fix:** add the join-key dimension to that item's `dimensions`.
+
+### Non-cross joins need `conditions` or `groups`
+
+Only a `cross` join may omit the join definition.
+
+- **Error:** *"Join of type `X` requires `conditions` or `groups` to define how sources are connected..."*
+- **Fix:** add `conditions` (or `groups`), or switch the type to `cross` if a cartesian product is what you want.
+
+### Source must be in `items`
+
+- **Error:** *"Join references source ID S which is not in the items list."*
+- **Fix:** the `left_source_id`/`right_source_id` (or a key's `integration_source_id`) must be one of the `items` integration source ids.
+
 ## Updating
 
 ```
