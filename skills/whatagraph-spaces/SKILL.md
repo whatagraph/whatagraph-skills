@@ -7,11 +7,12 @@ required_tools:
   - manage-integrations
   - manage-members
   - manage-spaces
+  - delete-spaces
 ---
 
 # Spaces (client folders)
 
-Tools covered: `list-spaces`, `manage-spaces`.
+Tools covered: `list-spaces`, `manage-spaces`, `delete-spaces`.
 
 A **space** is a top-level container that organizes reports and data sources. In the UI it's labeled as a space or folder. Every team has a "Home" space by default (not editable).
 
@@ -26,9 +27,13 @@ A **space** is a top-level container that organizes reports and data sources. In
 ```
 list-spaces action=list                                  # paginated; top-level only
 list-spaces action=list include_home=true                # include home
+list-spaces action=list search="Acme"                    # filter by name
+list-spaces action=list sort_by="name-asc"               # newest (default), oldest, name-asc, name-desc
 list-spaces action=show client_id=<id>                   # report/measurement counts
 list-spaces action=children client_id=<id>               # sub-spaces (each child includes its parent_id)
 ```
+
+Pagination: cursor-based with `cursor` parameter; `per_page` up to 500 (default 100).
 
 ## Create a space
 
@@ -57,11 +62,15 @@ Cannot update the Home space.
 
 ## Deleting a space
 
-Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: the parameter is `client_id`, reports and measurements inside soft-delete with it (support-restorable), the Home space cannot be deleted.
+```
+delete-spaces action=delete client_id=<id>
+```
+
+Soft-deletes the space and all its reports/measurements (support-restorable within retention window). The Home space cannot be deleted. The parameter is `client_id`, not `space_id`. See `whatagraph-deleting` for full context.
 
 ## What MCP can't do here
 
-- Move a space to a different parent after creation — UI only (where supported).
+- Move a space to a different parent after creation — `manage-spaces action=update` does not accept `parent_id`; UI only.
 - Assign users/permissions to a space — via `manage-members` for editor role.
 
 ## Common pitfalls
