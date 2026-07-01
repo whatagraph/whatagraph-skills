@@ -27,7 +27,11 @@ An **automation** = one report + a schedule + a list of email recipients. Multip
 ```
 list-automations action=list report_id=<report_id>
 list-automations action=show report_id=<report_id> automation_id=<id>
+list-automations action=list_all                    # account-wide, cursor-paginated
+list-automations action=list_all search="report name" frequency="monthly"
 ```
+
+`list_all` returns a slim payload per automation (`id`, `report_id`, `report_name`, `frequency`, `send_time`, `delivery_day`, `time_zone`). Use `show` for full details.
 
 ## Creating an automation
 
@@ -59,6 +63,25 @@ manage-automations action=create
 
 To deliver on the 2nd of every month, use `delivery_day="second_day_month"` — not `"day_2"`. There is no key for the 11th–14th, 16th–31st, or the last day of the month; pick the nearest supported ordinal.
 
+### Frequency ↔ report period constraints
+
+Not all frequencies work with all report date periods. The report's saved date range determines which frequencies are valid:
+
+| Report period category | Allowed frequencies |
+|---|---|
+| Day-level / rolling (`yesterday`, `today`, `last7Days`, `thisWeek`, `thisMonth`, etc.) | All (`daily` through `yearly`) |
+| Weekly (`lastWeek`, `last2Week`, `last3Week`) | All except `daily` |
+| Monthly (`lastMonth`, `last3Month` … `last25Month`) | `monthly`, `bi_monthly`, `quarterly`, `yearly` |
+| Quarterly (`lastQuarter`) | `quarterly`, `yearly` only |
+| Yearly (`lastYear`) | `yearly` only |
+| Custom date range | None — automation is blocked entirely |
+
+An invalid combination returns a clear error listing valid frequencies. Reports with custom date ranges cannot be automated at all.
+
+### MCP limitation: one automation per report
+
+Via MCP, only **one automation per report** is allowed. Attempting to create a second returns a `conflict` error. To change delivery targets, update the existing automation rather than creating a new one.
+
 > **Warning:** an automation emails real recipients on a schedule. When setting one up on a user's behalf, test with your own (or the user's own) address first, or set `needs_approval=true` so nothing goes out without review. Create and update responses echo the saved `receivers` (verified Jun 2026) — check them before calling it done.
 
 ### Key parameter naming
@@ -69,6 +92,8 @@ To deliver on the 2nd of every month, use `delivery_day="second_day_month"` — 
 - `include_report_pdf_in_email` — boolean for PDF attachment.
 - `needs_approval` — boolean; when `true`, each cycle must be approved via `action=review`.
 - `stop_on_issues` — boolean; pauses delivery when data source has sync issues.
+- `disable_date_range_change` — boolean; prevents report date range changes from affecting the automation.
+- `notify_sent` — boolean; sends a notification when the automation delivers.
 
 ## Approving a pending delivery
 
@@ -86,7 +111,7 @@ manage-automations action=update automation_id=<id> report_id=<report_id>
    receivers=["..."]
 ```
 
-Changeable fields: `frequency`, `delivery_day`, `send_time`, `time_zone`, `receivers`, `compare_type`, `include_report_pdf_in_email`, `needs_approval`, `stop_on_issues`, `options`.
+Changeable fields: `frequency`, `delivery_day`, `send_time`, `time_zone`, `receivers`, `compare_type`, `include_report_pdf_in_email`, `needs_approval`, `stop_on_issues`, `disable_date_range_change`, `notify_sent`, `options`.
 
 ## PDF settings
 
