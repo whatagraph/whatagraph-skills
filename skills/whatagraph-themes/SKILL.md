@@ -41,6 +41,8 @@ Pagination: cursor-based with `cursor` parameter; `per_page` up to 500 (default 
 
 Themes and palettes are stored at the team level. `report_id` is optional on the list actions (verified Jun 2026) — omit it for team-level items only; pass it to also see report-level items and which one is active on that report. `show_theme` requires both `report_id` and `theme_id`.
 
+Both `list_themes` and `list_colors` include context fields: `applied_theme_id` / `applied_color_id` (the ID active on the report, or `null`) and `team_has_themes` / `team_has_colors` (whether the team has any). Use these to distinguish "no themes exist" vs "none applied to this report".
+
 ## Apply a theme to a report
 
 ```
