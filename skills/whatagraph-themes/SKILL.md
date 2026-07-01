@@ -19,6 +19,8 @@ Two concepts:
 
 Themes and palettes live at the team level. They're applied per-report.
 
+> The `manage-themes` tool description is intentionally brief. Detailed color format rules (bare hex vs raw CSS), resolution order, dark-theme guidance, and email theme setup are documented here in this skill, not in the tool description. Always load this skill before creating or updating themes/palettes.
+
 ## Use this when
 
 - Apply the client's logo and brand fonts to a specific report.

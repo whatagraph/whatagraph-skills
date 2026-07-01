@@ -30,6 +30,8 @@ A **share** is a public, view-only URL for a report. Anyone with the link (and o
 view-sharing action=show report_id=<report_id>
 ```
 
+Response fields: `is_shared` (boolean), and when shared: `share_settings.id`, `share_settings.hash`, `share_settings.share_url`, `share_settings.require_password`, `share_settings.disable_date_changing`, `share_settings.options` (e.g. `{"iq_chat": true}`), `share_settings.date_range`.
+
 ## Create a share link
 
 ```

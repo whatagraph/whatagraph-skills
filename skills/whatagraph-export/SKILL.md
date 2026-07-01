@@ -49,6 +49,8 @@ Response:
 
 Each widget becomes a separate sheet in the `.xlsx` file. Comment, calendar, image, and filter-control widgets are excluded server-side.
 
+**Feature gate**: `export-report` requires the `widget-csv-export` plan feature. Teams without it get a permission error.
+
 ### Fallback date range
 
 Widgets without their own configured date range use this fallback:

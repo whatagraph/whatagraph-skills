@@ -25,9 +25,12 @@ A **tab** is a page inside a report. Each tab holds its own widgets. Reports can
 ## Listing
 
 ```
-list-report-tabs action=list report_id=<id>               # summaries
+list-report-tabs action=list report_id=<id>               # summaries (visible tabs only)
+list-report-tabs action=list report_id=<id> include_hidden=true   # include hidden tabs
 list-report-tabs action=show report_id=<id> tab_id=<id>   # full widget list
 ```
+
+By default, `list` returns only visible tabs. Pass `include_hidden: true` to include hidden tabs; when set, each tab includes a `hidden` boolean field.
 
 ## Create a tab
 

@@ -226,7 +226,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 
 ## Common pitfalls
 
-- **"My data isn't showing"** — run `list-sources action=show source_id=<id>` and check `status`. If `issue`, the source needs re-authorization in the UI.
+- **"My data isn't showing"** — run `list-sources action=show source_id=<id>` and check `status`. If `issue`, the source needs re-authorization in the UI. When `status` is `error`, the response includes `error_reason` describing why the source is broken.
 - **Numbers don't match the channel** — verify currency and timezone on `show`. Common mismatch sources.
 - **Passing metric names instead of ids** — `fetch-data` expects the `external_id` (e.g. `spend`), not the display name ("Spend"). Use `list_dimensions_and_metrics` to discover correct ids.
 - **Too many sources with similar names** — narrow with `search` + `channels` + `space_ids`.

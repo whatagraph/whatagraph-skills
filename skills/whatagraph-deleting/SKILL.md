@@ -40,7 +40,7 @@ Tools covered: every `delete-*` tool, `remove-integrations`, `remove-members`, p
 
 **Deletion is the highest-risk operation on this MCP surface.** Four rules before any call:
 
-1. **Confirm intent with the user.** There is no `confirm` parameter in any delete tool's schema. Some tools (`delete-sources`, `delete-destinations`, `remove-integrations`) say "Requires confirmation" in their description — this means the agent should confirm with the user conversationally before calling, not that a schema parameter exists.
+1. **Confirm intent with the user.** There is no `confirm` parameter in any delete tool's schema. The agent should confirm with the user conversationally before calling any destructive tool.
 2. **Check usage first** (table below) — know what breaks before it breaks.
 3. **Know the recovery class** — some deletes have a `restore` action, some need support, some are gone forever.
 4. **Prefer update over delete-and-recreate** wherever dependents bind by id (source groups, blends, goals).
@@ -270,7 +270,7 @@ These `manage-*` actions are destructive even though their tool names aren't:
 
 ## Common pitfalls
 
-- **Probing for a `confirm` parameter** — none exists in any delete tool's schema. Three tools say "Requires confirmation" in their description text — this is a conversational directive, not a parameter. Ask the user.
+- **Probing for a `confirm` parameter** — none exists in any delete tool's schema. Deletion is a conversational directive — confirm with the user before calling.
 - **`overview_id` instead of `measurement_id`** — `delete-overviews` takes `measurement_id`.
 - **`space_id` instead of `client_id`** — `delete-spaces` takes `client_id`; the Home space is rejected.
 - **Assuming `delete-filters` takes only `filter_id`** — the schema requires `action=delete` too.
