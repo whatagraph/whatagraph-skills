@@ -68,17 +68,17 @@ Help users discover and navigate the data available in their Whatagraph account.
 | `list-sources` | `list`, `show`, `list_report_types`, `list_dimensions_and_metrics`, `list_usage` | Finding data sources, checking available metrics |
 | `list-integrations` | `list`, `list_grouped`, `list_accounts`, `list_available_sources` | Understanding connected channels |
 | `list-spaces` | `list`, `show`, `children` | Navigating client/project folders |
-| `list-reports` | `list`, `show`, `list_sources` | Finding and examining reports |
+| `list-reports` | `list`, `show`, `list_sources`, `resolve` | Finding and examining reports; `resolve` accepts a report URL, share hash, or numeric ID |
 | `list-report-tabs` | `list`, `show` | Browsing tabs (pages) within a report |
 | `list-widgets` | `list`, `show`, `csv_export` | Exploring widgets on report tabs |
 | `list-blends` | `list`, `show` | Cross-channel blended data sources |
 | `list-source-groups` | `list`, `show`, `source_issues` | Aggregated same-type sources |
 | `list-custom-metrics` | `list`, `list_with_premades`, `show`, `usage` | User-created and premade metrics |
-| `list-custom-dimensions` | `list`, `list_with_premades`, `show`, `usage` | User-created and premade dimensions |
+| `list-custom-dimensions` | `list`, `list_with_premades`, `show`, `usage`, `list_tags` | User-created and premade dimensions; `list_tags` shows tag values + assigned sources for tag-type dimensions |
 | `list-themes` | `list_themes`, `list_colors` | Report visual themes and palettes |
 | `list-overviews` | `list`, `show` | KPI tracking dashboards |
 | `view-goals` | `list`, `show` | Metric targets and progress |
-| `view-team` | `show`, `search`, `roles`, `show_subscription`, `list_plans` | Account settings, overview search, subscription |
+| `view-team` | `show`, `show_subscription`, `members`, `search`, `roles`, `list_plans` | Account settings, subscription limits, user roster, cross-domain search |
 
 ## Report Types: Required for Most Paid Channels
 
@@ -97,11 +97,12 @@ Single-report-type sources (e.g., most social pages, email platforms) return exa
 
 ## Tips
 
-- `view-team action: search` searches **overview names only** — it does not search reports, spaces, or sources. To find reports by name use `list-reports action: list, search: "<term>"`; for spaces use `list-spaces action: list, search: "<term>"`; for sources use `list-sources action: list, search: "<term>"`.
+- `view-team action: search` is a **cross-domain search** — it searches reports, overviews, spaces, blends, and source groups by name. It returns results grouped by domain. For channel-filtered source lookup, use `list-sources action: list, channels: ["<slug>"]` instead.
 - When a user asks "what data do I have?", start with `list-integrations` (action: `list_grouped`) for the big picture, then drill into specific sources.
 - Source IDs are needed for data fetching. Always confirm the source ID before calling `fetch-data`.
 - The `list_usage` action on `list-sources` shows which reports and widgets reference a source — useful for understanding data dependencies.
 - Never fabricate source IDs from memory. If `list-sources` / `fetch-data` responds with `Invalid source_id`, rerun `list-sources action: list` with a `search` term rather than guessing.
 - When narrowing sources by `channels`, resolve integration ids from `list-integrations` for **this** team — don't hardcode a channel id from memory. On `list_dimensions_and_metrics`, prefer `filter`/`is_universal` to narrow, and use `page.has_more` (not `estimated_total`, often `null`) to decide whether to paginate.
 - Keep `list-*` responses small with `fields=` (e.g. `fields=id,name`). The selectable paths differ per tool; an unknown path is rejected with the valid set in the error message — correct in one retry rather than guessing nested paths.
-- `list-sources action=list_metadata scope=integrations` lists the integrations the team *can* use (the catalog), not how many sources are connected per channel. For per-channel counts, page `list-sources action=list` with `fields=id,channel_id` and aggregate by `channel_id`; use `list-integrations action=list_grouped` for a category overview. Scope `list_metadata` with `scope=` (`accounts`, `spaces`, `users`, `tags`, `categories`) to fetch only what you need.
+- `list-sources action=list_metadata scope=integrations` lists the integrations the team *can* use (the catalog), not how many sources are connected per channel. For per-channel counts, page `list-sources action=list` with `fields=id,channel_id` and aggregate by `channel_id`; use `list-integrations action=list_grouped` for a category overview. Scope `list_metadata` with `scope=` (`all`, `accounts`, `spaces`, `users`, `tags`, `categories`, `integrations`) to fetch only what you need — `scope=all` returns everything in one call but produces a large response.
+- `resolve_fields` works well on some integrations (Facebook Ads, social channels) but may return empty results on others (e.g., Google Ads). When it returns nothing, fall back to `list_dimensions_and_metrics` with `filter` — this works universally across all integrations.
