@@ -45,7 +45,7 @@ Always confirm these three things before calling `fetch-data`:
 
 ### Finding a field by name — try `resolve_fields` first
 
-To get the `external_id` for a metric or dimension the user named, make `list-sources action: resolve_fields` your **first** move: it takes `source_id` + a natural-language `query` (e.g. "how much did we spend" → Cost) and returns the best-matching fields ranked by relevance, so you skip guessing the exact spelling. Pass `report_type` too when the source has multiple report types. Only fall back to `list_dimensions_and_metrics` with `filter` (below) when `resolve_fields` returns nothing.
+To get the `external_id` for a metric or dimension the user named, make `list-sources action: resolve_fields` your **first** move: it takes `source_id` + a natural-language `query` (e.g. "how much did we spend" → Cost) and returns the best-matching fields ranked by relevance, so you skip guessing the exact spelling. Pass `report_type` too when the source has multiple report types. When `resolve_fields` returns empty results, check `semantic_search_supported` in the response — if `false`, the integration has no semantic embeddings and you should always use `list_dimensions_and_metrics` with `filter` for that source.
 
 ### Narrowing a large field catalog — use `filter`
 
