@@ -51,7 +51,7 @@ list-filters action=list channel_id=<id>       # only for one channel
 list-filters action=show filter_id=<id>        # structure, values
 ```
 
-Config-scoped copies (`team_available=false`) do not appear in `list-filters action=list`. Use `list-widgets action=show` → `configs[].inline_filters[]` to see them.
+Config-scoped copies (`team_available=false`) do not appear in `list-filters action=list`. Use `list-widgets action=show` → `configs[].inline_filters[]` to see them — each inline filter includes a `team_available` boolean to distinguish config-scoped from team-level filters. Also, `list-widgets action=list` includes `has_filters: bool` per widget, so you can check which widgets have filters without calling `show` on each one.
 
 ## Filter parameters (attribution windows, granularity, etc.)
 
