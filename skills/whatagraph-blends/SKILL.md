@@ -275,6 +275,14 @@ manage-custom-metrics action=create
 
 Get the `blend_metric_<n>` ids from `list-sources action=list_dimensions_and_metrics source_id=<blend_id>`. `blend_metric_*` fields require `integration_source_id` (the blend's source) — not `channel_id`.
 
+## Decoding `blend_metric_<n>` / `blend_dimension_<n>` — which channel a field belongs to
+
+`list_dimensions_and_metrics` returns these ids but **not** the channel they came from — the `name` is the bare field name, so two sub-sources both exposing "Spend" come back as two `blend_metric_<n>` entries named "Spend" with no channel hint. Don't guess by name.
+
+To decode, call `list-blends action=show blend_id=<id>`. Each `sub_sources[]` entry is one channel and carries `integration` (the channel), `source_name`, and `integration_source_id`; its `metrics[]` and `dimensions[]` each carry a numeric `id`. **The `<n>` in `blend_metric_<n>` equals that `metrics[].id`** (and `blend_dimension_<n>` equals a `dimensions[].id`).
+
+So `blend_metric_42` belongs to whichever `sub_sources[]` entry has a metric with `id == 42` — read that entry's `integration` / `source_name` to name the channel. (The `external_id` shown there is the channel-native id like `cost_micros`, not the `blend_metric_*` form — match on `id`, not `external_id`.)
+
 ## Reading blend data directly
 
 Call `fetch-data` with the blend's integration source id and the aggregation field ids:
