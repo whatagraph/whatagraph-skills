@@ -174,9 +174,10 @@ list-source-groups action: show, group_id: <id>
 ```
 Returns each config's `id`, `output_name`, and `etl_config_ids` — useful for understanding the group's data pipeline setup.
 
-Check for sync issues per group:
+Check for sync issues — omit `group_id` to scan all groups at once:
 ```
-list-source-groups action: source_issues, group_id: <id>
+list-source-groups action: source_issues                    # all groups
+list-source-groups action: source_issues, group_id: <id>    # one group
 ```
 
 Review:
