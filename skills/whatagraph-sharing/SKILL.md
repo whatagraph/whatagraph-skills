@@ -5,11 +5,12 @@ description: Create and update public share links for reports with optional pass
 required_tools:
   - view-sharing
   - manage-sharing
+  - delete-sharing
 ---
 
 # Sharing, PDF, Excel
 
-Tools covered: `view-sharing`, `manage-sharing`.
+Tools covered: `view-sharing`, `manage-sharing`, `delete-sharing`.
 
 A **share** is a public, view-only URL for a report. Anyone with the link (and optional password) can view; no login required.
 
@@ -40,8 +41,8 @@ manage-sharing action=create
    options={"iq_chat": true}
 ```
 
-- `require_password` boolean — required. When `true`, `password` is also required.
-- `disable_date_changing` boolean — required. When `true`, viewers cannot change the report's date range.
+- `require_password` boolean — optional, defaults to `false`. When `true`, `password` is also required (minimum 12 characters).
+- `disable_date_changing` boolean — optional, defaults to `false`. When `true`, viewers cannot change the report's date range.
 - `options.iq_chat` — enable the in-share AI chat ("IQ") so the client can ask questions about their data.
 
 The response includes a `share_url` field — that is the public viewer URL to hand to clients. It lives on the team's share domain (e.g. `https://reports.live/shared/<hash>`, or the team's custom domain on white-labeled accounts). For a specific tab, append `#tab:<tab_id>`.
@@ -66,7 +67,9 @@ manage-sharing action=update share_id=<id>
 manage-sharing action=download_pdf report_id=<report_id>
 ```
 
-Starts PDF generation. The response contains the downloadable PDF URL or a job identifier; polling may be required for large reports.
+Starts PDF generation. Layout is fixed: A4 landscape, 1440px width. The response contains the downloadable PDF URL or a job identifier; polling may be required for large reports.
+
+**Warning**: `download_pdf` auto-creates a public share link if one does not already exist (required for PDF rendering). This is a side effect — the report becomes publicly accessible even if you only wanted a PDF.
 
 ## Export to Excel
 
@@ -74,10 +77,11 @@ Starts PDF generation. The response contains the downloadable PDF URL or a job i
 manage-sharing action=export_excel report_id=<report_id>
 ```
 
-Returns an Excel file with the report's widget data.
+Returns an Excel file with the report's widget data. Layout: one sheet per report tab.
 
 ## Common pitfalls
 
+- **Password too short** — minimum 12 characters; shorter passwords are rejected.
 - **Forgetting `require_password=true` when setting `password`** — password is ignored when `require_password` is `false`.
 - **Sending the URL without the password in a separate channel** — password in URL/chat defeats protection.
 - **Password reset required to invalidate** — there's no revoke-all-sessions button; change the password to invalidate cookies.
