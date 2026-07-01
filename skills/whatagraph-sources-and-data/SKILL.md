@@ -120,15 +120,15 @@ If `fetch-data` returns `Invalid metrics: X` or `Invalid dimensions: X`, do not 
 
 ### Handling "data is being processed"
 
-`fetch-data` may return a transient warmup error on the first call after creating a blend or source group, or after a long idle period:
+`fetch-data` may return a transient error on the first call after creating a blend or source group, or after a long idle period:
 
 ```
 {"success": false, "error": {"category": "internal", "message": "Your data is being processed... please wait...", "retryable": false}}
 ```
 
-**Important:** `retryable: false` is misleading on this specific message — the condition is transient. Wait ~10–15 seconds and retry the same call once or twice. Most blends warm up within 30 seconds; declarative connectors can take 2–3 minutes on first fetch. The legacy pending response shape (`{"status":"pending","retry_after":30}`) is also seen on some integrations — same handling: wait the indicated seconds and retry.
+**Important:** `retryable: false` is misleading on this specific message — the condition is transient. Wait ~10–15 seconds and retry the same call once or twice. What's actually pending differs by source type: a **blend** stores nothing and is computed live, so this means one of its **underlying sub-sources** isn't ready yet (still fetching from its API, rate-limited, or period not aggregated) — there is no blend warmup. A **source group** is ETL/BigQuery-populated and genuinely takes a few minutes to populate after creation. **Declarative connectors** can take 2–3 minutes on first fetch. The legacy pending response shape (`{"status":"pending","retry_after":30}`) is also seen on some integrations — same handling: wait the indicated seconds and retry.
 
-Do NOT surface the warmup error to the user as a hard failure. Treat any "data is being processed" / "please wait" / `retry_after` response as a retry-with-backoff signal regardless of the `retryable` flag.
+Do NOT surface this error to the user as a hard failure. Treat any "data is being processed" / "please wait" / `retry_after` response as a retry-with-backoff signal regardless of the `retryable` flag.
 
 ## Listing integrations (channels)
 
