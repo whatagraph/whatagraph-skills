@@ -162,11 +162,10 @@ list-blends action: list
 list-source-groups action: list
 ```
 
-For each blend, inspect cross-channel join configuration:
+The `list` response includes `source_count` and `channel_names` per blend — often enough to assess blend health without calling `show`. For deeper inspection (join config, usage stats):
 ```
 list-blends action: show, blend_id: <id>
 ```
-The `show` response includes sub-sources, join config, and usage stats — needed to understand which channels are combined and how.
 
 For each source group, inspect per-config detail:
 ```

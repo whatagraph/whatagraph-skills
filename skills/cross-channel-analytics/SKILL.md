@@ -33,7 +33,7 @@ Help users analyze marketing performance across multiple channels by leveraging 
    ```
    list-blends action: list
    ```
-   Blends are the primary mechanism for cross-channel reporting. Each blend combines specific sources.
+   Blends are the primary mechanism for cross-channel reporting. Each blend's list entry includes `source_count` and `channel_names` — often enough to pick the right blend without calling `show`.
 
 2. **Inspect a blend's configuration**:
    ```
