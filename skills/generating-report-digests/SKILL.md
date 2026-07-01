@@ -61,7 +61,7 @@ list-reports action: list, search: "{name fragment}"
    ```
 
    This returns structured JSON with:
-   - `widget.id`, `widget.title`, `widget.widget_type_name`, `widget.tab_id`
+   - `widget.id`, `widget.name`, `widget.widget_type_name`, `widget.tab_id`
    - `widget.sources` — which channels/sources feed this widget
    - `csv_rows` — array of arrays (`string[][]`): first row is headers, subsequent rows are data
    - `contains_sample_data` — whether the data is sample/demo data
