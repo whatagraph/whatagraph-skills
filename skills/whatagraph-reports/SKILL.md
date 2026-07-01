@@ -37,9 +37,13 @@ A report references data through **report-local sources**. Before a widget on th
 ```
 list-reports action=list                                    # paginated
 list-reports action=list search="Acme" filter_space_ids=[<id>]
+list-reports action=list semantic_search="executive dashboard"  # embedding-based relevance ranking
 list-reports action=show report_id=<id>                     # tabs + widgets
 list-reports action=list_sources report_id=<id>             # sources used by widgets
+list-reports action=resolve url_or_hash="https://live.whatagraph.com/client/123/live-report/456"
 ```
+
+`semantic_search` finds reports by meaning, not just substring — returns a single bounded set of best matches ranked by relevance (no cursor pagination). `resolve` maps a live-report URL, share URL, hash, or numeric report ID to a `report_id`.
 
 ## Create a blank report in a space
 
@@ -59,11 +63,10 @@ manage-reports action=create
 manage-reports action=create_from_template
    client_id=<space_id>
    template_id=<template_id>
+   name="Custom Report Name"
 ```
 
-Creates a new report **linked** to the template — structural changes on the template propagate to the report until unlinked.
-
-The response reports the sample-data state (verified Jun 2026): `uses_sample_data` (boolean), `sample_data_channels` (which channels are on placeholders), and a next-step hint pointing at `change_sources`. When `uses_sample_data` is `true`, remap sources with `change_sources` before handing the report over.
+Creates a new report **linked** to the template — structural changes on the template propagate to the report until unlinked. Both `create` and `create_from_template` accept `idempotency_key` for retry-safe creation. When the response shows `uses_sample_data: true`, remap sources with `change_sources` before handing the report over.
 
 ## Duplicate an existing report
 
@@ -109,13 +112,15 @@ Before creating a widget that points at a data source, attach the source to the 
 ```
 manage-reports action=attach_source report_id=<id>
    integration_source_id=<source_id_from_list-sources>
+
+# Batch attach — multiple sources at once:
+manage-reports action=attach_source report_id=<id>
+   integration_source_ids=[<source_id_1>, <source_id_2>]
 ```
 
-The response returns the resulting **report-local `source_id`** — pass that as `source_id` when creating widgets via `manage-widgets`.
+Response shape differs by count — see **Response reference** below. Creating a widget from the attached source also requires `channel_id`, `widget_type_id`, `tab_id`, and usually `report_type` — see `whatagraph-widgets`.
 
-Source groups and blends are themselves data sources — pass their `id` from `list-source-groups` or `list-blends` as `integration_source_id` and the same flow works.
-
-If the source is already attached, the existing report-local id is returned (idempotent).
+Source groups and blends work the same way — pass their `id` as `integration_source_id`. Re-attaching an already-attached source returns the existing report-local id (idempotent).
 
 **The source must belong to the report's space.** A report lives in one space; a real source can only be attached if it is assigned to that space, or to no space at all ("All folders"). Attaching a source assigned only to *other* spaces is rejected (the report builder never offers it there, and such a binding gets reset to sample data on the next space sync). Check a source's `space_ids` via `list-sources action=show`; if the report's space isn't listed, assign it first with `manage-integrations action=sync_to_clients` (see `whatagraph-integrations-admin`). The same rule applies to the `to` side of `change_sources`.
 
@@ -128,7 +133,7 @@ manage-reports action=attach_source report_id=<id>
    channel_ids=[<channel_id>]
 ```
 
-Returns the report-local `source_id` with `is_sample_data: true` and `integration_source_id: null`. The placeholder has no global integration source id — reference it via the report-local `source_id`. Use `is_sample_data` as the canonical signal when distinguishing real sources from placeholders in onboarding flows. Widgets created against this id show realistic-looking sample numbers; swap to a real source later via `change_sources`.
+Returns a report-local `source_id` with `is_sample_data: true`. Widgets created against this id show sample numbers; swap to a real source later via `change_sources`.
 
 ## Detach a data source from a report
 
@@ -143,9 +148,7 @@ manage-reports action=detach_source report_id=<id> source_id=<report_local_sourc
    delete_widgets=true
 ```
 
-Response includes the lists of `deleted_widget_ids` (when `delete_widgets=true`) or `remapped_widget_ids` (default mode).
-
-Use `list-reports action=list_sources report_id=<id>` first to discover the report-local `source_id` to detach.
+Use `list-reports action=list_sources report_id=<id>` first to discover the report-local `source_id` to detach. See **Response reference** for the response shape.
 
 ## Bulk-swap data sources (`change_sources`)
 
@@ -156,9 +159,9 @@ manage-reports action=change_sources report_id=<id>
    source_mapping={"<old_source_id>": <new_source_id>, "<old_source_id>": <new_source_id>}
 ```
 
-Keys are the **global** `integration_source_id` of the source being replaced (`"0"` for sample data); values are the new global `integration_source_id` (`0` to switch back to sample data). The response includes a `replacements` array with the resulting report-local `source_id` for each new mapping — handy when chaining widget creation right after.
+Keys are the **global** `integration_source_id` of the source being replaced (`"0"` for sample data); values are the new global `integration_source_id` (`0` to switch back to sample data).
 
-Use `list-reports action=list_sources report_id=<id>` to discover current source ids.
+Use `list-reports action=list_sources` to discover current source ids — see **Response reference** for the `list_sources` response shape and which id to use as the mapping key.
 
 > **Verify the build.** After building or bulk-swapping, `export-report report_id=<id>` (or `list-widgets action=csv_export` per widget) and confirm every widget's `data_status` is `ready` with non-empty rows and expected metric names. `list-widgets action=show` is NOT sufficient — it echoes ids, not loaded data.
 
@@ -173,9 +176,111 @@ The `detach_source` action above is also destructive when called with `delete_wi
 - Share a report — see `whatagraph-sharing`.
 - Unlink a template-linked report via MCP — UI only.
 
+## Response reference
+
+### `create` / `duplicate`
+
+```json
+{
+  "success": true,
+  "report": {
+    "id": 123,
+    "name": "Acme — October 2025",
+    "type": "ondemand",
+    "space_id": 45,
+    "default_tab_id": 678,
+    "tabs": [{ "id": 678, "name": "Overview", "position": 0 }]
+  }
+}
+```
+
+### `create_from_template`
+
+Same as `create` plus `linked_template_id`, `uses_sample_data`, and (when sample data is present) `sample_data_channels` and `next_steps`.
+
+### `update`
+
+```json
+{
+  "success": true,
+  "report": { "id": 123, "name": "New Name", "type": "ondemand", "space_id": 45, "date_range": { ... } }
+}
+```
+
+### `move`
+
+```json
+{
+  "success": true,
+  "message": "Report moved successfully.",
+  "report": { "id": 123, "name": "Acme", "type": "ondemand", "space_id": 99 }
+}
+```
+
+### `attach_source` (single)
+
+```json
+{
+  "success": true, "report_id": 123,
+  "source_id": 456, "integration_source_id": 447295,
+  "channel_id": 5, "name": "My Google Ads", "is_sample_data": false
+}
+```
+
+### `attach_source` (batch — 2+ sources)
+
+```json
+{
+  "success": true, "report_id": 123, "attached_count": 3,
+  "sources": [
+    { "source_id": 456, "integration_source_id": 447295, "channel_id": 5, "name": "My Google Ads", "is_sample_data": false },
+    { "source_id": 457, "integration_source_id": 447296, "channel_id": 12, "name": "My Facebook", "is_sample_data": false }
+  ]
+}
+```
+
+### `detach_source`
+
+```json
+{
+  "success": true, "report_id": 123, "source_id": 456, "channel_id": 5, "name": "My Google Ads",
+  "deleted_widget_ids": [], "remapped_widget_ids": [789, 790],
+  "remapped_to": { "source_id": 460, "source_name": "Other Source", "is_sample_data": false }
+}
+```
+
+### `change_sources`
+
+```json
+{
+  "success": true, "report_id": 123, "replaced_count": 1, "uses_sample_data": false,
+  "replacements": [{
+    "old_integration_source_id": null, "new_integration_source_id": 447295,
+    "source_id": 456, "is_sample_data": false,
+    "affected_widget_ids": [789, 790], "widget_count": 2
+  }]
+}
+```
+
+### `list_sources`
+
+```json
+{
+  "success": true,
+  "integration_sources": [
+    { "id": 447295, "name": "My Google Ads", "external_id": "123-456", "channel_id": 5, "account_id": 10, "service": "google-ads", "status": "active", "access_status": "ok" }
+  ],
+  "sample_integrations": [
+    { "id": 12, "service": "facebook-ads", "title": "Facebook Ads", "source_id": 460 }
+  ]
+}
+```
+
+`integration_sources[].id` is the **global** IntegrationSource id (use as `change_sources` key). `sample_integrations[].source_id` is the **report-local** id (use `"0"` as the `change_sources` key for sample data, not this value).
+
 ## Common pitfalls
 
-- **`space_id` vs `client_id`** — MCP uses `client_id` for the space. `space_id` is rejected.
+- **`space_id` vs `client_id`** — The input key is `client_id` for the space; `space_id` is rejected. The create response echoes the space as `space_id` — don't feed that response key back as input.
 - **`source_mapping` keys as source names** — keys must be the source id as a string (`"12345"`), values are the new source id as integer.
 - **Creating a widget before attaching the source** — `manage-widgets` validates `source_id` against the report's attached sources. Call `attach_source` first and use the returned report-local `source_id`.
 - **Detaching the last source of a channel without `delete_widgets=true`** — there is no fallback source to remap dependent widgets to; the call fails. Either pass `delete_widgets=true` or attach another source of the same channel first.
