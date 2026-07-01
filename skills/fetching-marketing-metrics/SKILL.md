@@ -53,11 +53,11 @@ Big channels expose **hundreds** of fields per report type (Google Ads `campaign
 
 ```
 list-sources action: list_dimensions_and_metrics, source_id: <id>, report_type: "campaign", filter: "cost"
-→ only fields whose name or external_id contains "cost"
-  (e.g. metrics.cost_micros, metrics.cost_per_conversion, metrics.average_cost)
+list-sources action: list_dimensions_and_metrics, source_id: <id>, report_type: "campaign", filter: "cost,clicks"
+→ comma-separated terms use OR logic: matches fields containing "cost" OR "clicks"
 ```
 
-- **`filter`** is a case-insensitive substring match on both the display name and the `external_id`. When you do reach for `list_dimensions_and_metrics`, make it your **default** whenever the user named the field — "spend", "roas", "conversions", "sessions", "clicks". It turns a 500-field scan into a handful of fields in one call.
+- **`filter`** is a case-insensitive substring match on both the display name and the `external_id`. Supports **comma-separated terms** with OR logic — `filter: "cost,clicks"` returns all fields matching either term in one call. When you do reach for `list_dimensions_and_metrics`, make it your **default** whenever the user named the field — "spend", "roas", "conversions", "sessions", "clicks". It turns a 500-field scan into a handful of fields in one call.
 - **`premade_only: true`** returns only the curated headline metrics/dimensions (~20 fields: cost, clicks, impressions, conversions, etc.) instead of the full 500+ catalog. Use this as the default when the user asks a general question ("how did we do?") and you don't yet know which specific fields to fetch.
 - **`is_universal: true`** returns only the platform-unified `universal_*` fields (useful on source groups and blends); `is_universal: false` returns only channel-native fields; omit for all.
 - **`per_page: 500`** — when you do need the full catalog (rare), set `per_page: 500` to minimize pagination round-trips instead of the default 100.
