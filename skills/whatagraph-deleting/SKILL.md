@@ -40,7 +40,7 @@ Tools covered: every `delete-*` tool, `remove-integrations`, `remove-members`, p
 
 **Deletion is the highest-risk operation on this MCP surface.** Four rules before any call:
 
-1. **Confirm intent with the user.** There is NO `confirm` parameter on any delete tool — the confirmation IS you asking the user. Do not probe schemas for one.
+1. **Confirm intent with the user.** There is no `confirm` parameter in any delete tool's schema. Some tools (`delete-sources`, `delete-destinations`, `remove-integrations`) say "Requires confirmation" in their description — this means the agent should confirm with the user conversationally before calling, not that a schema parameter exists.
 2. **Check usage first** (table below) — know what breaks before it breaks.
 3. **Know the recovery class** — some deletes have a `restore` action, some need support, some are gone forever.
 4. **Prefer update over delete-and-recreate** wherever dependents bind by id (source groups, blends, goals).
@@ -169,7 +169,7 @@ delete-custom-metrics    action=delete metric_ids=[<id>, <id>]
 delete-custom-dimensions action=delete dimension_ids=[<id>, <id>]
 ```
 
-Batch-only arrays. **Permanent** — custom dimensions go with all their related mappings, tags, and fields. All-or-nothing ID validation (one unknown ID fails the whole call). A field still used by widgets or filters is **blocked**: the call returns a conflict listing the affected widgets, reports, and filters (filter usage is detected too, not just widgets). Remove those references first (`manage-widgets` / `manage-filters`), or pass `force=true` to delete anyway and accept the breakage. Pre-check with `list-custom-metrics action=usage` / `list-custom-dimensions action=usage`.
+Batch-only arrays. **Permanent** — custom dimensions go with all their related mappings, tags, and fields; custom metrics likewise. All-or-nothing ID validation (one unknown ID fails the whole call). A field still used by widgets or filters is **blocked**: the call returns a conflict listing the affected widgets, reports, and filters. Remove those references first (`manage-widgets` / `manage-filters`), or pass `force=true` to delete anyway and accept the breakage — `force` is available on **both** `delete-custom-metrics` and `delete-custom-dimensions`. Pre-check with `list-custom-metrics action=usage` / `list-custom-dimensions action=usage`.
 
 ### Config objects
 
@@ -270,7 +270,7 @@ These `manage-*` actions are destructive even though their tool names aren't:
 
 ## Common pitfalls
 
-- **Probing for a `confirm` parameter** — none exists on any delete tool. Confirmation is conversational: ask the user.
+- **Probing for a `confirm` parameter** — none exists in any delete tool's schema. Three tools say "Requires confirmation" in their description text — this is a conversational directive, not a parameter. Ask the user.
 - **`overview_id` instead of `measurement_id`** — `delete-overviews` takes `measurement_id`.
 - **`space_id` instead of `client_id`** — `delete-spaces` takes `client_id`; the Home space is rejected.
 - **Assuming `delete-filters` takes only `filter_id`** — the schema requires `action=delete` too.
