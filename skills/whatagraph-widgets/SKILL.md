@@ -30,10 +30,14 @@ A **widget** is a visual data component on a tab. Widgets are typed (KPI card, l
 ## Listing
 
 ```
-list-widgets action=list report_id=<id>                    # grouped by tab
-list-widgets action=show report_id=<id> widget_id=<id>     # ids/layout/source binding only
+list-widgets action=list report_id=<id>                    # grouped by tab, sorted by (position_y, position_x)
+list-widgets action=show report_id=<id> widget_id=<id>     # full widget details: layout, source binding, options, ai_text_settings, source_filter_off
 list-widgets action=csv_export report_id=<id> widget_id=<id>
 ```
+
+Notes:
+- All actions include widgets on **hidden tabs** by default. Use `tab_hidden=false` to exclude hidden tabs, or `tab_hidden=true` to show only hidden tabs. The `list` response includes a `tab_hidden` field on each tab. `csv_export` defaults to visible tabs only (`tab_hidden=false`) — pass `tab_hidden=true` to export a widget on a hidden tab.
+- `csv_export` requires the **Widget CSV Export** premium feature — throws an authorization error without it. When `data_status=warning`, the response includes `retry_after_seconds: 60`. Some widgets return `success: false` when the integration doesn't support export.
 
 ## Create a widget from scratch
 
@@ -143,6 +147,8 @@ manage-widgets action=apply_premade                # alias: create_premade
 ```
 
 `widget_id` here is the **premade's ID** from `list-widgets action=list_premade`, not a widget you created. A source whose channel doesn't match the premade's channel is rejected (verified Jun 2026) — scope `list_premade` to the source's own channel. Supports `position_x`/`position_y` and `options` (width, height). Same auto-attach rule applies: pass a global or report-local `source_id`.
+
+**Linked reports**: `apply_premade` / `create_premade` is rejected on reports linked to a template (`linked_template_id` is set). Use `create` instead, or unlink the report first.
 
 ## Update a widget
 
@@ -257,6 +263,8 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 | `content_horizontal_scrollable` | boolean | Table only |
 | `display_dimensions_as_columns` | boolean | Table only |
 | `wrap_text` | boolean | Table only |
+| `show_search_bar` | boolean | Table, List (shows a row search box) |
+| `active_theme_color_id` | integer | Any widget — overrides the theme color for this widget. Get available color IDs from the report's theme via `list-themes` |
 
 #### Value formatting
 
@@ -327,8 +335,9 @@ Known `options` shapes:
     }
     ```
   - On **read**, `list-widgets action=show` returns the Tiptap document under `options.comment_widget_text.description`. A text/font **colour** baked into the comment content overrides the theme's `text_color` (CSS specificity), so applying a palette won't recolour comment text — set the colour via a `textStyle` mark for white-on-dark headers, or leave it uncoloured to inherit the theme.
+  - **Background image**: set `background_image_url` (public http/https URL) or `background_image_data` (base64-encoded JPG/PNG, max 10 MB) with optional `background_image_filename` in `rows[].options`. This adds a full-bleed background behind the comment text.
   - **Updating a comment widget with omitted row/config IDs now works.** `manage-widgets update` carries forward the existing config's `integration_id` (and `source_id` / `report_type`) when you omit it, so a comment-widget rows-update that leaves out `rows[].id` / `configs[].id` succeeds rather than erroring on a missing `integration_id`. Pre-fetching the IDs via `list-widgets action=show` (capture `rows[0].id` and `rows[0].configs[0].id` and pass them back) is still the cleanest way to update one specific row in place and avoid replacing the rows — but it is no longer required to avoid a failure.
-- **Image widget** (`widget_type_id=34`): supply `{"image_url": "<url>"}` in `rows[].options`. The tool auto-propagates this to the config-side canonical shape `configs[].options.images: [{url, title}]`. You can also supply the config shape directly in `rows[].configs[].options`. Additional display options: `background_size` (`auto_fit` | `scale_to_fit` | `scale_to_fill`) and `alignment` (`left` | `center` | `right`) — pass these in row options alongside `image_url`.
+- **Image widget** (`widget_type_id=34`): supply `{"image_url": "<url>"}` or `{"image_data": "<base64 JPG/PNG>"}` (max 10 MB) with optional `image_filename` in `rows[].options`. `image_data` accepts a base64-encoded image directly — no multipart upload needed. The tool auto-propagates this to the config-side canonical shape `configs[].options.images: [{url, title}]`. You can also supply the config shape directly in `rows[].configs[].options`. Additional display options: `background_size` (`auto_fit` | `scale_to_fit` | `scale_to_fill`) and `alignment` (`left` | `center` | `right`) — pass these in row options alongside `image_url`.
 - **Single-value KPI** (`widget_type_id=101`): set `{"comparison_display_type": "combined"}` (or `"percentage"` / `"absolute"`) to surface the trend delta vs. the comparison window inherited from the report. `compare_type` is not a valid widget option key — it is a date-range field and the widget rejects it.
 - **Funnel** (`widget_type_id=115`): each funnel **stage is its own row** with a single metric — one metric per row, in stage order. Putting multiple metrics in one config renders a single 100% stage instead of a multi-stage funnel.
 - **Goal widget** (`widget_type_id=123`): set `options.goal_date_range` with `start_date`, `end_date`, and `visible_time_line` (boolean — controls the "Time passed" indicator line). Each row represents a goal line and requires `options.title` (goal name), `options.start_value` (baseline, typically 0), and `options.end_value` (target number). `end_value` must be greater than `start_value`. The metric in `configs[].options.metrics` tracks progress toward the target.
@@ -340,7 +349,7 @@ Known `options` shapes:
 
 ## Breakdown vs non-breakdown (pie / donut / bar)
 
-Breakdown is supported **only** on column (`104`), bar (`106`), pie (`108`), and donut (`109`) charts — on every other widget type `breakdowns_enabled` is ignored.
+Breakdown is supported **only** on column (`104`), bar (`106`), stacked column (`119`), stacked bar (`118`), pie (`108`), and donut (`109`) charts — on every other widget type `breakdowns_enabled` is ignored.
 
 > **Time-series charts are different.** On area (`105`) and line (`107`) charts the X-axis is always the date — a categorical dimension bound on its own renders an **empty chart**. To split a time series by a category (e.g. clicks per campaign over time), bind the dimension AND set `options.breakdowns_enabled: true`; for a share-of-total view, use a breakdown donut/pie instead.
 
@@ -401,7 +410,7 @@ Configure AI-generated text (summary, wins, issues, recommendations, or a custom
 manage-widgets action=update_ai_text report_id=<id> widget_id=<id>
    ai_text={
      "types": ["summary"],          # summary | wins | issues | recommendations | custom (≥1 required)
-     "load_type": "report_page",    # or "full_report"
+     "load_type": "report_page",    # or "full_report" or "full_report_visible" (excludes hidden tabs)
      "language": "English",
      "summary_length": "short",     # or "long"
      "custom_prompt": "...",        # required when types includes "custom"
@@ -419,6 +428,21 @@ manage-widgets action=batch_duplicate report_id=<id> widget_ids=[<id1>, <id2>, <
 ```
 
 Copies are packed into the next free grid slots and tile across the 6 columns, so duplicating a widget many times fills a clean grid. Duplicate a full row of widgets together (not one widget repeatedly) to keep the layout balanced.
+
+When position is omitted, the copy is auto-placed at the next free grid slot — it does NOT land at the original widget's position. When an explicit position is given, the same overlap rules from the Layout grid model apply (`auto_place` behaviour). `batch_duplicate` always auto-places and tracks each copy's rect in-memory so subsequent copies tile alongside rather than stacking.
+
+**Cross-tab duplication**:
+
+Pass `target_tab_id=<tab_id>` to duplicate widgets to a different tab in the same report — no `manage-report-tabs` needed.
+
+```
+manage-widgets action=duplicate report_id=<id> widget_id=<id> target_tab_id=<tab_id>
+manage-widgets action=batch_duplicate report_id=<id> widget_ids=[...] target_tab_id=<tab_id>
+```
+
+- The target tab must belong to the same report — cross-report duplication is not supported.
+- The copy lands on the target tab's grid using the same positioning rules above (auto-placed by default, not at the original position).
+- Data sources are carried over since both tabs share the same report's attached sources.
 
 ## Add / remove rows
 
@@ -442,11 +466,38 @@ manage-widgets action=batch_change_source
 manage-widgets action=batch_change_settings
    report_id=<id> widget_ids=[...]
    settings={"currency":"EUR","hide_footer":true}
+
+manage-widgets action=batch_change_date_range
+   report_id=<id> widget_ids=[...]
+   date_range={"from":"2025-01-01","till":"2025-03-31","period":"custom"}
+
+manage-widgets action=batch_delete_date_range
+   report_id=<id> widget_ids=[...]
+
+manage-widgets action=batch_change_filter_visibility
+   report_id=<id> widget_ids=[...] source_filter_off=true
 ```
 
-`batch_change_source` accepts both global and report-local source IDs — auto-attaches if needed.
+`batch_change_source` accepts both global and report-local source IDs — auto-attaches if needed. The new source's channel must match the widgets' channel — cross-channel source swaps are rejected with an error naming the mismatched widgets. `batch_change_date_range` sets a widget-level date range override on all specified widgets. `batch_delete_date_range` removes date range overrides (widgets revert to the report date). `batch_change_filter_visibility` toggles `source_filter_off` across many widgets — set `true` to disable source-level filters, `false` to re-enable them.
 
 Use when swapping ~10+ widgets at once — much faster than per-widget updates.
+
+## Currency conversion
+
+Convert money metrics on a widget to a different currency. Requires the Data Transformation premium feature.
+
+```
+list-widgets action=currency_exchange report_id=<id> widget_id=<id>
+# → lists convertible money metrics with external_id, original_currency, exchange_currency
+
+manage-widgets action=convert_currency report_id=<id> widget_id=<id>
+   currency_conversions=[{"external_id": "<metric_external_id>", "exchange_currency": "USD"}]
+
+manage-widgets action=restore_currency report_id=<id> widget_id=<id>
+# → reverts all converted money metrics back to their original currency
+```
+
+Use `currency_exchange` first to discover which metrics are convertible and their current `external_id` (a converted metric's id becomes `universal_metric_*`).
 
 ## Layout grid model
 
@@ -461,7 +512,7 @@ The report uses a **6-column grid**. Every widget occupies a rectangle defined b
 
 > **Input/output asymmetry:** On **input** (create/update), pass `width` and `height` inside `options`. On **output**, they appear as **top-level** fields (`width`, `height`). When using `fields` filtering, use the top-level names: `fields="width,height"` — not `options.width`.
 
-**Overlap rule:** On `create`, the server rejects widgets that overlap an existing widget at the same `(x, y, width, height)` rectangle — unless `auto_place=true`, which picks the nearest free slot instead (the response then carries `auto_placed: true` with the chosen position). When `position_x`/`position_y` are omitted entirely, auto-placement is the default. `duplicate` and `batch_duplicate` auto-position the copy at the next available row.
+**Overlap rule:** On `create`, `update`, and `duplicate`, the server rejects widgets that overlap an existing widget — unless `auto_place=true`, which picks the nearest free slot instead. On `create`, when `position_x`/`position_y` are omitted entirely, auto-placement is the default. On `update`, overlap is checked when `position_x` or `position_y` is provided (the widget being updated is excluded from the check). `duplicate` and `batch_duplicate` auto-position the copy at the next available row.
 
 ### The layout comes from the data and the user, not from a default
 
@@ -586,13 +637,16 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 
 - Move widgets to another tab — use `manage-report-tabs action=move_widgets`.
 - Set widget-level permissions — UI only.
-- Cross-report widget copy — duplicate within report only.
+- Cross-report widget copy — duplicate within the same report only (use `target_tab_id` for cross-tab duplication).
 - **Edit the generated AI text itself** — `update_ai_text` configures the settings and triggers generation, but the produced text can only be hand-edited in the UI.
-- **Comment widget background images** — the UI supports background images on comment widgets; MCP has no path for this yet.
-- **Image upload from local file** — MCP accepts external URLs for image widgets but cannot upload binary image files directly (no multipart upload equivalent).
+
+## Idempotency
+
+`create`, `apply_premade`, and `create_premade` accept an optional `idempotency_key` (a client-generated UUID). If a timeout or network error leaves the result uncertain, resend the same call with the same key — the original result is returned instead of creating a duplicate. Use a fresh key for each distinct operation.
 
 ## Common pitfalls
 
+- **Date dimension ambiguity** — a source may expose more than one date-typed dimension (e.g. `universal_dimension_1137` "Date" and `universal_dimension_150` "Date OLD"). Prefer the plainly-named current one and verify with `csv_export`. This is integration-dependent.
 - **Full-width single-value widgets** — looks like a section header; use 2×2 or 2×1 instead.
 - **Table summary row sums percentages** — the footer sums percent columns as numbers (25% + 30% = 55%); disable footer for percent-heavy tables.
 - **Updating metrics on a widget that uses a source group** — after the group's sources change, the widget may need to re-save to pick up field definitions. Verify via `list-widgets action=show`.
@@ -606,4 +660,5 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **Widget breaks after batch source swap** — the new source may not have the same report type or fields; always verify with `list-widgets action=show` after.
 - **`metric.external_id` change appears to no-op** — when the widget already has a config bound to a metric on a source group / blend, re-supplying a different `metric.external_id` in the same config sometimes leaves the original metric in place. The `list-widgets action=show` response masks this (it only echoes channel + source ids, not the metric). Always confirm via `list-widgets action=csv_export` or `export-report` after a metric swap; if the CSV still shows the previous metric name, delete and recreate the widget rather than trying to update it in place.
 - **Widget title differs from `name`** — `name` is saved on the widget record, but the title rendered in the report can be controlled by widget display options. Verify important titles in the UI.
+- **Duplicate metric/dimension bindings** — binding the same `external_id` twice in one config is silently de-duplicated (keeps first occurrence). A warning is returned, but the widget ends up with one series, not two. To chart two series of the same metric, use separate rows.
 - **`tab_id` missing on create** — required. Find via `list-report-tabs action=list`.
