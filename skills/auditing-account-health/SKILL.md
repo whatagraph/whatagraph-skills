@@ -64,8 +64,14 @@ list-integrations action: list_accounts, channel_id: <id>
 
 ### 3. Source Health Scan
 
+Start with a quick aggregate check — no pagination needed:
 ```
-list-sources action: list, per_page: 128
+list-sources action: health_summary
+```
+Returns `{ total, ok, error }` counts. If `error > 0`, drill into broken sources:
+
+```
+list-sources action: list, status: "issue", per_page: 128
 ```
 
 Check for:

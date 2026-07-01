@@ -27,6 +27,7 @@ A **data source** is one connected account (one Google Ads account, one GA4 prop
 ## Discovery sequence (do this first)
 
 ```
+list-sources action=health_summary                            # quick ok/error/total counts — no pagination
 list-sources action=list                                      # paginated list
 list-sources action=list search="Acme"                        # filter by name substring
 list-sources action=list semantic_search="paid advertising"   # meaning-based search (finds Google Ads, Facebook Ads, etc.)
