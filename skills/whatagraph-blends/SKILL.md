@@ -242,11 +242,38 @@ When picking metrics/dimensions on the widget, use the blend-level ids returned 
 
 | Field id family | `manage-custom-metrics create` | `manage-custom-dimensions create` | `fetch-data` on the blend | UI widget picker |
 |---|---|---|---|---|
-| `universal_metric_<n>` / `universal_dimension_<n>` (cross-channel canonical) | ✓ (as `data_formula` fields) | ✓ (`map_type=data`) | ✗ | (resolves on sub-source, not blend) |
-| `aggregation_metric_universal_metric_<n>` / `aggregation_dimension_universal_dimension_<n>` (aggregated unified output; native-field equivalents `aggregation_metric_blend_metric_<n>` / `aggregation_dimension_join_key_<n>` behave the same) | ✗ | ✗ | ✓ | ✓ aggregated |
-| `blend_metric_<n>` / `blend_dimension_<n>` (per-sub-source) | ✓ (as `data_formula` fields) | ✗ | ✗ | ✓ per-sub-source |
+| `universal_metric_<n>` / `universal_dimension_<n>` (cross-channel canonical) | ✗ for metrics — **rejected on channel 142** (see below) | ✓ (`map_type=data`) | ✗ | (resolves on sub-source, not blend) |
+| `aggregation_metric_universal_metric_<n>` / `aggregation_dimension_universal_dimension_<n>` (aggregated unified output; native-field equivalents `aggregation_metric_blend_metric_<n>` / `aggregation_dimension_join_key_<n>` behave the same) | ✗ (see below) | ✗ | ✓ | ✓ aggregated |
+| `blend_metric_<n>` / `blend_dimension_<n>` (per-sub-source) | ✓ **use this** (as `data_formula` fields) | ✗ | ✗ | ✓ per-sub-source |
 
-Rule of thumb: use `universal_*` to **build** custom fields, `aggregation_*` to **read** the unified output, and `blend_*` to **build** custom fields keyed off one specific sub-source.
+Rule of thumb: build a `data_formula` custom **metric** on a blend off `blend_metric_<n>` ids; `aggregation_*` is for **reading** the unified output; `universal_dimension_*` is what a `map_type=data` custom **dimension** builds off.
+
+### Custom metric on a blend — use `blend_metric_*`, not `universal_metric_*`
+
+A `data_formula` custom metric on a blend (channel 142) must reference `blend_metric_<n>` field ids, each with the blend's `integration_source_id`. `universal_metric_<n>` (and its `aggregation_metric_universal_metric_<n>` read form) are **rejected**: `manage-custom-metrics create` checks that each id resolves in the blend's field catalog, and a blend catalog only exposes `blend_metric_*` / `aggregation_metric_*` — never a bare `universal_metric_*`. The error is:
+
+> `Universal metric 'universal_metric_<id>' does not resolve on channel 142 — it is not available there, so a custom metric mapping it to this channel would fail at fetch time.`
+
+(The check is skipped when the blend catalog is cold/empty, so a `universal_*` create may occasionally slip through and then fail at fetch time — another reason to always use `blend_metric_*`.)
+
+```
+manage-custom-metrics action=create
+   name="Blended ROAS"
+   map_type="data_formula"
+   transformation_level="source"
+   fields=[
+     {"integration_source_id": <blend_source_id>, "field_external_id": "blend_metric_<revenue_id>", "identifier": "A"},
+     {"integration_source_id": <blend_source_id>, "field_external_id": "blend_metric_<spend_id>",   "identifier": "B"}
+   ]
+   formula="A/B"
+   formula_value_type="float"
+   accumulator="average"
+   summary_accumulator="average"
+   aggregation_level="aggregate"
+   formula_increase="positive"
+```
+
+Get the `blend_metric_<n>` ids from `list-sources action=list_dimensions_and_metrics source_id=<blend_id>`. `blend_metric_*` fields require `integration_source_id` (the blend's source) — not `channel_id`.
 
 ## Reading blend data directly
 
@@ -285,7 +312,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 ## Common pitfalls
 
 - **Picking the wrong field id family when reading** — use `aggregation_metric_*`/`aggregation_dimension_*` to read the blend's unified output, not the sub-source native ids (those won't resolve on the blend itself).
-- **Picking the wrong field id family when writing custom fields on a blend** — a `data_formula` custom metric on a blend takes `universal_metric_<n>` (unified slot) or `blend_metric_<n>` (per-sub-source) ids as its `A`/`B` fields (from `list-sources action=list_dimensions_and_metrics`). `manage-custom-dimensions action=create map_type=data` expects the `universal_dimension_<n>` form on a blend, not `aggregation_dimension_*` / `blend_dimension_*`.
+- **Picking the wrong field id family when writing custom fields on a blend** — a `data_formula` custom metric on a blend takes `blend_metric_<n>` (per-sub-source) ids as its `A`/`B` fields (from `list-sources action=list_dimensions_and_metrics`), each with the blend's `integration_source_id`. `universal_metric_<n>` is **rejected on channel 142** (see "Custom metric on a blend" above). `manage-custom-dimensions action=create map_type=data` expects the `universal_dimension_<n>` form on a blend, not `aggregation_dimension_*` / `blend_dimension_*`.
 - **`join_type` vs `type`** — use `type` inside each join object.
 - **`join_fields` vs `conditions`** — use `conditions` with `{left_source_id, left_dimension, right_source_id, right_dimension}` per pair.
 - **`inner` join excluding data** — most "where did my data go?" blend issues are caused by `inner` on a dimension that doesn't match across sources (e.g. Google campaign name "Brand_US" vs Meta "Brand - US"). Use `full` unless you specifically want intersection.
