@@ -43,8 +43,8 @@ view-team action: members
 Review:
 - **Subscription plan** and limits (sources, reports, users) — from `show_subscription`
 - **Team settings** and configuration — from `show`
-- **Usage vs. limits** — compare `sources_used` vs `sources_total`, `users_used` vs `users_total`
-- **Legacy plans**: `sources_total: 0` or `users_total: 0` may mean "unlimited/unenforced" rather than "zero allowed" — do not flag as over-utilization
+- **Usage vs. limits** — compare `sources_used` vs `sources_total`, `users_used` vs `users_total`, `reports_count` vs `reports_total`
+- **Null limits**: `sources_total: null`, `users_total: null`, or `reports_total: null` means "unlimited/unenforced" — do not flag as over-utilization
 
 ### 2. Integration Health
 
