@@ -118,7 +118,7 @@ The tool rejects `data_formula` creates without these four:
 
 The same applies to `manage-custom-dimensions` — accepts `universal_dimension_<n>`, channel-native ids, and existing `universal_dimension_<custom_dimension_id>`.
 
-**On a blend source (channel 142)** the forms above do not apply — use `blend_metric_<n>` ids (with the blend's `integration_source_id`, not `channel_id`). `universal_metric_<n>` and `aggregation_metric_universal_metric_<n>` are **rejected** on a blend because they don't resolve in the blend's field catalog. See `whatagraph-blends` → "Custom metric on a blend" for the worked payload.
+**On a blend source (channel 142)** the forms above do not apply — use `blend_metric_<n>` ids (with the blend's `integration_source_id`, not `channel_id`). `universal_metric_<n>` and `aggregation_metric_universal_metric_<n>` are **rejected** on a blend because they don't resolve in the blend's field catalog. See `whatagraph-blends` → "Custom fields on a blend" for the worked payload.
 
 ### Formula rules
 
