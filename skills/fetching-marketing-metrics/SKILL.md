@@ -147,7 +147,14 @@ If the user's question doesn't imply a report type, default to the most granular
 | "Year to date" | January 1 of current year | Today |
 | "Last week" | Monday of previous week | Sunday of previous week |
 
-Alternatively, pass a `period` preset instead of `from`/`till` and let the source compute the range. A wide set is supported — among them `today`, `yesterday`, `last7Days`/`last14Days`/`last30Days`/`last90Days`, `lastWeek`, `lastMonth`, `lastQuarter`, `lastYear`, `thisWeek`/`thisMonth`/`thisQuarter`/`thisYear`, the `full*` variants (`fullWeek`, `fullMonth`, `fullQuarter`, `fullYear` — the most recent fully-completed period), and the `*ExclToday` variants (`thisWeekExclToday`, `thisMonthExclToday`, …). If you pass an invalid key the error lists every valid period — copy one from there.
+Alternatively, pass a `period` preset instead of `from`/`till` and let the source compute the range. Common presets:
+
+- **Relative**: `today`, `yesterday`, `last7Days`, `last14Days`, `last28Days`, `last30Days`, `last60Days`, `last90Days`, `last365Days`
+- **Calendar**: `thisWeek`, `thisMonth`, `thisQuarter`, `thisYear`, `lastWeek`, `last2Week`, `last3Week`, `lastMonth`, `last3Month`, `last6Month`, `last12Month`, `lastQuarter`, `lastYear`
+- **Full completed**: `fullWeek`, `fullMonth`, `fullQuarter`, `fullYear` — the most recent fully-completed period
+- **Excl-today**: `thisWeekExclToday`, `thisMonthExclToday`, `thisQuarterExclToday`, `thisYearExclToday`
+
+If you pass an invalid key the error lists every valid period — copy one from there. Do not pass both `period` and `from`/`till` — `period` takes precedence and the dates are silently ignored.
 
 ## Interpreting Results
 
@@ -155,6 +162,19 @@ Alternatively, pass a `period` preset instead of `from`/`till` and let the sourc
 - **Currency**: Check the source's `currency` field from `list-sources` to know which currency cost metrics are reported in.
 - **Aggregation**: Data is aggregated by the dimensions you specify. No dimensions = single totals row. Adding `date` dimension gives daily breakdown.
 - **Rate metrics**: Metrics like CTR, conversion rate, and ROAS may be pre-calculated or may need manual calculation from component metrics depending on the source.
+- **`totals`**: Every `fetch-data` response includes a `totals` object with aggregated values across all rows (not just the current page). Use this for headline numbers without summing rows manually.
+
+## Row Pagination
+
+`fetch-data` responses are paginated. The `limit` parameter sets page size (default 100, max 1000). Check the `page` object in the response:
+
+- `page.has_more` — `true` if more rows exist beyond this page
+- `page.cursor` — pass this as `cursor` on the next call to get the next page
+- `page.estimated_total` — approximate total row count
+
+When `compare_type` is set, both primary and comparison data paginate together under one cursor.
+
+`period` takes precedence over `from`/`till` if both are passed — avoid passing both to prevent confusion.
 
 ## Tips
 
@@ -162,7 +182,11 @@ Alternatively, pass a `period` preset instead of `from`/`till` and let the sourc
 - Always include a `date` dimension when users want to see trends over time.
 - If a metric returns unexpected results, check if the report type is correct — different report types expose different metrics.
 - Keep each call focused — fetch the metrics you actually need rather than the whole catalog. There is no hard cap on the number of metrics, but large requests are slower and the response is byte-capped (~50 KB) and paginated. The `limit` parameter caps the number of **rows** returned (default 100, max 1000), not metrics.
-- For period-over-period comparisons, make two `fetch-data` calls with different date ranges and compare the results side by side. (If the user has a Whatagraph report with a built-in comparison period, prefer the `generating-report-digests` skill, which surfaces comparison metrics directly.)
+- For period-over-period comparisons, use `compare_type` on a **single** `fetch-data` call — no need for two calls. Supported modes:
+  - `compare_type: "previous"` — shifts the date range backward by the same duration
+  - `compare_type: "last_year"` — compares against the same dates one year prior
+  - `compare_type: "custom"` — pass `vs_from` and `vs_till` for an arbitrary comparison window
+  The response includes a `comparison` block alongside the primary `data` block, with its own `from`, `till`, `rows`, and `totals`.
 
 ## Handling Errors (read before retrying)
 
