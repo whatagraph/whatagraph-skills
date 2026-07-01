@@ -105,9 +105,9 @@ For a full-report export — all widgets at once — use `export-report`. This i
 list-reports action: list_sources, report_id: <id>
 ```
 
-The response contains two separate arrays:
-- **`integration_sources`** — real connected accounts with `access` status (`ok`, `error`, etc.). These are live data sources.
-- **`sample_integrations`** — demo/sample data sources with no real account behind them. The `source_id` here is report-local.
+Returns a flat `sources` array. Each entry has `is_sample_data: bool`:
+- **`is_sample_data: false`** — real connected accounts with `access_status` (`ok`, `error`, etc.). These are live data sources.
+- **`is_sample_data: true`** — demo/sample data sources with no real account behind them. The `sample_source_id` is report-local.
 
 Note which sources are real vs sample — sample data is static and won't reflect actual campaign performance.
 
