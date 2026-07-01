@@ -5,11 +5,12 @@ description: View configured data transfers that push Whatagraph-ingested data t
 required_tools:
   - list-destinations
   - manage-destinations
+  - delete-destinations
 ---
 
 # Destinations & data transfers
 
-Tools covered: `list-destinations`, `manage-destinations`.
+Tools covered: `list-destinations`, `manage-destinations`, `delete-destinations`.
 
 A **destination** = a configured transfer that pushes data from Whatagraph-ingested integration sources out to an external system (BigQuery, LookerStudio, etc.). This is the opposite direction of a data source (source = pulls in; destination = pushes out).
 
@@ -26,7 +27,10 @@ list-destinations action=list
 list-destinations action=list status="active"
 list-destinations action=list destination_id=1              # 1=BigQuery
 list-destinations action=list issue="job"                    # only transfers with job issues
+list-destinations action=list name="My Transfer"            # filter by transfer name
 ```
+
+Pagination: `page` (integer, default 1) and `per_page` (string: `"16"`, `"32"`, `"64"`, `"128"`). Same pagination applies to `list_jobs`.
 
 `destination_id` values:
 - `1` — BigQuery
@@ -73,11 +77,15 @@ manage-destinations action=update transfer_id=<id> backfill_until=<date>
 ```
 
 - `resync` requires the transfer to be ACTIVE — resume a stopped transfer first. It also rejects when a backfill is still in progress; wait for it to finish.
-- `update` needs at least one of `name` / `backfill_until`. Moving `backfill_until` further back queues additional ETL jobs for the newly-covered dates.
+- `update` needs at least one of `name` / `backfill_until`. `backfill_until` must be on or before yesterday. Moving it further back queues additional ETL jobs for the newly-covered dates.
 
 ## Deleting a transfer
 
-Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: needs `transfer_id`, stops the outbound transfer, previously delivered rows in the destination are outside Whatagraph's control.
+```
+delete-destinations action=delete transfer_id=<id>
+```
+
+Stops the outbound transfer permanently. Previously delivered rows in the destination are outside Whatagraph's control. See `whatagraph-deleting` for cascades and recovery context.
 
 ## What MCP can't do here
 
