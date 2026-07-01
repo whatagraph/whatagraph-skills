@@ -31,7 +31,7 @@ list-automations action=list_all                    # account-wide, cursor-pagin
 list-automations action=list_all search="report name" frequency="monthly"
 ```
 
-`list_all` returns a slim payload per automation (`id`, `report_id`, `report_name`, `frequency`, `send_time`, `delivery_day`, `time_zone`). Use `show` for full details.
+Both `list` and `list_all` return a standard `page` envelope (`cursor`, `has_more`, `estimated_total`). `list_all` returns a slim payload per automation (`id`, `report_id`, `report_name`, `frequency`, `send_time`, `delivery_day`, `time_zone`). Use `show` for full details.
 
 ## Creating an automation
 
