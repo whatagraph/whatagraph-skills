@@ -150,11 +150,13 @@ If the user's question doesn't imply a report type, default to the most granular
 Alternatively, pass a `period` preset instead of `from`/`till` and let the source compute the range. Common presets:
 
 - **Relative**: `today`, `yesterday`, `last7Days`, `last14Days`, `last28Days`, `last30Days`, `last60Days`, `last90Days`, `last365Days`
-- **Calendar**: `thisWeek`, `thisMonth`, `thisQuarter`, `thisYear`, `lastWeek`, `last2Week`, `last3Week`, `lastMonth`, `last3Month`, `last6Month`, `last12Month`, `lastQuarter`, `lastYear`
+- **Calendar**: `thisWeek`, `thisMonth`, `thisQuarter`, `thisYear`, `lastWeek`, `last2Week`, `last3Week`, `lastMonth`, `last3Month`, `last4Month`, `last6Month`, `last12Month`, `last12MonthInclToday`, `last13Month`, `last14Month`, `last25Month`, `lastQuarter`, `lastYear`
 - **Full completed**: `fullWeek`, `fullMonth`, `fullQuarter`, `fullYear` — the most recent fully-completed period
 - **Excl-today**: `thisWeekExclToday`, `thisMonthExclToday`, `thisQuarterExclToday`, `thisYearExclToday`
+- **Custom rolling**: `customRollingDaily`, `customRollingWeekly`, `customRollingMonthly`
+- **Custom range**: `customRangeTwoDaysAgo`, `customRangeYesterday`, `customRangeToday`
 
-If you pass an invalid key the error lists every valid period — copy one from there. Do not pass both `period` and `from`/`till` — `period` takes precedence and the dates are silently ignored.
+The tool schema now lists **all** valid periods dynamically — check the `period` field description in the schema for the complete list. Do not pass both `period` and `from`/`till` — `period` takes precedence and the dates are silently ignored.
 
 ## Interpreting Results
 
