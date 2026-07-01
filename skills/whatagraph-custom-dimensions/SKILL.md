@@ -118,7 +118,7 @@ maps=[
 
 Use the full shape when you need multiple conditions per bucket, cross-field comparisons, or to bind each map to a specific field different from the top-level `fields`. Use the simplified shape for the common "label by substring" pattern with an optional fallback.
 
-Each condition's `fields` entry has the same shape as a top-level `fields` entry: `{channel_id, field_external_id, report_type_external_id?}` at channel level, or `{integration_source_id, field_external_id, report_type_external_id?}` at source level. On a blend or source-group source, use the unprefixed `universal_dimension_*` form (e.g. `universal_dimension_1` for Campaign Name) — the platform-prefixed `aggregation_dimension_*` and `blend_dimension_*` ids returned by `list-sources action=list_dimensions_and_metrics` are *not* accepted on `manage-custom-dimensions create` even though they show up on read.
+Each condition's `fields` entry has the same shape as a top-level `fields` entry: `{channel_id, field_external_id, report_type_external_id?}` at channel level, or `{integration_source_id, field_external_id, report_type_external_id?}` at source level. On a blend source (channel 142), the `fields` array accepts **any** family the blend catalog returns — `universal_dimension_<n>`, `blend_dimension_<n>`, or `aggregation_dimension_<n>` (the `aggregation_dimension_` prefix is stripped and re-resolved); prefer `universal_dimension_<n>` (e.g. `universal_dimension_1` for Campaign Name). There is no channel-142 gate on dimensions — the opposite of custom **metrics**, where `universal_metric_<n>` is rejected on a blend. See `whatagraph-blends` → "Custom fields on a blend". On a source-group source, use the unprefixed `universal_dimension_*` form.
 
 ## Creating a `tag` dimension
 
