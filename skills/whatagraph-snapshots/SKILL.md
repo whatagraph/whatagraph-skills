@@ -12,7 +12,7 @@ required_tools:
 
 # Snapshots
 
-Tools covered: `list-snapshots`, `manage-snapshots`.
+Tools covered: `list-snapshots`, `manage-snapshots`, `delete-snapshots`.
 
 A **snapshot** captures a report's structure (tabs, widget configs, layout, theme) at a point in time. Data values are not stored — they re-query at view time against current sources.
 
@@ -25,9 +25,11 @@ A **snapshot** captures a report's structure (tabs, widget configs, layout, them
 ## Listing
 
 ```
-list-snapshots action=list report_id=<id>                     # paginated
-list-snapshots action=list report_id=<id> per_page="32" page=2   # valid per_page: 16, 32, 64, 128
+list-snapshots action=list report_id=<id>
+list-snapshots action=list report_id=<id> per_page=32 cursor=<cursor>
 ```
+
+Pagination: cursor-based (not page-number). `per_page` is an integer (default 100, max 500). Pass `cursor` from `page.cursor` in the response to get the next page.
 
 ## Create (save) a snapshot
 
@@ -47,7 +49,11 @@ Restore rewrites the report's tabs, widgets, and layout to the snapshot state. *
 
 ## Deleting a snapshot
 
-Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: permanent (no restore of any kind), needs both `report_id` and `snapshot_id`, keep at least one recent snapshot on actively edited reports.
+```
+delete-snapshots action=delete report_id=<id> snapshot_id=<id>
+```
+
+Permanent — no restore of any kind. Keep at least one recent snapshot on actively edited reports. See `whatagraph-deleting` for broader deletion context.
 
 ## What MCP can't do here
 
