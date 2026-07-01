@@ -84,8 +84,8 @@ Are all the sources the same channel (e.g. all Google Ads)?
 
 Inputs: Google Ads, Meta Ads, LinkedIn Ads sources; GA4 for revenue.
 
-1. **Source groups (one config each).** For each channel where the client has multiple ad accounts, build one source group with **one** `configs` entry (e.g. `[{"output_name": "campaign_performance"}]` for Google Ads campaign-level data). If they need campaign-level *and* keyword-level rollups, build two separate groups — one config per group. See `whatagraph-source-groups` for why the legacy multi-config pattern is discouraged.
-2. **Blend.** Build a blend that joins the channel sources (or their source groups) on a shared date dimension (`universal_dimension_1137`) plus a shared grouping key like campaign or channel name. Pick the **same universal dimensions and metrics** on every sub-source of the blend — blends are designed around unified dimensions and integer/summable metrics (impressions, clicks, spend). Use `type="full"` unless you deliberately want to drop channels where a campaign is missing.
+1. **Source groups (one config each).** For each channel where the client has multiple ad accounts, build one source group with **one** `configs` entry (e.g. `[{"name": "Campaign Performance", "etl_config_ids": [<ids>]}]` for Google Ads campaign-level data). Note: `output_name` is a read-only field returned by `list-source-groups show`, not a create parameter. If they need campaign-level *and* keyword-level rollups, build two separate groups — one config per group. See `whatagraph-source-groups` for why the legacy multi-config pattern is discouraged.
+2. **Blend.** Build a blend that joins the channel sources (or their source groups) on a shared date dimension (`universal_dimension_1137`) plus a shared grouping key like campaign or channel name. Pick the **same universal dimensions and metrics** on every sub-source of the blend — blends are designed around unified dimensions and integer/summable metrics (impressions, clicks, spend). Use `type="full"` to keep all rows from both sides (nulls where a dimension is missing on one side). Use `type="inner"` to keep only rows present in both sides.
 3. **Custom metrics.**
    - On each source group: `manage-custom-metrics action=create map_type=data_formula transformation_level=channel` with `aggregation_level="aggregate"` and `formula_increase="positive"` or `"negative"`. Use channel-native field ids (`metrics.clicks`, `metrics.impressions` for Google Ads; `clicks`, `spend` for Meta Ads) or platform-unified `universal_metric_<n>` ids when the formula should work on any channel that exposes the slot.
    - On the blend: build the cross-channel formula metric at `transformation_level=source` with the constituent sources' native fields as A, B, C, D.
@@ -103,8 +103,9 @@ Inputs: Google Ads, Meta Ads, LinkedIn Ads sources; GA4 for revenue.
 4. `fetch-data source_id=<id> metrics=[...] from=... till=...` — does the raw data match the platform's own export?
    - Yes → issue is at widget level (wrong filter, wrong formula, wrong dimension pairing).
    - No → issue is upstream (stale ETL, rate limits, attribution lag). Try again after a few minutes.
-5. Scan saved filters for stale entries: `list-filters action=list source_id=<id>`.
-6. Cross-check `list-sources action=list_usage source_ids=[<id>]` — a different variant (another source group or blend) may be feeding the widget you think is direct.
+5. Check field ID family — widgets on source groups must use `universal_metric_*` / `universal_dimension_*`; widgets on blends must use `aggregation_metric_*` / `aggregation_dimension_*`; widgets on native sources use channel-native IDs (`metrics.clicks` for Google Ads, `spend` for Meta). Wrong family → wrong or no data.
+6. Scan saved filters for stale entries: `list-filters action=list source_id=<id>`.
+7. Cross-check `list-sources action=list_usage source_ids=[<id>]` — a different variant (another source group or blend) may be feeding the widget you think is direct.
 
 ### 4. Rebrand all reports for a client
 
