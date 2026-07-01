@@ -63,7 +63,7 @@ Help users analyze marketing performance across multiple channels by leveraging 
      from: "2026-03-01", till: "2026-03-31"
    ```
 
-   **First-call warmup:** blends often return `Your data is being processed... please wait...` with `retryable: false` on their first fetch. Treat this as transient — wait ~10–15 seconds and retry. See the "Handling Errors" section of `fetching-marketing-metrics` for the full retry pattern.
+   **First-call transient:** a blend is computed live (it stores nothing), so its data is available immediately. But the first fetch can still return `Your data is being processed... please wait...` with `retryable: false` — that signals an **underlying sub-source** isn't ready yet (still fetching from its API, rate-limited, or period not aggregated), not a blend warmup. Treat it as transient — wait ~10–15 seconds and retry the same call. See the "Handling Errors" section of `fetching-marketing-metrics` for the full retry pattern.
 
    **Incorrect blend setup error:** if `fetch-data` returns an error categorised as `setup_error` (e.g. "Incorrect blend setup"), the blend itself is misconfigured — not the fetch call. Use `list-blends action: show, blend_id: <id>` to inspect the source mapping. Common causes: a source was removed after the blend was created, or a required metric mapping is missing. The fix is in the UI blend editor — reconnect the missing source or re-map the metrics.
 

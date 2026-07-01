@@ -266,6 +266,16 @@ One row per date (or per join-key value) with the unified metrics summed across 
 
 To preview per-sub-source values, call `fetch-data` on each sub-source's integration source id individually with its own native or universal field ids.
 
+## Reading data right after creating a blend
+
+A blend stores nothing — it is computed live on every `fetch-data`, by fetching each sub-source and joining the results in-request. So a blend's data is **available immediately after create**; there is no blend warmup or pre-computation to wait for.
+
+The first fetch can still come back with `Your data is being processed... please wait...` (or `Retry in N seconds`). That is **not** the blend warming up — it means an **underlying sub-source** isn't ready yet: a direct-fetch integration still pulling from the third-party API, a rate limit, or the provider hasn't aggregated the requested period yet.
+
+- **Treat it as transient.** Wait and re-run the **same** call. `retryable: false` on that specific message is misleading — the condition is retryable. When the error gives `Retry in N seconds`, honor that N (it comes from the source).
+- **If a sub-source stays not-ready, investigate that source — not the blend.** Fetch the sub-source directly (its own `integration_source_id`) to see its state.
+- **Zeros are not "broken".** A sub-source may legitimately have no data for the period. Confirm by fetching that sub-source directly for the same dates.
+
 > **Verify the build.** After building or bulk-swapping, `export-report report_id=<id>` (or `list-widgets action=csv_export` per widget) and confirm every widget's `data_status` is `ready` with non-empty rows and expected metric names. `list-widgets action=show` is NOT sufficient — it echoes ids, not loaded data.
 
 ## Deleting a blend
