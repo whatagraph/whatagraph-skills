@@ -60,7 +60,7 @@ For each channel's representative source, resolve:
 - the **report type** (channel-native) — `list-sources action=list_report_types source_id=<src>`
 - the **fields** — `list-sources action=list_dimensions_and_metrics source_id=<src> is_universal=true`
 
-**Always prefer universal / unified fields** (`universal_metric_*`, `universal_dimension_*`) so the group aggregates cleanly across channels. Fall back to a channel's **native** fields only when no universal field fits. Resolve fields **per channel** — a universal field counts for a channel only if it maps to that channel, and native fields belong only to their own channel. Include the Date dimension (`universal_dimension_1137`) so the group has a time axis.
+**Always prefer universal / unified fields** (`universal_metric_*`, `universal_dimension_*`) so the group aggregates cleanly across channels. Fall back to a channel's **native** fields only when no universal field fits. Resolve fields **per channel** — but that means *reading each channel's own `list_dimensions_and_metrics` output*, not deciding applicability from memory: the call already returns only the fields that apply to that channel (a universal field shows up only where it maps; native fields only on their own channel). Use a field only if it appears in that source's list. Include the Date dimension (`universal_dimension_1137`) so the group has a time axis.
 
 ### Step 2 — Verify the selection actually fetches (per channel) — MANDATORY
 
@@ -94,6 +94,8 @@ manage-source-groups action=create_config
 The channel is derived from the source — you don't pass it. Each call returns an `etl_config_id`. **Collect one `etl_config_id` per channel.** Continue only when every channel's config is created.
 
 > Some channels have **no report types** (e.g. Facebook Ads — `list_report_types` returns none). For those, omit `report_types` entirely (and omit `report_type` in the step-2 verify fetch too).
+
+> **Applicability is server-enforced here.** A field the channel doesn't expose can't enter a config — the server rejects it. But it surfaces as a **generic error**, not a clean per-field message, so don't throw arbitrary fields and read the error to learn what fits. That's exactly why fields come from the channel's own `list_dimensions_and_metrics` (step 1) and are proven by the verify fetch (step 2) **before** this call.
 
 ### Step 4 — Create the source group
 
@@ -250,7 +252,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 
 - **Skipping the verify fetch (step 2)** — never create configs or a group on fields you haven't proven fetch. `data_not_ready` is **not** success: wait and re-run the same fetch until it returns `success: true` (zero rows is fine), then proceed.
 - **Missing a channel's ETL config** — the single create config's `etl_config_ids` must cover **every** channel in `integration_source_ids` (one config per channel from `create_config`). Miss one and `create` is rejected.
-- **Resolving fields once for all channels** — a universal field applies to a channel only if it maps to that channel, and native fields are channel-specific. Resolve per channel (step 1).
+- **Resolving fields once for all channels** — a universal field applies to a channel only if it maps to that channel, and native fields are channel-specific. Each channel's `list_dimensions_and_metrics` is the source of truth — resolve per channel from it (step 1). Pass a field a channel doesn't expose and config-create fails with an opaque server error, not a clear "field X doesn't apply" message.
 - **Editing a group? Use `update`, never delete+recreate** — a rebuild changes the virtual `source_id` and orphans source-level custom metrics and widget bindings.
 - **`resolve_issues` on a shared source re-syncs other groups** — scope `integration_source_ids` narrowly and expect a transient re-download on anything sharing those sources.
 - **Empty group right after creation** — ETL needs a few minutes to populate; the create response includes a `warmup_hint` and `retry_after_seconds`. Wait before fetching from the group.
