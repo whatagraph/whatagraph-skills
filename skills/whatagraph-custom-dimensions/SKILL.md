@@ -27,7 +27,7 @@ A **custom dimension** is a derived field that groups, labels, or aliases existi
 
 | `map_type` | What it does | Example |
 |---|---|---|
-| `metadata` | 1:1 alias of an existing dimension | Alias `campaign_name` to "Campaign" for consistency |
+| `metadata` | 1:1 alias of an existing dimension | Alias `<campaign field>` to "Campaign" for consistency |
 | `data` | Maps field values to named buckets via rules | `contains 'brand'` → "Branded" else "Non-branded" |
 | `tag` | Manually-assigned tag per source | "Account Manager = Jane" across a list of sources |
 | `ai` | AI-classified via a prompt | Classify campaign names into Brand / Generic / Display |
@@ -51,6 +51,12 @@ list-custom-dimensions action=usage universal_dimension_ids=[<id>]
 
 `show` returns compact summaries for tag dimensions: `tag_count` and `source_count` instead of the full tags array. Use `list_tags` to get paginated tag details with assigned source IDs. Both `list_tags` and `list` support cursor pagination via `cursor` and `per_page` parameters.
 
+## Field IDs are per-channel — discover them, don't copy
+
+`field_external_id`, `channel_id`, and `report_type_external_id` are **channel-specific**. Before building any `fields` entry, fetch the real values with `list-sources action=list_dimensions_and_metrics` for your target channel/source and pass each id exactly as returned (universal / organized dimensions come back with a `universal_` prefix — keep it). The `campaign_name` / `report_type_external_id: "campaign"` pair in the examples below only shows the *shape*: it exists on some ad channels and is absent on others, so pasting it verbatim will fail validation on the wrong channel.
+
+The premade "Campaign Name" is a **universal / organized** dimension exposed as `universal_dimension_1` (keep the `universal_` prefix) — this is distinct from a channel-native campaign field. On Google Ads / GA4 the channel-native id is **dotted** (e.g. `campaign.name`); bare `campaign_name` is not in those catalogs and will fail resolution. Always resolve the exact id via `list-sources action=list_dimensions_and_metrics` and paste it as returned.
+
 ## Creating a `metadata` alias
 
 ```
@@ -59,7 +65,8 @@ manage-custom-dimensions action=create
    map_type="metadata"
    transformation_level="channel"
    fields=[
-     {"channel_id": <channel_id>, "field_external_id": "campaign_name", "report_type_external_id": "campaign"}
+     # example ids — resolve real ones via list_dimensions_and_metrics first
+     {"channel_id": <channel_id>, "field_external_id": "<field_external_id>", "report_type_external_id": "<report_type>"}
    ]
 ```
 
@@ -73,7 +80,8 @@ manage-custom-dimensions action=create
    map_type="data"
    transformation_level="channel"
    fields=[
-     {"channel_id": <channel_id>, "field_external_id": "campaign_name", "report_type_external_id": "campaign"}
+     # example ids — resolve real ones via list_dimensions_and_metrics first
+     {"channel_id": <channel_id>, "field_external_id": "<field_external_id>", "report_type_external_id": "<report_type>"}
    ]
    maps=[
      {
@@ -82,7 +90,7 @@ manage-custom-dimensions action=create
          {
            "operator": "contains",
            "value": "brand",
-           "fields": [{"channel_id": <channel_id>, "field_external_id": "campaign_name", "report_type_external_id": "campaign"}]
+           "fields": [{"channel_id": <channel_id>, "field_external_id": "<field_external_id>", "report_type_external_id": "<report_type>"}]
          }
        ]
      },
@@ -92,7 +100,7 @@ manage-custom-dimensions action=create
          {
            "operator": "contains",
            "value": "comp",
-           "fields": [{"channel_id": <channel_id>, "field_external_id": "campaign_name", "report_type_external_id": "campaign"}]
+           "fields": [{"channel_id": <channel_id>, "field_external_id": "<field_external_id>", "report_type_external_id": "<report_type>"}]
          }
        ]
      }
@@ -165,7 +173,8 @@ manage-custom-dimensions action=create
    name="Campaign Intent"
    map_type="ai"
    transformation_level="source"
-   fields=[{"integration_source_id": <source_id>, "field_external_id": "campaign_name"}]
+   # example id — resolve real one via list_dimensions_and_metrics first
+   fields=[{"integration_source_id": <source_id>, "field_external_id": "<field_external_id>"}]
    prompt="Classify this campaign name into one of: Brand, Generic, Retargeting, Display. Return only the category name."
 ```
 
@@ -211,6 +220,6 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **AI dimension prompt too open** — constrain outputs: "Return only one of: <list>". Unbounded prompts produce variant category names.
 - **Prompt-only without `fields`** — `ai` map_type still requires a source field via `fields` (or `integration_source_id` + `field_external_id` pair inside the preview call).
 - **`channel_id` vs `integration_source_id`** — channel-level fields use `channel_id`; source-level fields use `integration_source_id`. Match to `transformation_level`.
-- **Universal / organized dimensions** — their `field_external_id` starts with `universal_` prefix; pass exactly as returned by `list-sources action=list_dimensions_and_metrics`.
+- **Guessed / copied field ids** — never invent a `field_external_id` or reuse one from the examples; resolve it per channel via `list-sources action=list_dimensions_and_metrics` (see "Field IDs are per-channel" above). Universal / organized dimensions keep their `universal_` prefix.
 - **Compact tag responses** — `create`, `update`, and `show` return `tag_count`/`source_count` instead of full tag arrays to stay under MCP transport limits. Use `list_tags` to get individual tag details with source IDs.
 - **`assign_tag_sources` replaces, not appends** — the `source_ids` array replaces the tag's entire source list. To add a source, include all existing source IDs plus the new one. Pass an empty array to clear all sources.
