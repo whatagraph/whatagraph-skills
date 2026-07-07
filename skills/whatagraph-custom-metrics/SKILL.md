@@ -69,6 +69,25 @@ list-custom-metrics action=usage universal_metric_ids=[<id>, <id>]
 
 This is why a `universal_metric_<id>` fails on a source-group / blend `integration_source_id` — `resolves_on` will not list the group or blend. See "Using a custom metric in `fetch-data`" below.
 
+### Finding an existing metric
+
+Before creating a metric, search for one that already exists.
+
+```
+list-custom-metrics action=list search="ROAS"                       # name substring match
+list-custom-metrics action=list semantic_search="customer acquisition cost"   # by meaning — finds CAC even if named differently
+list-custom-metrics action=list type=channel                        # filter by transformation level
+list-custom-metrics action=list_with_premades map_type=data_formula # filter by map type (incl. premade/system metrics)
+list-custom-metrics action=list_with_premades integrations=[<id>]   # filter by integration
+```
+
+- `search` — name substring. Works on `list` and `list_with_premades`.
+- `semantic_search` — meaning-based match ("cost per lead" finds CPL). **`list` only.** Default 10 results.
+- `type` — transformation level, enum: `channel`, `source`. **`list` only.**
+- `map_type` — map type, enum: `metadata`, `data`, `data_aggregation`, `data_formula`, `currency_exchange`, `tag`, `system`, `ai`. **`list_with_premades` only.**
+- `integrations` — integration ID array. **`list_with_premades` only.**
+- Paginate with `cursor` (pass `page.cursor` from prior response) and `per_page` (max 500, default 100).
+
 ## Creating a `data_formula` metric
 
 ```
