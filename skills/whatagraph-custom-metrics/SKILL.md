@@ -58,6 +58,17 @@ list-custom-metrics action=show metric_id=<id>
 list-custom-metrics action=usage universal_metric_ids=[<id>, <id>]
 ```
 
+`list` items carry a `transformation_level` field; `list_with_premades` items (platform-native metrics) do not.
+
+### `show` — where a metric is valid (`resolves_on` / `usage_hint`)
+
+`list-custom-metrics action=show metric_id=<id>` returns, alongside the metric config, two resolution fields that answer "where does this metric actually work":
+
+- **`resolves_on`** — `{ channels: [{id, service, title}], sources: [{id, name}] }` — the exact channels and sources the metric's mapped fields land on. An empty `{}` means it maps to nothing. Check this before `fetch-data`: a custom metric only resolves on these channels/sources, and only for their mapped report types.
+- **`usage_hint`** — a one-line reminder that the metric is referenced as `universal_metric_<id>` and does **not** resolve on a source group or blend unless the field was mapped there.
+
+This is why a `universal_metric_<id>` fails on a source-group / blend `integration_source_id` — `resolves_on` will not list the group or blend. See "Using a custom metric in `fetch-data`" below.
+
 ### Finding an existing metric
 
 Before creating a metric, search for one that already exists.
@@ -241,7 +252,16 @@ manage-custom-metrics action=duplicate metric_id=<id>
 list-custom-metrics action=usage universal_metric_ids=[<id>]
 ```
 
-Returns the number of widgets/reports affected.
+Returns three maps — `affected_widget_count`, `affected_report_count`, and `affected_filter_count` — each keyed by metric id (the `universal_metric_` prefix stripped), value = the count. Filters **are** counted, so this is the real blast radius before a modify/delete.
+
+```
+{
+  "success": true,
+  "affected_widget_count": { "511018": 4 },
+  "affected_report_count": { "511018": 2 },
+  "affected_filter_count": { "511018": 1 }
+}
+```
 
 ## Deleting custom metrics
 
@@ -258,6 +278,8 @@ fetch-data source_id=<source_id>
   dimensions=["universal_dimension_1137"]
   from="2026-04-01" till="2026-04-15"
 ```
+
+To confirm which channels/sources a metric resolves on before fetching, check `resolves_on` from `list-custom-metrics action=show` (see "Listing" above) — it lists exactly where the metric's mapped fields land, and never a source group or blend unless the field was mapped there.
 
 **Custom metrics on a source-group's virtual `integration_source_id` cannot be read via `fetch-data` on the group itself.** The platform aggregates sub-source data at the widget/export layer, not at the `fetch-data` boundary. To preview a custom metric on a source group, call `fetch-data` against each constituent source individually, or render the metric in a widget and read it via `list-widgets action=csv_export` / `export-report`. The error message returned by `fetch-data` on the group strips the `_metric_` infix, so the diagnostic looks like `Invalid metrics: universal_<id>` — that is *not* a hint that the legacy form would have worked; the metric simply does not resolve at the group level.
 

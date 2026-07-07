@@ -277,6 +277,8 @@ manage-custom-metrics action=create
 
 Get the `blend_metric_<n>` ids from `list-sources action=list_dimensions_and_metrics source_id=<blend_id>`. `blend_metric_*` fields require `integration_source_id` (the blend's source) — not `channel_id`.
 
+**A `map_type=data_aggregation` custom metric on a blend is single-column, not cross-channel.** It can only reference `blend_metric_<n>` ids, and each `blend_metric_<n>` is scoped to ONE sub-source's column (e.g. `blend_metric_957` = Facebook Spend only). So a `data_aggregation` metric over a single `blend_metric_<n>` CANNOT produce a cross-channel SUM. For the true cross-channel total, do NOT build a custom metric — READ the auto-exposed `aggregation_metric_universal_metric_<n>` field via `fetch-data` (the blend already sums it across sub-sources). Reserve custom `data_formula` metrics for cross-sub-source ratios (e.g. Blended ROAS above).
+
 ## Decoding `blend_metric_<n>` / `blend_dimension_<n>` — which channel a field belongs to
 
 `list_dimensions_and_metrics` returns these ids but **not** the channel they came from — the `name` is the bare field name, so two sub-sources both exposing "Spend" come back as two `blend_metric_<n>` entries named "Spend" with no channel hint. Don't guess by name.
