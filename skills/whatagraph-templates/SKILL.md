@@ -6,13 +6,14 @@ required_tools:
   - list-templates
   - manage-reports
   - manage-templates
+  - delete-templates
 ---
 
 # Templates
 
-Tools covered: `list-templates`, `manage-templates`, plus `manage-reports action=create_from_template`.
+Tools covered: `list-templates`, `manage-templates`, `delete-templates`, plus `manage-reports action=create_from_template`.
 
-A **template** is a reusable report blueprint. Reports created `from_template` are **linked** — structural changes to the template automatically propagate into the linked reports.
+A **template** is a reusable report blueprint. Reports created `from_template` are **linked** — structural changes propagate into linked reports, but **only through the edit → publish cycle** (not by editing the original source report).
 
 ## Use this when
 
@@ -25,9 +26,12 @@ A **template** is a reusable report blueprint. Reports created `from_template` a
 
 ```
 list-templates action=list                                    # all team templates
+list-templates action=list search="Paid Media"                # filter by name
 list-templates action=show template_id=<id>                   # tabs + widget counts
 list-templates action=linked_reports template_id=<id>         # reports using it
 ```
+
+Pagination: cursor-based with `cursor` parameter; `per_page` up to 500 (default 100).
 
 ## Creating a template from an existing report
 
@@ -46,6 +50,28 @@ manage-templates action=update template_id=<id>
 ```
 
 Name must be at least 4 characters.
+
+## Editing a template (edit → modify → publish)
+
+Structural changes to a template only reach linked reports through this cycle. Editing the original source report does NOT propagate.
+
+**Step 1 — Open a draft:**
+
+```
+manage-templates action=edit template_id=<id>
+```
+
+Returns a `draft_report.id` — a temporary report you can modify with `manage-report-tabs` and `manage-widgets`. Optionally pass `client_id=<space_id>` to host the draft in a specific space (defaults to Home).
+
+**Step 2 — Modify the draft** using standard report-editing tools (add/remove widgets, reorder tabs, etc.) on the draft report ID.
+
+**Step 3 — Publish:**
+
+```
+manage-templates action=publish template_id=<id> report_id=<draft_report_id>
+```
+
+Pushes the draft back into the template AND propagates changes to all linked reports. The draft is consumed on publish.
 
 ## Applying a template to a new report
 
@@ -74,7 +100,11 @@ Returns the list of reports that will auto-update when the template changes. Rev
 
 ## Deleting a template
 
-Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: linked reports survive but lose future auto-updates (benign cascade), pre-check `list-templates action=linked_reports template_id=<id>`.
+```
+delete-templates action=delete template_id=<id>
+```
+
+Linked reports survive but lose future auto-updates. Pre-check `list-templates action=linked_reports template_id=<id>` to see what stops syncing.
 
 ## What MCP can't do here
 
@@ -83,7 +113,8 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 
 ## Common pitfalls
 
-- **Template edit propagates to all linked reports** — deleting a widget on the template removes it from every linked client report. Use `linked_reports` first.
+- **Editing the source report doesn't propagate** — only the edit → publish cycle pushes changes to linked reports. Editing the original report that was converted into a template has no effect on links.
+- **Template publish propagates to all linked reports** — deleting a widget on the draft and publishing removes it from every linked client report. Use `linked_reports` first.
 - **Source mapping gaps after create_from_template** — widgets start on the template's default sources (often sample). Always follow up with `change_sources`.
 - **Template name < 4 characters** — rejected.
 - **Template references custom metrics or dimensions that don't exist in the target team** — won't resolve in the new report. Create the custom metrics/dimensions first, then apply.

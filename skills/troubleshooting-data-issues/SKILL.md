@@ -40,19 +40,25 @@ Ask clarifying questions to determine which category the issue falls into:
    ```
    list-sources action: show, source_id: <id>
    ```
-   Look for `status: "issue"` (the value and the `list-sources` filter are `issue`, not `error`) — this indicates a connection problem. Note that `show` confirms the error status but does **not** expose the error message or failure reason — MCP has no field for that. To read the actual error description, open the source in the Whatagraph UI (Settings → Sources) where the specific error is displayed.
+   Look for `status: "issue"` (the value and the `list-sources` filter are `issue`, not `error`) — this indicates a connection problem. When `status` is `error`, the response includes an `error_reason` field with a human-readable explanation of why the source is broken — use this to diagnose the issue without sending the user to the UI.
 
-2. **Check the integration account**:
+2. **Check if the source is used anywhere**:
+   ```
+   list-sources action: list_usage, source_ids: [<id>]
+   ```
+   Returns report/blend/transfer/source-group/overview counts. If all zeros, the source isn't used in any report — that explains "missing data" immediately.
+
+3. **Check the integration account**:
    ```
    list-integrations action: list_accounts, channel_id: <id>
    ```
    Account-level errors often affect all sources under that account.
 
-3. **Verify the source is assigned to the right spaces**:
+4. **Verify the source is assigned to the right spaces**:
    ```
    list-sources action: show, source_id: <id>
    ```
-   Check the `space_ids` array — empty means the source isn't in any space.
+   Check `space_ids` — empty means the source isn't in any space. Also note the `currency` field — currency mismatches between sources are a common discrepancy cause.
 
 4. **Common causes**: Expired connections, revoked permissions, API quota limits, or the external account being deleted/renamed. For all of these, the user must reconnect or fix permissions in the UI — MCP cannot trigger a reconnection.
 
@@ -60,13 +66,21 @@ Ask clarifying questions to determine which category the issue falls into:
 
 1. **Confirm the date range**: Ensure the user is comparing the same dates in both Whatagraph and the native platform.
 
-2. **Check the report type and metrics**:
+2. **Check report types first** — many sources (Google Ads has 64) expose multiple report types:
    ```
-   list-sources action: list_dimensions_and_metrics, source_id: <id>, report_type: "<type>"
+   list-sources action: list_report_types, source_id: <id>
    ```
-   Verify the metric names match what the user expects. Some platforms have multiple metrics with similar names.
 
-3. **Fetch raw data for comparison**:
+3. **Find the right metric** — use `resolve_fields` for natural-language lookup:
+   ```
+   list-sources action: resolve_fields, source_id: <id>, query: "spend"
+   ```
+   Returns semantically matched fields ranked by relevance. Fall back to `list_dimensions_and_metrics` with `filter` if `resolve_fields` returns nothing (it doesn't work on all integrations):
+   ```
+   list-sources action: list_dimensions_and_metrics, source_id: <id>, report_type: "<type>", filter: "cost"
+   ```
+
+4. **Fetch raw data for comparison**:
    ```
    fetch-data source_id: <id>, report_type: "<type>",
      metrics: ["<metric>"], dimensions: ["date"],
@@ -74,14 +88,17 @@ Ask clarifying questions to determine which category the issue falls into:
    ```
    Compare day-by-day values with the native platform.
 
-4. **Check for filters**: Hidden filters on widgets or report-level filters can exclude data:
+5. **Check for filters**: Hidden filters on widgets or report-level filters can exclude data:
    ```
    list-filters action: list
    list-widgets action: show, report_id: <report_id>, widget_id: <id>
    ```
-   `show` confirms layout/source binding and ids, but it may not return every widget option. Use `list-widgets action: csv_export` or `export-report` when you need to verify the actual rendered metric/filter output.
+   `show` exposes `inline_filters` with full detail: filter ID, name, scope, version (1 or 2), and `filter_groups` with dimension/metric, operator, and value. This is sufficient for diagnosing widget-level filters. Use `list-widgets action: csv_export` when you need the actual rendered data output.
 
-5. **Common causes**:
+6. **Common causes**:
+   - **Currency mismatches**: Sources may report in different currencies (e.g., EUR vs USD). Check `currency` in `list-sources action: show` for each source. Mixing currencies in blends or comparisons without conversion produces wrong totals.
+   - **Field ID family mismatch**: Widgets use universal IDs (`universal_metric_*`), but `list_dimensions_and_metrics` also returns channel-native IDs (`metrics.clicks` for Google Ads, `spend` for Meta). Source groups use `universal_metric_*` / `universal_dimension_*`; blends use `aggregation_metric_*` / `aggregation_dimension_*`. Using the wrong family returns no data or errors.
+   - **Wrong report type**: Sources like Google Ads have 60+ report types (campaign, ad_group, ad, keyword, etc.). A widget using the wrong report type shows different metrics than expected.
    - **Time zone differences**: Whatagraph may aggregate data in a different timezone than the native platform.
    - **Attribution models**: Different attribution windows (e.g., 7-day click vs 28-day click in Meta).
    - **Data freshness**: Some integrations have a 24-48 hour delay. Recent data may not yet be synced.

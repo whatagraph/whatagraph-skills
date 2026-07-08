@@ -8,23 +8,25 @@ required_tools:
   - manage-members
   - manage-sources
   - manage-team
+  - remove-members
 ---
 
 # Team & members
 
-Tools covered: `view-team`, `manage-team`, `manage-members`.
+Tools covered: `view-team`, `manage-team`, `manage-members`, `remove-members`.
 
 ## View team info and subscription
 
 ```
 view-team action=show                    # team name, enabled features
 view-team action=show_subscription       # plan + usage limits
+view-team action=members                 # seated members with member_id, name, email, role
 view-team action=list_plans              # all available plans
 view-team action=roles                   # available roles
 view-team action=search search="acme"    # global cross-domain search
 ```
 
-Use `view-team action=search` when you don't know which domain (reports, overviews, spaces) contains the match.
+Use `view-team action=members` to get `member_id` values needed for `update_member_role`. Use `view-team action=search` when you don't know which domain (reports, overviews, spaces) contains the match.
 
 ## Update team settings
 
@@ -72,14 +74,29 @@ Changes role on a pending (not-yet-accepted) invitation.
 manage-members action=resend_invite invite_id=<id>
 ```
 
+## Change role on an accepted member
+
+```
+manage-members action=update_member_role
+   member_id=<id>                          # from view-team action=members
+   role="editor"
+   spaces=[{"id": <space_id>}]            # required for editor role
+```
+
+Get `member_id` from `view-team action=members`. For editors, you must pass the complete `spaces` list — it **replaces** current access, so omitting a space removes it. Admin/manager roles ignore `spaces` and are reset to all-space access on each role change.
+
 ## Cancelling a pending invitation
 
-Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: `remove-members` only cancels *pending* invites, `invite_id` comes from `manage-members`, accepted members can only be removed in the UI.
+```
+remove-members action=cancel_invite invite_id=<id>
+```
+
+Only cancels **pending** invites — accepted members cannot be removed via MCP (UI only). `invite_id` comes from the response of `manage-members action=invite`.
 
 ## What MCP can't do here
 
-- Remove an accepted member — UI only.
-- Change role on an accepted member — UI only.
+- Remove an accepted member — UI only (`remove-members` only cancels pending invites).
+- List pending invites — no read action exists; `invite_id` comes from the invite response.
 - Set custom permissions beyond admin/manager/editor — UI only (Enterprise plans).
 - View audit log of member actions — UI only.
 

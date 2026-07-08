@@ -5,12 +5,13 @@ description: Create, duplicate, rename, and reorder tabs within a report. Each t
 required_tools:
   - list-report-tabs
   - manage-report-tabs
+  - delete-report-tabs
   - manage-widgets
 ---
 
 # Report tabs (pages)
 
-Tools covered: `list-report-tabs`, `manage-report-tabs`.
+Tools covered: `list-report-tabs`, `manage-report-tabs`, `delete-report-tabs`.
 
 A **tab** is a page inside a report. Each tab holds its own widgets. Reports can have one or many tabs; tabs appear in the top navigation of the report.
 
@@ -24,9 +25,12 @@ A **tab** is a page inside a report. Each tab holds its own widgets. Reports can
 ## Listing
 
 ```
-list-report-tabs action=list report_id=<id>               # summaries
+list-report-tabs action=list report_id=<id>               # summaries (visible tabs only)
+list-report-tabs action=list report_id=<id> include_hidden=true   # include hidden tabs
 list-report-tabs action=show report_id=<id> tab_id=<id>   # full widget list
 ```
+
+By default, `list` returns only visible tabs. Pass `include_hidden: true` to include hidden tabs; when set, each tab includes a `hidden` boolean field.
 
 ## Create a tab
 
@@ -44,6 +48,7 @@ Use `create` only for additional tabs beyond the first:
 
 ```
 manage-report-tabs action=create report_id=<id> name="Paid Social"
+manage-report-tabs action=create report_id=<id> name="Hidden Tab" hidden=true
 ```
 
 The new tab starts empty — add widgets via `manage-widgets action=create` or `manage-widgets action=create_premade`.
@@ -56,11 +61,15 @@ manage-report-tabs action=duplicate report_id=<id> tab_id=<source_tab_id>
 
 Clones the tab and all its widgets. Duplicated widgets preserve source and config. Useful for creating a per-channel variant of a template tab.
 
-## Rename a tab
+## Rename or hide/show a tab
 
 ```
 manage-report-tabs action=update report_id=<id> tab_id=<id> name="New Name"
+manage-report-tabs action=update report_id=<id> tab_id=<id> hidden=true    # hide from viewers
+manage-report-tabs action=update report_id=<id> tab_id=<id> hidden=false   # make visible again
 ```
+
+Hidden tabs are excluded from shared/exported views. Use `list-widgets tab_hidden=true` to find widgets on hidden tabs, or `tab_hidden=false` for visible-only.
 
 ## Reorder tabs
 
@@ -83,11 +92,27 @@ manage-report-tabs action=move_widgets
 
 Widgets retain their configs and sources; only their tab assignment changes.
 
-> **Verify the build.** After building or bulk-swapping, `export-report report_id=<id>` (or `list-widgets action=csv_export` per widget) and confirm every widget's `data_status` is `ready` with non-empty rows and expected metric names. `list-widgets action=show` is NOT sufficient — it echoes ids, not loaded data.
+## Set tab layout (print-ready)
+
+```
+manage-report-tabs action=set_layout report_id=<id> tab_id=<id>
+   layout="printing_landscape_6x6"       # or "printing_portrait_4x8"
+   border_radius_size="medium"           # none | small | medium | large
+   show_page_numbers=true
+```
+
+Only works on tabs with **no widgets** yet — set layout before adding widgets. Useful for print-optimized report pages.
 
 ## Deleting / restoring a tab
 
-Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: soft-delete with a `restore` action, the tab's widgets soft-delete and restore with it, a report must keep at least one tab.
+```
+delete-report-tabs action=delete  report_id=<id> tab_id=<id>
+delete-report-tabs action=restore report_id=<id> tab_id=<id>
+```
+
+Soft-delete — the tab's widgets soft-delete and restore with it. A report must keep at least one tab; deleting the last one is rejected. See `whatagraph-deleting` for full context.
+
+> **Verify the build.** After building or bulk-swapping, `export-report report_id=<id>` (or `list-widgets action=csv_export` per widget) and confirm every widget's `data_status` is `ready` with non-empty rows and expected metric names. `list-widgets action=show` is NOT sufficient — it echoes ids, not loaded data.
 
 ## What MCP can't do here
 

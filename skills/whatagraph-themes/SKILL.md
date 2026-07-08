@@ -6,17 +6,20 @@ required_tools:
   - list-themes
   - list-widgets
   - manage-themes
+  - delete-themes
 ---
 
 # Themes & color palettes
 
-Tools covered: `list-themes`, `manage-themes`.
+Tools covered: `list-themes`, `manage-themes`, `delete-themes`.
 
 Two concepts:
 - **Theme** — logo, fonts, header/footer layout, overall visual skin.
 - **Color palette** — the specific colors used in chart series, widget backgrounds, accents.
 
 Themes and palettes live at the team level. They're applied per-report.
+
+> The `manage-themes` tool description is intentionally brief. Detailed color format rules (bare hex vs raw CSS), resolution order, dark-theme guidance, and email theme setup are documented here in this skill, not in the tool description. Always load this skill before creating or updating themes/palettes.
 
 ## Use this when
 
@@ -28,13 +31,19 @@ Themes and palettes live at the team level. They're applied per-report.
 
 ```
 list-themes action=list_themes                          # team-level themes
+list-themes action=list_themes search="Acme"            # filter by name
 list-themes action=list_colors                          # team-level palettes
+list-themes action=list_colors search="dark"            # filter palettes by name
 list-themes action=list_themes report_id=<id>           # report + team themes, with active status
 list-themes action=list_colors report_id=<id>           # report + team palettes, with active status
 list-themes action=show_theme report_id=<id> theme_id=<id>   # one theme: name, header, footer, style options
 ```
 
+Pagination: cursor-based with `cursor` parameter; `per_page` up to 500 (default 100).
+
 Themes and palettes are stored at the team level. `report_id` is optional on the list actions (verified Jun 2026) — omit it for team-level items only; pass it to also see report-level items and which one is active on that report. `show_theme` requires both `report_id` and `theme_id`.
+
+Both `list_themes` and `list_colors` include context fields: `applied_theme_id` / `applied_color_id` (the ID active on the report, or `null`) and `team_has_themes` / `team_has_colors` (whether the team has any). Use these to distinguish "no themes exist" vs "none applied to this report".
 
 ## Apply a theme to a report
 
@@ -133,9 +142,27 @@ manage-themes action=update_color
 
 Same shapes as `create_color` — `widget_colors`/`additional_colors` are objects, `chart_colors` is the hex array (leading `#` stripped automatically). Note `chart_colors` is an indexed array and is replaced entirely on update — pass the full desired list. After updating a palette already enabled on a report, re-check the report render (`list-widgets action=csv_export` or the UI) to confirm the change propagated.
 
+## Email themes (whitelabel)
+
+Requires the `whitelabel` feature. Controls branding on report-delivery emails (sender name, button colors, heading/body/footer text, images).
+
+```
+list-themes action=list_email_themes                    # team email themes
+list-themes action=list_web_domains                     # custom web domains
+list-themes action=list_email_domains                   # custom email domains
+manage-themes action=create_email_theme name="Acme Email" options={...}
+manage-themes action=update_email_theme email_theme_id=<id> options={...}
+manage-themes action=enable_email_theme report_id=<id> email_theme_id=<id>  # report_id optional (omit for team-level)
+```
+
 ## Deleting a theme or palette
 
-Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: two actions (`delete_theme` / `delete_color`), affected reports fall back to the team default, switch them to a replacement first via `enable_theme` / `enable_color`.
+```
+delete-themes action=delete_theme theme_id=<id>
+delete-themes action=delete_color color_id=<id>
+```
+
+Affected reports fall back to the team default. Switch them to a replacement first via `enable_theme` / `enable_color`. See `whatagraph-deleting` for full context.
 
 ## What MCP can't do here
 

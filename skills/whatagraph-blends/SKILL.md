@@ -38,7 +38,7 @@ A **blend** joins 2+ sources into a single virtual source. The blend has its own
 ## Listing
 
 ```
-list-blends action=list                # paginated; supports search
+list-blends action=list                # paginated; includes source_count, channel_names per blend
 list-blends action=show blend_id=<id>  # full sub-sources, joins, widgets_count
 ```
 

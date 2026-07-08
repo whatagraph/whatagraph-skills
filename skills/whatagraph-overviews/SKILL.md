@@ -7,11 +7,12 @@ required_tools:
   - list-sources
   - manage-overviews
   - manage-sources
+  - delete-overviews
 ---
 
 # Overviews (Measurements)
 
-Tools covered: `list-overviews`, `manage-overviews`.
+Tools covered: `list-overviews`, `manage-overviews`, `delete-overviews`.
 
 An **overview** (UI name: "Measurement") is a KPI dashboard that tracks selected metrics over time with trend/column/heatmap visualizations and comparison framing. Overviews live at the team level and can optionally be associated with a space.
 
@@ -34,10 +35,11 @@ An **overview** (UI name: "Measurement") is a KPI dashboard that tracks selected
 
 ```
 list-overviews action=list                          # paginated list
+list-overviews action=list search="Acme"            # filter by name
 list-overviews action=show measurement_id=<id>      # full details
 ```
 
-Note: the input parameter is `measurement_id`, not `overview_id`.
+Note: the input parameter is `measurement_id`, not `overview_id`. Pagination: cursor-based with `cursor` parameter; `per_page` up to 500 (default 100).
 
 ## Creating an overview
 
@@ -93,11 +95,15 @@ manage-overviews action=update overview_id=<id>
    name="..." source_id=<id> metrics=[...] dimensions=[...]
 ```
 
-`update` **fully replaces** the overview's configuration — supply the complete desired `name`, `source_id`, `metrics`, and any `dimensions`; fields you omit are not kept. Passing a different `space_id` moves the overview; omitting it leaves it in place. (Note the update parameter is `overview_id`, while list/show/delete use `measurement_id` — both refer to the same overview.)
+`update` **fully replaces** the overview's configuration — `name`, `source_id`, and `metrics` are required even for update (not just create). Fields you omit are not kept. Passing a different `space_id` moves the overview; omitting it leaves it in place. (Note the update parameter is `overview_id`, while list/show/delete use `measurement_id` — both refer to the same overview.)
 
 ## Deleting an overview
 
-Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: the parameter is `measurement_id` (not `overview_id`), no restore.
+```
+delete-overviews action=delete measurement_id=<id>
+```
+
+Permanent — no restore path. The parameter is `measurement_id` (not `overview_id`). See `whatagraph-deleting` for cascades and recovery context.
 
 ## What MCP can't do here
 

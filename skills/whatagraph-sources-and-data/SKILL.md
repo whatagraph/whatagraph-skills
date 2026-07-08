@@ -27,13 +27,17 @@ A **data source** is one connected account (one Google Ads account, one GA4 prop
 ## Discovery sequence (do this first)
 
 ```
+list-sources action=health_summary                            # quick ok/error/total counts — no pagination
 list-sources action=list                                      # paginated list
-list-sources action=list search="Acme"                        # filter by name
+list-sources action=list search="Acme"                        # filter by name substring
+list-sources action=list semantic_search="paid advertising"   # meaning-based search (finds Google Ads, Facebook Ads, etc.)
 list-sources action=list channels=[<integration_id>]          # one channel — resolve the id via list-integrations, never hardcode
 list-sources action=list space_ids=[<space_id>]               # sources in one space
 list-sources action=list status="issue"                       # broken sources only
 list-sources action=list only_untagged=true                   # sources without tags
 list-sources action=list currencies=["EUR","USD"]             # by currency
+list-sources action=list tags=[<tag_id>]                      # by tag IDs
+list-sources action=list sort_by="name-asc"                   # newest (default), oldest, name-asc, name-desc
 ```
 
 Returns source `id`, `name`, channel, space assignments, currency, and access status.
@@ -63,6 +67,8 @@ list-sources action=list_report_types source_id=<id>
 list-sources action=list_dimensions_and_metrics
    source_id=<id>
    report_type="campaign"
+   field_kind="metrics"                    # "metrics" or "dimensions" to filter; omit for both
+   premade_only=true                       # only the ~20 headline fields; omit for full catalog
 # → {"dimensions":[...],"metrics":[...]}
 ```
 
@@ -105,7 +111,20 @@ fetch-data
    limit=100
 ```
 
-Response: rows of metric values grouped by dimensions.
+Response: rows of metric values grouped by dimensions. `limit` controls page size (default 100, max 1000).
+
+### Comparison in a single call
+
+Use `compare_type` to get comparison data alongside the primary data:
+
+```
+fetch-data source_id=<id> metrics=[...] from="2025-10-01" till="2025-10-31"
+   compare_type="previous"              # auto-calculates the previous period
+fetch-data source_id=<id> metrics=[...] from="2025-10-01" till="2025-10-31"
+   compare_type="custom" vs_from="2025-04-01" vs_till="2025-04-30"
+```
+
+Values: `previous` (matching-length previous period), `last_year` (same dates, year prior), `custom` (explicit `vs_from`/`vs_till`).
 
 ### Field-id family by source type
 
@@ -186,7 +205,12 @@ manage-sources action=tag
    source_ids=[<id>]
    tag_id=<tag_dimension_id>        # from list_metadata scope=tags
    tag_value_ids=[<value_id>, ...]  # empty array = remove all tag values in that dimension
+
+manage-sources action=refresh
+   source_ids=[<id>, <id>]          # max 10 per call
 ```
+
+**`refresh`** clears cached data so the next read re-fetches fresh data from the provider. Useful for "my data isn't showing" troubleshooting after a source reconnect or data delay.
 
 **Currency override** is the most common fix when numbers look wrong — a USD Google Ads account reporting into a EUR-default team needs an explicit override here. Override affects display only; historical data rows keep their stored currency.
 
@@ -202,7 +226,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 
 ## Common pitfalls
 
-- **"My data isn't showing"** — run `list-sources action=show source_id=<id>` and check `status`. If `issue`, the source needs re-authorization in the UI.
+- **"My data isn't showing"** — run `list-sources action=show source_id=<id>` and check `status`. If `issue`, the source needs re-authorization in the UI. When `status` is `error`, the response includes `error_reason` describing why the source is broken.
 - **Numbers don't match the channel** — verify currency and timezone on `show`. Common mismatch sources.
 - **Passing metric names instead of ids** — `fetch-data` expects the `external_id` (e.g. `spend`), not the display name ("Spend"). Use `list_dimensions_and_metrics` to discover correct ids.
 - **Too many sources with similar names** — narrow with `search` + `channels` + `space_ids`.

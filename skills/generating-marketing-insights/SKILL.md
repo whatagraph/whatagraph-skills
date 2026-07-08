@@ -46,28 +46,44 @@ Before generating insights, understand the scope:
    ```
    view-goals action: list
    ```
+   Note: `view-goals` uses **page-number pagination** (`page`, `per_page` as "16"/"32"/"64"/"128", `last_page`, `total_count`), not cursor pagination. Goals may not exist on the account — if `total_count: 0`, skip the Goal Progress Framework and rely on raw data instead.
 
 4. **Are there overviews/KPI dashboards?**
    ```
    list-overviews action: list
    ```
 
+### Step 1.5: Discover Available Fields
+
+Before fetching, look up the actual field IDs for each source. Field names vary by channel — `impressions` works on Facebook Ads but Google Ads uses `universal_metric_1`. **Never guess field names.**
+
+```
+list-sources action: list_report_types, source_id: <id>
+list-sources action: list_dimensions_and_metrics, source_id: <id>, report_type: "<type>", premade_only: true
+```
+
+`premade_only: true` returns the ~10-20 headline metrics (cost, clicks, impressions, conversions, etc.) — usually sufficient for an insights summary. Copy `external_id` values verbatim into your `fetch-data` call.
+
 ### Step 2: Fetch Performance Data
 
-Fetch data for the relevant period and channels:
+Fetch data using the field IDs discovered above:
 
 ```
 fetch-data source_id: <id>, report_type: "<type>",
-  metrics: ["impressions", "clicks", "spend", "conversions", "conversion_value"],
+  metrics: [<ids from list_dimensions_and_metrics>],
   dimensions: ["date"],
   from: "<period_start>", till: "<period_end>"
 ```
 
-For period-over-period comparison, also fetch the previous period:
+For period-over-period comparison, use `compare_type` in a **single call** (no need for two separate calls):
 ```
-fetch-data source_id: <id>, ...,
-  from: "<previous_period_start>", till: "<previous_period_end>"
+fetch-data source_id: <id>, report_type: "<type>",
+  metrics: [...], dimensions: ["date"],
+  from: "<period_start>", till: "<period_end>",
+  compare_type: "previous"
 ```
+
+Supported `compare_type` values: `previous` (same duration shifted back), `last_year` (year-over-year), `custom` (with `vs_from`/`vs_till`). The response includes a `comparison` block with its own `rows` and `totals`.
 
 ### Step 3: Analyze and Narrate
 
