@@ -45,9 +45,8 @@ A **custom metric** is a calculated field that behaves like any other metric. Us
 |---|---|
 | `channel` | Metric applies to all sources of a channel (e.g. every Google Ads source) |
 | `source` | Metric applies to one specific source |
-| `widget` | Metric is per-widget only |
 
-Use `channel` for reusable cross-source metrics (most common). Use `source` to scope to one account. Use `widget` for one-off formulas (prefer per-widget formulas via `manage-widgets` for those).
+Use `channel` for reusable cross-source metrics (most common). Use `source` to scope to one account. There is no `widget` transformation level — build per-widget formulas via `manage-widgets` instead.
 
 ## Listing
 
