@@ -20,15 +20,15 @@ required_tools:
 
 Many Whatagraph users run recurring prompts on top of a single report URL ("give me the main metric from each source in this report", "run my daily triage on this report", "summarize last week's performance from this report"). For these requests, do **not** rebuild the data from `fetch-data` — the report already encodes the user's chosen sources, metrics, dimensions, date range, and comparison period. Read the report directly.
 
-## Extracting the Report ID
+## Resolving the Report
 
-Whatagraph report URLs look like:
+When the user pastes a report URL or share link, resolve it to a report ID:
 
 ```
-https://live.whatagraph.com/client/{client_id}/live-report/{report_id}
+list-reports action: resolve, url_or_hash: "<url or share hash>"
 ```
 
-Use the number after `live-report/` as `report_id`. The `client_id` in the URL refers to a space (folder) and is not needed for the MCP tools.
+This handles full URLs (`https://live.whatagraph.com/client/{cid}/live-report/{rid}`), share hashes, and plain numeric IDs.
 
 If the user mentions a report by name instead of URL, discover the ID:
 
@@ -46,33 +46,49 @@ list-reports action: list, search: "{name fragment}"
 
    The response includes `date_range.from`, `date_range.till`, and — when comparison is enabled — `date_range.vs_from`, `date_range.vs_till`, `date_range.compare_type`. If `vs_from` / `vs_till` are present, the report expects period-over-period output; surface both current and previous values in the digest.
 
-2. **Export the report's data** in one call:
+2. **List the report's widgets** to understand its structure:
 
    ```
-   export-report report_id: {id}
+   list-widgets action: list, report_id: {id}
    ```
 
-   This returns one envelope per widget containing the widget title (`title`), the widget id and `widget_type_id` / `widget_type_name`, the configured `sources`, the widget's `date_range`, `contains_sample_data`, `exportable`, and a raw `csv` string.
+   This returns all widgets across all tabs with their `id`, `name`, `widget_type_name`, and `tab_id`. Skip non-data widgets (text, image, header, comment, calendar, control-filter types).
 
-   The structured `metrics` array — with `name`, `external_id`, `type`, `currency`, `value`, `previous_value`, `absolute_change`, `percentage_change` — is **only present when the report has comparison configured** (`date_range.compare_type` ∈ `{previous, last_year, …}`). On reports without comparison (the most common case), the `metrics` array is not included on widget envelopes — parse the `csv` string instead.
+3. **Export widget data inline** using `csv_export` on each data widget:
 
-   When `metrics` is present, use it as the primary source for digests on **single-value, table, list, pie, and KPI-style widgets** — it's more reliable than parsing CSV, and `previous_value` is `null` only on metrics that genuinely have no comparison value (not as a stand-in for "comparison is off").
+   ```
+   list-widgets action: csv_export, widget_id: {widget_id}
+   ```
 
-3. **For time-series / chart widgets, read the `csv` string instead.** The `metrics` block on these widgets only reflects the first bucket. The CSV interleaves rows so previous-period values are visible alongside current-period ones:
-   - Date dimensions: previous rows are emitted first with calendar-shifted dates (e.g. `2024-01-01` → `2025-01-01`), then current rows.
-   - Non-date dimensions (e.g. `Day of week`, `Device`): previous rows get a ` (prev)` suffix in the same column (e.g. `Wednesday (prev)`).
-   - When a chart carries multiple metrics, all metrics share the first metric's dimension column; values are positioned by index, so the CSV columns are `{dimension} | {metric_1} | {metric_2} | …` with one row per dimension bucket.
+   This returns structured JSON with:
+   - `widget.id`, `widget.name`, `widget.widget_type_name`, `widget.tab_id`
+   - `widget.sources` — which channels/sources feed this widget
+   - `csv_rows` — array of arrays (`string[][]`): first row is headers, subsequent rows are data
+   - `contains_sample_data` — whether the data is sample/demo data
+   - `data_status` — `"ready"` when data is available
 
-4. **For non-time-series widgets, the `csv` string also carries comparison side-by-side.** Each numeric metric expands to two columns: `{Metric}` (current) and `{Metric} (prev)` (previous-period). Goal widgets keep their existing `{Metric}` / `{Metric} Goal` layout — they don't get a `(prev)` column.
+   For comparison data, the CSV headers include `(prev)` suffix columns alongside current-period columns.
 
-5. **Build the digest from the returned envelopes.** For each widget, include:
+   **Note**: `export-report` exists but returns an `.xlsx` download URL (not inline data). It is useful for giving the user a downloadable file, but **not for LLM-driven digests** — use `csv_export` per widget instead.
+
+4. **Build the digest from the csv_export results.** For each widget, include:
    - Widget title
-   - Main metric(s), with previous-period value and `percentage_change` when `compare_type` is set on the report
-   - Source/channel attribution if the user asked "per source"
+   - Main metric(s) from `csv_rows`, with previous-period values when `(prev)` columns are present
+   - Source/channel attribution from `widget.sources` if the user asked "per source"
 
-   Skip text / image / header / comment / calendar / control-filter widgets — `export-report` already excludes most of these, and the rest have no `metrics` payload (`exportable: false`).
+   For reports with many widgets, batch the most important ones first (single-value KPIs, then tables, then charts).
 
-6. **Respect what the report is scoped to.** If the user asks a question the report can't answer (e.g., "how did Google Ads do?" on a report with no Google Ads widget), say so explicitly rather than pivoting to `fetch-data`. The report is the user's source of truth for this workflow.
+5. **Respect what the report is scoped to.** If the user asks a question the report can't answer (e.g., "how did Google Ads do?" on a report with no Google Ads widget), say so explicitly rather than pivoting to `fetch-data`. The report is the user's source of truth for this workflow.
+
+### Using `export-report` for downloadable files
+
+If the user wants a **downloadable Excel file** rather than an inline digest:
+
+```
+export-report report_id: {id}
+```
+
+This returns `download_url` (temporary, expires in 1 hour), `file_size_bytes`, and `tabs`. Each widget becomes a separate sheet in the `.xlsx` file. This is async — the first call on an unwarmed report may take 30-90 seconds.
 
 ## Date Ranges
 
@@ -102,6 +118,6 @@ If the digest data doesn't match what the user sees in the Whatagraph UI, the mo
 
 ## What NOT To Do
 
-- Do **not** iterate widget-by-widget with `list-widgets action: csv_export` for a full-report digest. That produces dozens of calls where `export-report` does it in one and includes comparison data.
-- Do **not** fall back to `fetch-data` to "fill in" comparison metrics when `export-report` already returns `previous_value`. The report's comparison period is the authoritative one.
-- Do **not** pass `from` / `till` to `export-report` to "re-run for a different window" — those parameters are a per-widget fallback, not a window override.
+- Do **not** fall back to `fetch-data` to "fill in" data that a widget already shows. The report's configured sources, metrics, and comparison period are the authoritative ones for a digest.
+- Do **not** pass `from` / `till` to `export-report` expecting to change the report's date window — those parameters are a per-widget fallback, not a window override.
+- Do **not** assume `export-report` returns inline data — it returns an `.xlsx` download URL. For LLM-readable data, use `csv_export` per widget.

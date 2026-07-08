@@ -6,12 +6,13 @@ required_tools:
   - list-sources
   - view-goals
   - manage-goals
+  - delete-goals
   - manage-widgets
 ---
 
 # Goals
 
-Tools covered: `view-goals`, `manage-goals`.
+Tools covered: `view-goals`, `manage-goals`, `delete-goals`.
 
 A **goal** is a target value on a metric for a specific period (daily, weekly, monthly, quarterly, yearly, or static). Goals can be hit (`target`), capped (`limit`), or bound to a range.
 
@@ -38,8 +39,11 @@ A **goal** is a target value on a metric for a specific period (daily, weekly, m
 ```
 view-goals action=list                             # all goals
 view-goals action=list source_id=<id>              # filter by source
+view-goals action=list search="spend"              # search by goal name or metric name
 view-goals action=show goal_id=<id>                # full details
 ```
+
+Pagination: page-number based (not cursor). `page` (integer, default 1) and `per_page` (string: `"16"`, `"32"`, `"64"`, `"128"`). Use `last_page` from the response to know total pages.
 
 ## Creating a goal
 
@@ -85,6 +89,7 @@ manage-goals action=create
 ```
 manage-goals action=update goal_id=<id>
    condition="..." period="..." min_value=... max_value=... repeat="..."
+   name="Updated Goal Name"
 ```
 
 ## Attaching a goal to a widget
@@ -93,7 +98,11 @@ The widget type "Goal" is how a goal renders in a report. Create via `manage-wid
 
 ## Deleting a goal
 
-Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: batch-only (`goal_ids` array, one-element for a single goal), goal widgets show an empty state until re-attached, IDs come from `view-goals`.
+```
+delete-goals action=delete goal_ids=[<id1>, <id2>]
+```
+
+Batch-only — always an array, even for one goal. Goal widgets show an empty state until re-attached. IDs come from `view-goals`. See `whatagraph-deleting` for cascades and recovery context.
 
 ## What MCP can't do here
 

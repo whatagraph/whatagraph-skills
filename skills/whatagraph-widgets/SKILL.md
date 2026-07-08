@@ -30,7 +30,7 @@ A **widget** is a visual data component on a tab. Widgets are typed (KPI card, l
 ## Listing
 
 ```
-list-widgets action=list report_id=<id>                    # grouped by tab, sorted by (position_y, position_x)
+list-widgets action=list report_id=<id>                    # grouped by tab, sorted by (position_y, position_x); each widget includes `has_filters` boolean and `widget_type_label` (human-readable)
 list-widgets action=show report_id=<id> widget_id=<id>     # full widget details: layout, source binding, options, ai_text_settings, source_filter_off
 list-widgets action=csv_export report_id=<id> widget_id=<id>
 ```
@@ -621,7 +621,7 @@ A widget applies **one** filter, not both:
 
 > **Avoid source-level filters unless explicitly requested.** A source filter applies to **every widget using that source across all reports** — not just the current report. It can also cause errors when the filter references a dimension or metric that doesn't exist in every report type the source's widgets use. Default to `widget_config_id` for per-widget filtering. Only use `source_id` when the user specifically wants all data from that source filtered (e.g. "I only want US data from this source").
 
-`list-widgets action=show` returns all filters in `inline_filters` with a `scope` field (`widget_config` or `source`) so you can see what's configured, but only one applies at runtime per the precedence above.
+`list-widgets action=show` returns all filters in `inline_filters` with a `scope` field (`widget_config` or `source`) and a `team_available` boolean. Filters with `team_available: false` are config-scoped — they won't appear in `list-filters action=list` (which only shows team-level filters). Only one scope applies at runtime per the precedence above.
 
 Other notes:
 - `source_filter_off` (a `manage-widgets` `create`/`update` parameter) only **toggles** existing source-level filters on/off for the widget — it does not author them.

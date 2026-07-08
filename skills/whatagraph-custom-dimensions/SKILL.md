@@ -15,6 +15,8 @@ Tools covered: `list-custom-dimensions`, `manage-custom-dimensions`.
 
 A **custom dimension** is a derived field that groups, labels, or aliases existing dimension values. Once created, it appears in `list-sources action=list_dimensions_and_metrics` and can be used in widgets, blends, filters, and overviews.
 
+Discover the source's `field_external_id`s with `list-sources action=list_dimensions_and_metrics`. **Prerequisite:** on multi-report-type sources this call requires a `report_type` — run `list-sources action=list_report_types` for the target source first; if it returns more than one report type (e.g. Google Ads, 60+), pass `report_type` on the discovery call, or it errors "Multiple report types are available. Please specify a report_type parameter." Zero-report-type sources (e.g. Facebook Ads, GA4) omit `report_type` entirely.
+
 ## Use this when
 
 - "Branded vs Non-branded" classification of campaigns.
@@ -220,6 +222,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **AI dimension prompt too open** — constrain outputs: "Return only one of: <list>". Unbounded prompts produce variant category names.
 - **Prompt-only without `fields`** — `ai` map_type still requires a source field via `fields` (or `integration_source_id` + `field_external_id` pair inside the preview call).
 - **`channel_id` vs `integration_source_id`** — channel-level fields use `channel_id`; source-level fields use `integration_source_id`. Match to `transformation_level`.
+- **Field discovery on multi-report-type channels** — on channels with many report types (e.g. Google Ads, 60+), `list_dimensions_and_metrics` errors without `report_type`. Run `list_report_types` first; pass `report_type` when >1 exists; omit it for zero-report-type sources.
 - **Guessed / copied field ids** — never invent a `field_external_id` or reuse one from the examples; resolve it per channel via `list-sources action=list_dimensions_and_metrics` (see "Field IDs are per-channel" above). Universal / organized dimensions keep their `universal_` prefix.
 - **Compact tag responses** — `create`, `update`, and `show` return `tag_count`/`source_count` instead of full tag arrays to stay under MCP transport limits. Use `list_tags` to get individual tag details with source IDs.
 - **`assign_tag_sources` replaces, not appends** — the `source_ids` array replaces the tag's entire source list. To add a source, include all existing source IDs plus the new one. Pass an empty array to clear all sources.

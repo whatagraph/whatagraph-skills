@@ -43,6 +43,8 @@ list-source-groups action=show group_id=<id>         # sources, configs, currenc
 list-source-groups action=source_issues group_id=<id> # sources with disabled ETL
 ```
 
+Note: `output_name` in the `show` response is read-only (computed from the config structure). It is not a create or update parameter.
+
 ## Creating a source group
 
 Creation is a **strict, ordered pipeline** that mirrors how the app builds a group: resolve fields → **verify with a real fetch** → build one ETL config per channel → create the group from those configs. Do **not** skip a step, and do **not** advance until the current step fully succeeds. A group built on fields a channel can't actually return will look fine and then come back empty.
