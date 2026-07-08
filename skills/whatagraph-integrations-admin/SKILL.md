@@ -33,7 +33,7 @@ list-integrations action=list_accounts channel_id=<id>
 list-integrations action=list_available_sources account_id=<id> search="Acme"
 ```
 
-`channel_id` accepts both numeric IDs and slugs (e.g. `5` or `"google-ads"`) on `list-integrations`. On `manage-integrations`, `channel_id` must be an integer.
+`channel_id` accepts both numeric IDs and slugs (e.g. `5` or `"google-ads"`) on both `list-integrations` and `manage-integrations`.
 
 ## Connect a source from an already-authenticated account
 

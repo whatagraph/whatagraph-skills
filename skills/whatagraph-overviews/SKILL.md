@@ -36,10 +36,10 @@ An **overview** (UI name: "Measurement") is a KPI dashboard that tracks selected
 ```
 list-overviews action=list                          # paginated list
 list-overviews action=list search="Acme"            # filter by name
-list-overviews action=show measurement_id=<id>      # full details
+list-overviews action=show overview_id=<id>          # full details
 ```
 
-Note: the input parameter is `measurement_id`, not `overview_id`. Pagination: cursor-based with `cursor` parameter; `per_page` up to 500 (default 100).
+Pagination: cursor-based with `cursor` parameter; `per_page` up to 500 (default 100).
 
 ## Creating an overview
 
@@ -90,20 +90,29 @@ Default `percentage`. Values: `percentage`, `absolute`, `combined`.
 
 ## Updating an overview
 
+`update` supports **partial updates** — only supply the fields you want to change. Omitted fields keep their current values.
+
 ```
+# rename only
+manage-overviews action=update overview_id=<id> name="New Name"
+
+# replace metrics, keep everything else
+manage-overviews action=update overview_id=<id> metrics=[...]
+
+# full replacement (all fields supplied)
 manage-overviews action=update overview_id=<id>
    name="..." source_id=<id> metrics=[...] dimensions=[...]
 ```
 
-`update` **fully replaces** the overview's configuration — `name`, `source_id`, and `metrics` are required even for update (not just create). Fields you omit are not kept. Passing a different `space_id` moves the overview; omitting it leaves it in place. (Note the update parameter is `overview_id`, while list/show/delete use `measurement_id` — both refer to the same overview.)
+When `metrics` or `dimensions` are supplied, they **fully replace** the existing set — partial metric lists are not merged. Passing a different `space_id` moves the overview; omitting it leaves it in place.
 
 ## Deleting an overview
 
 ```
-delete-overviews action=delete measurement_id=<id>
+delete-overviews action=delete overview_id=<id>
 ```
 
-Permanent — no restore path. The parameter is `measurement_id` (not `overview_id`). See `whatagraph-deleting` for cascades and recovery context.
+Permanent — no restore path. See `whatagraph-deleting` for cascades and recovery context.
 
 ## What MCP can't do here
 
@@ -118,4 +127,4 @@ Permanent — no restore path. The parameter is `measurement_id` (not `overview_
 - **Forgetting `report_type_external_id`** when the source has multiple report types — leads to missing data or an error.
 - **Too many metrics** — 6–8 is readable; more makes the dashboard noisy.
 - **Mixed-currency metrics** — overview does not auto-convert. Normalize via source-level currency override (`manage-sources action=set_currency`) before building the overview.
-- **`measurement_id` vs `overview_id`** — `list`/`show`/`delete` use `measurement_id`; `manage-overviews action=update` uses `overview_id`. The UI says "Measurement"; the tool name says "overview". Both refer to the same thing.
+- **`overview_id`** — all overview tools now use `overview_id` consistently (list, show, update, delete).

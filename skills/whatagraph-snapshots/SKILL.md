@@ -31,6 +31,14 @@ list-snapshots action=list report_id=<id> per_page=32 cursor=<cursor>
 
 Pagination: cursor-based (not page-number). `per_page` is an integer (default 100, max 500). Pass `cursor` from `page.cursor` in the response to get the next page.
 
+## Viewing snapshot details
+
+```
+list-snapshots action=show report_id=<id> snapshot_id=<id>
+```
+
+Returns full snapshot details: `pages_count`, `widgets_count`, `sources_count`, `type`, `created_by`, and `created_at`. Use this to inspect what a snapshot contains before deciding to restore it.
+
 ## Create (save) a snapshot
 
 ```

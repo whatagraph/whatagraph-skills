@@ -30,7 +30,7 @@ list-destinations action=list issue="job"                    # only transfers wi
 list-destinations action=list name="My Transfer"            # filter by transfer name
 ```
 
-Pagination: `page` (integer, default 1) and `per_page` (string: `"16"`, `"32"`, `"64"`, `"128"`). Same pagination applies to `list_jobs`.
+Pagination: `page` (integer, default 1) and `per_page` (integer, default 16, max 500). Same pagination applies to `list_jobs`.
 
 `destination_id` values:
 - `1` — BigQuery
