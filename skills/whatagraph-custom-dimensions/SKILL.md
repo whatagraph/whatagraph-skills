@@ -197,6 +197,8 @@ manage-custom-dimensions action=update dimension_id=<id>
 
 Replace-style for arrays — the new `maps`/`tags`/`fields` list replaces the previous one.
 
+> **`data` dimension `show` does not round-trip for editing.** `list-custom-dimensions action=show` returns `maps[].conditions[]` with only `operator` and `value` — the per-condition `fields` binding is **omitted** from the response (top-level `fields` is returned separately, and may be empty if the dimension was built from per-condition fields only). Because `update` is replace-style, you cannot copy `maps` straight from `show` output back into `update`: every full-shape condition requires a `fields` array, so a re-sent map missing it fails validation ("Each condition must have at least one entry in `fields`"). When editing, rebuild each map's `conditions[].fields` (or use the simplified `{when,value,then}`/`{default}` shape, which inherits the top-level `fields`).
+
 ## Duplicating
 
 ```
