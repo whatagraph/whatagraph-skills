@@ -189,13 +189,11 @@ delete-goals action=delete goal_ids=[<id>, <id>]   # one goal? still a one-eleme
 
 The schema has no singular `goal_id` (verified Jun 2026). Goal widgets referencing a deleted goal show an empty state until re-attached.
 
-**Overviews (Measurements)** — the parameter is `measurement_id`, not `overview_id`:
+**Overviews (Measurements):**
 
 ```
-delete-overviews action=delete measurement_id=<id>
+delete-overviews action=delete overview_id=<id>
 ```
-
-Delete + recreate is also the only "modify" path for overviews — there is no update action.
 
 **Automations** — two-key scoping:
 
@@ -271,7 +269,7 @@ These `manage-*` actions are destructive even though their tool names aren't:
 ## Common pitfalls
 
 - **Probing for a `confirm` parameter** — none exists in any delete tool's schema. Deletion is a conversational directive — confirm with the user before calling.
-- **`overview_id` instead of `measurement_id`** — `delete-overviews` takes `measurement_id`.
+- **All overview tools use `overview_id`** — list, show, update, and delete all use `overview_id` consistently.
 - **`space_id` instead of `client_id`** — `delete-spaces` takes `client_id`; the Home space is rejected.
 - **Assuming `delete-filters` takes only `filter_id`** — the schema requires `action=delete` too.
 - **Looking for goal IDs in a `list-goals` tool** — goals are read via `view-goals`; shares via `view-sharing action=show`; invites via `manage-members`.

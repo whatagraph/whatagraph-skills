@@ -58,6 +58,18 @@ manage-spaces action=update client_id=<id>
    name="..." description="..."
 ```
 
+Update accepts any combination of `name`, `description`, and `parent_id` — at least one is required.
+
+### Move a space to a different parent
+
+```
+manage-spaces action=update client_id=<id>
+   parent_id=<new_parent_id>          # move under another space
+```
+
+Pass `parent_id=0` to move a space to the root level (no parent).
+Self-parenting and circular hierarchies are rejected automatically.
+
 Cannot update the Home space.
 
 ## Deleting a space
@@ -70,7 +82,7 @@ Soft-deletes the space and all its reports/measurements (support-restorable with
 
 ## What MCP can't do here
 
-- Move a space to a different parent after creation — `manage-spaces action=update` does not accept `parent_id`; UI only.
+- Bulk-move multiple spaces at once — move them one at a time with `manage-spaces action=update parent_id=<id>`.
 - Assign users/permissions to a space — via `manage-members` for editor role.
 
 ## Common pitfalls

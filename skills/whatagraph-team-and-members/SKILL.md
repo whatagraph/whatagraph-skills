@@ -58,6 +58,14 @@ manage-members action=invite
 - `spaces` — required for `editor` role; restricts the editor to listed spaces.
 - Omit `spaces` for `admin` and `manager`.
 
+## List pending invitations
+
+```
+view-team action=invites
+```
+
+Returns all pending invitations with `invite_id`, email, role, spaces (for editors), and `created_at`. Use the `invite_id` from this list with `manage-members` for `update_invite`, `resend_invite`, or `remove-members` for `cancel_invite`.
+
 ## Update a pending invitation
 
 ```
@@ -91,7 +99,7 @@ Get `member_id` from `view-team action=members`. For editors, you must pass the 
 remove-members action=cancel_invite invite_id=<id>
 ```
 
-Only cancels **pending** invites — accepted members cannot be removed via MCP (UI only). `invite_id` comes from the response of `manage-members action=invite`.
+Only cancels **pending** invites — accepted members cannot be removed via MCP (UI only). Use `view-team action=invites` to find invite IDs.
 
 ## What MCP can't do here
 

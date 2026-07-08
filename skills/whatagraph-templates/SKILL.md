@@ -68,10 +68,16 @@ Returns a `draft_report.id` — a temporary report you can modify with `manage-r
 **Step 3 — Publish:**
 
 ```
-manage-templates action=publish template_id=<id> report_id=<draft_report_id>
+manage-templates action=publish template_id=<id>
 ```
 
 Pushes the draft back into the template AND propagates changes to all linked reports. The draft is consumed on publish.
+
+`report_id` is optional — if omitted, the most recent draft for the template is used automatically. You can still pass it explicitly if needed:
+
+```
+manage-templates action=publish template_id=<id> report_id=<draft_report_id>
+```
 
 ## Applying a template to a new report
 

@@ -43,7 +43,7 @@ view-goals action=list search="spend"              # search by goal name or metr
 view-goals action=show goal_id=<id>                # full details
 ```
 
-Pagination: page-number based (not cursor). `page` (integer, default 1) and `per_page` (string: `"16"`, `"32"`, `"64"`, `"128"`). Use `last_page` from the response to know total pages.
+Pagination: page-number based (not cursor). `page` (integer, default 1) and `per_page` (integer, default 64, max 500). Use `last_page` from the response to know total pages.
 
 ## Creating a goal
 
