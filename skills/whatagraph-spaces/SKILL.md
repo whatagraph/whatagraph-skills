@@ -25,8 +25,7 @@ A **space** is a top-level container that organizes reports and data sources. In
 ## Listing
 
 ```
-list-spaces action=list                                  # paginated; top-level only (excludes Home)
-list-spaces action=list include_home=true                # include the Home space
+list-spaces action=list                                  # paginated; top-level spaces including Home
 list-spaces action=list search="Acme"                    # filter by name
 list-spaces action=list sort_by="name-asc"               # newest (default), oldest, name-asc, name-desc
 list-spaces action=show client_id=<id>                   # report/measurement counts
@@ -35,7 +34,7 @@ list-spaces action=children client_id=<id>               # sub-spaces (each chil
 
 Pagination: cursor-based with `cursor` parameter; `per_page` up to 500 (default 100).
 
-**Empty results?** By default `list` excludes the Home space. If the result is empty, the team likely only uses the Home space — pass `include_home=true` to include it. You can also find the Home space ID from the `space_id` field on any report returned by `list-reports`.
+**Home space:** The Home space is always included in list results. You can also find the Home space ID from the `space_id` field on any report returned by `list-reports`.
 
 ## Create a space
 
@@ -43,6 +42,16 @@ Pagination: cursor-based with `cursor` parameter; `per_page` up to 500 (default 
 manage-spaces action=create
    name="Acme Corp"
    description="Acme's reports and data sources"
+```
+
+You can also set theme fields inline during creation:
+
+```
+manage-spaces action=create
+   name="Acme Corp"
+   cover_color="#555ee4"
+   icon_type="emoji" icon_emoji="🚀"
+   font="inter"
 ```
 
 ## Create a sub-space (nested)
@@ -70,9 +79,29 @@ manage-spaces action=update client_id=<id>
 ```
 
 Pass `parent_id=0` to move a space to the root level (no parent).
-Self-parenting and circular hierarchies are rejected automatically.
+Self-parenting, circular hierarchies, and using the Home space as a parent are rejected automatically.
 
 Cannot update the Home space.
+
+## Theming a space
+
+```
+manage-spaces action=set_theme client_id=<id>
+   cover_color="#555ee4"                  # cover background color (#RRGGBB)
+   icon_type="emoji" icon_emoji="🚀"     # icon as emoji
+   icon_color="#ff5454"                   # icon background color (works with any icon_type)
+   font="inter"                          # Google Font slug in snake_case
+```
+
+All theme fields are optional. On an existing space, omitted fields preserve their current values (merge, not replace). On a new space, omitted fields use defaults (`cover_type=color`, `icon_type=emoji`).
+Image uploads are not supported via MCP — `cover_type` only accepts `color`, `icon_type` accepts `emoji` or `color`.
+
+**Validation rules:**
+- Colors (`cover_color`, `icon_color`): 6-digit hex format `#RRGGBB` (e.g. `#555ee4`)
+- Font: lowercase Google Font slug with underscores (e.g. `inter`, `open_sans`, `playfair_display`)
+- Emoji: native Unicode emoji character (e.g. `🚀`, `📊`, `✅`)
+
+Use `list-spaces action=show client_id=<id>` to see the current theme.
 
 ## Deleting a space
 
