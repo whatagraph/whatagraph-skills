@@ -25,8 +25,8 @@ A **space** is a top-level container that organizes reports and data sources. In
 ## Listing
 
 ```
-list-spaces action=list                                  # paginated; top-level only
-list-spaces action=list include_home=true                # include home
+list-spaces action=list                                  # paginated; top-level only (excludes Home)
+list-spaces action=list include_home=true                # include the Home space
 list-spaces action=list search="Acme"                    # filter by name
 list-spaces action=list sort_by="name-asc"               # newest (default), oldest, name-asc, name-desc
 list-spaces action=show client_id=<id>                   # report/measurement counts
@@ -34,6 +34,8 @@ list-spaces action=children client_id=<id>               # sub-spaces (each chil
 ```
 
 Pagination: cursor-based with `cursor` parameter; `per_page` up to 500 (default 100).
+
+**Empty results?** By default `list` excludes the Home space. If the result is empty, the team likely only uses the Home space — pass `include_home=true` to include it. You can also find the Home space ID from the `space_id` field on any report returned by `list-reports`.
 
 ## Create a space
 

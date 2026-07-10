@@ -47,6 +47,8 @@ manage-sharing action=create
 - `disable_date_changing` boolean — optional, defaults to `false`. When `true`, viewers cannot change the report's date range.
 - `options.iq_chat` — enable the in-share AI chat ("IQ") so the client can ask questions about their data.
 
+**Idempotent:** if a share link already exists for the report, `create` returns an error pointing to `update` — it will not create a duplicate or silently overwrite the existing link.
+
 The response includes a `share_url` field — that is the public viewer URL to hand to clients. It lives on the team's share domain (e.g. `https://reports.live/shared/<hash>`, or the team's custom domain on white-labeled accounts). For a specific tab, append `#tab:<tab_id>`.
 
 The `live.whatagraph.com/client/<team_client_id>/live-report/<report_id>` URL is the signed-in editor view used by teammates inside the app — it is **not** the public share URL and external clients can't authenticate. Always copy `share_url` from the response when handing a link to an external viewer; never substitute the live URL.
@@ -54,14 +56,13 @@ The `live.whatagraph.com/client/<team_client_id>/live-report/<report_id>` URL is
 ## Update an existing share
 
 ```
-manage-sharing action=update share_id=<id>
-   report_id=<report_id>
+manage-sharing action=update report_id=<report_id>
    require_password=true password="new-password"
    disable_date_changing=true
    options={"iq_chat": false}
 ```
 
-`share_id` comes from `view-sharing action=show`. Changing the password invalidates existing share sessions.
+`share_id` is optional — if omitted, the report's share link is resolved automatically from `report_id` (each report has at most one). You can still pass `share_id` explicitly if you already have it. Changing the password invalidates existing share sessions.
 
 ## Generate a PDF
 
