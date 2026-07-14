@@ -76,6 +76,26 @@ manage-reports action=duplicate report_id=<source_report_id>
 
 Copies tabs, widgets, filters, and layout. The duplicate is independent (not linked back to the source).
 
+## Building a report when the request doesn't specify structure
+
+This governs *what* to build on `manage-reports action=create` (and on `create_from_template` / `duplicate` when the user asks to flesh a report out). The sizing, placement, and field-binding mechanics live in `whatagraph-widgets` — this section only decides the report's shape.
+
+First, decide which mode you're in:
+
+1. **The user specified the structure** — they named the tabs, the widgets, the metrics, or handed a reference (PDF / screenshot / live-report URL / existing report). → Build exactly that. Do not add tabs or widgets they didn't ask for, and do not collapse a detailed spec into something smaller. Skip the rest of this section and follow the reference/instruction faithfully (see `whatagraph-widgets` → "Replicating a reference report").
+
+2. **The request is open-ended** — "create a report", "visualise this source", "build me a dashboard", "make a report for `<channel>`", with no tab / widget / metric detail. → Do **not** ship a single tab of generic KPIs. Build a detailed, multi-tab report as below.
+
+An open-ended report is **multi-tab and thematic**:
+
+- Create **at least 2–3 tabs**, each scoped to a distinct analytical theme, rather than one flat page of mixed metrics. Which themes apply depends entirely on what the source(s) actually expose — inspect the available metrics and dimensions first (`list-sources action=list_dimensions_and_metrics`) and let the data decide. Illustrative theme shapes **only** (never a fixed template): an overview / traffic tab, a conversions / outcomes tab, a spend / efficiency tab, an audience / geography tab, a creative / content tab. A source with no cost data gets no spend tab; a source with no creative dimension gets no creative tab.
+- The report's first tab is created with the report itself — name it after its theme via `tab_name`. Add the remaining themed tabs with `manage-report-tabs action=create`.
+- Different sources → different tab sets. If every open-ended report you build has the same tabs, you've defaulted to a template — go back to the data.
+
+**Populate every tab via `whatagraph-widgets`.** Report creation only makes the container and the tabs. Load and follow `whatagraph-widgets` to fill each tab — it owns widget-type selection, fit-for-purpose metric/dimension binding, the grid layout (no gaps/overlaps), titles, and the variety-of-types guidance. A report is not "created" until its tabs hold widgets and those widgets have verified data (`export-report`). Build the container, tabs, and widgets in one continuous flow — don't hand back an empty shell.
+
+**Partial detail** — honour whatever the user specified and use judgment only for the gaps: if they named the tabs but not the widgets, build their tabs and let the widgets skill choose the widgets; if they named metrics but not layout, bind those metrics and lay them out cleanly; if they asked for one tab only, respect that.
+
 ## Update report metadata
 
 ```
@@ -96,6 +116,15 @@ manage-reports action=update report_id=<id>
 ```
 
 The report-level date range is the baseline **every widget inherits** unless it sets its own `date_range`. Set it when replicating a report into a new period so the widgets — and the comparison deltas — use the right window. `list-reports action=show` returns the current `period`, `compare_type`, `vs_from`, and `vs_till` alongside `from`/`till`.
+
+## Set the date range at creation (default: last 30 days)
+
+The report-level date range is the baseline every widget inherits, and the report-level `compare_type` is what makes each KPI's trend delta render. A report created without a date range leaves widgets on an undefined window, and KPI cards configured with `comparison_display_type` show no delta because there's no comparison period to diff against. So set both as part of building the report — don't leave them unset.
+
+- **Default window: the last 30 days**, unless the user specifies a period or explicit dates. Prefer a **rolling** last-30-days period so the report stays current after creation rather than freezing on fixed dates — use the platform's rolling `period: "last30Days"` (accepted by the `manage-reports` `date_range.period` schema, alongside `thisMonth`, `lastWeek`, etc.) with `from`/`till` covering the trailing 30 days. Fall back to explicit `from`/`till` with `period: "custom"` only if a rolling window doesn't fit the ask.
+- **Default comparison: previous period** (`compare_type: "previous"`), so KPI deltas are meaningful out of the box. Omit the comparison only if the user asks for no comparison, or set `compare_type: "last_year"` if they ask for year-over-year.
+- **The user's window always wins.** If they name a period ("last quarter", "March", "this year") or explicit dates, use that and don't apply the 30-day default. If they name a window but no comparison, still apply the previous-period comparison unless they decline it.
+- Set this via `manage-reports action=update … date_range={…}` (shape and fields documented in "Update the report date range" above) right after creating the report, before or alongside populating widgets. Individual widgets can still override with their own `date_range` when a specific widget needs a different window.
 
 ## Move a report to another space
 
