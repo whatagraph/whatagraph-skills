@@ -222,7 +222,7 @@ manage-filters action=attach filter_id=<id> source_id=<id>
 
 Use `list-widgets action=show` to find `widget_config_id` values, and `list-sources action=list` to find `source_id` values.
 
-`create` and `attach` support `idempotency_key` for retry-safe operations.
+`create` and `attach` support `idempotency_key` (a client-generated UUID) for retry-safe operations. If a timeout or network error leaves the result uncertain, resend the same call with the same key — the original result is returned instead of creating a duplicate.
 
 ## Response reference
 

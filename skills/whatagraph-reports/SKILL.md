@@ -37,13 +37,16 @@ A report references data through **report-local sources**. Before a widget on th
 ```
 list-reports action=list                                    # paginated
 list-reports action=list search="Acme" filter_space_ids=[<id>]
+list-reports action=list filter_channel_ids=["google-ads"]  # filter by connected integration
 list-reports action=list semantic_search="executive dashboard"  # embedding-based relevance ranking
 list-reports action=show report_id=<id>                     # tabs + widgets
 list-reports action=list_sources report_id=<id>             # sources used by widgets
 list-reports action=resolve url_or_hash="https://live.whatagraph.com/client/123/live-report/456"
 ```
 
-`semantic_search` finds reports by meaning, not just substring — returns a single bounded set of best matches ranked by relevance (no cursor pagination). `resolve` maps a live-report URL, share URL, hash, or numeric report ID to a `report_id`.
+Each list item includes: `space_name` (parent space), `pages_count` (number of tabs), `sources_summary` (connected integration names like `["Google Ads", "Meta Ads"]`), and `updated_at`. Use these to identify reports without extra calls — `pages_count` and `sources_summary` help distinguish set-up reports from empty scratch ones.
+
+Filter by integration with `filter_channel_ids` (accepts slugs like `"google-ads"`), by source with `filter_source_ids`, or by space with `filter_space_ids`. `semantic_search` finds reports by meaning, not just substring — returns a single bounded set of best matches ranked by relevance (no cursor pagination). `resolve` maps a live-report URL, share URL, hash, or numeric report ID to a `report_id`.
 
 ## Create a blank report in a space
 
@@ -252,7 +255,7 @@ Same as `create` plus `linked_template_id`, `uses_sample_data`, and (when sample
 {
   "success": true, "report_id": 123,
   "source_id": 456, "integration_source_id": 447295,
-  "channel_id": 5, "name": "My Google Ads", "is_sample_data": false
+  "channel_id": 5, "channel_name": "Google Ads", "name": "My Google Ads", "is_sample_data": false
 }
 ```
 
@@ -262,8 +265,8 @@ Same as `create` plus `linked_template_id`, `uses_sample_data`, and (when sample
 {
   "success": true, "report_id": 123, "attached_count": 3,
   "sources": [
-    { "source_id": 456, "integration_source_id": 447295, "channel_id": 5, "name": "My Google Ads", "is_sample_data": false },
-    { "source_id": 457, "integration_source_id": 447296, "channel_id": 12, "name": "My Facebook", "is_sample_data": false }
+    { "source_id": 456, "integration_source_id": 447295, "channel_id": 5, "channel_name": "Google Ads", "name": "My Google Ads", "is_sample_data": false },
+    { "source_id": 457, "integration_source_id": 447296, "channel_id": 12, "channel_name": "Facebook Ads", "name": "My Facebook", "is_sample_data": false }
   ]
 }
 ```
