@@ -45,6 +45,15 @@ list-source-groups action=source_issues group_id=<id> # sources with disabled ET
 
 Note: `output_name` in the `show` response is read-only (computed from the config structure). It is not a create or update parameter.
 
+### Valid `fields` paths
+
+Use the `fields` parameter to select only the attributes you need (reduces response size).
+
+- **`list`**: `id`, `name`, `description`, `currency`, `created_by`
+- **`show`**: `id`, `name`, `description`, `currency`, `integration_source_id`, `sources`, `configs_count`, `configs`
+
+Note: `integration_source_id` is only available on `show`, not `list`. To get a group's virtual source ID, use `show`.
+
 ## Creating a source group
 
 Creation is a **strict, ordered pipeline** that mirrors how the app builds a group: resolve fields → **verify with a real fetch** → build one ETL config per channel → create the group from those configs. Do **not** skip a step, and do **not** advance until the current step fully succeeds. A group built on fields a channel can't actually return will look fine and then come back empty.

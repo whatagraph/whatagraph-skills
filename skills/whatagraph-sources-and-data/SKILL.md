@@ -54,7 +54,7 @@ list-sources action=show source_id=<id>
 
 `id, name, external_id, channel_id, channel_name, account_id, currency, status, space_ids, tag_ids`
 
-`channel` and `integration` are accepted as aliases for `channel_id`. The set is per-tool and not uniform — if you pass an unknown path the call is rejected and the error lists the valid paths; read that list and retry once instead of guessing. Don't assume nested paths such as `options.currency` exist.
+`channel` and `integration` are accepted as aliases for `channel_id`; `service`, `platform`, and `integration_name` are aliases for `channel_name`. The set is per-tool and not uniform — if you pass an unknown path the call is rejected and the error lists the valid paths; read that list and retry once instead of guessing. Don't assume nested paths such as `options.currency` exist.
 
 ## Available report types, metrics, dimensions
 
@@ -72,7 +72,7 @@ list-sources action=list_dimensions_and_metrics
 # → {"dimensions":[...],"metrics":[...]}
 ```
 
-**Always run `list_report_types` first** when you don't know the report type. `list_dimensions_and_metrics` requires `report_type` when a source has multiple. Some sources (e.g. Facebook Ads, GA4) return zero report types — omit `report_type` entirely for those. If you pass an invalid report type, the error lists valid options — use that list.
+Each source in `list` and `show` responses includes `requires_report_type` (boolean). When `true`, you must call `list_report_types` and pass the result to widget/fetch calls. When `false` (e.g. Facebook Ads, GA4), skip `list_report_types` entirely — omit `report_type` from subsequent calls. If you pass an invalid report type, the error lists valid options — use that list.
 
 ### Finding a field by name — try `resolve_fields` first
 
