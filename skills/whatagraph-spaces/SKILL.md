@@ -7,7 +7,9 @@ required_tools:
   - manage-integrations
   - manage-members
   - manage-spaces
-  - delete-spaces
+optional_tools:
+  - tool_name: delete-spaces
+    purpose: Soft-delete a space and its reports/measurements.
 ---
 
 # Spaces (client folders)

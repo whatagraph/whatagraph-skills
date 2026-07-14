@@ -8,6 +8,9 @@ required_tools:
   - manage-reports
   - manage-sharing
   - manage-snapshots
+optional_tools:
+  - tool_name: delete-snapshots
+    purpose: Remove an old snapshot when pruning version history.
 ---
 
 # Snapshots

@@ -4,13 +4,20 @@ type: domain
 description: Create calculated or unified metrics on top of a data source — formulas (ROAS, CPA, CPL), cross-source sum metrics (data_aggregation), and metric aliases / unified names. Use when a standard channel metric isn't enough. A data_aggregation metric sums the same metric across sources into one total; a cross-source ratio (blended ROAS/CPA) still needs a source group or blend (see whatagraph-source-groups / whatagraph-blends).
 required_tools:
   - list-custom-metrics
-  - list-sources
-  - list-widgets
-  - export-report
-  - fetch-data
-  - manage-custom-dimensions
   - manage-custom-metrics
-  - manage-widgets
+  - list-sources
+  - fetch-data
+optional_tools:
+  - tool_name: manage-custom-dimensions
+    purpose: Alias fields or add a blend dimension when building the metric.
+  - tool_name: list-widgets
+    purpose: csv_export to preview a metric that only resolves at the widget layer.
+  - tool_name: export-report
+    purpose: Preview a metric rendered on a source group / blend widget.
+  - tool_name: manage-widgets
+    purpose: Remove widget references before deleting a metric.
+  - tool_name: manage-filters
+    purpose: Remove filter references before deleting a metric.
 ---
 
 # Custom metrics

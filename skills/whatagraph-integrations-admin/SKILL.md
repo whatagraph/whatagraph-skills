@@ -8,7 +8,9 @@ required_tools:
   - list-spaces
   - manage-integrations
   - manage-sources
-  - remove-integrations
+optional_tools:
+  - tool_name: remove-integrations
+    purpose: Detach sources from an account or disconnect an authenticated account.
 ---
 
 # Integrations & sources admin

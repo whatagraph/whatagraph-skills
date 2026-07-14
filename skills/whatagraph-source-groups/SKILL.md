@@ -6,9 +6,12 @@ required_tools:
   - list-source-groups
   - list-sources
   - fetch-data
-  - manage-reports
   - manage-source-groups
-  - manage-widgets
+optional_tools:
+  - tool_name: manage-reports
+    purpose: Attach the group's virtual source to a report before charting it.
+  - tool_name: manage-widgets
+    purpose: Render the group in a widget once it is attached to a report.
 ---
 
 # Source groups

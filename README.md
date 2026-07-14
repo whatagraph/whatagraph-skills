@@ -54,6 +54,31 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-customer-patterns` | Common multi-tool flows and decision trees across skills. |
 | `whatagraph-deleting` | Safe deletion, removal, and revocation across Whatagraph entities. |
 
+## Skill frontmatter — declaring tools
+
+Each `SKILL.md` declares the MCP tools it uses in YAML frontmatter, split into
+two lists:
+
+- **`required_tools`** — the **core** tools the skill's main happy path invokes.
+  A skill is only offered to an agent that has all of its `required_tools`.
+- **`optional_tools`** — tools used only in optional sub-workflows, verification
+  steps, or decision-table alternatives. Absent = an empty list (identical to
+  declaring none). Each entry is either a bare tool name or a
+  `{tool_name, purpose}` mapping; `purpose` is surfaced downstream when present.
+
+  ```yaml
+  optional_tools:
+    - tool_name: export-report
+      purpose: Verify the built widgets render with data.
+    - list-filters
+  ```
+
+**Authoring rule:** every tool the skill body actually invokes must appear in
+`required_tools` **or** `optional_tools`; alternatives and branch-only tools go
+in `optional_tools`, never in core; and no tool may appear in both lists. These
+rules are enforced in CI by `scripts/lint_skill_tools.py` (run it locally with
+`python3 scripts/lint_skill_tools.py`).
+
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE) for details.

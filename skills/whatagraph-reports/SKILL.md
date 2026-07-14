@@ -12,6 +12,13 @@ required_tools:
   - manage-report-tabs
   - manage-reports
   - manage-widgets
+optional_tools:
+  - tool_name: list-widgets
+    purpose: Inspect / csv_export widgets when verifying a report.
+  - tool_name: export-report
+    purpose: Verify a built or duplicated report renders with data.
+  - tool_name: manage-integrations
+    purpose: Attach integration sources to a report.
 ---
 
 # Reports

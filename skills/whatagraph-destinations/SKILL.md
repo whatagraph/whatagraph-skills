@@ -5,7 +5,9 @@ description: View configured data transfers that push Whatagraph-ingested data t
 required_tools:
   - list-destinations
   - manage-destinations
-  - delete-destinations
+optional_tools:
+  - tool_name: delete-destinations
+    purpose: Permanently stop and delete a configured data transfer.
 ---
 
 # Destinations & data transfers

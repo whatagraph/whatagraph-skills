@@ -8,7 +8,9 @@ required_tools:
   - manage-members
   - manage-sources
   - manage-team
-  - remove-members
+optional_tools:
+  - tool_name: remove-members
+    purpose: Cancel a pending member invitation.
 ---
 
 # Team & members

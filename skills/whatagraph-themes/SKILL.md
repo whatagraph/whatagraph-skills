@@ -6,7 +6,9 @@ required_tools:
   - list-themes
   - list-widgets
   - manage-themes
-  - delete-themes
+optional_tools:
+  - tool_name: delete-themes
+    purpose: Delete a theme or color palette.
 ---
 
 # Themes & color palettes

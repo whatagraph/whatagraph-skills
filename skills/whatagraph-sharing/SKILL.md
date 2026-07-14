@@ -5,7 +5,9 @@ description: Create and update public share links for reports with optional pass
 required_tools:
   - view-sharing
   - manage-sharing
-  - delete-sharing
+optional_tools:
+  - tool_name: delete-sharing
+    purpose: Revoke a public share link.
 ---
 
 # Sharing, PDF, Excel

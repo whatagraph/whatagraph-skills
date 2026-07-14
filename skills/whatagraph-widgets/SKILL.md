@@ -3,15 +3,26 @@ name: whatagraph-widgets
 type: domain
 description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, or bulk-swapping data sources across many widgets at once.
 required_tools:
-  - list-blends
-  - list-report-tabs
-  - list-reports
-  - list-source-groups
-  - list-sources
   - list-widgets
-  - export-report
-  - manage-report-tabs
+  - list-reports
+  - list-report-tabs
+  - list-sources
   - manage-widgets
+optional_tools:
+  - tool_name: list-blends
+    purpose: Resolve a blend's id when binding a blend as the widget's source.
+  - tool_name: list-source-groups
+    purpose: Resolve a source group's id when binding a group as the widget's source.
+  - tool_name: manage-report-tabs
+    purpose: Move widgets to another tab (move_widgets).
+  - tool_name: manage-filters
+    purpose: Create or attach a filter on a widget config.
+  - tool_name: list-filters
+    purpose: Find an existing team-level filter to attach inline.
+  - tool_name: list-themes
+    purpose: Look up theme colour ids for active_theme_color_id.
+  - tool_name: export-report
+    purpose: Verify the built layout renders with data.
 ---
 
 # Widgets

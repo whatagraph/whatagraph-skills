@@ -32,6 +32,21 @@ required_tools:
   - delete-widgets
   - remove-integrations
   - remove-members
+optional_tools:
+  - tool_name: manage-reports
+    purpose: Detach a source / remove a widget reference before deleting it.
+  - tool_name: manage-sharing
+    purpose: Revoke sharing before deleting a report.
+  - tool_name: manage-snapshots
+    purpose: Manage snapshot references during cleanup.
+  - tool_name: manage-source-groups
+    purpose: Detach sub-sources before deleting a source group.
+  - tool_name: manage-themes
+    purpose: Reassign a theme before deleting one in use.
+  - tool_name: manage-goals
+    purpose: Remove goal references before deleting a metric.
+  - tool_name: manage-integrations
+    purpose: Detach integration sources during cleanup.
 ---
 
 # Deleting things safely

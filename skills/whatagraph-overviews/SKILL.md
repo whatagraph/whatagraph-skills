@@ -7,7 +7,9 @@ required_tools:
   - list-sources
   - manage-overviews
   - manage-sources
-  - delete-overviews
+optional_tools:
+  - tool_name: delete-overviews
+    purpose: Permanently delete an overview.
 ---
 
 # Overviews (Measurements)

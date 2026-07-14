@@ -6,8 +6,10 @@ required_tools:
   - list-sources
   - view-goals
   - manage-goals
-  - delete-goals
   - manage-widgets
+optional_tools:
+  - tool_name: delete-goals
+    purpose: Delete goals that are no longer tracked.
 ---
 
 # Goals

@@ -6,7 +6,9 @@ required_tools:
   - list-templates
   - manage-reports
   - manage-templates
-  - delete-templates
+optional_tools:
+  - tool_name: delete-templates
+    purpose: Delete a template (linked reports stop auto-updating).
 ---
 
 # Templates

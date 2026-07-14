@@ -5,8 +5,14 @@ description: Create, duplicate, rename, and reorder tabs within a report. Each t
 required_tools:
   - list-report-tabs
   - manage-report-tabs
-  - delete-report-tabs
   - manage-widgets
+optional_tools:
+  - tool_name: delete-report-tabs
+    purpose: Soft-delete or restore a report tab.
+  - tool_name: list-widgets
+    purpose: Inspect / csv_export widgets on a tab when verifying.
+  - tool_name: export-report
+    purpose: Verify tab structure renders after changes.
 ---
 
 # Report tabs (pages)
