@@ -558,7 +558,7 @@ When unsure of a dimension's cardinality, check it before choosing the widget �
 
 Compose by analytical priority: surface the few numbers that matter most first, then the main trend, then the breakdowns and detail. But the **selection, mix, and count** of widgets follow from what the data supports — so they vary from report to report. Don't force a fixed set or a minimum count.
 
-**Show a variety of widget types.** When you are choosing the layout yourself — no reference and no specific ask — a good report uses a *mix* of the types above rather than a wall of the same widget: typically a row of KPI / SingleValue cards for the headline numbers, one or more charts (a trend line/area plus a breakdown bar / column / donut), a detail table, and media or funnel widgets where the data supports them. Match each type to the data as described above; the point is that a self-directed report should demonstrate the format's range, not repeat one widget. If the user specified the widget types, follow their choice instead of diversifying.
+**Show a variety of widget types.** When you are choosing the layout yourself — no reference and no specific ask — a good report uses a *mix* of the types above rather than a wall of the same widget: typically a row of KPI / SingleValue cards for the headline numbers, one or more charts (a trend line/area plus a breakdown bar / column / donut), a detail table, and media or funnel widgets where the data supports them. Match each type to the data as described above; the point is that a self-directed report should demonstrate the format's range, not repeat one widget. If the user specified the widget types, follow their choice instead of diversifying. For how to arrange the mix into a complete page — headers, pairing, row rhythm — see "Composing a full tab" below.
 
 ### Titles — every widget and every metric row is labelled
 
@@ -568,6 +568,15 @@ Every data widget carries a **title**, and every metric row carries a **row labe
 - Set each row's label in `rows[].options.title` — the rendered series/metric label, distinct from the config-side data binding. For multi-row charts, funnels, and non-breakdown pie/donut, give **each** row its own title so every series / stage / slice is named.
 - Utility widgets (Comment `21`, Image `34`, Calendar `22`) are exempt from the metric-row rule, but a Comment used as a section header still carries its heading text.
 - The title states what's shown (metric + scope). Because the title makes a promise to the reader, the bound fields must actually deliver it — see "Fit for purpose" below.
+
+### Section headers — introduce each section of a tab with a Comment widget
+
+A tab that holds more than one group of content (a KPI block, then a trend section, then a breakdown / detail section) should **introduce each group with a section header**: a full-width Comment widget (`21`, `channel_id=7`) carrying a short markdown heading — the report-page equivalent of an `##` heading in a document.
+
+- **Shape:** full row (`width: 6`), `height: 1` for a bare heading (a heading plus a one-line subtitle needs `height: 2` — see Comment sizing above). Place it as the first row of the section it introduces.
+- **Text:** a markdown heading in `rows[].options.comment_widget_text.text` — e.g. `## Campaign performance` — naming the section's theme, not repeating the widget titles below it. Keep it to a few words; optionally add one plain-text line of context beneath the heading. For styled headers (color, size, alignment) use a Tiptap `description` — see the Comment widget notes under `### options`.
+- **When to use one:** whenever a tab has two or more distinct sections — which a full, self-directed tab almost always does (see "Composing a full tab"). The tab's *first* header also serves as the page title when the tab name alone isn't enough.
+- **When not to:** a tab that is genuinely one section (a single full-page table the user asked for, a lean one-pager) doesn't need a header row per widget — headers earn their row only when they separate something. Never stack two headers with no content between them.
 
 ### Fit for purpose — fields must match the intent and each other
 
@@ -604,6 +613,28 @@ Once you know the structure, lay it out top to bottom:
 3. **Pack to match your intent** — no gaps and no overlaps, but mirror the *reference's* density: don't tighten a deliberately sparse page, don't pad a dense one.
 4. **Fill each row left-to-right and start the next row flush against the previous one.** A row's widths sum to ≤ 6; if a row doesn't reach 6, widen a widget or add another rather than leaving a trailing gap. Don't leave an empty column mid-row or an empty row between populated rows — the only intentional blank space is one a *reference* deliberately shows (see "Replicating a reference report").
 5. **Build, then verify** with `export-report` (or `list-widgets action=csv_export`) — confirm the layout and that every widget loaded data. `list-widgets action=show` echoes positions but not rendered data.
+6. **Finish with styling.** Once every tab is composed and verified, load `whatagraph-themes` and apply a theme and color palette (client branding when known, otherwise a coherent team theme). An unstyled report is an unfinished report — see `whatagraph-reports` → "Style the report before handing it over".
+
+### Composing a full tab (self-directed builds)
+
+When you're deciding the layout yourself — no reference, no explicit widget list — each tab is a **complete page with a visual rhythm**, not a strip of cards or a lone widget. The failure modes to design against: a row of identical KPI cards plus one chart and nothing else; a tab whose only occupant is a single table floating in empty space; every tab in the report shaped the same way.
+
+**Anatomy of a well-composed tab** (an ordering principle, not a fixed list — every element must still be justified by the data):
+
+1. **A section header** (Comment `6×1`) naming the page or its first section.
+2. **A headline row** — 2–3 small KPI cards (`2×2` or `3×2`) carrying the tab's most important totals. Vary the form across tabs: a Gauge or Goal where there's a target, a List where several small numbers belong together.
+3. **A main visual row** — the tab's centrepiece, usually a wide trend or comparison chart. Pair it rather than leaving it alone: a `4×3` chart beside a `2×3` list/donut/KPI, or two `3×3` charts side by side.
+4. **Another section header**, then **breakdown / detail rows** — a full-width table, or a table beside the donut/bar that summarizes it; a GeoMap for geography; Media tiles for creatives; a Funnel for staged conversions.
+5. **Supporting rows** as the data warrants — secondary breakdowns, a narration Comment, an AI-summary block.
+
+**Composition rules that make it read well:**
+
+- **Pair, don't strand.** No widget sits alone on a row unless it's genuinely full-width (a `6`-wide table, trend chart, or header). A small widget with 4 empty columns beside it is a layout bug — widen it, pair it, or move it into another row.
+- **Adjacency is meaning.** Widgets that answer the same question sit next to each other: the KPI and the trend that explains it, the donut and the table that details it, the map and the top-regions list. A reader should be able to say what each *row* is about, not just each widget.
+- **Vary the forms — within the tab and across tabs.** A tab drawing only on KPI cards and one chart type looks machine-generated. Draw on the full range the data supports (see "Choosing a visualization"), and don't repeat the same overview shape on every tab — the spend tab, audience tab, and creative tab should each look like what they're about.
+- **Depth over sprawl.** A full tab typically lands somewhere around 6–12 widgets across four or more rows — enough to develop its theme with headline, trend, breakdown, and detail. That's a description of what a developed theme tends to need, not a quota: never pad with near-duplicate widgets to hit a count, and never stop at two rows because the minimum was technically met.
+- **End flush.** The last row fills its width like every other row. If the tab ends with a `2`-wide orphan, rebalance the final rows (widen the table, resize the pair) so the page bottom is a clean edge.
+- **Too thin to fill?** If a theme can't sustain a full page from the available fields, don't pad it — merge it into a related tab (see `whatagraph-reports` → "Building a report when the request doesn't specify structure").
 
 ### Replicating a reference report (the priority when one is given)
 
@@ -620,7 +651,7 @@ Reproduce the reference faithfully — do not substitute a default arrangement:
 Different requests produce different shapes. **Copy the user's intent or reference — never copy these.** They exist only to show that the structure should vary:
 
 - **Dense paid-media page (varied, many widgets):** a `6×1` header comment; a row of three KPIs `2×2`; a donut `3×3` beside a table `3×3`; a full-width detail table `6×3`; a row of three ad creatives `2×3`. (Coordinates for this one shape: comment `x0 y0 6×1`; KPIs `x0/x2/x4 y1 2×2`; donut `x0 y3 3×3` + table `x3 y3 3×3`; table `x0 y6 6×3`; media `x0/x2/x4 y9 2×3`.)
-- **Lean summary (sparse, few widgets):** three KPIs `2×2` across the top, then one full-width trend chart `6×3`. Nothing more — don't pad it out.
+- **Lean summary (sparse, few widgets):** three KPIs `2×2` across the top, then one full-width trend chart `6×3`. Nothing more — don't pad it out. This shape is for when the user *asked* for a lean one-pager — an open-ended "create a report" gets a full composition (see "Composing a full tab"), not this.
 - **Exec narrative (text-led):** an AI-summary comment `6×3` at the top, then two supporting visuals `3×3 + 3×3`.
 - **Uneven split:** a wide trend chart `4×3` beside a tall KPI list `2×3`.
 
