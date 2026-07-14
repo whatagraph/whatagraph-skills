@@ -45,7 +45,10 @@ Pagination: cursor-based with `cursor` parameter; `per_page` up to 500 (default 
 
 Themes and palettes are stored at the team level. `report_id` is optional on the list actions (verified Jun 2026) — omit it for team-level items only; pass it to also see report-level items and which one is active on that report. `show_theme` requires both `report_id` and `theme_id`.
 
-Both `list_themes` and `list_colors` include context fields: `applied_theme_id` / `applied_color_id` (the ID active on the report, or `null`) and `team_has_themes` / `team_has_colors` (whether the team has any). Use these to distinguish "no themes exist" vs "none applied to this report".
+Both `list_themes` and `list_colors` include context fields:
+- `applied_theme_id` / `applied_color_id` — the ID active on the report, or `null`
+- `applied_theme_source` / `applied_color_source` — `"team"`, `"report"`, `"system"`, or `null`. When `"system"`, the applied theme/palette is a built-in premade not included in the list — `team_has_themes: false` with a non-null `applied_theme_id` is expected in this case
+- `team_has_themes` / `team_has_colors` — whether the team has any custom themes/palettes
 
 ## Apply a theme to a report
 
@@ -55,6 +58,8 @@ manage-themes action=enable_theme
    theme_id=<id>
 ```
 
+Response includes `report_state.applied_theme_id` and `report_state.applied_color_id` confirming the report's current state after the change.
+
 ## Apply a color palette to a report
 
 ```
@@ -62,6 +67,8 @@ manage-themes action=enable_color
    report_id=<id>
    color_id=<id>
 ```
+
+Response includes `report_state.applied_theme_id` and `report_state.applied_color_id` confirming the report's current state after the change. When a palette is bound to a theme, `enable_color` also activates that theme automatically.
 
 ## Create a custom theme
 
@@ -74,7 +81,16 @@ manage-themes action=create_theme
    }
 ```
 
-See `list-themes action=list_themes` for an existing theme's `options` shape.
+Each section (`header`/`footer`) accepts:
+- `images` — array of `{url, title, scale_to_fill, alignment, width, height}`
+- `text` — string or null
+- `text_alignment` — `"left"`, `"center"`, or `"right"` (default: `"right"`)
+- `text_format` — `{"italic": bool, "bold": bool}` (default: both false)
+- `text_color` — CSS hex (default: `"#516D8E"`)
+- `background_color` — CSS hex (default: `"#ffffff"`)
+- `apply_to_footer` / `apply_to_header` — bool, mirrors this section to the other
+
+Use `list-themes action=show_theme` to see an existing theme's full `options` shape.
 
 ## Update a theme
 
@@ -117,13 +133,13 @@ manage-themes action=create_color
 ```
 
 - **`widget_colors`** is an **object with named keys** — NOT a flat array. Keys: `text_color`, `positive_color`, `negative_color`, `accent_fill_color`, `accent_text_color`, `neutral_color`, `neutral_bg`, `chart_axis_text`, `chart_grid_lines`, `widget_background`, `icon_symbol`, `icon_background`, `list_odd_fill`, `list_even_fill`, `font_family`, `shades`.
-- **Required on `create_color`:** `font_family` (e.g. `"inherit"`), `accent_text_color`, `positive_color`, `negative_color` (bare hex), and `shades` (array of 6 bare hex strings — a legacy field no longer rendered by the UI, but still required by frontend validation when users edit palettes). Pick 6 diverse colors that complement the palette.
+- **Required on `create_color`:** `font_family` (e.g. `"inherit"`), `accent_text_color`, `positive_color`, `negative_color` (bare hex), and `shades` (array of 6 bare hex strings — a legacy field no longer rendered by the UI, but still required by frontend validation when users edit palettes). If unsure what to pass, pick 6 hex values from your `chart_colors`.
 - **Hex format matters — two groups of keys:**
   - **Text / accent / chart-line colors are bare hex (NO `#`):** `text_color`, `neutral_color`, `neutral_bg`, `positive_color`, `negative_color`, `accent_fill_color`, `accent_text_color`, `chart_axis_text`, `chart_grid_lines`, and `additional_colors.report_accent` / `report_text_color` / `report_title_color`. The renderer prepends the `#` itself, so a value stored **with** a `#` becomes `##RRGGBB` — an invalid color — and the element falls back to a default (commonly **dark, unreadable text/numbers**). Pass `"2B2B2B"`, not `"#2B2B2B"`.
   - **Backgrounds / fills / icons are raw CSS values (KEEP the `#`, or use `rgba()` / `transparent` / a gradient):** `widget_background`, `icon_symbol`, `icon_background`, `list_odd_fill`, `list_even_fill`, and `additional_colors.background`.
 - **`chart_colors`** is an array of bare hex values (6-digit `"C0392B"` or 8-digit-with-alpha `"6366f1ff"`). A leading `#` is stripped automatically; non-hex values are rejected. Provide 8–12 colors to avoid repetition on large charts.
 - **`additional_colors`** is an **object** controlling the report canvas: `background` (raw CSS), `report_accent`, `report_text_color`, `report_title_color` (bare hex). Set these to drive the report background and title color; omit to keep the theme default.
-- Tie a palette to a theme via `theme_id` in `colors`.
+- Tie a palette to a theme via `theme_id` in `colors`. Binding is organizational only — any palette can be applied to any report regardless of which theme it's bound to. Omitting `theme_id` creates an unbound palette that works with any theme.
 
 ### Dark themes — set the full key set
 
@@ -179,6 +195,6 @@ Affected reports fall back to the team default. Switch them to a replacement fir
 - **Passing a palette's `theme_id` field to `enable_theme`** — palettes returned by `list_colors` carry a `theme_id` attribute (the theme they're bound to); that is **not** the palette's own id and the palette's id is not a theme id. `enable_theme` takes a theme id from `list_themes`; `enable_color` takes a palette id from `list_colors`. Mixing them up enables the wrong asset or errors.
 - **Logo URL not publicly accessible** — shared-link viewers won't see it. Use a CDN-backed public URL.
 - **Brand colors with low contrast** — charts become unreadable. Test against white + dark report backgrounds.
-- **Creating a palette without `theme_id`** — palette still works but isn't bound to a specific theme; any theme can use it.
+- **Creating a palette without `theme_id`** — palette still works; binding is purely organizational and any palette can be applied to any report regardless of theme binding.
 - **Enabling a theme without also enabling its companion palette** — colors fall back to the team default, producing off-brand output.
 - **Editing one section silently rewrites the other** — with `header.apply_to_footer: true` (or `footer.apply_to_header: true`), every `update_theme` mirrors that section onto the other, images included. Set the flag to `false` in the same update to edit them independently.
