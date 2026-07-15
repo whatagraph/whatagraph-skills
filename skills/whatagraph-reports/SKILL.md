@@ -79,6 +79,32 @@ manage-reports action=duplicate report_id=<source_report_id>
 
 Copies tabs, widgets, filters, and layout. The duplicate is independent (not linked back to the source).
 
+## Building a report when the request doesn't specify structure
+
+This governs *what* to build on `manage-reports action=create` (and on `create_from_template` / `duplicate` when the user asks to flesh a report out). The sizing, placement, and field-binding mechanics live in `whatagraph-widgets` — this section only decides the report's shape.
+
+First, decide which mode you're in:
+
+1. **The user specified the structure** — they named the tabs, the widgets, the metrics, or handed a reference (PDF / screenshot / live-report URL / existing report). → Build exactly that: **what they named is a contract.** Every named metric, tab, and widget appears — map the user's wording to the source's exact fields via `list-sources action=list_dimensions_and_metrics` (match by meaning when their term differs from the field name, e.g. "cost" → the source's spend metric). Nothing they didn't ask for is added, their naming and order are kept, and a detailed spec is never collapsed into something smaller. If something requested doesn't exist on the source (a metric the integration doesn't expose), don't silently substitute — build the rest and tell the user what's missing and the closest available field. Skip the rest of this section and follow the reference/instruction faithfully (see `whatagraph-widgets` → "Replicating a reference report").
+
+2. **The request is open-ended** — "create a report", "visualise this source", "build me a dashboard", "make a report for `<channel>`", with no tab / widget / metric detail. → Do **not** ship a single tab of generic KPIs. Build a detailed, multi-tab report as below.
+
+An open-ended report is **multi-tab and thematic**:
+
+- **Let the data set the tab count — two is the floor, not the target.** Inspect the available metrics and dimensions first (`list-sources action=list_dimensions_and_metrics`), enumerate the distinct analytical themes the source actually supports, and give **each substantial theme its own tab**. A genuinely narrow source (a handful of metrics, one or two dimensions) may only sustain 2 tabs; a mainstream ad or analytics source — cost, conversions, devices, audience, geography, creatives, search terms — typically sustains **3–5 well-scoped tabs**, and a multi-source or blended request sustains more (e.g. a cross-channel overview tab plus one tab per channel). If you find yourself building 2 tabs for every source regardless of its richness, you've stopped reading the data.
+- **Read the prompt for scale signals too.** "Client deliverable", "monthly report", "full performance report", "dashboard for the team" all imply the fuller end of the range even when the user never says "detailed". Only a deliberately small ask ("quick overview", "one-pager", "just the KPIs") caps the report at the lean end — and then respect that cap.
+- Which themes apply depends entirely on what the source(s) actually expose. Illustrative theme shapes **only** (never a fixed template): an overview / traffic tab, a conversions / outcomes tab, a spend / efficiency tab, an audience / geography tab, a creative / content tab, a campaign-deep-dive tab. A source with no cost data gets no spend tab; a source with no creative dimension gets no creative tab — and conversely, when the data supports a theme, add its tab rather than compressing two themes onto one page.
+- **Every tab must be a full page.** A tab holding one lone table or a strip of KPIs floating in empty space reads as unfinished. Each themed tab gets a complete composition — section headers, KPIs, charts, and detail working together (see `whatagraph-widgets` → "Composing a full tab"). If a theme can't fill a page from the available data, merge it into a related tab instead of shipping a thin one.
+- **Order tabs like a story, and name them for the reader.** The report reads front to back: the broadest tab first (overview / headline results), themed deep-dives next, the most granular detail (long per-entity tables) last. Tab names are short, client-readable labels — "Overview", "Conversions", "Audience" — not sentences or metric lists.
+- The report's first tab is created with the report itself — name it after its theme via `tab_name`. Add the remaining themed tabs with `manage-report-tabs action=create`.
+- Different sources → different tab sets. If every open-ended report you build has the same tabs, you've defaulted to a template — go back to the data.
+
+**Populate every tab via `whatagraph-widgets`.** Report creation only makes the container and the tabs. Load and follow `whatagraph-widgets` to fill each tab — it owns widget-type selection, fit-for-purpose metric/dimension binding, the grid layout (no gaps/overlaps), titles, section headers, and the full-tab composition guidance. A report is not "created" until its tabs hold widgets and those widgets have verified data (`export-report`). Build the container, tabs, and widgets in one continuous flow — don't hand back an empty shell.
+
+**Style the report before handing it over.** A finished deliverable is themed, not default-chrome. Once the widgets are built and their data verified, load `whatagraph-themes` and apply a theme and color palette: the client's branding when the space or prompt indicates one, otherwise a coherent existing team theme. The delivery flow is **build → verify (`export-report`) → style (`whatagraph-themes`)** — the styling pass is part of creating the report, not an optional extra. Skip it only when the user explicitly says to leave the default look, or the report already carries the intended theme (e.g. it was duplicated from a styled report).
+
+**Partial detail** — honour whatever the user specified and use judgment only for the gaps: if they named the tabs but not the widgets, build their tabs and let the widgets skill choose the widgets; if they named metrics but not layout, bind those metrics and lay them out cleanly; if they asked for one tab only, respect that.
+
 ## Update report metadata
 
 ```
@@ -99,6 +125,15 @@ manage-reports action=update report_id=<id>
 ```
 
 The report-level date range is the baseline **every widget inherits** unless it sets its own `date_range`. Set it when replicating a report into a new period so the widgets — and the comparison deltas — use the right window. `list-reports action=show` returns the current `period`, `compare_type`, `vs_from`, and `vs_till` alongside `from`/`till`.
+
+## Set the date range at creation (default: last 30 days)
+
+The report-level date range is the baseline every widget inherits, and the report-level `compare_type` is what makes each KPI's trend delta render. A report created without a date range leaves widgets on an undefined window, and KPI cards configured with `comparison_display_type` show no delta because there's no comparison period to diff against. So set both as part of building the report — don't leave them unset.
+
+- **Default window: the last 30 days**, unless the user specifies a period or explicit dates. Prefer a **rolling** last-30-days period so the report stays current after creation rather than freezing on fixed dates — use the platform's rolling `period: "last30Days"` (accepted by the `manage-reports` `date_range.period` schema, alongside `thisMonth`, `lastWeek`, etc.) with `from`/`till` covering the trailing 30 days. Fall back to explicit `from`/`till` with `period: "custom"` only if a rolling window doesn't fit the ask.
+- **Default comparison: previous period** (`compare_type: "previous"`), so KPI deltas are meaningful out of the box. Omit the comparison only if the user asks for no comparison, or set `compare_type: "last_year"` if they ask for year-over-year.
+- **The user's window always wins.** If they name a period ("last quarter", "March", "this year") or explicit dates, use that and don't apply the 30-day default. If they name a window but no comparison, still apply the previous-period comparison unless they decline it.
+- Set this via `manage-reports action=update … date_range={…}` (shape and fields documented in "Update the report date range" above) right after creating the report, before or alongside populating widgets. Individual widgets can still override with their own `date_range` when a specific widget needs a different window.
 
 ## Move a report to another space
 
