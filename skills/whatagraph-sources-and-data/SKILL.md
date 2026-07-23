@@ -176,6 +176,19 @@ list-integrations action=list_available_sources account_id=<id> search="Acme"
 
 Use this when the user asks "what platforms does Whatagraph support?" or wants to connect a new sub-account from an already-authenticated integration.
 
+### Sub-source integrations
+
+Some integrations (Google Sheets, BigQuery, Snowflake, Google My Business) have parent → sub-source hierarchy. When `list_available_sources` returns `has_sub_sources: true`, discover sub-sources before adding:
+
+```
+list-integrations action=list_available_sub_sources
+   account_id=<id>
+   source_external_id=<parent_external_id>   # from list_available_sources
+   search="tab name"                          # optional name filter
+```
+
+Returns sub-source names and JSON `external_id` values ready for `manage-integrations action=add_sources`. See `whatagraph-integrations-admin` for the full connect flow.
+
 ## Where is a source used?
 
 ```
