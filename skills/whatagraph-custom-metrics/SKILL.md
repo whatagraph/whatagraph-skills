@@ -124,9 +124,9 @@ The tool rejects `data_formula` creates without these four:
 | param | values | use |
 |---|---|---|
 | `formula_value_type` | `int`, `percent`, `float`, `currency`, `seconds`, `milliseconds` | How the result renders |
-| `accumulator` | `sum`, `average`, `last`, `first` | How values roll up across rows/time |
-| `summary_accumulator` | `sum`, `average`, `last`, `first` | How the total/summary row is calculated (optional, defaults to `accumulator` value) |
-| `aggregation_level` | `aggregate`, `row` | `aggregate` = apply formula on totals; `row` = apply per row, then accumulate |
+| `accumulator` | `sum`, `average`, `last`, `first` | How values roll up within one entity over time. Only shapes widget totals when `aggregation_level=row` — with `aggregate`, totals are recomputed from summed parent fields and this setting is silently inert (see "Aggregation level" below) |
+| `summary_accumulator` | `sum`, `average`, `last`, `first` | How to combine values across entities in summary/totals rows (e.g. `last` budget per campaign, then `sum` across campaigns). Optional, defaults to `accumulator` value. Only applies when `aggregation_level=row` and the widget carries an aggregation-key dimension |
+| `aggregation_level` | `aggregate`, `row` | `aggregate` = apply formula on already-summed totals (right for ratios like ROAS/CPA); `row` = apply per row first, then accumulate — **required** for `accumulator`/`summary_accumulator` to shape totals of non-additive values |
 | `formula_increase` | `positive`, `negative` | `positive` = higher is better (revenue, CTR); `negative` = lower is better (CPA, CPL) |
 
 `formula_value_type`, `accumulator`, `aggregation_level`, and `formula_increase` must be set. If any is missing, the tool returns an error that names the missing parameter. `summary_accumulator` is optional but recommended for ratio metrics.
@@ -139,6 +139,26 @@ The tool rejects `data_formula` creates without these four:
 | Cost-per-action | CPA, CPL, CPM | `currency` | `average` | `average` | `aggregate` | `negative` |
 | Return ratio | ROAS | `float` | `average` | `average` | `aggregate` | `positive` |
 | Summable total | Total spend, total clicks | `currency` / `int` | `sum` | `sum` | `row` | varies |
+| Non-additive value | Budget, target, balance | `currency` / `int` | `last` | `sum` | `row` | varies |
+
+### Aggregation level — `aggregate` vs `row` (critical for non-additive metrics)
+
+`aggregation_level` controls **when** the formula is evaluated relative to row aggregation, and it determines whether `accumulator`/`summary_accumulator` actually affect widget totals.
+
+| `aggregation_level` | How it works | When to use |
+|---|---|---|
+| `aggregate` | Parent fields (A, B) are **summed first**, then the formula runs on the totals. `accumulator`/`summary_accumulator` are **silently inert** — totals are always recomputed from summed fields. | Ratios where the total should be formula(sum(A), sum(B)) — e.g. CPC = total_spend / total_clicks. Most ratio metrics (CPC, CTR, ROAS, CPA) belong here. |
+| `row` | Formula runs **per row first**, then `accumulator` rolls up within each entity and `summary_accumulator` combines across entities in the totals row. | Non-additive values (budgets, targets, balances) where you need `last`/`first` to pick one value per entity, then `sum`/`average` across entities. Also needed for any metric where summing per-row formula results is the desired behavior. |
+
+**The trap:** setting `accumulator=last` with `aggregation_level=aggregate` looks correct but the `last` setting is silently ignored — totals still sum the parent fields and recompute. A "LAST budget" metric configured this way produces SUM-inflated totals (e.g. 157,500 instead of 9,500).
+
+**Aggregation-key dimensions:** for `row`-level metrics to group correctly in widget totals, the widget needs an aggregation-key dimension — a dimension flagged `is_aggregation_key`, a widget-level `aggregation_key_overrides` config option, or a blend join key. Without one, per-row accumulation has no entity boundary to group by. Set the aggregation key via `manage-widgets` config `options.aggregation_key_overrides`:
+
+```
+options.aggregation_key_overrides: [{"external_id": "<dimension>", "is_aggregation_key": true}]
+```
+
+This marks a bound dimension (e.g. campaign) as the entity key. The metric's `accumulator` then aggregates within each entity (e.g. `last` budget per campaign) and `summary_accumulator` combines across entities (e.g. `sum` of last-budgets) in the summary row.
 
 ### Which `field_external_id` works where
 
@@ -289,6 +309,7 @@ To confirm which channels/sources a metric resolves on before fetching, check `r
 
 ## Common pitfalls
 
+- **`accumulator=last` (or `first`) with `aggregation_level=aggregate`** — the accumulator is silently inert. Totals are recomputed from summed parent fields regardless, so a "LAST budget" metric still SUM-inflates. Use `aggregation_level=row` for non-additive values, and set an aggregation-key dimension on the widget.
 - **`formula="A/B*100"` with `formula_value_type="percent"`** — double-scales! `percent` already ×100 for display. Write `formula="A/B"` instead. A ThruPlay Rate of 7.09% would show as 708.9% with `*100`.
 - **Using `{placeholder}` tokens in formulas** — wrong. Use `A/B` style identifiers only.
 - **Passing metric display names as `field_external_id`** — field IDs come from `list-sources action=list_dimensions_and_metrics`, not display names.
