@@ -20,11 +20,13 @@ Tools covered: `list-reports`, `manage-reports`.
 
 A **report** is a named container of tabs and widgets, scoped to a single **space** (client folder). Reports can be created blank, from a template (linked, auto-updating), or duplicated from an existing report.
 
+> **Default: build from scratch.** `create_from_template` is used only when the request explicitly asks for a template (or names one). An open request like "create a report for X" is a scratch build — do not scan templates for a match first. When a template IS explicitly requested, run `change_sources` immediately after `create_from_template`.
+
 A report references data through **report-local sources**. Before a widget on the report can use a data source, the source must be attached to the report — `manage-reports` exposes the attach / detach actions that mirror what the report builder UI does when a user picks a source from the side panel.
 
 ## Use this when
 
-- Onboarding a new client — create a blank report or clone from template.
+- Onboarding a new client — create a blank report (from scratch by default); clone from template only when explicitly requested.
 - Rolling out the same report structure to 20 clients — use a template.
 - Attaching a data source to a report so widgets can use it — `attach_source`.
 - Attaching a sample-data placeholder for a channel — `attach_source` with `channel_ids`.
@@ -59,6 +61,12 @@ manage-reports action=create
 
 - `client_id` = space id (the `team_client` id). Find via `list-spaces action=list`.
 - A default tab is always created with the report (verified Jun 2026) — pass `tab_name` to name it, otherwise it's unnamed. Add further tabs via `manage-report-tabs action=create`.
+
+## Orientation — landscape by default, set it IMMEDIATELY after create
+
+The page layout lives on `manage-report-tabs action=set_layout` with `layout: "printing_landscape_6x6"` (or `"printing_portrait_4x8"` when the user asks for portrait) — not on `manage-reports`. The call is **rejected once the report contains any widget**, so the mandatory ordering is `manage-reports action=create` → `set_layout` → attach sources → build widgets. If you reach the widget stage without setting it, the orientation is locked for that report — there is no post-hoc switch via MCP.
+
+Landscape changes the rendered page ratio, not the grid: it keeps the 6-column grid all the row math in `whatagraph-widgets` assumes, but a landscape page fits fewer stacked rows per printed/PDF page — prefer wider rows (4+2, 3+3, 6) over tall narrow stacks. Portrait (`printing_portrait_4x8`) switches the report to a **4-column grid**, so widget widths there sum to ≤ 4, not 6 (verified against the served `manage-report-tabs` schema, Jul 2026).
 
 ## Create from a template (linked)
 
@@ -101,7 +109,9 @@ An open-ended report is **multi-tab and thematic**:
 
 **Populate every tab via `whatagraph-widgets`.** Report creation only makes the container and the tabs. Load and follow `whatagraph-widgets` to fill each tab — it owns widget-type selection, fit-for-purpose metric/dimension binding, the grid layout (no gaps/overlaps), titles, section headers, and the full-tab composition guidance. A report is not "created" until its tabs hold widgets and those widgets have verified data (`export-report`). Build the container, tabs, and widgets in one continuous flow — don't hand back an empty shell.
 
-**Style the report before handing it over.** A finished deliverable is themed, not default-chrome. Once the widgets are built and their data verified, load `whatagraph-themes` and apply a theme and color palette: the client's branding when the space or prompt indicates one, otherwise a coherent existing team theme. The delivery flow is **build → verify (`export-report`) → style (`whatagraph-themes`)** — the styling pass is part of creating the report, not an optional extra. Skip it only when the user explicitly says to leave the default look, or the report already carries the intended theme (e.g. it was duplicated from a styled report).
+**Style the report before handing it over.** A finished deliverable is themed, not default-chrome. Once the widgets are built and their data verified, load `whatagraph-themes` and apply a theme and color palette: the client's branding when the space or prompt indicates one, otherwise a coherent existing team theme. The delivery flow is **build → verify (`export-report`) → style (`whatagraph-themes`)** — the styling pass is part of creating the report, not an optional extra. Skip it only when the user explicitly says to leave the default look, or the report already carries the intended theme (e.g. it was duplicated from a styled report). In an agent-fleet context, theming/branding is preferentially **delegated to the branding/delivery agent** (theme, palette, fonts, then sharing/automation); applying via `whatagraph-themes` directly is the standalone fallback. Either way the chain is build → verify → brand — a report is not done until it is themed.
+
+**Partially-specified requests get the full open-ended bar for everything unspecified.** "Aggregate Q2 data into a detailed report", "report focused on conversions", or a request naming metrics but not widgets/placement is NOT spec mode — the named focus, sources, metrics, and window are contracts, but the structure (tabs, widget mix, layout, headers) follows the open-ended rules above in full. A short prompt never licenses a thin report.
 
 **Partial detail** — honour whatever the user specified and use judgment only for the gaps: if they named the tabs but not the widgets, build their tabs and let the widgets skill choose the widgets; if they named metrics but not layout, bind those metrics and lay them out cleanly; if they asked for one tab only, respect that.
 

@@ -139,6 +139,19 @@ manage-themes action=create_color
 - **`additional_colors`** is an **object** controlling the report canvas: `background` (raw CSS), `report_accent`, `report_text_color`, `report_title_color` (bare hex). Set these to drive the report background and title color; omit to keep the theme default.
 - Tie a palette to a theme via `theme_id` in `colors`. Binding is organizational only — any palette can be applied to any report regardless of which theme it's bound to. Omitting `theme_id` creates an unbound palette that works with any theme.
 
+### Designing a palette that hangs together
+
+When you compose a palette yourself (no exact brand values supplied), don't pick each key independently — derive the whole set from one starting point so the report reads as a single design:
+
+- **Start from one accent.** Take the brand/primary color (from the prompt, the client's logo, or the space name's known brand) as `report_accent` / `accent_text_color` / `icon_background`, and derive everything else from it — same temperature (warm accent → warm greys and fills, cool accent → cool ones), never a mix of clashing families.
+- **`chart_colors` are siblings, not a grab-bag.** Use distinct **hues** at broadly similar saturation and lightness so no series shouts over the others — vary the hue around the wheel, not just the shade of one color. Order the array so adjacent entries contrast clearly (series are colored in array order; two near-identical neighbours make consecutive series indistinguishable). Provide 8–12.
+- **Keep semantic colors unambiguous.** `positive_color` stays recognizably green-ish and `negative_color` red-ish, both clearly distinct from the nearby `chart_colors` — if a chart series uses nearly the same red as the negative delta, trend arrows stop reading at a glance. For the same reason avoid leaning the chart series heavily on red+green pairs.
+- **Chrome recedes, data speaks.** `chart_axis_text` and `chart_grid_lines` are quiet, low-saturation greys tinted toward the palette's temperature — grid lines lighter than axis text, both far quieter than any chart color. `neutral_color` sits between `text_color` and the background.
+- **Contrast where text lives.** `text_color` on `widget_background`, `accent_text_color` on `accent_fill_color`, and `report_title_color` / `report_text_color` on `additional_colors.background` must each be comfortably readable (aim for roughly WCAG-AA-level contrast). This is where near-miss palettes fail.
+- **Let the canvas lift the cards.** Make `additional_colors.background` a subtle tint one step away from `widget_background` (slightly darker or warmer/cooler) so widgets read as cards on a page; `list_even_fill` is a barely-visible step from `widget_background`, not a loud stripe.
+- **Theme and palette agree.** The theme's header/footer `text_color` / `background_color` come from the same family as the palette (accent or its neutrals) — a blue-branded header on an earth-toned palette reads as two different reports stapled together. When creating both, derive them from the same accent; when applying a palette to a report with an existing theme, check the pair side by side.
+- **Verify on a real page.** After applying, export a tab that holds a table + chart + KPI (`export-report`) and check: series distinguishable, deltas obviously green/red, text readable on every surface, header matching the page. Adjust with `update_color` rather than shipping a near-miss.
+
 ### Dark themes — set the full key set
 
 When the background is dark you must darken the foreground keys too, or widgets keep their light defaults and text disappears:

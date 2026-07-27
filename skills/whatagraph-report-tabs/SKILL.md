@@ -92,16 +92,16 @@ manage-report-tabs action=move_widgets
 
 Widgets retain their configs and sources; only their tab assignment changes.
 
-## Set tab layout (print-ready)
+## Set report layout / orientation (print-ready)
 
 ```
-manage-report-tabs action=set_layout report_id=<id> tab_id=<id>
+manage-report-tabs action=set_layout report_id=<id>
    layout="printing_landscape_6x6"       # or "printing_portrait_4x8"
    border_radius_size="medium"           # none | small | medium | large
    show_page_numbers=true
 ```
 
-Only works on tabs with **no widgets** yet — set layout before adding widgets. Useful for print-optimized report pages.
+The layout is **report-level** (no `tab_id`) and the call is **rejected once the report contains any widget** — so when building a report, the mandatory ordering is `manage-reports action=create` → `set_layout` → attach sources → build widgets. If you reach the widget stage without setting it, the orientation is locked for that report; there is no post-hoc switch via MCP. Default to landscape (`printing_landscape_6x6`, the 6-column grid) unless the user asks for portrait — note `printing_portrait_4x8` switches the report to a **4-column** grid, which changes all the row math in `whatagraph-widgets` (verified against the served schema, Jul 2026).
 
 ## Deleting / restoring a tab
 

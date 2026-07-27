@@ -513,6 +513,8 @@ Use `currency_exchange` first to discover which metrics are convertible and thei
 
 The report uses a **6-column grid**. Every widget occupies a rectangle defined by four properties:
 
+> **Grid width follows the report's layout.** Landscape (`printing_landscape_6x6`, the default — set immediately after create, see `whatagraph-reports` → "Orientation") is the 6-column grid documented here. Portrait (`printing_portrait_4x8`) is a **4-column** grid — every width / `position_x` rule below caps at 4 instead of 6. Landscape renders a wider, shorter page: favor wide rows and keep per-tab height in check for clean PDF pagination.
+
 | Property | Range | Default | Notes |
 |---|---|---|---|
 | `position_x` | 0..5 | 0 | Horizontal column (0-based). Must satisfy `position_x + width ≤ 6`. |
@@ -554,6 +556,8 @@ When you're deciding what to show — case 3 above, or filling gaps in a loose r
 - **Many categories (dozens+)** → a pie/donut becomes an illegible confetti of slices and a bar chart runs off the axis. Use a **table** sorted by the primary metric, or a bar/column chart **limited to the top N** (see "Surfacing a top / bottom N" below). Never bind a high-cardinality dimension to a pie or donut.
 - **Continuous over time** → line / area with the date dimension, regardless of how many dates.
 
+Canonical mappings that follow from this: **gender split → pie/donut, never a table**; device category → donut; channel grouping mix → donut; age brackets → column chart; campaign / landing-page / search-term detail → table sorted desc by the primary metric; staged conversion path → funnel; country/region → GeoMap; ad creatives → Media with the thumbnail dimension.
+
 When unsure of a dimension's cardinality, check it before choosing the widget — a breakdown that looks fine on sample data can overflow on the real account.
 
 Compose by analytical priority: surface the few numbers that matter most first, then the main trend, then the breakdowns and detail. But the **selection, mix, and count** of widgets follow from what the data supports — so they vary from report to report. Don't force a fixed set or a minimum count.
@@ -592,6 +596,8 @@ Whatever the widget's stated purpose is — the user's prompt, or the widget's o
 
 ### Sizing — driven by content, not a fixed table
 
+Size scales with data density: the more rows / series / columns a widget carries, the larger it should be — grow a table's height with its row count and give the tab's centerpiece chart the widest slot, rather than shrinking dense content to fit a slot. **A widget carrying a lot of data gets more area, not a scrollbar.**
+
 Pick each widget's size from what its content needs to be legible, then fit it into the row you're building. These are affordances, not defaults:
 
 - **KPI / SingleValue / Gauge / Goal** — just a number; keep it small so several share a row. A full-row single value reads as a header.
@@ -614,8 +620,9 @@ Once you know the structure, lay it out top to bottom:
 2. **Set `position_x` / `position_y` / `width` / `height` explicitly** on every widget so rows land where you intend. `auto_place=true` (the default when you omit position) just drops a widget in the next free slot — fine for a one-off add, not for a designed or replicated layout.
 3. **Pack to match your intent** — no gaps and no overlaps, but mirror the *reference's* density: don't tighten a deliberately sparse page, don't pad a dense one.
 4. **Fill each row left-to-right and start the next row flush against the previous one.** A row's widths sum to ≤ 6; if a row doesn't reach 6, widen a widget or add another rather than leaving a trailing gap. Don't leave an empty column mid-row or an empty row between populated rows — the only intentional blank space is one a *reference* deliberately shows (see "Replicating a reference report").
-5. **Build, then verify** with `export-report` (or `list-widgets action=csv_export`) — confirm the layout and that every widget loaded data. `list-widgets action=show` echoes positions but not rendered data.
-6. **Finish with styling.** Once every tab is composed and verified, load `whatagraph-themes` and apply a theme and color palette (client branding when known, otherwise a coherent team theme). An unstyled report is an unfinished report — see `whatagraph-reports` → "Style the report before handing it over".
+5. **Standard row recipes on the 6-column grid** (starting points, not the only options): three KPI cards = `2+2+2` (h2); two charts = `3+3` or `4+2` (h3); full-width table or trend = `6` (h3, taller as row count grows — a widget carrying a lot of data gets more area, not a scrollbar); section header comment = `6×1`; three creative tiles = `2+2+2` (h3).
+6. **Build, then verify** with `export-report` (or `list-widgets action=csv_export`) — confirm the layout and that every widget loaded data. `list-widgets action=show` echoes positions but not rendered data.
+7. **Finish with styling.** Once every tab is composed and verified, load `whatagraph-themes` and apply a theme and color palette (client branding when known, otherwise a coherent team theme). An unstyled report is an unfinished report — see `whatagraph-reports` → "Style the report before handing it over".
 
 ### Composing a full tab (self-directed builds)
 
