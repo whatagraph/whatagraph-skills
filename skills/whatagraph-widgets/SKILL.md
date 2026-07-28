@@ -48,7 +48,10 @@ manage-widgets action=create
    channel_id=<channel_id>             # integer ID or slug, e.g. 5 or "google-ads"
    widget_type_id=<widget_type>        # prefer 101+ (new architecture)
    source_id=<report_local_source_id>  # omit for sample-data widget
+   name="<widget title>"               # always set — see Titles
 ```
+
+**Always pass `name` at create** — a widget created without one renders the platform's default label. Set each row's rendered label in `rows[].options.title` at the same time (see "Titles — every widget and every metric row is labelled").
 
 You can pass `rows` at create time to bind metrics and dimensions immediately — no separate update needed. If `rows` is omitted, the widget defaults to the first metric in the source catalog.
 
@@ -84,7 +87,9 @@ Use `list-sources action=list_dimensions_and_metrics` to find the correct dimens
 manage-widgets action=create
    report_id=<id> tab_id=<tab_id>
    channel_id="google-ads" widget_type_id=105 source_id=<id>
-   rows=[{"configs": [{"options": {"report_type": "campaign", "metrics": ["impressions"], "dimensions": ["segments.date"]}}]}]
+   name="Impressions Over Time"
+   rows=[{"options": {"title": "Impressions"},
+          "configs": [{"options": {"report_type": "campaign", "metrics": ["impressions"], "dimensions": ["segments.date"]}}]}]
 ```
 
 **Table example** (with categorical dimension):
@@ -92,7 +97,9 @@ manage-widgets action=create
 manage-widgets action=create
    report_id=<id> tab_id=<tab_id>
    channel_id="google-ads" widget_type_id=102 source_id=<id>
-   rows=[{"configs": [{"options": {"report_type": "campaign", "metrics": ["impressions", "clicks"], "dimensions": ["campaign_name"]}}]}]
+   name="Campaign Performance"
+   rows=[{"options": {"title": "Campaign Performance"},
+          "configs": [{"options": {"report_type": "campaign", "metrics": ["impressions", "clicks"], "dimensions": ["campaign_name"]}}]}]
 ```
 
 **SingleValue example** (no dimension needed):
@@ -100,7 +107,9 @@ manage-widgets action=create
 manage-widgets action=create
    report_id=<id> tab_id=<tab_id>
    channel_id="google-ads" widget_type_id=101 source_id=<id>
-   rows=[{"configs": [{"options": {"report_type": "campaign", "metrics": ["impressions"]}}]}]
+   name="Total Impressions"
+   rows=[{"options": {"title": "Impressions"},
+          "configs": [{"options": {"report_type": "campaign", "metrics": ["impressions"]}}]}]
 ```
 
 ### `source_id` — global or report-local
@@ -374,6 +383,7 @@ manage-widgets action=create
    channel_id=<channel_id>
    widget_type_id=109                    # donut, pie, bar, column
    source_id=<report_local_source_id>
+   name="Clicks by Ad Group"
    options={"width": 4, "height": 3, "breakdowns_enabled": true, "breakdowns_show": true}
    rows=[
      {
@@ -392,6 +402,7 @@ manage-widgets action=create
    channel_id=<channel_id>
    widget_type_id=109
    source_id=<report_local_source_id>
+   name="Impressions vs Clicks"
    options={"width": 4, "height": 3, "breakdowns_enabled": false, "breakdowns_show": true}
    rows=[
      {
