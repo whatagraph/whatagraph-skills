@@ -55,10 +55,12 @@ manage-reports action=create
    client_id=<space_id>
    name="Acme — October 2025"
    tab_name="Overview"          # optional — names the default tab
+   layout="printing_landscape_6x6"   # optional — orientation; defaults to landscape
 ```
 
 - `client_id` = space id (the `team_client` id). Find via `list-spaces action=list`.
 - A default tab is always created with the report (verified Jun 2026) — pass `tab_name` to name it, otherwise it's unnamed. Add further tabs via `manage-report-tabs action=create`.
+- **Orientation is set here, at create.** `layout` is optional and **defaults to `printing_landscape_6x6`** (wide 6-column grid) when omitted — pass `printing_portrait_4x8` (narrow 4-column grid) only when the user asks for portrait. Setting it inline is the recommended path: a brand-new report has no widgets, so there is no ordering foot-gun and no need to follow up with `manage-report-tabs action=set_layout`. Once widgets exist the layout can no longer be changed via MCP, so decide orientation at create time.
 
 ## Create from a template (linked)
 
@@ -67,9 +69,12 @@ manage-reports action=create_from_template
    client_id=<space_id>
    template_id=<template_id>
    name="Custom Report Name"
+   layout="printing_portrait_4x8"    # optional — overrides the template's orientation
 ```
 
 Creates a new report **linked** to the template — structural changes on the template propagate to the report until unlinked. Both `create` and `create_from_template` accept `idempotency_key` for retry-safe creation. When the response shows `uses_sample_data: true`, remap sources with `change_sources` before handing the report over.
+
+`layout` is optional here and — unlike blank `create` — is **not** defaulted: omit it to keep the template's own orientation, pass it only to override. An explicit `layout` is honoured only while the new report still has no widgets; a template that already carries widgets rejects the override, so keep the template's orientation in that case.
 
 ## Duplicate an existing report
 
@@ -226,15 +231,19 @@ The `detach_source` action above is also destructive when called with `delete_wi
     "name": "Acme — October 2025",
     "type": "ondemand",
     "space_id": 45,
+    "layout": "printing_landscape_6x6",
+    "layout_type": "desktop_landscape",
     "default_tab_id": 678,
     "tabs": [{ "id": 678, "name": "Overview", "position": 0 }]
   }
 }
 ```
 
+The `layout` / `layout_type` fields are returned by `create` only (it echoes the orientation it applied — landscape by default). `duplicate` copies the source report's layout but does not echo these fields in its response.
+
 ### `create_from_template`
 
-Same as `create` plus `linked_template_id`, `uses_sample_data`, and (when sample data is present) `sample_data_channels` and `next_steps`.
+Same as `create` plus `linked_template_id`, `uses_sample_data`, and (when sample data is present) `sample_data_channels` and `next_steps`. `layout` / `layout_type` reflect the template's layout unless an explicit `layout` was passed to override it.
 
 ### `update`
 
