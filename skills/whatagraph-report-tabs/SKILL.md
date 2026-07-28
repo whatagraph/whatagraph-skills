@@ -92,7 +92,7 @@ manage-report-tabs action=move_widgets
 
 Widgets retain their configs and sources; only their tab assignment changes.
 
-## Set tab layout (print-ready)
+## Set report layout (print-ready)
 
 ```
 manage-report-tabs action=set_layout report_id=<id> tab_id=<id>
@@ -101,7 +101,9 @@ manage-report-tabs action=set_layout report_id=<id> tab_id=<id>
    show_page_numbers=true
 ```
 
-Only works on tabs with **no widgets** yet — set layout before adding widgets. Useful for print-optimized report pages.
+Sets the report's grid orientation. Only works while the report has **no widgets** yet — changing it later would misplace existing widgets, so it's rejected.
+
+**Prefer setting orientation at create instead.** For a brand-new report, pass `layout` directly to `manage-reports action=create` (it defaults to landscape) — a single call with no ordering foot-gun. Reach for `set_layout` here only to change the orientation of an already-created report that is *still empty*, or to also adjust `border_radius_size` / `show_page_numbers`.
 
 ## Deleting / restoring a tab
 
