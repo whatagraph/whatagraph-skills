@@ -95,7 +95,7 @@ Widgets retain their configs and sources; only their tab assignment changes.
 ## Set report layout (print-ready)
 
 ```
-manage-report-tabs action=set_layout report_id=<id> tab_id=<id>
+manage-report-tabs action=set_layout report_id=<id>
    layout="printing_landscape_6x6"       # or "printing_portrait_4x8"
    border_radius_size="medium"           # none | small | medium | large
    show_page_numbers=true
