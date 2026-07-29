@@ -82,8 +82,8 @@ rather than silently dropping them, and it needs an existing widget, so it works
     }
   ],
   "axes": {
-    "x": { "type": "value", "name": "Spend" },
-    "y": { "type": "value", "name": "Conversions" }
+    "x": { "type": "value" },
+    "y": { "type": "value" }
   },
   "legend": true,
   "tooltip": "item"
@@ -97,14 +97,14 @@ rather than silently dropping them, and it needs an existing widget, so it works
 | `encode` | Which bound column drives which visual channel. Refs are `metric:<external_id>` / `dimension:<external_id>`; `metric:0` / `dimension:0` positional forms also work, but prefer by-id — it survives re-ordering of the bindings and you can verify it by reading the response back. |
 | `size` | What turns a scatter into a bubble chart: a third metric becomes point size. |
 | `transform` | Applied in order before plotting. `[{"op":"sort","by":"metric:spend","dir":"desc"},{"op":"limit","n":10}]` is how you build top-N — do not try to pre-filter the data. |
-| `axes.x` / `axes.y` | Intent only: `category`, `value`, `time`, `log`, plus an optional `name`. On a polar chart, x is the angle and y the radius. |
+| `axes.x` / `axes.y` | Intent only: `category`, `value`, `time`, `log`. On a polar chart, x is the angle and y the radius. **There is no axis title** — reports never render one, so name the series instead (`series[].name`), which is what the legend and tooltip show. |
 | `coordinate` | `cartesian` (default x/y grid) or `polar` for radial charts. Works with `bar`, `line`, `scatter`, `effectScatter` — not `heatmap` or `candlestick`. |
 | `legend`, `tooltip` | `tooltip` is `item`, `axis`, or `none`. |
 | `preset` | Optional label from the catalogue. The `series` carry the chart; the label carries nothing. |
 
-Tick formatting, label rotation, colours, and grid geometry are deliberately **not** in the
-spec — they depend on the rendered size and the report theme, which you cannot see, and the
-report owns them.
+Tick formatting, label rotation, colours, grid geometry and data labels are deliberately
+**not** in the spec — they follow the report's theme and its widget settings (`hide_legend`,
+`show_chart_labels`, `decimal_place`, `currency`), which the report owns and you cannot see.
 
 ## Rules that will bite you
 
