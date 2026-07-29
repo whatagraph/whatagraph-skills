@@ -1,7 +1,7 @@
 ---
 name: whatagraph-dynamic-charts
 type: domain
-description: Build chart families that have no dedicated widget type — scatter, bubble, heatmap, candlestick, pie/donut/rose, radial (polar) bars, bars-plus-line combo, top-N ranking — with the Dynamic Chart widget (141) and a `chart_spec`. Use when the chart a user asks for cannot be expressed by the standard widget types (correlation between two metrics, a third metric as bubble size, a metric across two dimensions, a ranked top-N bar), or when writing, dry-running, or debugging a `chart_spec`.
+description: Build chart families that have no dedicated widget type — scatter, bubble, heatmap, candlestick, pie/donut/rose, polar bars, bars-plus-line combo, top-N ranking — with the Dynamic Chart widget and a `chart_spec`. Use when the chart asked for cannot be expressed by the standard widget types, or when writing, dry-running, or debugging a `chart_spec`.
 required_tools:
   - list-sources
   - list-widgets
@@ -14,7 +14,7 @@ Tools covered: `list-widgets` (`chart_presets`), `manage-widgets` (`chart_spec`,
 
 Whatagraph has a widget type per chart family — column, line, pie, funnel, geomap. When a user
 wants a family that is not on that list, you do not need a new widget type: create a **Dynamic
-Chart** (`widget_type_id: 141`, name `dynamic_chart`) and describe the chart with a
+Chart** (`widget_type_id: 142`, name `dynamic_chart`) and describe the chart with a
 `chart_spec`.
 
 A spec describes the chart in terms of the widget's **bindings** — which bound column drives
