@@ -137,7 +137,7 @@ Widget types are integers. Prefer the modern types (`101+`) unless you have a sp
 | Gauge (dial-style single value) | `139` |
 | GeoMap (geographic map, BETA) | `140` |
 | Filter control (dimension dropdown) | `137` |
-| Dynamic chart (scatter, bubble, candlestick, rose, polar bars, combo) | `142` — needs a `chart_spec`; load the `whatagraph-dynamic-charts` skill |
+| Dynamic chart (scatter, bubble, heatmap, candlestick, combo, top-N) | `142` — needs a `chart_spec`; load the `whatagraph-dynamic-charts` skill |
 
 Comment, image, and calendar widgets are the only widget types that take `channel_id=7` and no `source_id`. Filter control (`137`) needs a `channel_id` and `source_id` but does not load data — it renders as a dimension dropdown that filters other widgets on the tab. Every other data-bearing widget needs a `channel_id` matching the source's channel and a report-local `source_id`.
 
@@ -356,7 +356,7 @@ Known `options` shapes:
 - **Gauge** (`widget_type_id=139`): dial-style single metric display. Same configuration as SingleValue (`101`) but different visual rendering — use when a circular dial is more appropriate than a plain number. Supports `start_value` and `end_value` in row options to set the gauge range.
 - **Heatmap** (`widget_type_id=138`): heat-colored grid showing metric values across time/dimension. Same configuration as SingleValue (`101`).
 - **GeoMap** (`widget_type_id=140`, BETA): geographic map. Set `options.geo_map_region` to control the displayed region (see Type-specific options table above). Bind a dimension with country/region data.
-- **Dynamic chart** (`widget_type_id=142`): the type for chart families with no dedicated widget type — scatter, bubble (a third metric as point size), candlestick, rose, polar stacked bars, and a bars-plus-line combo. Bind rows as usual, then describe the chart with a `chart_spec`. Load the `whatagraph-dynamic-charts` skill before writing one; it is refused at create without a spec. Where a dedicated type exists — heatmap `138`, donut `109`, pie `108`, bar `106` — create that instead: a dynamic chart cannot be edited in the widget drawer.
+- **Dynamic chart** (`widget_type_id=142`): the type for chart families with no dedicated widget type — scatter, bubble (a third metric as point size), heatmap across two dimensions, candlestick, bars-plus-line combo, and ranked top-N. Bind rows as usual, then describe the chart with a `chart_spec`. Load the `whatagraph-dynamic-charts` skill before writing one; it is refused at create without a spec.
 - **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads.
 
 ## Breakdown vs non-breakdown (pie / donut / bar)

@@ -1,7 +1,7 @@
 ---
 name: whatagraph-dynamic-charts
 type: domain
-description: Build chart families that have no dedicated widget type — scatter, bubble, candlestick, rose, polar bars, bars-plus-line combo — with the Dynamic Chart widget and a `chart_spec`. Use when the chart asked for cannot be expressed by the standard widget types, or when writing, dry-running, or debugging a `chart_spec`.
+description: Build chart families that have no dedicated widget type — scatter, bubble, heatmap, candlestick, pie/donut/rose, polar bars, bars-plus-line combo, top-N ranking — with the Dynamic Chart widget and a `chart_spec`. Use when the chart asked for cannot be expressed by the standard widget types, or when writing, dry-running, or debugging a `chart_spec`.
 required_tools:
   - list-sources
   - list-widgets
@@ -26,26 +26,16 @@ bindings change.
 
 - Two metrics against each other (spend vs conversions, CPC vs volume) → scatter.
 - The same, plus a third metric as point size (budget, impressions) → bubble.
+- One metric across **two** categorical dimensions (day × hour, channel × device) → heatmap.
+- A ranked "top 10 campaigns by spend" bar → `sort` + `limit` on a bar series.
 - A volume metric as bars with a rate metric as a line over the same dimension → combo.
 - Open/close/low/high per period → candlestick.
-- A composition where the slice **radius** should carry the magnitude too → rose.
+- Share of a total across one dimension → `pie`, `donut`, or `rose` (slice radius also carries the value).
 - A composition wrapped around a circle, for cyclical categories like hour or weekday → a stacked bar with `coordinate: "polar"`.
 
-## Use a native widget type instead
-
-A dynamic chart is **not** editable in the widget drawer: its family and channels live in the
-spec, and only `manage-widgets` can write one. So whenever a dedicated widget type exists, that
-type wins — the user can adjust it afterwards, and you write no spec at all.
-
-| Asked for | Create this instead |
-|---|---|
-| Heatmap — one metric across two categorical dimensions | **Heatmap `138`**: bind exactly two dimensions and one metric. It has its own colour scale. |
-| Share of total — donut or pie | **Donut `109`** / **Pie `108`**: one dimension, one metric. Set `options.pie_top_n` to keep the N largest slices and bucket the rest as "Other". |
-| Ranked bar — "top 10 campaigns by spend" | **Bar `106`** (horizontal) or **Column `104`** (vertical): one dimension, one metric. There is no top-N option for bars, so say so if the dimension has many values. |
-| A single trend line | **Line `107`**; stacked composition over time → **Stacked column `119`**. |
-
-The `chart_presets` response repeats this as `use_native_widget_type_instead`. For how to create
-those types, see the `whatagraph-widgets` skill.
+Do **not** reach for this when a standard type already fits — a single trend line is a line
+chart (`107`), share-of-total is a pie (`108`). Use the ordinary types where they apply; see
+the `whatagraph-widgets` skill.
 
 ## The loop
 
@@ -106,7 +96,7 @@ rather than silently dropping them, and it needs an existing widget, so it works
 | `row` | Zero-based index of the widget row this series reads (default `0`). Several series may read the same row or different rows. |
 | `encode` | Which bound column drives which visual channel. Refs are `metric:<external_id>` / `dimension:<external_id>`; `metric:0` / `dimension:0` positional forms also work, but prefer by-id — it survives re-ordering of the bindings and you can verify it by reading the response back. |
 | `size` | What turns a scatter into a bubble chart: a third metric becomes point size. |
-| `transform` | Applied in order before plotting. `[{"op":"sort","by":"metric:spend","dir":"desc"},{"op":"limit","n":10}]` keeps a high-cardinality dimension readable — do not try to pre-filter the data. Note `limit` **drops** the remainder; it does not bucket it into "Other". |
+| `transform` | Applied in order before plotting. `[{"op":"sort","by":"metric:spend","dir":"desc"},{"op":"limit","n":10}]` is how you build top-N — do not try to pre-filter the data. |
 | `axes.x` / `axes.y` | Intent only: `category`, `value`, `time`, `log`. On a polar chart, x is the angle and y the radius. **There is no axis title** — reports never render one, so name the series instead (`series[].name`), which is what the legend and tooltip show. |
 | `coordinate` | `cartesian` (default x/y grid) or `polar` for radial charts. Works with `bar`, `line`, `scatter`, `effectScatter` — not `heatmap` or `candlestick`. |
 | `legend`, `tooltip` | `tooltip` is `item`, `axis`, or `none`. |
@@ -133,10 +123,10 @@ Tick formatting, label rotation, colours, grid geometry and data labels are deli
   metrics genuinely mean those things.
 - **Pass the spec as the top-level `chart_spec`**, never inside `options` — only the top-level
   parameter is validated and compiled.
-- **The pie family takes `itemName` + `value`, not x/y**, and has no axes. It cannot share a chart with a series that needs them — one chart per family. `pie`, `donut` and `rose` are one ECharts type with a different shape; only `rose` belongs here, because the other two have native widget types.
-- **Always sort and limit a rose or a scatter over a high-cardinality dimension.** A rose with 30 slices, or a scatter with 200 points, is noise — and it hides the very change you were looking for.
+- **The pie family takes `itemName` + `value`, not x/y**, and has no axes. It cannot share a chart with a series that needs them — one chart per family. `donut` and `rose` are `pie` with a different shape, so pick the name that matches the chart you mean.
+- **Always sort and limit a pie or a scatter over a high-cardinality dimension.** A donut with 30 slices, or a scatter with 200 points, is noise — and it hides the very change you were looking for.
 - **Sizing.** A dynamic chart defaults to a full-width 6×3 tile. Categorical x-axes need that
-  width or labels truncate; scatter reads well closer to square.
+  width or labels truncate; scatter and heatmap read well closer to square.
 
 ## Not available yet
 
@@ -145,11 +135,10 @@ one that is absent, because you would build on it:
 
 | Asked for | Why not | Offer instead |
 |---|---|---|
-| Bump / rank-over-time chart | Needs a `rank` transform that does not exist yet | A native bar (`106`) of the ranking metric, or a line of the underlying metric |
+| Bump / rank-over-time chart | Needs a `rank` transform that does not exist yet | Top-N bar, or a line of the underlying metric |
 | Boxplot | Needs precomputed min/Q1/median/Q3/max | Scatter of the same rows |
 | Radar | Needs indicator axes | Polar bar, or a bar comparison |
-| Half donut / gauge-like arc | The spec has no `startAngle`/`endAngle` | Native donut (`109`), or the Gauge widget (`139`) |
-| Treemap, sunburst, sankey | Need hierarchical or link-shaped data, and aggregation the compiler does not do | Native donut (`109`) for composition, native bar (`106`) for ranking |
+| Treemap, sunburst, sankey | Need hierarchical or link-shaped data, and aggregation the compiler does not do | Donut for composition, top-N bar for ranking |
 
 Say plainly that the family is not available and offer the nearest shipping one — do not
 approximate it with a chart that looks similar but means something else.
