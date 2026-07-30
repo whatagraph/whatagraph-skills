@@ -22,14 +22,14 @@ A **report** is a named container of tabs and widgets, scoped to a single **spac
 
 > **Default: build from scratch. Templates are opt-in, never a shortcut.** `create_from_template` is used only when the request or the agent's instructions explicitly say to use a template (or name one). An open request like "create a report for X" is a scratch build — do not scan the team's templates, and never browse Whatagraph's pre-made template gallery, for a match first. When a template IS explicitly called for, use the **user's own (team-created) template** — the one they named or built — not a pre-made gallery template, unless the instructions name a gallery template specifically. When a template is used, run `change_sources` immediately after `create_from_template`.
 >
-> **Default: deliver unlinked.** `create_from_template` always produces a **linked** report (template edits propagate into it). Do not hand over a linked report unless the request or agent instructions explicitly ask for linking/auto-sync (e.g. scaling one layout across many clients). For everything else, convert to an independent copy via the duplicate flow in "Create from a template" below.
+> **Default: deliver unlinked.** `create_from_template` always produces a **linked** report (template edits propagate into it). Do not hand over a linked report unless the user specifically asks for linking/auto-sync, or it is clearly relevant in the context (e.g. the task is scaling one layout across many clients, or a standardization rollout where reports must stay in step with a master template). For everything else, convert to an independent copy via the duplicate flow in "Create from a template" below.
 
 A report references data through **report-local sources**. Before a widget on the report can use a data source, the source must be attached to the report — `manage-reports` exposes the attach / detach actions that mirror what the report builder UI does when a user picks a source from the side panel.
 
 ## Use this when
 
 - Onboarding a new client — create a blank report (from scratch by default); clone from template only when explicitly requested.
-- Rolling out the same report structure to 20 clients — use a template, and keep the reports linked only when auto-sync is explicitly requested.
+- Rolling out the same report structure to 20 clients — use a template; keeping the reports linked is appropriate here because the scaling context makes auto-sync relevant.
 - Attaching a data source to a report so widgets can use it — `attach_source`.
 - Attaching a sample-data placeholder for a channel — `attach_source` with `channel_ids`.
 - Detaching a source the report no longer needs — `detach_source`.
@@ -85,7 +85,7 @@ manage-reports action=create_from_template
 3. Delete the linked intermediate (`delete-reports`) — it is scaffolding you created seconds ago with no user content, so this delete needs no confirmation round-trip.
 4. Continue on the duplicate: rename it to the intended name (`manage-reports action=update`), then `change_sources`, date range, theming.
 
-**Explicit scaling — keep the link.** Only when the request or agent instructions explicitly say the report should stay in sync with the template (rolling one layout out across many clients, centralized template maintenance) do you keep the report from step 1 as-is: structural changes on the template propagate to it until unlinked.
+**Scaling — keep the link.** Keep the report from step 1 as-is (linked) when the user specifically asks for auto-sync, or the context makes it clearly relevant — rolling one layout out across many clients, or centralized template maintenance where reports must stay in step with a master template. Structural changes on the template propagate to it until unlinked.
 
 Both `create` and `create_from_template` accept `idempotency_key` for retry-safe creation. When the response shows `uses_sample_data: true`, remap sources with `change_sources` before handing the report over.
 
@@ -349,7 +349,7 @@ Same as `create` plus `linked_template_id`, `uses_sample_data`, and (when sample
 - **Creating a widget before attaching the source** — `manage-widgets` validates `source_id` against the report's attached sources. Call `attach_source` first and use the returned report-local `source_id`.
 - **Detaching the last source of a channel without `delete_widgets=true`** — there is no fallback source to remap dependent widgets to; the call fails. Either pass `delete_widgets=true` or attach another source of the same channel first.
 - **Reaching for a template on an open request** — "create a report for X" means build from scratch. Scanning `list-templates` (or the pre-made gallery) for something that "fits" is a template pick nobody asked for.
-- **Handing over a linked report nobody asked to be linked** — `create_from_template` always links. Unless linking/auto-sync was explicitly requested, run the duplicate → delete-intermediate flow so the delivered report is independent.
+- **Handing over a linked report nobody asked to be linked** — `create_from_template` always links. Unless the user asked for auto-sync or the context clearly calls for it (a many-client scaling rollout), run the duplicate → delete-intermediate flow so the delivered report is independent.
 - **Creating from a template without re-mapping sources** — the report inherits whatever sources the template defined (often sample data); call `change_sources` immediately after creation.
 - **Forgetting that linked reports auto-update** — edits to the template ripple into the linked report. Fine for standardization, surprising for one-off tweaks. If the client needs bespoke changes, duplicate instead of linking.
 - **`create_from_template` on a template that's not yet filled out** — the resulting report inherits empty/sample widgets. Verify template via `list-templates action=show` before rolling out.
