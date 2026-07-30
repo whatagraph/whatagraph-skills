@@ -331,6 +331,7 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 Known `options` shapes:
 
 - **Comment / text widget** (`widget_type_id=21`): on **write**, supply `{"comment_widget_text": {"text": "Hello\nWorld", "contentAlign": "top"}}` in `rows[].options` — `text` is a plain string, the platform converts it. The tool auto-propagates this to `configs[].options.comment_widget_text.text`. The legacy `{"text": "<html>", "comment": "<html>"}` shape also works for older accounts.
+  - ⚠️ **Newlines must be real newline characters in the string — never the literal two-character sequence `\n` (backslash + n).** LLM tool-callers frequently double-escape control characters; a literal `\n` is not a line break. The platform then sees one long line, so a leading `##` turns the *entire* text — heading **and** body — into one oversized heading that overflows the widget and displays a visible `\n` in the rendered report. If a rendered comment shows a literal `\n`, the payload was double-escaped: recreate the widget with real newlines. When in doubt, avoid multi-line `text` entirely — put the heading and the body copy in **separate** comment widgets (see "Section headers").
   - **Three formatting layers** — supply `text` OR `description` inside `comment_widget_text`, never both (verified Jun 2026):
     1. Plain `text` string → paragraphs.
     2. `text` with **markdown** → headings, bold, italic, lists, links (converted to a Tiptap document on save).
@@ -594,6 +595,7 @@ A tab that holds more than one group of content (a KPI block, then a trend secti
 - **Text:** a markdown heading in `rows[].options.comment_widget_text.text` — e.g. `## Campaign performance` — naming the section's theme, not repeating the widget titles below it. Keep it to a few words; optionally add one plain-text line of context beneath the heading. For styled headers (color, size, alignment) use a Tiptap `description` — see the Comment widget notes under `### options`.
 - **When to use one:** whenever a tab has two or more distinct sections — which a full, self-directed tab always does by default, since two sections is the floor (see "Composing a full tab"). The tab's *first* header also serves as the page title when the tab name alone isn't enough.
 - **When not to:** a tab that is genuinely one section (a single full-page table the user asked for, a lean one-pager) doesn't need a header row per widget — headers earn their row only when they separate something. Never stack two headers with no content between them.
+- **A section header holds ONLY the `## …` line.** Body copy — an intro paragraph, narrative text, or an AI summary — is a **separate** comment widget sized per the Comment sizing rule (`height: 2` for 1–2 sentences, `height: 3` per paragraph, `height: 4+` for a multi-paragraph AI text block), and body copy never carries a `##` prefix. Never append body text to a 6×1 header — a 6×1 comment fits exactly one short heading line, nothing more.
 
 ### Fit for purpose — fields must match the intent and each other
 
@@ -757,3 +759,4 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **`tab_id` missing on create** — required. Find via `list-report-tabs action=list`.
 - **`sort` warning on single-value widgets** — the "`sort` has no effect" warning only fires for row-level `sort` (a data-sort directive). The `sort` field inside `rows[].options.metrics[]` is a positional ordinal index required by the dual-array pattern — it does not trigger the warning.
 - **AI text (`update_ai_text`) errors** — if generation fails with a timeout, the settings are saved; retry after ~30 seconds. A non-timeout error may indicate the AI feature is not available on the team's plan.
+- **Literal `\n` in comment text** — a comment widget whose rendered text shows a visible `\n` (and renders entirely in heading size) received a double-escaped newline: the string contained the two characters backslash + n instead of a line break. Recreate with real newlines, or split into a header widget + a separate text-block widget.
