@@ -45,6 +45,35 @@ view-goals action=show goal_id=<id>                # full details
 
 Pagination: page-number based (not cursor). `page` (integer, default 1) and `per_page` (integer, default 64, max 500). Use `last_page` from the response to know total pages.
 
+`list` and `show` return **configuration only** — the target, the period, the direction. No current value, no verdict. Their `active` field means the goal is still running, **not** that it is being met. Never conclude from `list` or `show` that a goal is healthy, on track, or within its limit.
+
+## Checking whether goals are being met
+
+```
+view-goals action=status goal_ids=[4455, 4017]
+```
+
+This is the only action that fetches actual data and decides. Per goal it returns:
+
+| Field | Meaning |
+|-------|---------|
+| `status` | `on_track`, `off_track`, or `unknown` |
+| `current_value` | Measured value so far in the goal's period |
+| `goal_value` | The target, pro-rated to the working period |
+| `percentage` | `current_value` as a share of `goal_value` |
+| `projected_value` | Where the metric lands at the end of the period if the current run-rate holds |
+| `current_pacing` | Run-rate per day, measured over a trailing 7-day window |
+| `remaining_value` | How much is still needed (floored at 0) |
+| `days_remaining` | Days left in the goal's period |
+
+Response totals: `off_track_count`, `on_track_count`, `evaluated_count`, `unknown_goal_ids`, `missing_goal_ids`.
+
+`off_track` means the goal is **projected** to miss a target or breach a limit at the current run-rate — not merely that it is behind an even pace. A goal already over a `limit` is off track; a `target` already achieved is on track.
+
+`unknown` means the goal could not be measured at all — a disconnected source, a metric that no longer exists, an empty response. The `error` field says why. Report it as a blind spot; never count it as a pass.
+
+`goal_ids` is **required and capped at 20 per call**, because each goal costs two source fetches (the working period plus the trailing pacing window). To check a whole account: `list` first, then `status` in batches of 20. `missing_goal_ids` tells you which requested IDs did not exist for the team, so a stale ID silently drops out of the batch rather than failing it.
+
 ## Creating a goal
 
 ```
@@ -108,10 +137,11 @@ Batch-only — always an array, even for one goal. Goal widgets show an empty st
 
 - Bulk create goals — one at a time.
 - Custom pacing schedules — linear only; for seasonal/custom pacing, reach out to support.
-- Read goal progress/attainment — `view-goals` returns the goal's **configuration only**, no current values. To show progress, render a Goal widget (`widget_type_id=123`) and read it via `export-report`, or `fetch-data` the underlying metric and compare it to `max_value` yourself.
+- Check more than 20 goals in one call — `action=status` caps `goal_ids` at 20; batch larger checks.
 
 ## Common pitfalls
 
+- **Reading `active: true` from `list` as "the goal is being met"** — it only means the goal is still running. Answering "all goals are healthy" off a `list` response states a verdict that was never measured. Call `action=status` or say you have not checked.
 - **`repeat` as int vs string** — MCP expects `"1"` / `"0"` as strings.
 - **`condition=limit` but passing `min_value`** — `min_value` is only used for `range`. Pass `max_value` for limit caps.
 - **Goal on a source group** — pass the source group's integration source id (the exposed virtual source) as `integration_source_id`.

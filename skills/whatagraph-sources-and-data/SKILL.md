@@ -96,6 +96,16 @@ list-sources action=list_dimensions_and_metrics source_id=<id> report_type="camp
 - **`is_universal=true`** — only the unified `universal_*` fields (source groups / blends); `false` — only channel-native fields; omit for all.
 - This call is **paginated**: decide whether to continue with `page.has_more` (not `estimated_total`, which is commonly `null` on this action), passing `page.cursor`. Prefer `filter` / `is_universal` / `per_page` over paging the whole catalog.
 
+### Deprecated fields
+
+Fields the channel has retired carry `deprecated_at`, and `deprecated: true` once that date has passed. Both keys are only present when a date is set, so absence means the field is current.
+
+- Fields whose deprecation has **already taken effect** are left out of the catalog entirely — they no longer return data. If a widget is bound to one, `list-widgets action=show` flags it inline (`"deprecated": true` on the bound metric), which is the way to tell a retired binding apart from a typo.
+- Fields with a **future** `deprecated_at` are still listed and still work, but are sorted to the bottom of the catalog (so onto the last page). Treat them as "migrate before this date", not as a choice.
+- `manage-widgets` refuses to bind a field whose deprecation has taken effect, and warns when binding one that is only scheduled.
+
+To replace a retired metric: read the widget with `list-widgets action=show` to see which bound fields are flagged, then look for the current equivalent in the catalog — the replacement usually shares wording with the old name (e.g. a retired "Likes" metric replaced by "Followers"). `resolve_fields` with a natural-language query is the fastest way to find it.
+
 ## Fetching raw data
 
 Field ids in `metrics` and `dimensions` are the channel-native `external_id` returned by `list_dimensions_and_metrics` — not display names, not what the native platform's API calls them. For Google Ads campaign-level fetches that means `metrics.clicks`, `metrics.impressions`, `metrics.cost_micros`, and the dimension is `campaign.name` (dot, not underscore). For source groups and blends the ids are different again — see the family table below.

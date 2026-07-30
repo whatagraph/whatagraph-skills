@@ -77,7 +77,7 @@ Help users discover and navigate the data available in their Whatagraph account.
 | `list-custom-dimensions` | `list`, `list_with_premades`, `show`, `usage`, `list_tags` | User-created and premade dimensions; `list_tags` shows tag values + assigned sources for tag-type dimensions |
 | `list-themes` | `list_themes`, `list_colors` | Report visual themes and palettes |
 | `list-overviews` | `list`, `show` | KPI tracking dashboards |
-| `view-goals` | `list`, `show` | Metric targets and progress |
+| `view-goals` | `list`, `show`, `status` | Metric targets (`list` / `show`) and measured attainment (`status`) |
 | `view-team` | `show`, `show_subscription`, `members`, `search`, `roles`, `list_plans` | Account settings, subscription limits, user roster, cross-domain search |
 
 ## Report Types: Required for Most Paid Channels
