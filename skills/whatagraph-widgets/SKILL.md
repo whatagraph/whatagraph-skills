@@ -120,7 +120,9 @@ Discover already-attached sources via `list-reports action=list_sources report_i
 
 ### `widget_type_id` — widget types
 
-Widget types are integers. Prefer the modern types (`101+`) unless you have a specific reason to use an older type. Common values exposed by `list-widgets`:
+Widget types are integers. `manage-widgets` writes current-generation types only: `101+`, their offline (manually entered data) counterparts, and the comment / image / calendar utility types. Anything older is rejected on create **and** update — including multi-source table (`37`), which is deprecated in favour of blends and source groups; combine sources there and bind the result to a table (`102`).
+
+Common values exposed by `list-widgets`:
 
 | Widget type | `widget_type_id` |
 |---|---|
@@ -169,7 +171,9 @@ manage-widgets action=apply_premade                # alias: create_premade
 
 ## Update a widget
 
-Supply metrics on `configs[].options.metrics` (array of objects or strings; singular `metric` is auto-wrapped). On write, the platform converts your `metrics` / `dimensions` payload to its internal storage shape `integration-metrics` / `integration-dimensions`, and `list-widgets action=show` will echo those keys back. That's expected — read paths return `integration-metrics`, write paths accept `metrics`. Do not hand-craft `integration-metrics` on input; supply `metrics` and let the platform convert.
+Supply metrics on `configs[].options.metrics` (array of objects or strings; singular `metric` is auto-wrapped). Reads and writes use the same vocabulary: `list-widgets action=show` returns each config's bindings as `metrics` / `dimensions` / `report_types`, which is exactly what `manage-widgets` accepts back, so a config you read can be sent straight back.
+
+The old storage keys `integration-metrics` / `integration-dimensions` / `integration-report-types` are **rejected** on input (changed Jul 2026) and are no longer returned by any response. They used to bind nothing while still displaying in the widget row, which left widgets rendering "Metrics not selected" after a write that reported success. If you see one in an error message, replace it with `metrics`, `dimensions`, or `report_type`.
 
 ```
 manage-widgets action=update
@@ -750,7 +754,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **Creating without `widget_type_id`** — required; verify via existing widgets on the tab.
 - **Passing an invalid `source_id`** — the tool accepts both global and report-local IDs, but will error if the ID doesn't exist. Use `list-sources` or `list-reports action=list_sources` to find valid IDs.
 - **`metrics=[]` as a top-level param** — wrong shape. Metrics live inside `rows[].options.metrics` (row label) and `rows[].configs[].options.metrics` (data binding).
-- **Hand-crafting `integration-metrics` / `integration-dimensions` on input** — supply `metrics` and `dimensions` instead; the platform converts to the internal storage keys automatically. `list-widgets action=show` echoes the internal keys back — that's expected, not an error.
+- **Sending `integration-metrics` / `integration-dimensions` / `integration-report-types`** — rejected with an error naming the key to use instead (`metrics`, `dimensions`, `report_type`). These are pre-new-architecture storage keys that bind nothing on a current widget. No response returns them any more either, so there is nothing to copy them from.
 - **Batch operations without `widget_ids`** — the array is required. Empty array = no-op, not "all widgets".
 - **Widget breaks after batch source swap** — the new source may not have the same report type or fields; always verify with `list-widgets action=show` after.
 - **`metric.external_id` change appears to no-op** — when the widget already has a config bound to a metric on a source group / blend, re-supplying a different `metric.external_id` in the same config sometimes leaves the original metric in place. The `list-widgets action=show` response masks this (it only echoes channel + source ids, not the metric). Always confirm via `list-widgets action=csv_export` or `export-report` after a metric swap; if the CSV still shows the previous metric name, delete and recreate the widget rather than trying to update it in place.
