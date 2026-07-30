@@ -53,6 +53,8 @@ The response includes a `share_url` field — that is the public viewer URL to h
 
 The `live.whatagraph.com/client/<team_client_id>/live-report/<report_id>` URL is the signed-in editor view used by teammates inside the app — it is **not** the public share URL and external clients can't authenticate. Always copy `share_url` from the response when handing a link to an external viewer; never substitute the live URL.
 
+**Report shortcut cascade:** if the report contains Report shortcut widgets (`widget_type_id=141`, drill-down links to other reports), sharing it automatically shares every linked report too — recursively, so nested shortcuts keep working in the public view. Auto-created child shares inherit the parent's password and date-lock settings; linked reports that already have their own share keep their existing settings untouched.
+
 ## Update an existing share
 
 ```

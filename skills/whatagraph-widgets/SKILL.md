@@ -146,8 +146,9 @@ Widget types are integers. Prefer the modern types (`101+`) unless you have a sp
 | Gauge (dial-style single value) | `139` |
 | GeoMap (geographic map, BETA) | `140` |
 | Filter control (dimension dropdown) | `137` |
+| Report shortcut (drill-down link to another report) | `141` (channel_id `7`; no `source_id`) |
 
-Comment, image, and calendar widgets are the only widget types that take `channel_id=7` and no `source_id`. Filter control (`137`) needs a `channel_id` and `source_id` but does not load data — it renders as a dimension dropdown that filters other widgets on the tab. Every other data-bearing widget needs a `channel_id` matching the source's channel and a report-local `source_id`.
+Comment, image, calendar, and report shortcut widgets are the only widget types that take `channel_id=7` and no `source_id`. Filter control (`137`) needs a `channel_id` and `source_id` but does not load data — it renders as a dimension dropdown that filters other widgets on the tab. Every other data-bearing widget needs a `channel_id` matching the source's channel and a report-local `source_id`.
 
 ## Apply a premade widget
 
@@ -366,6 +367,16 @@ Known `options` shapes:
 - **Heatmap** (`widget_type_id=138`): heat-colored grid showing metric values across time/dimension. Same configuration as SingleValue (`101`).
 - **GeoMap** (`widget_type_id=140`, BETA): geographic map. Set `options.geo_map_region` to control the displayed region (see Type-specific options table above). Bind a dimension with country/region data.
 - **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads.
+- **Report shortcut** (`widget_type_id=141`): a drill-down card linking to another report in the same team. `channel_id=7`, no `source_id`, no metrics/dimensions. Set the link in `rows[].configs[].options`:
+
+  ```
+  "rows": [{"configs": [{"options": {
+    "linked_report_id": <report_id>,                # must belong to the team — cross-team IDs are rejected
+    "linked_report_thumbnail_style": "card"         # card | image | title_only (optional)
+  }}]}]
+  ```
+
+  Find target report IDs with `list-reports`. On read, `list-widgets action=show` returns a `linked_report` field with the target's name, URL, space, and last-edit info. Default size is 2×2. **Sharing cascade:** when the parent report is shared, every report reachable via report shortcuts is shared automatically (recursively, inheriting the parent share's password and date-lock settings) so drill-down keeps working in the public view.
 
 ## Breakdown vs non-breakdown (pie / donut / bar)
 
