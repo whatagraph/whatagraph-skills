@@ -26,6 +26,7 @@ Data flows into widgets from:
 - **Data source** — one connected account (e.g. one Google Ads account).
 - **Source group** — multiple accounts of the same channel rolled up.
 - **Blend** — two or more sources (any channels) joined on shared dimensions.
+- **Values entered by hand** — an offline (manual-data) widget for figures no integration can supply (offline spend, retainer fees, client targets). See `whatagraph-widgets`.
 
 ## Mental model for the tools
 
