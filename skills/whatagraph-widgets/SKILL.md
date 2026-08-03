@@ -1,7 +1,7 @@
 ---
 name: whatagraph-widgets
 type: domain
-description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, or bulk-swapping data sources across many widgets at once.
+description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, bulk-swapping data sources across many widgets at once, or entering numbers by hand into an offline / manual-data widget for figures no integration can supply.
 required_tools:
   - list-blends
   - list-report-tabs
@@ -23,6 +23,7 @@ A **widget** is a visual data component on a tab. Widgets are typed (KPI card, l
 ## Use this when
 
 - Adding a KPI card, chart, table, or funnel to a tab.
+- Entering numbers by hand — offline spend, retainer fees, client targets — into an offline (manual-data) widget.
 - Swapping the source on a set of widgets (migrating from sample to real data).
 - Changing common settings (currency, footer visibility) across many widgets at once.
 - Duplicating a widget or a set of widgets on a tab.
@@ -152,7 +153,90 @@ Common values exposed by `list-widgets`:
 | Filter control (dimension dropdown) | `137` |
 | Report shortcut (drill-down link to another report) | `141` (channel_id `7`; no `source_id`) |
 
-Comment, image, calendar, and report shortcut widgets are the only widget types that take `channel_id=7` and no `source_id`. Filter control (`137`) needs a `channel_id` and `source_id` but does not load data — it renders as a dimension dropdown that filters other widgets on the tab. Every other data-bearing widget needs a `channel_id` matching the source's channel and a report-local `source_id`.
+Offline (manual-data) types hold numbers you supply instead of reading a source. All take `channel_id=7` and no `source_id`, and their values go in `rows[].data` — see "Offline (manual-data) widgets" below. String names are the live name with an `offline_` prefix (`"offline_single_value"`, `"offline_table"`, …).
+
+| Offline widget type | `widget_type_id` |
+|---|---|
+| Single value (KPI card) | `125` |
+| Table | `126` |
+| List | `127` |
+| Column chart | `128` |
+| Area chart | `129` |
+| Bar chart | `130` |
+| Line chart | `131` |
+| Pie chart | `132` |
+| Donut chart | `133` |
+| Goal | `135` |
+| Funnel | `136` |
+
+Comment, image, calendar, report shortcut, and the offline types are the only widget types that take `channel_id=7` and no `source_id`. Filter control (`137`) needs a `channel_id` and `source_id` but does not load data — it renders as a dimension dropdown that filters other widgets on the tab. Every other data-bearing widget needs a `channel_id` matching the source's channel and a report-local `source_id`.
+
+## Offline (manual-data) widgets
+
+For numbers that live nowhere Whatagraph can connect to — offline spend, retainer fees, call volumes, a client's own targets. The widget holds the values themselves; there is no source, no metric binding, and no refresh.
+
+Created like any other widget, with `channel_id=7`, an offline `widget_type_id`, and the values in a row-level **`data`** array. `data` is a sibling of `options` and `configs`, not a key inside either:
+
+```
+manage-widgets action=create
+   report_id=<id>
+   tab_id=<tab_id>
+   channel_id=7
+   widget_type_id=125                              # or "offline_single_value"
+   name="Offline spend"
+   options={"width": 2, "height": 2}
+   rows=[{"options": {"title": "Retainer"},
+          "data": [{"name": "Retainer", "value": "4500", "previous_value": "4000"}]}]
+```
+
+Update the same way — supplying `data` replaces that row's values wholesale:
+
+```
+manage-widgets action=update report_id=<id> widget_id=<id>
+   rows=[{"data": [{"name": "Retainer", "value": "5000", "previous_value": "4500"}]}]
+```
+
+### Two `data` shapes, picked by widget type
+
+**Entry list** — Single value (`125`), List (`127`), Pie (`132`), Donut (`133`), Funnel (`136`), Goal (`135`). One entry per KPI, list item, slice, or funnel step:
+
+| Key | Required | Notes |
+|---|---|---|
+| `name` | yes | The visible label. This is where an offline widget's metric name comes from. |
+| `value` | yes | The number. |
+| `previous_value` | no | The comparison value behind the trend delta. |
+| `negative_ratio` | no | `true` when a rise is bad (costs, refunds) so the delta colours correctly. Default `false`. |
+| `start` / `target` | Goal only | The ends of the goal line. `target` is required on Goal; `start` defaults to `"0"`. Rejected on every other type. |
+
+```
+rows=[{"data": [
+  {"name": "New users", "value": "125", "previous_value": "100"},
+  {"name": "Refunds", "value": "1200", "previous_value": "900", "negative_ratio": true}
+]}]
+```
+
+**Header row + data rows** — Table (`126`) and the time-series charts: Column (`128`), Area (`129`), Bar (`130`), Line (`131`). First inner array is the header, the first cell of every row is the dimension label, the rest are values:
+
+```
+rows=[{"data": [
+  ["Page",     "Sessions", "CTR"],
+  ["Homepage", "3000",     "25%"],
+  ["Pricing",  "1450",     "12.5%"]
+]}]
+```
+
+Every row must have as many cells as the header — cells are read by position, so a short or long row shifts every column after the gap, and the tool rejects it.
+
+### Values
+
+Stored as strings. Numbers are accepted and converted, so `1450` and `"1450"` are equivalent. A unit in the string is read by the formatter and drives how the value renders: `"25%"` → percentage, `"100 $"` → currency, `"12.5"` → one decimal place. `null` renders a blank cell.
+
+### Rules worth knowing before you build one
+
+- **No metric or dimension binding.** An offline widget's metrics are derived from its own values (from each entry's `name`, or the header row), so `rows[].configs[].options.metrics` is rejected on these types. The dual metric-array pattern used everywhere else does not apply here.
+- **Omitting `data` on create leaves placeholder sample values.** A new offline widget is built from a template seeded with demo numbers (200,000 impressions against 15,000) and renders them verbatim. The tool warns when you do this — treat that warning as a widget not yet finished, and never leave one in a client-facing report.
+- **One row is the norm.** Multiple values belong in a single row's `data` array, not in separate rows — a 3-item List or a 3-line Goal is one row with three entries.
+- **`data` is per row.** If you do build a multi-row offline widget (e.g. two series on a line chart), give every row its own `data`; rows added beyond the template's count start empty and render "Couldn't find data to display" until they have values.
 
 ## Apply a premade widget
 
@@ -787,4 +871,8 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **`tab_id` missing on create** — required. Find via `list-report-tabs action=list`.
 - **`sort` warning on single-value widgets** — the "`sort` has no effect" warning only fires for row-level `sort` (a data-sort directive). The `sort` field inside `rows[].options.metrics[]` is a positional ordinal index required by the dual-array pattern — it does not trigger the warning.
 - **AI text (`update_ai_text`) errors** — if generation fails with a timeout, the settings are saved; retry after ~30 seconds. A non-timeout error may indicate the AI feature is not available on the team's plan.
+- **An offline widget showing 200,000 impressions you never entered** — it was created without `rows[].data`, so it still holds the template's placeholder sample numbers. The create response warns about this. Send an `update` with the row's `data` to replace them.
+- **Offline values passed as row options** — `rows[].options.value` / `previous_value` bind nothing. Row `options` is a free-form blob, so these used to persist silently and the call still reported success; they now come back as an "unrecognized `options` keys" warning. Offline values belong in the row's `data` array.
+- **Binding a metric on an offline widget** — rejected. These widgets derive their metrics from their own values, and a binding written here is reverted before the response is built, so it used to return success with a metric the widget never had. Use `data` instead; `name` on each entry is the metric label.
+- **`"offline_single_value"` and friends** — the `offline_`-prefixed string names resolve to the writable current-generation types (`125`+). On deployments before Aug 2026 they resolved to the pre-new-architecture types (`25`+) and were then rejected as too old — pass the integer ID there.
 - **Literal `\n` in comment text** — a comment widget whose rendered text shows a visible `\n` (and renders entirely in heading size) received a double-escaped newline: the string contained the two characters backslash + n instead of a line break. Recreate with real newlines, or split into a header widget + a separate text-block widget.
