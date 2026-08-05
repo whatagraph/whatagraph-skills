@@ -184,6 +184,24 @@ manage-themes action=update_email_theme email_theme_id=<id> options={...}
 manage-themes action=enable_email_theme report_id=<id> email_theme_id=<id>  # report_id optional (omit for team-level)
 ```
 
+`create_email_theme` requires `name`, `web_domain_id`, and `email_domain_id` — get the last two from `list_web_domains` / `list_email_domains`; both must belong to the team or be premade. On `update_email_theme` the theme keeps its current domains when you omit them.
+
+### Email theme `options`
+
+| Key | Notes |
+|---|---|
+| `background_color` | Email body background |
+| `heading_text`, `heading_text_color` | |
+| `body_text`, `body_text_color` | |
+| `footer_text`, `footer_text_color` | `footer_text` is nullable |
+| `button_text`, `button_text_color`, `button_background_color` | The "View report" call to action |
+| `sender_name` | Display name on the From line |
+| `sender_email` | **Local part only** — the part before the `@`. Validated as a full address against `sender_email_domain` |
+| `sender_email_domain` | The domain half, from `list_email_domains` |
+| `subject_text` | |
+| `reply_name`, `reply_to_email` | |
+| `images[]` | `{title, url, alignment, scale_to_fill}`. Import and publish a remote image first — see the header/footer image rule above |
+
 ## Deleting a theme or palette
 
 ```
