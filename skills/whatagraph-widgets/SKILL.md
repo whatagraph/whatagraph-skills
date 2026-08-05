@@ -418,6 +418,21 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 |---|---|---|
 | `geo_map_region` | string | GeoMap (`140`). Values: `world`, `north-america`, `south-america`, `europe`, `asia`, `africa`, `oceania`, `emea`, `apac`, `latam`, `mena`, `noram`, `eu-eea`, `nordics`, `baltics`, `dach`, `benelux`, `iberia`, `uk-ireland`, `anz` |
 | `goal_date_range` | object | Goal (`123`). `{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD", "visible_time_line": true}` |
+| `pie_top_n` | integer | Pie (`108`), Donut (`109`). `5`, `10`, or `20` — keep the top N slices and sum the remainder into a single "Other". Omit or set `null` to show every slice |
+| `background_size` | string | Image (`34`). `auto_fit`, `scale_to_fit`, `scale_to_fill` |
+| `alignment` | string | Image (`34`). `left`, `center`, `right` |
+| `description` | string | SingleValue (`101`) — the only type that renders it. Omitting it clears the template's "Edit description" placeholder rather than printing it |
+
+#### Goal / target line (Column, Area, Bar, Line charts)
+
+A horizontal reference line drawn at a fixed y-axis value. Unrelated to the Goal widget type (`123`).
+
+| Option | Type | Notes |
+|---|---|---|
+| `goal_line_enabled` | boolean | Turns the line on |
+| `goal_line_value` | number | The y-axis value to draw at. Required when enabled |
+| `goal_line_label` | string | Optional caption |
+| `goal_line_color` | string | Optional hex |
 
 Known `options` shapes:
 
