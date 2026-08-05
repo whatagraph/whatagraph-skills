@@ -1,7 +1,7 @@
 ---
 name: whatagraph-overviews
 type: domain
-description: Create overviews — KPI dashboards that track metrics over time. The UI calls these "Measurements". Use when a user wants a single-page KPI dashboard with trend visualizations and comparisons, independent of any report.
+description: Create overviews — KPI dashboards that track metrics over time. The UI calls these "Measurements". Use when a user wants a single-page KPI dashboard with trend visualizations and comparisons, independent of any report. Caution — "overview" in a prompt often means a report tab or a summary report instead of this entity; load this skill to run the disambiguation check (and ask the user a follow-up) whenever the meaning isn't clear from context.
 required_tools:
   - list-overviews
   - list-sources
@@ -15,6 +15,15 @@ required_tools:
 Tools covered: `list-overviews`, `manage-overviews`, `delete-overviews`.
 
 An **overview** (UI name: "Measurement") is a KPI dashboard that tracks selected metrics over time with trend/column/heatmap visualizations and comparison framing. Overviews live at the team level and can optionally be associated with a space.
+
+## First: confirm the user means *this* Overview
+
+"Overview" is one of the most overloaded words in Whatagraph prompts. Before creating, updating, or deleting anything here, confirm the request is about the standalone Overview/Measurement entity and not one of these:
+
+- **A report tab named "Overview"** — "General Overview" in a tab list, "the overview tab", "overview page/section" of a report → `whatagraph-report-tabs` / `whatagraph-widgets`, not this skill.
+- **A summary-style report** — "an overview of last month", "high-level overview report" in report-building context → `whatagraph-reports`.
+
+Clear signals this skill applies: the user says "Measurement", "KPI dashboard", "add to Overviews", references `list-overviews` output, or explicitly contrasts it with reports. **If the wording is ambiguous — e.g. a bare "create an overview for Acme" with no other context — ask the user a short follow-up** ("standalone Overview/Measurement dashboard, or an overview tab inside a report?") rather than guessing. The two artifacts live in different places, are built with different tools, and an Overview delete is permanent — a wrong guess is expensive in both directions.
 
 ## Use this when
 
