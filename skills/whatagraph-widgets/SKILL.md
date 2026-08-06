@@ -1,7 +1,7 @@
 ---
 name: whatagraph-widgets
 type: domain
-description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, bulk-swapping data sources across many widgets at once, or entering numbers by hand into an offline / manual-data widget for figures no integration can supply.
+description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, bulk-swapping data sources across many widgets at once, or entering numbers by hand into an offline / manual-data widget for figures no integration can supply. Carries the non-negotiable full-tab composition bar for self-directed builds — multi-section pages of 8–14 varied widgets, never a thin strip of KPIs plus a chart.
 required_tools:
   - list-blends
   - list-report-tabs
@@ -19,6 +19,8 @@ required_tools:
 Tools covered: `list-widgets`, `manage-widgets`.
 
 A **widget** is a visual data component on a tab. Widgets are typed (KPI card, line chart, table, pie chart, etc.) and each has a data source (or no source for comment/image widgets). Widgets expose rows and configs — a row groups metrics and dimensions; configs define the data.
+
+> **The quality bar — read this before building anything.** Unless the user handed you a widget-by-widget spec or a reference to replicate, every tab you build is a **full composed page: two or more sections with header comments, a varied widget mix (KPI row + trend chart + composition chart + detail table + at least one distinctive type the data earns), typically 8–14 widgets**. The instinctive "a few KPIs, a chart, and a table" (~5–6 widgets) is **below the bar** — it is what gets built when nobody reads the data, and it ships thin, repetitive pages. Full rules in "Composing a full tab" below; the bar applies even when the tabs and their themes were named for you. **If your run has a limited step budget, economize on discovery and verification calls — bind `rows` at create, reuse the field catalog across widgets, batch, verify once at the end — never on widget count.**
 
 ## Use this when
 
