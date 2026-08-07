@@ -37,6 +37,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-reports` | Create, duplicate, and update reports. |
 | `whatagraph-report-tabs` | Create, duplicate, rename, and reorder report tabs. |
 | `whatagraph-widgets` | Build and lay out widgets on the grid. |
+| `whatagraph-offline-reports` | Build a whole report from numbers you already have, with no connected source. |
 | `whatagraph-blends` | Combine data from different channels into one virtual source. |
 | `whatagraph-source-groups` | Roll up multiple accounts of the same channel into one aggregated source. |
 | `whatagraph-custom-metrics` | Create calculated or unified metrics across sources. |
@@ -46,6 +47,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-goals` | Create goals — metric targets with a deadline. |
 | `whatagraph-templates` | Convert a report into a reusable template and apply templates to new reports. |
 | `whatagraph-themes` | Apply and manage themes (logos, fonts, headers/footers) and color palettes. |
+| `whatagraph-assets` | Import, find, read and publish files — brand images for reports and themes, and searchable documents. |
 | `whatagraph-sharing` | Create and update public share links, generate PDFs, and export reports. |
 | `whatagraph-automations` | Schedule automated report delivery by email. |
 | `whatagraph-snapshots` | Save and restore the structural state of a report. |
