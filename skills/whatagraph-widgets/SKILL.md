@@ -81,13 +81,13 @@ The tool validates that the correct dimensions are provided based on the widget 
 
 Use `list-sources action=list_dimensions_and_metrics` to find the correct dimension external_ids for a source. The date dimension external_id varies by integration — always look it up rather than guessing.
 
-> **A single value (101) always aggregates the whole dataset into one total** — it has no dimension and cannot rank or isolate a single entity. It will **not** show the "best" or "worst" campaign: a `sort` passed on its row/metric options is silently ignored (the tool returns a warning saying so). To surface a top/bottom performer, use a **Table (102)** with the entity dimension bound and the metric sorted desc/asc, or a saved filter (`whatagraph-filters`) pinning the specific entity.
+> **A single value (101) always aggregates the whole dataset into one total** — it has no dimension and cannot rank or isolate a single entity. It will **not** show the "best" or "worst" campaign: a `sort` passed on its row or metric options is ignored (the tool returns a warning saying so). To surface a top/bottom performer, use a **Table (102)** with the entity dimension bound and the metric sorted desc/asc, or a saved filter (`whatagraph-filters`) pinning the specific entity.
 
 ### Surfacing a top / bottom N
 
 "Top 10 campaigns", "worst-performing ads", "biggest spenders" are ranking asks — they need an **entity dimension bound and the metric sorted**, on a widget type that shows multiple rows (Table `102`, List `103`, or a bar/column chart). A SingleValue can't do this (see the callout above).
 
-- **Sort** on the ranking metric: set the direction in the row/metric options (`sort: "desc"` for top, `"asc"` for bottom) so the highest/lowest values lead.
+- **Sort** on the ranking metric: set `sort: "desc"` (top) or `"asc"` (bottom) on that metric's entry in `rows[].options.metrics[]` so the highest/lowest values lead. Full rules in "Sorting a widget" below.
 - **Limit the rows** so "top N" actually shows N: the `manage-widgets` schema exposes **no** row-count / limit parameter on Table, List, or bar/column widgets, so cap the set another way — a `whatagraph-filters` condition that scopes to the entities of interest, or (when the report only needs the leaders) size the widget height to show N rows and rely on the sort. Do **not** fabricate a limit parameter that the tool doesn't accept.
 - **Verify** with `export-report` / `list-widgets action=csv_export` that the leading rows are the intended ones and the ordering is correct — a mis-set sort silently returns the data in the wrong order.
 
@@ -296,7 +296,7 @@ manage-widgets action=update
      {
        "options": {
          "metrics": [
-           {"sort": 0, "identifier": 0, "external_id": "universal_metric_3"}
+           {"identifier": 0, "external_id": "universal_metric_3"}
          ]
        },
        "configs": [
@@ -334,7 +334,6 @@ For multi-row chart widgets (Column, Line, Area, Bar), rows support additional o
 | `cumulative` | boolean | Show cumulative values for this row. |
 | `trend_line` | string | Trend line type. |
 | `trend_line_period` | integer | Trend line period. |
-| `sort` | `asc` \| `desc` | Sort direction on this row's metric. |
 | `icon` | string | Row icon (for List and SingleValue widgets). Must be a filename from the icon library — see [Row icons](#row-icons). |
 
 Example — mixed column + line chart:
@@ -348,13 +347,48 @@ rows=[
 Example — cross-channel column chart (compare one metric across sources, no date dimension):
 ```
 rows=[
-  {"options": {"type": "column", "axis": "left", "title": "Source A", "metrics": [{"sort": 0, "identifier": 0, "external_id": "<metric>"}]},
+  {"options": {"type": "column", "axis": "left", "title": "Source A", "metrics": [{"identifier": 0, "external_id": "<metric>"}]},
    "configs": [{"source_id": <A>, "integration_id": <channel>, "options": {"metrics": [{"identifier": 0, "external_id": "<metric>"}], "report_type": "<rt>"}}]},
-  {"options": {"type": "column", "axis": "left", "title": "Source B", "metrics": [{"sort": 0, "identifier": 0, "external_id": "<metric>"}]},
+  {"options": {"type": "column", "axis": "left", "title": "Source B", "metrics": [{"identifier": 0, "external_id": "<metric>"}]},
    "configs": [{"source_id": <B>, "integration_id": <channel>, "options": {"metrics": [{"identifier": 0, "external_id": "<metric>"}], "report_type": "<rt>"}}]}
 ]
 ```
 > One row per source, each with a single config (its source) and the **same** metric, and **no** dimension — the sources become the columns. Set `axis: "left"` on every row; without it the editor's Left/Right axis sections render empty even though the data is bound.
+
+### Sorting a widget
+
+Sorting is a **row display option**, not a config one. Set `sort` on the entry in `rows[].options.metrics[]` or `rows[].options.dimensions[]` whose `identifier` matches the binding you want to order by. This is the same field the UI writes when a user clicks a table column header.
+
+| Field | Values | Notes |
+|---|---|---|
+| `sort` | `"asc"` \| `"desc"` \| `null` | The **direction**. `null` clears the sort. Anything else — a number, `"descending"` — is rejected. |
+| `sort_type` | `"value"` \| `"change"` | Metrics only. `value` (the default) sorts by the number; `change` sorts by its movement against the comparison period. |
+| `sort_order` | integer from 0 | Precedence when several columns are sorted — 0 is applied first. Filled in request order when omitted. |
+
+```
+manage-widgets action=update report_id=<id> widget_id=<id>
+   rows=[{"id": <row_id>,
+          "options": {"metrics": [{"identifier": 0, "external_id": "sessions", "sort": "desc"},
+                                  {"identifier": 1, "external_id": "clicks"}]},
+          "configs": [{"id": <config_id>, "channel_id": <channel_id>, "source_id": <source_id>,
+                       "options": {"report_type": "<report_type>",
+                                   "metrics": [{"external_id": "sessions", "name": "Sessions", "identifier": 0},
+                                               {"external_id": "clicks", "name": "Clicks", "identifier": 1}]}}]}]
+```
+
+**Sort a table by its dimension column** — same shape, on `dimensions[]`. `"asc"` is A–Z, `"desc"` is Z–A:
+
+```
+rows=[{"id": <row_id>,
+       "options": {"dimensions": [{"identifier": 0, "external_id": "campaign_name", "sort": "asc"}]},
+       "configs": [...]}]
+```
+
+**Metrics and dimensions are separate sort groups, and only one can be active.** The UI clears every sort in one group whenever the other is sorted, so a request that sorts a metric *and* a dimension on the same row is rejected. To switch groups, set `sort: null` on the entries of the group you are leaving in the same call.
+
+Read the current state back from `list-widgets action=show` — the three fields sit on each entry of `rows[].options.metrics` / `rows[].options.dimensions`, in the shape `manage-widgets` accepts back.
+
+There is **no** row-level `sort`. `rows[].options.sort` is a pre-new-architecture key that nothing on a `101`+ widget reads; setting it stores a value, orders nothing, and returns a warning saying so.
 
 ### Row icons
 
@@ -396,7 +430,7 @@ Both icon sets render on all three types. Two entries in the library have no fil
 - Each config pairs a metric with an optional dimension.
 - Replace-style: supplied `rows` replace previous rows. Row metadata (`title`, `description`) from existing rows is preserved when the new row omits them.
 - Each row carries **two parallel metric arrays** that must agree:
-  - `rows[].options.metrics: [{sort, identifier, external_id}]` — drives the rendered label and the value the renderer prints.
+  - `rows[].options.metrics: [{identifier, external_id}]` — the row's display entry, and where per-column display settings live (`sort`, `decimal_place`, `width`). See "Sorting a widget".
   - `rows[].configs[].options.metrics: [{name, identifier, external_id}]` — drives the actual data binding.
   - Both must be set; mismatched values between the two cause the widget to render the row's label with the config's data. The same parallelism applies for dimensions: `rows[].options.dimensions` (rendered label) vs. `configs[].options.dimensions` (binding).
   - **The tool rejects updates where row-level metrics/dimensions are provided but the config has no matching `options.metrics`/`options.dimensions`.** Row-level fields are display labels only — the actual data binding lives in config options. If you get this error, move your metrics/dimensions into `rows[].configs[].options.metrics` (and `options.dimensions`).
@@ -1145,7 +1179,8 @@ For a single value that must carry its own colour, put it in a Comment widget in
 - **A comment/image edit that "worked" but changed nothing** — row-level `comment_widget_text`, the legacy `text`/`comment` aliases, and image `image_url` / `image_data` were only applied on create; on update they were accepted and dropped. Fixed Jul 2026. If you hit this on an older deployment, write the config shape directly in `rows[].configs[].options` instead.
 - **Duplicate metric/dimension bindings** — binding the same `external_id` twice in one config is silently de-duplicated (keeps first occurrence). A warning is returned, but the widget ends up with one series, not two. To chart two series of the same metric, use separate rows.
 - **`tab_id` missing on create** — required. Find via `list-report-tabs action=list`.
-- **`sort` warning on single-value widgets** — the "`sort` has no effect" warning only fires for row-level `sort` (a data-sort directive). The `sort` field inside `rows[].options.metrics[]` is a positional ordinal index required by the dual-array pattern — it does not trigger the warning.
+- **A sort that stores fine and orders nothing** — `sort` is the sort **direction**, `"asc"` / `"desc"` / `null`, on the entry in `rows[].options.metrics[]` or `rows[].options.dimensions[]`. It is not a position or an index. `sort: 0` used to be accepted and skipped outright by the backend (which matches on truthiness), so the write returned success and the widget came back in the source's own order; it is rejected now. See "Sorting a widget".
+- **`sort` on a single-value widget** — inert wherever you put it: a `101` aggregates everything into one number and has no rows to order. The tool warns. Use a Table (`102`) with the dimension bound.
 - **AI text (`update_ai_text`) errors** — if generation fails with a timeout, the settings are saved; retry after ~30 seconds. A non-timeout error may indicate the AI feature is not available on the team's plan.
 - **An offline widget showing 200,000 impressions you never entered** — it was created without `rows[].data`, so it still holds the template's placeholder sample numbers. The create response warns about this. Send an `update` with the row's `data` to replace them.
 - **Offline values passed as row options** — `rows[].options.value` / `previous_value` bind nothing. Row `options` is a free-form blob, so these used to persist silently and the call still reported success; they now come back as an "unrecognized `options` keys" warning. Offline values belong in the row's `data` array.
