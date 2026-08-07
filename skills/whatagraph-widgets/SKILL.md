@@ -2,7 +2,7 @@
 name: whatagraph-widgets
 type: domain
 group: report_building
-description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, renaming the metric caption / series label a widget shows, colouring table cells by value with conditional formatting, bulk-swapping data sources across many widgets at once, or entering numbers by hand into an offline / manual-data widget. Also the widget reference for building a whole report out of numbers you already have — an analysis, a spreadsheet, a client's own figures — with no connected source at all; load `whatagraph-offline-reports` for that workflow. Carries the non-negotiable full-tab composition bar for self-directed builds — multi-section pages of 8–14 varied widgets, never a thin strip of KPIs plus a chart.
+description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, renaming the metric caption / series label a widget shows, colouring table cells by value with conditional formatting, bulk-swapping data sources across many widgets at once, or entering numbers by hand into an offline / manual-data widget. Also the widget reference for building a whole report out of numbers you already have — an analysis, a spreadsheet, a client's own figures — with no connected source at all; load `whatagraph-offline-reports` for that workflow. Carries the non-negotiable full-tab composition bar for self-directed builds — dashboard pages of 8–14 varied widgets, or editorial story chapters with styled narrative openers, argumentative titles, and closing takeaways; never a thin strip of token widgets.
 required_tools:
   - list-widgets
   - list-reports
@@ -36,7 +36,7 @@ Tools covered: `list-widgets`, `manage-widgets`.
 
 A **widget** is a visual data component on a tab. Widgets are typed (KPI card, line chart, table, pie chart, etc.) and each has a data source (or no source for comment/image widgets). Widgets expose rows and configs — a row groups metrics and dimensions; configs define the data.
 
-> **The quality bar — read this before building anything.** Unless the user handed you a widget-by-widget spec or a reference to replicate, every tab you build is a **full composed page: two or more sections with header comments, a varied widget mix (KPI row + trend chart + composition chart + detail table + at least one distinctive type the data earns), typically 8–14 widgets**. The instinctive "a few KPIs, a chart, and a table" (~5–6 widgets) is **below the bar** — it is what gets built when nobody reads the data, and it ships thin, repetitive pages. Full rules in "Composing a full tab" below; the bar applies even when the tabs and their themes were named for you. **If your run has a limited step budget, economize on discovery and verification calls — bind `rows` at create, reuse the field catalog across widgets, batch, verify once at the end — never on widget count.**
+> **The quality bar — read this before building anything.** Unless the user handed you a widget-by-widget spec or a reference to replicate, every tab you build is a **full, purposeful page**: it opens with narrative framing, develops one clear question with substantial, varied widgets, and leaves no dead grid. Two composition modes clear the bar — a **dashboard tab** (two or more header-led sections, typically 8–14 widgets) and an **editorial tab** (a chapter in a story: styled narrative opener, 3–8 *larger* widgets that argue one point, a closing takeaway comment) — see "Composing a full tab" for both; a report may mix them. What never clears the bar: one or two token widgets adrift in an empty grid, a strip of small KPIs plus a lone chart, a page with no narrative framing at all. The bar applies even when the tabs and their themes were named for you. **If your run has a limited step budget, economize on discovery and verification calls — bind `rows` at create, reuse the field catalog across widgets, batch, verify once at the end — never on the composition.**
 
 ## Use this when
 
@@ -925,6 +925,7 @@ When you're deciding what to show — case 3 above, or filling gaps in a loose r
 - **A geographic dimension** → GeoMap.
 - **Ad / creative performance with thumbnails** → Media.
 - **Narration or context** → a Comment (AI-text comment for an auto summary) — only when it adds value.
+- **A cover, hero banner, or visual divider** → an Image widget (`34`), full-width `6×2` — a generated or brand visual that opens the report's first tab or marks a major transition. Import the image via `manage-assets` first (see the image-import rule); use sparingly — one hero on the first tab, not a banner on every page.
 
 **Let dimension cardinality narrow the choice.** How many values a dimension has decides which of the above actually reads well:
 
@@ -952,6 +953,7 @@ Every data widget carries a **title**, and every metric row carries a **row labe
 - Utility widgets (Comment `21`, Image `34`, Calendar `22`) are exempt from the metric-row rule, but a Comment used as a section header still carries its heading text.
 - **Comment (`21`), Calendar (`22`), Filter control (`137`), and Report shortcut (`141`) render no title at all and reject `name` / `options.title`.** Don't try to label them — a Comment's heading lives in its body text (`comment_widget_text.text`, markdown `#`), and the other three are labelled by what they contain. Image (`34`) does render a title.
 - The title states what's shown (metric + scope). Because the title makes a promise to the reader, the bound fields must actually deliver it — see "Fit for purpose" below.
+- **On editorial tabs, let titles carry the argument.** A widget title can state the finding or define the measure, not just name the metric — the professional pattern is `Claim or metric — what it means / how it's defined`: "Commits per engineer per month — the only comparable measure", "Bus factor — engineers needed to cover half of all commits", "Adoption is not evenly spread — share of each engineer's commits that are agent-signed". Use it when the widget is an exhibit in a story; keep plain descriptive titles ("Sessions by channel") on dashboard tabs where the reader scans rather than reads. Never title a widget with a claim its data doesn't show.
 
 #### Renaming a metric caption
 
@@ -1001,6 +1003,30 @@ A tab that holds more than one group of content (a KPI block, then a trend secti
 - **When to use one:** whenever a tab has two or more distinct sections — which a full, self-directed tab always does by default, since two sections is the floor (see "Composing a full tab"). The tab's *first* header also serves as the page title when the tab name alone isn't enough.
 - **When not to:** a tab that is genuinely one section (a single full-page table the user asked for, a lean one-pager) doesn't need a header row per widget — headers earn their row only when they separate something. Never stack two headers with no content between them.
 - **A section header holds ONLY the `<h2>` line.** Body copy — an intro paragraph, narrative text, or an AI summary — is a **separate** comment widget sized per the Comment sizing rule (`height: 2` for 1–2 sentences, `height: 3` per paragraph, `height: 4+` for a multi-paragraph AI text block), and body copy is `<p>`, never a heading. Never append body text to a 6×1 header — a 6×1 comment fits exactly one short heading line, nothing more.
+
+### Narrative comments — openers and takeaways for editorial tabs
+
+Where a bare `## …` header labels a dashboard section, an **editorial tab** opens and closes with a *narrative comment* — a single Comment widget whose typography does the framing. The professional pattern is three levels in one Tiptap `description`:
+
+1. **Kicker** — one short ALL-CAPS line, small and muted (`fontSize: "12px"`, bold, a gray such as `#7c8794`): the report/section eyebrow, e.g. `ENGINEERING PERFORMANCE · Q3 2026` or `THE CASE, IN ONE PARAGRAPH`.
+2. **Headline** — one bold, large line (`fontSize: "28px"`–`"32px"`) that states the page's **claim in plain words**: "The team got smaller. The output went up." — never a label like "Overview" or "Performance".
+3. **Body** — one or two paragraphs at `14px`–`15px` carrying the evidence in prose, with real numbers from the data ("per-engineer throughput went from 19.9 to 49.0 commits a month"). An optional final `12px` muted line can carry sources or methodology.
+
+```
+"comment_widget_text": {
+  "description": {"type": "doc", "content": [
+    {"type": "paragraph", "content": [{"type": "text", "text": "Q3 PERFORMANCE · ACME", "marks": [{"type": "bold"}, {"type": "textStyle", "attrs": {"fontSize": "12px", "color": "#7c8794"}}]}]},
+    {"type": "paragraph", "content": [{"type": "text", "text": "Spend fell 12% — conversions didn't.", "marks": [{"type": "bold"}, {"type": "textStyle", "attrs": {"fontSize": "30px"}}]}]},
+    {"type": "paragraph", "content": [{"type": "text", "text": "Efficiency gains in Search offset the budget cut: CPA improved from $41 to $33 while conversion volume held flat.", "marks": [{"type": "textStyle", "attrs": {"fontSize": "14px"}}]}]}
+  ]},
+  "contentAlign": "top"
+}
+```
+
+- **Size:** `6×2` for kicker + headline + a sentence or two; `6×3`–`6×4` when the body runs to full paragraphs (a closing "what it all means" block).
+- **Write the numbers in.** A narrative comment with real figures from the data reads as insight; one full of generic filler ("performance was strong this period") reads as padding — pull the figures from the widgets you just built (`csv_export`) or skip the claim.
+- **Colors:** the muted-gray kicker is safe on light themes; for the headline and body, prefer setting `fontSize` only and letting the text color inherit from the theme — a hard-coded near-black breaks on dark themes (a baked-in color overrides the theme's `text_color`). Bake colors in only when you know the theme.
+- **Takeaways close the loop.** A tab that argues something ends with a `6×2`+ narrative comment stating what the evidence means (kicker + body, no big headline needed). Don't bolt the takeaway text onto a header or an existing comment — it's its own widget, last row of the tab.
 
 ### Fit for purpose — fields must match the intent and each other
 
@@ -1062,9 +1088,14 @@ Once you know the structure, lay it out top to bottom:
 
 When you're deciding the layout yourself — no reference, no explicit widget list — each tab is a **complete page with a visual rhythm**, not a strip of cards or a lone widget. **This section applies just as fully when the tabs were named for you** — by the user's prompt or an agent's instructions ("build these 6 tabs: Overview, Google Ads, Meta Ads, …"). A named tab with a theme or metric list scopes the page's *subject*; the page itself is still yours to compose, and it gets the complete treatment below. The failure modes to design against: a tab holding one or two widgets adrift in an empty grid (the classic outcome of misreading a tab list as a widget list); a row of identical KPI cards plus one chart and nothing else; a tab whose only occupant is a single table floating in empty space; every tab in the report shaped the same way.
 
-**Every tab carries at least two sections — three or more where the data supports it.** A *section* is a header Comment plus the two-to-four widgets beneath it that answer one question (e.g. a "Traffic overview" section = a KPI row plus the trend chart that explains it). **One section is not a page:** a KPI strip plus a single chart is half a tab, and with only one section there is no room to showcase more than a couple of widget types — which is exactly what makes a report feel thin and repetitive. So plan each tab as a *sequence of sections* before you place anything, and only fall back to a single section when the user explicitly asked for a lean one-pager.
+**First, pick the tab's composition mode.** There are two ways a tab clears the bar, and a report may mix them — choose per tab, by what the page is for:
 
-**Anatomy of a well-composed tab** (an ordering principle, not a fixed list — every element must still be justified by the data):
+- **Dashboard mode** — the page is a working surface the reader scans for numbers: an operations tab, a campaign monitor, a per-channel performance page. Multiple header-led sections, a dense varied mix, typically 8–14 widgets.
+- **Editorial mode** — the page is a *chapter in an argument*: an executive summary, a monthly story, an analysis that builds to a conclusion. Fewer but **larger** widgets (3–8 per tab), each one a deliberate exhibit, wrapped in narrative: a styled opener that states the chapter's claim, and a closing takeaway that says what the evidence means. Editorial tabs earn their lower count by making every widget substantial (`3×4`, `6×4`, paired `3×6` tables — not token `2×2` cards) and by filling the page vertically just as fully.
+
+When the user's ask reads like a deliverable someone will *read* (client story, executive briefing, year-in-review, analysis "of what happened"), default to editorial; when it reads like a surface someone will *monitor*, default to dashboard. Either way, plan the tab as a sequence of moments before you place anything, and fall back to a single lean section only when the user explicitly asked for a one-pager.
+
+**Anatomy of a dashboard tab** (an ordering principle, not a fixed list — every element must still be justified by the data):
 
 1. **Section 1 — a header** (Comment `6×1`) naming the page or its first section.
 2. **A headline row** — 2–3 small KPI cards (`2×2` or `3×2`) carrying the tab's most important totals. Vary the form across tabs: a Gauge or Goal where there's a target, a List where several small numbers belong together.
@@ -1072,12 +1103,18 @@ When you're deciding the layout yourself — no reference, no explicit widget li
 4. **Section 2 — another header**, then **breakdown / detail rows** — a full-width table, or a table beside the donut/bar that summarizes it; a GeoMap for geography; Media tiles for creatives; a Funnel for staged conversions.
 5. **Section 3 where the data supports it** — a further header plus secondary breakdowns, a narration Comment, or an AI-summary block. Most metric-rich sources support a third section on at least some tabs; reach for it rather than stopping at two.
 
+**Anatomy of an editorial tab** (equally a principle, not a template):
+
+1. **A narrative opener** (Comment, `6×2`) that *frames the chapter*: a small muted kicker line, a large bold headline that states the claim ("The team got smaller. The output went up." — not "Overview"), and one or two sentences of supporting context with real numbers. Built with a Tiptap `description` for the typography — see "Narrative comments" below. On the report's first tab, an **Image widget hero banner** (`6×2`, a generated or brand visual imported via `manage-assets`) may sit above the opener as a cover.
+2. **The evidence** — 3–8 substantial widgets that develop exactly the claim the opener made, in whatever geometry the evidence needs: a strip of six narrow `1×2` KPIs; a `6×4` full-width chart whose title carries the argument; two `3×6` tables side by side comparing cohorts; a `2×2` grid of four `3×4` charts; a `6×5` heatmap-style table. The geometry varies chapter to chapter — an editorial report where every tab has the same shape has stopped telling a story.
+3. **A closing takeaway** (Comment, `6×2`–`6×4`) that says what the evidence on this page *means* — the sentence the reader should leave with, plus caveats or a pointer to the next chapter. The report's final tab typically closes with the whole argument in one block ("The case, in one paragraph"). An AI-text comment can serve as the takeaway when hand-written insight isn't available.
+
 **Composition rules that make it read well:**
 
 - **Pair, don't strand.** No widget sits alone on a row unless it's genuinely full-width (a `6`-wide table, trend chart, or header). A small widget with 4 empty columns beside it is a layout bug — widen it, pair it, or move it into another row.
 - **Adjacency is meaning.** Widgets that answer the same question sit next to each other: the KPI and the trend that explains it, the donut and the table that details it, the map and the top-regions list. A reader should be able to say what each *row* is about, not just each widget.
 - **Vary the forms — within the tab and across tabs.** A tab drawing only on KPI cards and one chart type looks machine-generated. Draw on the full range the data supports (see "Choosing a visualization"), and don't repeat the same overview shape on every tab — the spend tab, audience tab, and creative tab should each look like what they're about.
-- **Depth over sprawl.** A full tab typically lands around **8–14 widgets across two or more sections and five or more rows** — enough to develop its theme with headline, trend, breakdown, and detail. That's a description of what a developed theme tends to need, not a quota: never pad with near-duplicate widgets to hit a count — but equally, never stop at one section or two rows just because something rendered.
+- **Depth over sprawl — and fullness over count.** The real invariant is that **the page is full**: content develops down the grid (typically 8–14 grid rows) with no dead space, and every widget earns its place. Widget count follows the mode — a dashboard tab lands around 8–14 widgets across two or more sections; an editorial tab lands around 3–8 *larger* widgets wrapped in narrative, and is every bit as finished. Never pad with near-duplicate widgets to hit a count — but equally, never stop at a half-empty page because something rendered. A tab with one or two token widgets satisfies neither mode.
 - **Give every KPI card its own icon.** A headline row of SingleValue cards is where the reader's eye lands first, and the icons are half of what distinguishes one card from the next. Pick each one for the metric it sits on (see "Row icons") — a row of identical eye icons is the signature of icons left unset.
 - **End flush.** The last row fills its width like every other row. If the tab ends with a `2`-wide orphan, rebalance the final rows (widen the table, resize the pair) so the page bottom is a clean edge.
 - **Too thin to fill?** If a theme can't sustain a full page from the available fields, don't pad it — merge it into a related tab (see `whatagraph-reports` → "Building a report when the request doesn't specify structure").
@@ -1096,7 +1133,10 @@ Reproduce the reference faithfully — do not substitute a default arrangement:
 
 Different requests produce different shapes. **Copy the user's intent or reference — never copy these.** They exist only to show that the structure should vary:
 
-- **Dense paid-media page (varied, many widgets, two sections):** *Section 1* — a `6×1` header comment; a row of three KPIs `2×2`; a donut `3×3` beside a table `3×3`. *Section 2* — a second `6×1` header; a full-width detail table `6×3`; a row of three ad creatives `2×3`. (Coordinates for this one shape: header `x0 y0 6×1`; KPIs `x0/x2/x4 y1 2×2`; donut `x0 y3 3×3` + table `x3 y3 3×3`; header `x0 y6 6×1`; table `x0 y7 6×3`; media `x0/x2/x4 y10 2×3`.)
+- **Dense paid-media page (dashboard mode, varied, many widgets, two sections):** *Section 1* — a `6×1` header comment; a row of three KPIs `2×2`; a donut `3×3` beside a table `3×3`. *Section 2* — a second `6×1` header; a full-width detail table `6×3`; a row of three ad creatives `2×3`. (Coordinates for this one shape: header `x0 y0 6×1`; KPIs `x0/x2/x4 y1 2×2`; donut `x0 y3 3×3` + table `x3 y3 3×3`; header `x0 y6 6×1`; table `x0 y7 6×3`; media `x0/x2/x4 y10 2×3`.)
+- **Editorial headline chapter (a report's opening tab):** hero Image `6×2` at `y0`; narrative opener comment `6×2` at `y2` (kicker + claim headline + context); a strip of six narrow KPIs `1×2` at `y4`; a full-width at-a-glance table `6×4` at `y6`; a closing takeaway comment `6×2` at `y10`. Five rows, page full, only 10 widgets — and it reads like a magazine cover, not a dashboard.
+- **Editorial comparison chapter:** narrative opener `6×2`; two tall tables `3×6` side by side comparing cohorts (periods, segments, regions). Three widgets, full page — the pairing *is* the argument.
+- **Editorial evidence chapter:** narrative opener `6×2`; a `6×4` full-width chart whose title carries the finding; a `2×2` grid of four `3×4` supporting charts/tables; closing takeaway `6×2`.
 - **Lean summary (sparse, few widgets):** three KPIs `2×2` across the top, then one full-width trend chart `6×3`. Nothing more — don't pad it out. This shape is for when the user *asked* for a lean one-pager — an open-ended "create a report" gets a full composition (see "Composing a full tab"), not this.
 - **Exec narrative (text-led):** an AI-summary comment `6×3` at the top, then two supporting visuals `3×3 + 3×3`.
 - **Uneven split:** a wide trend chart `4×3` beside a tall KPI list `2×3`.
