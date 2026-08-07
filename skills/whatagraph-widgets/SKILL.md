@@ -1,7 +1,7 @@
 ---
 name: whatagraph-widgets
 type: domain
-description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, renaming the metric caption / series label a widget shows, bulk-swapping data sources across many widgets at once, or entering numbers by hand into an offline / manual-data widget. Also the widget reference for building a whole report out of numbers you already have — an analysis, a spreadsheet, a client's own figures — with no connected source at all; load `whatagraph-offline-reports` for that workflow. Carries the non-negotiable full-tab composition bar for self-directed builds — multi-section pages of 8–14 varied widgets, never a thin strip of KPIs plus a chart.
+description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, renaming the metric caption / series label a widget shows, colouring table cells by value with conditional formatting, bulk-swapping data sources across many widgets at once, or entering numbers by hand into an offline / manual-data widget. Also the widget reference for building a whole report out of numbers you already have — an analysis, a spreadsheet, a client's own figures — with no connected source at all; load `whatagraph-offline-reports` for that workflow. Carries the non-negotiable full-tab composition bar for self-directed builds — multi-section pages of 8–14 varied widgets, never a thin strip of KPIs plus a chart.
 required_tools:
   - list-blends
   - list-report-tabs
@@ -37,6 +37,7 @@ list-widgets action=list report_id=<id>                    # grouped by tab, sor
 list-widgets action=show report_id=<id> widget_id=<id>     # full widget details: layout, source binding, options, ai_text_settings, source_filter_off
 list-widgets action=csv_export report_id=<id> widget_id=<id>
 list-widgets action=list_icons                             # the row icon library — see Row icons
+list-widgets action=conditional_formats report_id=<id> widget_id=<id>   # a table widget's cell colour rules — see Conditional formatting
 ```
 
 > ⚠️ **Do not edit a field back just because `show` returned it.** The `show` response repeats the metric's name in `rows[].options.title` as well as `rows[].configs[].options.metrics[].name`, and only the **config** one is the caption the reader sees — the row title is just the placeholder shown until data loads. To rename a metric caption or series label, set `rows[].configs[].options.metrics[].name` — full rule in "Renaming a metric caption".
@@ -686,7 +687,7 @@ manage-widgets action=remove_row report_id=<id> widget_id=<id> row_id=<row_id>
 ```
 
 - `add_row` copies the last row's config (integration, source, report type) into a new row. Update the new row's metric afterwards with a regular `update`.
-- `remove_row` deletes the row and all its config children (metrics, dimensions, report types). Cannot remove the last remaining row.
+- `remove_row` deletes the row and all its config children (metrics, dimensions, report types) — including any conditional formatting on it, which the response reports in `warnings`. Cannot remove the last remaining row.
 - Find row IDs with `list-widgets action=show`.
 
 ## Batch operations
@@ -732,6 +733,80 @@ manage-widgets action=restore_currency report_id=<id> widget_id=<id>
 ```
 
 Use `currency_exchange` first to discover which metrics are convertible and their current `external_id` (a converted metric's id becomes `universal_metric_*`).
+
+## Conditional formatting
+
+Colour a table cell by its own value. Two modes, per metric (per column):
+
+- **Manual rules** — your thresholds, and **both** colours per rule: `text_color` and `background_color`, each independent and each optional. Set only `text_color` to recolour the number and leave the cell background alone. "Red under 100."
+- **Auto colors** — one base colour for the background, shaded into seven tints across the column's own lowest-to-highest value. **You do not control the text colour**: it is contrast-derived per cell (dark on light tints, white on dark). "Heatmap this column."
+
+**A metric uses one mode or the other, never both.** The renderer prefers the auto shade and never looks at the rules, so setting one mode clears the other and says so in `warnings`.
+
+**Table (`102`) only.** Only the table renderer paints these colours. Every other widget type is rejected rather than storing rules that never draw. Offline tables (`126`) are not supported either — see "Faking a heatmap" for those.
+
+```
+list-widgets action=conditional_formats report_id=<id> widget_id=<id>
+# → per metric: mode (`manual` | `auto` | `none`), auto_color, and every rule in evaluation order
+# → narrow with metric_external_id=<id>
+
+manage-widgets action=set_conditional_formats report_id=<id> widget_id=<id>
+   metric_external_id="clicks"
+   conditional_formats=[
+     {"operator": "greater_than",  "value": 1000,                  "text_color": "#ffffff", "background_color": "#059669"},
+     {"operator": "between",       "value": 100, "value_end": 1000, "text_color": "#2a2b30", "background_color": "#fde68a"},
+     {"operator": "less_or_equal", "value": 100,                   "text_color": "#ffffff", "background_color": "#dc2626"}
+   ]
+
+manage-widgets action=add_conditional_formats ...   # appends, keeps existing rules
+```
+
+### Auto colors
+
+No thresholds to author — pick a base colour and the column shades itself.
+
+```
+manage-widgets action=set_auto_colors report_id=<id> widget_id=<id>
+   metric_external_id="impressions" auto_color="#059669"
+
+manage-widgets action=set_auto_colors ... auto_color=null   # back to unformatted
+```
+
+The seven tints run light-to-dark from the column's own minimum to its maximum, recomputed on every render, and each cell's text colour is contrast-derived — auto colors takes no `text_color`, so if the ask names a specific text colour you need manual rules. Because the range is derived from the data, the colours move when the data does — which is what you want for "show me the big numbers" and wrong for "flag anything under target". Use manual rules when a specific number matters.
+
+### Rules
+
+| Field | Notes |
+| --- | --- |
+| `operator` | `greater_than`, `greater_or_equal`, `less_than`, `less_or_equal`, `equal`, `not_equal`, `between` |
+| `value` | Number to compare the cell against. Required. |
+| `value_end` | **Required for `between`**, which matches `value`..`value_end` inclusive. Ignored otherwise. |
+| `text_color`, `background_color` | 6-digit hex (`#059669`). Independent and both optional — omit one to leave that half of the cell alone. Colour names and 3-digit hex are rejected; they render as nothing. |
+| `position` | Evaluation order. Defaults to the array order you send. |
+
+**First match wins.** The rules are evaluated in `position` order and the first one that matches paints the cell. Order from narrowest to widest, or a catch-all `greater_than 0` first will swallow every band after it.
+
+### `set` is replace-all
+
+`set_conditional_formats` makes the rules you send the metric's **complete** set — anything already there is deleted. Read first with `list-widgets action=conditional_formats`, or you will silently drop rules a user set in the UI. Two safe shapes:
+
+- **Adding a band** → `add_conditional_formats`, which appends and leaves the rest alone.
+- **Clearing a column** → `set_conditional_formats` with `conditional_formats=[]`.
+
+### Reading back
+
+`list-widgets action=show` flags each table metric with `has_conditional_format`, so you can tell which columns already carry rules without a second call. The flag appears only on table widgets. Use `action=conditional_formats` to read the rules themselves.
+
+### Formatting is attached to the config, not the metric
+
+Rules are stored against the widget **config** the row binds — the first config of the row, which is where the UI writes them too. Two consequences:
+
+- **A rebuilt row loses its formatting.** The "omit `rows[].id` to rebuild the binding" workaround (see Common pitfalls) recreates the row, and formatting cannot outlive the row it hangs off. `manage-widgets` re-attaches the rules when only the config is replaced, and warns you in `warnings` when a removed row took its rules with it — but there is no way to move them across a full row rebuild. **Read the rules out first, rebuild, then write them back.**
+- **`remove_row` discards them**, and reports how many in `warnings`.
+
+`duplicate` and `batch_duplicate` carry formatting across correctly; no extra work needed.
+
+Auto colors is stored in the config's `options.auto_colors`, so it rides along with any config edit — but a full row rebuild loses it the same way manual rules do.
 
 ## Layout grid model
 
@@ -1031,11 +1106,11 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - Set widget-level permissions — UI only.
 - Cross-report widget copy — duplicate within the same report only (use `target_tab_id` for cross-tab duplication).
 - **Edit the generated AI text itself** — `update_ai_text` configures the settings and triggers generation, but the produced text can only be hand-edited in the UI.
-- **Conditional formatting on table and KPI metrics** — value-threshold colour rules exist in the product but are not exposed here; UI only. Two workarounds get close — see "Faking a heatmap" below.
+- **Conditional formatting outside the live table (`102`)** — the colour rules are exposed (see "Conditional formatting"), but only the live table renders them. KPI cards and offline tables cannot carry them; see "Faking a heatmap" below.
 
 ### Faking a heatmap
 
-Cell values in an offline table are strings, so encode the intensity in the text itself. Prefix a shade glyph per bucket — `█` highest, then `▓`, `▒`, `░`, and `·` for none — or use a proportional bar like `██████░░░░`. This survives PDF rendering and needs no colour support. Keep it to one glyph plus the number in a narrow column: a ten-cell bar overflows and the column truncates.
+Only the live table (`102`) can colour cells by value. For an offline table, cell values are strings, so encode the intensity in the text itself. Prefix a shade glyph per bucket — `█` highest, then `▓`, `▒`, `░`, and `·` for none — or use a proportional bar like `██████░░░░`. This survives PDF rendering and needs no colour support. Keep it to one glyph plus the number in a narrow column: a ten-cell bar overflows and the column truncates.
 
 For a single value that must carry its own colour, put it in a Comment widget instead. There you *do* control colour per run of text — a `textStyle` colour mark for a good or bad number, or a `highlight` mark for a background chip. This is the only place in an MCP-built report where a number can carry meaning through colour.
 
@@ -1076,4 +1151,10 @@ For a single value that must carry its own colour, put it in a Comment widget in
 - **Offline values passed as row options** — `rows[].options.value` / `previous_value` bind nothing. Row `options` is a free-form blob, so these used to persist silently and the call still reported success; they now come back as an "unrecognized `options` keys" warning. Offline values belong in the row's `data` array.
 - **Binding a metric on an offline widget** — rejected. These widgets derive their metrics from their own values, and a binding written here is reverted before the response is built, so it used to return success with a metric the widget never had. Use `data` instead; `name` on each entry is the metric label.
 - **`"offline_single_value"` and friends** — the `offline_`-prefixed string names resolve to the writable current-generation types (`125`+). On deployments before Aug 2026 they resolved to the pre-new-architecture types (`25`+) and were then rejected as too old — pass the integer ID there.
+- **Conditional formatting that vanished after an unrelated edit** — the rules hang off the widget config, so a row rebuilt from scratch (the "omit `rows[].id`" workaround) cannot keep them. Read them out with `list-widgets action=conditional_formats` before any structural edit and write them back after. `manage-widgets` re-attaches them when only the config is replaced and warns in `warnings` when a row removal discarded them, so check `warnings` on every table update.
+- **`set_conditional_formats` wiping the rules you didn't send** — it is replace-all, not a merge. Use `add_conditional_formats` to append a band, and `set_conditional_formats` with an empty array only when you mean to clear the column.
+- **Manual rules that store fine and never paint** — the metric is in auto-colors mode, which the renderer prefers. Both write actions now clear the other mode and tell you in `warnings`, but a metric that was set up in the UI before this can hold both; check `mode` in `list-widgets action=conditional_formats`.
+- **Auto colours that shift between runs** — the seven tints are anchored to the column's own min and max, so new data remaps every cell. Expected. Use manual rules when a threshold must stay put.
+- **Only the top band ever colouring** — the rules are evaluated in `position` order and the first match wins. A wide rule sent first (`greater_than 0`) matches everything and the narrower bands after it never fire. Order narrowest first.
+- **A conditional format that stores fine and never paints** — the widget is not a live table (`102`). This is now rejected outright, but on deployments before Aug 2026 the rule was stored silently against a type that never draws it.
 - **Literal `\n` in comment text** — a comment widget whose rendered text shows a visible `\n` (and renders entirely in heading size) received a double-escaped newline: the string contained the two characters backslash + n instead of a line break. Recreate with real newlines, or split into a header widget + a separate text-block widget.
