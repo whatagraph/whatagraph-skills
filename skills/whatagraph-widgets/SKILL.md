@@ -34,6 +34,7 @@ A **widget** is a visual data component on a tab. Widgets are typed (KPI card, l
 list-widgets action=list report_id=<id>                    # grouped by tab, sorted by (position_y, position_x); each widget includes `has_filters` boolean and `widget_type_label` (human-readable)
 list-widgets action=show report_id=<id> widget_id=<id>     # full widget details: layout, source binding, options, ai_text_settings, source_filter_off
 list-widgets action=csv_export report_id=<id> widget_id=<id>
+list-widgets action=list_icons                             # the row icon library — see Row icons
 ```
 
 Notes:
@@ -311,7 +312,7 @@ For multi-row chart widgets (Column, Line, Area, Bar), rows support additional o
 | `trend_line` | string | Trend line type. |
 | `trend_line_period` | integer | Trend line period. |
 | `sort` | `asc` \| `desc` | Sort direction on this row's metric. |
-| `icon` | string | Row icon (for List and SingleValue widgets). |
+| `icon` | string | Row icon (for List and SingleValue widgets). Must be a filename from the icon library — see [Row icons](#row-icons). |
 
 Example — mixed column + line chart:
 ```
@@ -331,6 +332,49 @@ rows=[
 ]
 ```
 > One row per source, each with a single config (its source) and the **same** metric, and **no** dimension — the sources become the columns. Set `axis: "left"` on every row; without it the editor's Left/Right axis sections render empty even though the data is bound.
+
+### Row icons
+
+Three widget types render a row icon. `manage-widgets` rejects `options.icon` on every other
+type, so treat this as a whitelist:
+
+| `widget_type_id` | Type | Behaviour |
+|---|---|---|
+| 101 | SingleValue | Icon on **row 0 only**. Always drawn when set — no toggle. |
+| 125 | Offline SingleValue | Same as 101. |
+| 103 | List | Icon **per row**, gated by the widget option `show_icons`. |
+
+Offline List (127) is **not** on the list, even though plain List is. It builds its lines from
+the offline data entries inside the row instead of from the rows themselves, so it never reads
+the icon column.
+
+On 103, new List widgets are created with `show_icons: true`, but the API reports `false`
+whenever the key is absent. If an icon does not appear, read `options.show_icons` with
+`action=show` and set it explicitly.
+
+The value is a filename from a fixed library — never invent one. Browse it with:
+
+```
+list-widgets action=list_icons                            # every set, paginated (per_page, cursor)
+list-widgets action=list_icons search=revenue             # matches name, tags and groups
+list-widgets action=list_icons icon_set=sharp-line        # the current library
+```
+
+Each entry returns `icon` (the filename to write), `name`, `icon_set`, `groups` and `tags`.
+Write it back verbatim:
+
+```
+manage-widgets action=update report_id=<id> widget_id=<id>
+   rows=[{"options": {"icon": "Visible--Streamline-Sharp.svg", ...}, "configs": [...]}]
+```
+
+Read it back with `list-widgets action=show`: `rows[].icon` is the authoritative value, even
+though you write it under `rows[].options.icon`. Ignore any `icon` still sitting in
+`rows[].options` — that is legacy data the renderer does not read. Pass `"icon": null` to clear
+the icon.
+
+Both icon sets render on all three types. Two entries in the library have no file behind them —
+`twitter.svg` and `twitter-ads.svg` — and draw blank; pick another icon.
 
 ### `rows` → `configs` shape
 
