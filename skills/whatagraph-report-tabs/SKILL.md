@@ -53,6 +53,8 @@ manage-report-tabs action=create report_id=<id> name="Hidden Tab" hidden=true
 
 The new tab starts empty — add widgets via `manage-widgets action=create` or `manage-widgets action=create_premade`.
 
+> **A created tab is not done until it's a full page.** When building out a report — whether the tabs came from the user, an agent's instructions, or your own structure — every tab you create must be populated as a complete composed page before the report is handed over: two or more sections with headers, a varied widget mix, verified data (see `whatagraph-widgets` → "Composing a full tab" and `whatagraph-reports` → the pre-handover checklist). Never leave a tab empty or holding just one or two widgets — a named tab is a request for a full themed page, not a placeholder.
+
 ## Duplicate a tab
 
 ```

@@ -102,6 +102,14 @@ Users rarely say "data source"; they say things like "my Google Ads account". Tr
 | "share link", "public link" | sharing + the returned URL |
 | "template report" | a report template (linked report pattern) |
 
+> **⚠️ "Overview" is an overloaded word — resolve it before building.** In Whatagraph, an **Overview** (UI name: "Measurement") is a standalone product entity — a single-page KPI dashboard that lives outside any report (`list-overviews` / `manage-overviews`, see `whatagraph-overviews`). But users and agent instructions also say "overview" for other things. Read the context:
+>
+> - **A tab inside a report** — "Overview" / "General Overview" named in a tab list, "the overview tab", "overview page of the report" → a report tab, not the Overview entity. Build it with `manage-report-tabs` / `manage-widgets`.
+> - **A summary-style report** — "an overview of last month's performance", "a high-level overview report" alongside report language → a report (often its first tab is the summary).
+> - **The Overview entity** — "create an overview", "a Measurement", "KPI dashboard", "add it to Overviews", or the request explicitly contrasts it with reports → `whatagraph-overviews`.
+>
+> **When the signals don't settle it, don't guess — ask the user** one short follow-up before creating anything: e.g. *"Do you mean a Whatagraph Overview (the standalone KPI dashboard, called 'Measurement' in the UI), or an overview tab/summary inside a report?"* Building the wrong artifact type wastes the build and confuses the account. The same check applies in reverse when listing or deleting: "delete the overview" may mean the entity or a report's tab.
+
 ## The golden flow for new users
 
 1. `view-team action=show` — confirm plan, features enabled.

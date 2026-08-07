@@ -1,7 +1,7 @@
 ---
 name: whatagraph-widgets
 type: domain
-description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, bulk-swapping data sources across many widgets at once, or entering numbers by hand into an offline / manual-data widget for figures no integration can supply.
+description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, bulk-swapping data sources across many widgets at once, or entering numbers by hand into an offline / manual-data widget for figures no integration can supply. Carries the non-negotiable full-tab composition bar for self-directed builds — multi-section pages of 8–14 varied widgets, never a thin strip of KPIs plus a chart.
 required_tools:
   - list-blends
   - list-report-tabs
@@ -19,6 +19,8 @@ required_tools:
 Tools covered: `list-widgets`, `manage-widgets`.
 
 A **widget** is a visual data component on a tab. Widgets are typed (KPI card, line chart, table, pie chart, etc.) and each has a data source (or no source for comment/image widgets). Widgets expose rows and configs — a row groups metrics and dimensions; configs define the data.
+
+> **The quality bar — read this before building anything.** Unless the user handed you a widget-by-widget spec or a reference to replicate, every tab you build is a **full composed page: two or more sections with header comments, a varied widget mix (KPI row + trend chart + composition chart + detail table + at least one distinctive type the data earns), typically 8–14 widgets**. The instinctive "a few KPIs, a chart, and a table" (~5–6 widgets) is **below the bar** — it is what gets built when nobody reads the data, and it ships thin, repetitive pages. Full rules in "Composing a full tab" below; the bar applies even when the tabs and their themes were named for you. **If your run has a limited step budget, economize on discovery and verification calls — bind `rows` at create, reuse the field catalog across widgets, batch, verify once at the end — never on widget count.**
 
 ## Use this when
 
@@ -56,7 +58,7 @@ manage-widgets action=create
 
 ⚠️ **Four types reject `name` and `options.title` outright** — Comment (`21`), Calendar (`22`), Filter control (`137`), and Report shortcut (`141`). They never render a widget title, so passing one is refused rather than silently stored (Jul 2026). For a Comment, put the heading in the body text instead — `rows[].configs[].options.comment_widget_text.text` with a markdown `#` prefix. Image (`34`) does render a title and still takes `name`.
 
-You can pass `rows` at create time to bind metrics and dimensions immediately — no separate update needed. If `rows` is omitted, the widget defaults to the first metric in the source catalog.
+**Always pass `rows` at create time on data widgets** — bind the metrics and dimensions in the same call. If `rows` is omitted, the widget falls back to the first metric in the source catalog — an arbitrary binding that rarely matches the widget's title, and on some sources no default applies at all, leaving the widget rendering **"Metrics not selected"** in the client-facing report. A create that returns `success` with no explicit binding is not a configured widget. Before binding, look the fields up with `list-sources action=list_dimensions_and_metrics` (never guess `external_id`s), keep every field in one config on the same `report_type`, and verify the result loads data (see "Fit for purpose").
 
 ### Dimension requirements by widget type
 
@@ -666,8 +668,8 @@ The report uses a **6-column grid**. Every widget occupies a rectangle defined b
 **There is no house layout, and no default report structure.** The tab's shape is decided fresh each time, in this order of priority:
 
 1. **A reference was provided** — a PDF, screenshot, live-report URL, or an existing report → **replicate its structure** (see "Replicating a reference report"). Don't normalize it to a layout you prefer.
-2. **The user described what they want** → build to that intent: the metrics, breakdowns, and emphasis they asked for.
-3. **No reference and no specific ask** → *you* decide what's worth showing and how. This is a judgment call, not a fallback skeleton: look at the data that's actually available (which metrics, which dimensions), pick the most meaningful KPIs, choose the best visualization for each (see below), and arrange them in a sensible information hierarchy. Different sources and metrics should produce different reports — if every report you build looks the same, you've defaulted to a template.
+2. **The user described what they want** → build to that intent: the metrics, breakdowns, and emphasis they asked for. But a description of *what a tab is about* is not a description of *the layout*: a tab named with a theme or a metric list ("Google Ads: performance widgets for spend, clicks, impressions, conversions") fixes the tab's focus and which metrics must appear — the page composition around them still follows case 3 and "Composing a full tab" in full. Only an actual widget-by-widget spec pins the layout itself.
+3. **No reference and no widget-level spec** → *you* decide what's worth showing and how. This is a judgment call, not a fallback skeleton: look at the data that's actually available (which metrics, which dimensions), pick the most meaningful KPIs, choose the best visualization for each (see below), and arrange them in a sensible information hierarchy. Different sources and metrics should produce different reports — if every report you build looks the same, you've defaulted to a template.
 
 Sizing and positioning (further down) only make *whatever you chose* render cleanly — they are not a recipe for what to build.
 
@@ -763,7 +765,7 @@ Once you know the structure, lay it out top to bottom:
 
 ### Composing a full tab (self-directed builds)
 
-When you're deciding the layout yourself — no reference, no explicit widget list — each tab is a **complete page with a visual rhythm**, not a strip of cards or a lone widget. The failure modes to design against: a row of identical KPI cards plus one chart and nothing else; a tab whose only occupant is a single table floating in empty space; every tab in the report shaped the same way.
+When you're deciding the layout yourself — no reference, no explicit widget list — each tab is a **complete page with a visual rhythm**, not a strip of cards or a lone widget. **This section applies just as fully when the tabs were named for you** — by the user's prompt or an agent's instructions ("build these 6 tabs: Overview, Google Ads, Meta Ads, …"). A named tab with a theme or metric list scopes the page's *subject*; the page itself is still yours to compose, and it gets the complete treatment below. The failure modes to design against: a tab holding one or two widgets adrift in an empty grid (the classic outcome of misreading a tab list as a widget list); a row of identical KPI cards plus one chart and nothing else; a tab whose only occupant is a single table floating in empty space; every tab in the report shaped the same way.
 
 **Every tab carries at least two sections — three or more where the data supports it.** A *section* is a header Comment plus the two-to-four widgets beneath it that answer one question (e.g. a "Traffic overview" section = a KPI row plus the trend chart that explains it). **One section is not a page:** a KPI strip plus a single chart is half a tab, and with only one section there is no room to showcase more than a couple of widget types — which is exactly what makes a report feel thin and repetitive. So plan each tab as a *sequence of sections* before you place anything, and only fall back to a single section when the user explicitly asked for a lean one-pager.
 
@@ -865,6 +867,8 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 
 ## Common pitfalls
 
+- **A widget rendering "Metrics not selected"** — it was created without `rows` (or with a config whose `options.metrics` is empty), so nothing is bound. The create still returns `success`, which is why this reaches shipped reports. Always bind at create, and always verify with `export-report` / `csv_export` — see "Always pass `rows` at create time".
+- **A tab with one or two widgets floating in an empty grid** — the tab list in the instructions was misread as a widget list. A named tab ("Google Ads", "Weather Report for New York") is a full themed page, not a slot for one widget per named metric — compose it per "Composing a full tab", whoever named the tab.
 - **Date dimension ambiguity** — a source may expose more than one date-typed dimension (e.g. `universal_dimension_1137` "Date" and `universal_dimension_150` "Date OLD"). Prefer the plainly-named current one and verify with `csv_export`. This is integration-dependent.
 - **Full-width single-value widgets** — looks like a section header; use 2×2 or 2×1 instead.
 - **Table summary row sums percentages** — the footer sums percent columns as numbers (25% + 30% = 55%); disable footer for percent-heavy tables.
