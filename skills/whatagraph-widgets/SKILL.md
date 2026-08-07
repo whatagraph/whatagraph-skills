@@ -335,8 +335,7 @@ rows=[
 
 ### Row icons
 
-Three widget types render a row icon. `manage-widgets` rejects `options.icon` on every other
-type, so treat this as a whitelist:
+Three widget types render a row icon. `manage-widgets` rejects `options.icon` on every other type, so treat this as a whitelist:
 
 | `widget_type_id` | Type | Behaviour |
 |---|---|---|
@@ -344,13 +343,9 @@ type, so treat this as a whitelist:
 | 125 | Offline SingleValue | Same as 101. |
 | 103 | List | Icon **per row**, gated by the widget option `show_icons`. |
 
-Offline List (127) is **not** on the list, even though plain List is. It builds its lines from
-the offline data entries inside the row instead of from the rows themselves, so it never reads
-the icon column.
+Offline List (127) is **not** on the list, even though plain List is. It builds its lines from the offline data entries inside the row instead of from the rows themselves, so it never reads the icon column.
 
-On 103, new List widgets are created with `show_icons: true`, but the API reports `false`
-whenever the key is absent. If an icon does not appear, read `options.show_icons` with
-`action=show` and set it explicitly.
+On 103, new List widgets are created with `show_icons: true`, but the API reports `false` whenever the key is absent. If an icon does not appear, read `options.show_icons` with `action=show` and set it explicitly.
 
 The value is a filename from a fixed library — never invent one. Browse it with:
 
@@ -360,21 +355,16 @@ list-widgets action=list_icons search=revenue             # matches name, tags a
 list-widgets action=list_icons icon_set=sharp-line        # the current library
 ```
 
-Each entry returns `icon` (the filename to write), `name`, `icon_set`, `groups` and `tags`.
-Write it back verbatim:
+Each entry returns `icon` (the filename to write), `name`, `icon_set`, `groups` and `tags`. Write it back verbatim:
 
 ```
 manage-widgets action=update report_id=<id> widget_id=<id>
    rows=[{"options": {"icon": "Visible--Streamline-Sharp.svg", ...}, "configs": [...]}]
 ```
 
-Read it back with `list-widgets action=show`: `rows[].icon` is the authoritative value, even
-though you write it under `rows[].options.icon`. Ignore any `icon` still sitting in
-`rows[].options` — that is legacy data the renderer does not read. Pass `"icon": null` to clear
-the icon.
+Read it back with `list-widgets action=show`: `rows[].icon` is the authoritative value, even though you write it under `rows[].options.icon`. Ignore any `icon` still sitting in `rows[].options` — that is legacy data the renderer does not read. Pass `"icon": null` to clear the icon.
 
-Both icon sets render on all three types. Two entries in the library have no file behind them —
-`twitter.svg` and `twitter-ads.svg` — and draw blank; pick another icon.
+Both icon sets render on all three types. Two entries in the library have no file behind them — `twitter.svg` and `twitter-ads.svg` — and draw blank; pick another icon.
 
 ### `rows` → `configs` shape
 
