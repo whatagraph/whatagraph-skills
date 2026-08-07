@@ -1,7 +1,7 @@
 ---
 name: whatagraph-widgets
 type: domain
-description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, bulk-swapping data sources across many widgets at once, or entering numbers by hand into an offline / manual-data widget for figures no integration can supply. Carries the non-negotiable full-tab composition bar for self-directed builds — multi-section pages of 8–14 varied widgets, never a thin strip of KPIs plus a chart.
+description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, renaming the metric caption / series label a widget shows, bulk-swapping data sources across many widgets at once, or entering numbers by hand into an offline / manual-data widget for figures no integration can supply. Carries the non-negotiable full-tab composition bar for self-directed builds — multi-section pages of 8–14 varied widgets, never a thin strip of KPIs plus a chart.
 required_tools:
   - list-blends
   - list-report-tabs
@@ -39,6 +39,8 @@ list-widgets action=csv_export report_id=<id> widget_id=<id>
 list-widgets action=list_icons                             # the row icon library — see Row icons
 ```
 
+> ⚠️ **Do not edit a field back just because `show` returned it.** The `show` response repeats the metric's name in `rows[].options.title` as well as `rows[].configs[].options.metrics[].name`, and only the **config** one is the caption the reader sees — the row title is just the placeholder shown until data loads. To rename a metric caption or series label, set `rows[].configs[].options.metrics[].name` — full rule in "Renaming a metric caption".
+
 Notes:
 - All actions include widgets on **hidden tabs** by default. Use `tab_hidden=false` to exclude hidden tabs, or `tab_hidden=true` to show only hidden tabs. The `list` response includes a `tab_hidden` field on each tab. `csv_export` defaults to visible tabs only (`tab_hidden=false`) — pass `tab_hidden=true` to export a widget on a hidden tab.
 - `csv_export` requires the **Widget CSV Export** premium feature — throws an authorization error without it. When `data_status=warning`, the response includes `retry_after_seconds: 60`. Some widgets return `success: false` when the integration doesn't support export.
@@ -55,7 +57,7 @@ manage-widgets action=create
    name="<widget title>"               # always set on data widgets — see Titles
 ```
 
-**Always pass `name` at create on data widgets** — one created without a name renders the platform's default label. Set each row's rendered label in `rows[].options.title` at the same time (see "Titles — every widget and every metric row is labelled").
+**Always pass `name` at create on data widgets** — one created without a name renders the platform's default label. Set each row's rendered metric label in `rows[].configs[].options.metrics[].name` at the same time (see "Titles — every widget and every metric row is labelled").
 
 ⚠️ **Four types reject `name` and `options.title` outright** — Comment (`21`), Calendar (`22`), Filter control (`137`), and Report shortcut (`141`). They never render a widget title, so passing one is refused rather than silently stored (Jul 2026). For a Comment, put the heading in the body text instead — `rows[].configs[].options.comment_widget_text.text` with a markdown `#` prefix. Image (`34`) does render a title and still takes `name`.
 
@@ -505,7 +507,7 @@ Known `options` shapes:
 - **Remote image URLs must be imported before widget use.** For `image_url` and a comment widget's `background_image_url`, do not pass an external URL: call `manage-assets action=import_url` with `target_scope=team` so the asset stays reusable, then `manage-assets action=publish` with the `asset.ulid` the import returned, and pass only the `url` that `publish` returns. A Whatagraph URL that is already published needs no import. `image_data` / `background_image_data` are unaffected — they carry the bytes already. If import or publish fails, fix the URL or ask the user for the image and leave the widget unchanged; never fall back to the raw URL and never invent a replacement. `manage-widgets` stores the URL verbatim and only checks its scheme and host, so an external URL stays a live hotlink: it can rot, sit behind a login, or block hotlinking, and one recalled rather than fetched may not exist at all — which is how a broken image reaches a customer's report. The same rule applies to theme header/footer `images[].url` via `manage-themes`.
 - **Single-value KPI** (`widget_type_id=101`): set `{"comparison_display_type": "combined"}` (or `"percentage"` / `"absolute"`) to surface the trend delta vs. the comparison window inherited from the report. `compare_type` is not a valid widget option key — it is a date-range field and the widget rejects it.
 - **Funnel** (`widget_type_id=115`): each funnel **stage is its own row** with a single metric — one metric per row, in stage order. Putting multiple metrics in one config renders a single 100% stage instead of a multi-stage funnel.
-- **Goal widget** (`widget_type_id=123`): set `options.goal_date_range` with `start_date`, `end_date`, and `visible_time_line` (boolean — controls the "Time passed" indicator line). Each row represents a goal line and requires `options.title` (goal name), `options.start_value` (baseline, typically 0), and `options.end_value` (target number). `end_value` must be greater than `start_value`. The metric in `configs[].options.metrics` tracks progress toward the target.
+- **Goal widget** (`widget_type_id=123`): set `options.goal_date_range` with `start_date`, `end_date`, and `visible_time_line` (boolean — controls the "Time passed" indicator line). Each row represents a goal line and requires `options.title` (goal name), `options.start_value` (baseline, typically 0), and `options.end_value` (target number). Note that `options.title` only labels the line while it has no data — once the goal loads, the rendered label is the config metric's `name` (see "Renaming a metric caption"), so set both to the same text. `end_value` must be greater than `start_value`. The metric in `configs[].options.metrics` tracks progress toward the target.
 - **Filter control** (`widget_type_id=137`): bind a **dimension** (not a metric) via rows — the widget renders as a dropdown filter that other widgets on the tab respond to. No date range is needed. Does not load data itself.
 - **Gauge** (`widget_type_id=139`): dial-style single metric display. Same configuration as SingleValue (`101`) but different visual rendering — use when a circular dial is more appropriate than a plain number. Supports `start_value` and `end_value` in row options to set the gauge range.
 - **Heatmap** (`widget_type_id=138`): heat-colored grid showing metric values across time/dimension. Same configuration as SingleValue (`101`).
@@ -742,10 +744,50 @@ Compose by analytical priority: surface the few numbers that matter most first, 
 Every data widget carries a **title**, and every metric row carries a **row label** — never ship an untitled widget or an unlabelled series. A reader scanning the report should know what each widget shows without opening its config.
 
 - Set the widget title via `name` on create/update, and confirm it isn't suppressed by `hide_title` (see Display toggles).
-- Set each row's label in `rows[].options.title` — the rendered series/metric label, distinct from the config-side data binding. For multi-row charts, funnels, and non-breakdown pie/donut, give **each** row its own title so every series / stage / slice is named.
+- Set each row's metric label in **`rows[].configs[].options.metrics[].name`** — on every current-generation type (`101`–`123`, `137`–`140`) that is the caption the reader sees. For multi-row charts, funnels, and non-breakdown pie/donut, give **each** row's metric its own `name` so every series / stage / slice is named. Rename a dimension label the same way, with `rows[].configs[].options.dimensions[].name`.
+- **Never label a row with `rows[].options.title` or `rows[].options.metrics[].label`.** The first is only a pre-data placeholder, the second is read by nothing — writing to either succeeds and shows nothing. See "Renaming a metric caption" below for the full rule and its exceptions.
 - Utility widgets (Comment `21`, Image `34`, Calendar `22`) are exempt from the metric-row rule, but a Comment used as a section header still carries its heading text.
 - **Comment (`21`), Calendar (`22`), Filter control (`137`), and Report shortcut (`141`) render no title at all and reject `name` / `options.title`.** Don't try to label them — a Comment's heading lives in its body text (`comment_widget_text.text`, markdown `#`), and the other three are labelled by what they contain. Image (`34`) does render a title.
 - The title states what's shown (metric + scope). Because the title makes a promise to the reader, the bound fields must actually deliver it — see "Fit for purpose" below.
+
+#### Renaming a metric caption
+
+⚠️ **There is exactly one writable field for this, and the widget carries decoys that look more like it.** A `list-widgets action=show` response shows the old metric name in both `rows[].options.title` and `rows[].configs[].options.metrics[].name`. Only the config one is the rendered caption; the row title is the pre-data placeholder. Writing to the row title is accepted, returns `success`, changes the stored row, and changes nothing the reader sees. Do not copy the shape you see in the `show` response — go straight to the config metric. `manage-widgets` returns a warning if you set a row-level label without a config metric `name`.
+
+To change the metric label a reader sees — "Clicks" → "Hot Leads" — set the `name` on the **config** metric:
+
+```
+manage-widgets action=update widget_id=<id>
+  rows=[{id: <row_id>, configs: [{id: <config_id>, channel_id: <channel_id>, source_id: <source_id>,
+    options: {report_type: "<report_type>",
+              metrics: [{external_id: "clicks", name: "Hot Leads", identifier: 0}]}}]}]
+```
+
+Carry `channel_id`, `source_id`, and `report_type` on the config, exactly as with any other in-place config edit — a metric-only update can rebuild the config without its report-type binding and blank the widget.
+
+Nothing else is needed: when a request leaves `rows[].options.title` unset, `manage-widgets` copies the config metric names into the row display options for you, so the editor chip and the rendered caption stay in step.
+
+**Why the two decoys fail, in detail:**
+
+- `rows[].options.title` is the placeholder the renderer shows *before* data arrives; once the widget loads, the caption is the config metric's name. Setting it on its own reads back as `success`, looks right for a moment, then reverts to the old metric name as soon as the data lands. Worse, an explicit `options.title` in the request suppresses the automatic mirroring above, so the two fields stay in disagreement — which is the state that produces this bug.
+- `rows[].options.metrics[].label` is not read at all on a current-generation widget — not by the renderer, not by the editor, not by the backend. It is a leftover from the pre-new-architecture widget shape that premade and seeded widgets still carry. New-arch code reads only `decimal_place`, `width`, and `sort` out of `rows[].options.metrics[]`. A rename written to `label` is invisible from the moment it is stored. Since Aug 2026 the widget tools strip it from responses on types `101`+, so you should not see it at all; on an older deployment it still comes back holding the metric's name, and it is still inert there.
+
+Change the config metric name; leave both of these alone.
+
+This holds for every type that renders a metric label:
+
+| Type | Where the rendered label comes from |
+|---|---|
+| SingleValue `101`, Gauge `139`, List `103` | Config metric `name`. Row `options.title` shows only until data loads. |
+| Charts `104`–`107`, `115`, `118`, `119`, Pie/Donut `108`/`109` | Config metric `name`. Series names never fall back to the row title. |
+| Table `102`, Media `110`/`111`, Heatmap `138`, GeoMap `140` | Config metric / dimension `name` — column headers included. |
+| Goal `123` | Config metric `name` for the goal line's label. `options.title` is still required at create, and is what shows while the line has no data. |
+
+Three real exceptions, where the row-level field **is** the label:
+
+- **Multi-channel formula rows** — a row carrying `options.operators` is captioned by `rows[].options.formula_title`, falling back to `options.title`. There is no config metric to name.
+- **Offline widgets (`125`–`136`)** — the label is the `name` on each entry of the row's `data` array. Config bindings are rejected on these types.
+- **Pre-new-architecture types (below `101`)** — the old renderer really does read `rows[].options.title` first. Only relevant on legacy widgets; create everything new at `101`+.
 
 ### Section headers — introduce each section of a tab with a Comment widget
 
@@ -916,7 +958,8 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **Batch operations without `widget_ids`** — the array is required. Empty array = no-op, not "all widgets".
 - **Widget breaks after batch source swap** — the new source may not have the same report type or fields; always verify with `list-widgets action=show` after.
 - **`metric.external_id` change appears to no-op** — when the widget already has a config bound to a metric on a source group / blend, re-supplying a different `metric.external_id` in the same config sometimes leaves the original metric in place. The `list-widgets action=show` response masks this (it only echoes channel + source ids, not the metric). Always confirm via `list-widgets action=csv_export` or `export-report` after a metric swap; if the CSV still shows the previous metric name, delete and recreate the widget rather than trying to update it in place.
-- **Widget `name` vs row-level `title`** — `name` sets `options.title`, the heading above the chart/table. `rows[].options.title` labels individual data rows (metric name in a KPI, series name in a chart legend). To rename the visible metric label, update `rows[].options.title`, not `name`.
+- **A metric rename that returns `success` and changes nothing on screen** — the new caption was written to `rows[].options.title` or `rows[].options.metrics[].label`. Neither is an input; the rendered caption is `rows[].configs[].options.metrics[].name`. The row title version looks correct until the data arrives, then snaps back; the `label` version is invisible immediately, because nothing reads it. A warning now flags this on write. Set the config metric `name` instead — see "Renaming a metric caption".
+- **Widget `name` vs row-level `title`** — `name` sets the widget-level `options.title`, the heading above the chart/table. `rows[].options.title` is a row display option, not the metric caption; don't reach for it to rename a metric.
 - **Titling a type that has no title** — `name` / `options.title` on a Comment (`21`), Calendar (`22`), Filter control (`137`), or Report shortcut (`141`) is rejected, on create, update, and `batch_change_settings`. These types render no title, so the value used to be stored and never shown — which read back as success and led to reporting headers that did not exist. A Comment's heading belongs in its body text.
 - **A comment widget that renders as an empty box** — the body text never arrived. Either it was never supplied (now rejected at create), or an update rebuilt the row without it: a row passed without `rows[].id` is recreated from scratch and drops the existing text. Pass the row's `id`, or re-send `comment_widget_text`. Both failure modes are refused now rather than returning success.
 - **A comment/image edit that "worked" but changed nothing** — row-level `comment_widget_text`, the legacy `text`/`comment` aliases, and image `image_url` / `image_data` were only applied on create; on update they were accepted and dropped. Fixed Jul 2026. If you hit this on an older deployment, write the config shape directly in `rows[].configs[].options` instead.
