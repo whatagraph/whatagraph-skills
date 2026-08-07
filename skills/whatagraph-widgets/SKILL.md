@@ -736,13 +736,18 @@ Use `currency_exchange` first to discover which metrics are convertible and thei
 
 ## Conditional formatting
 
-Colour a table cell by its own value — green above target, red below. Rules attach to one metric (one column) at a time.
+Colour a table cell by its own value. Two modes, per metric (per column):
+
+- **Manual rules** — your thresholds, and **both** colours per rule: `text_color` and `background_color`, each independent and each optional. Set only `text_color` to recolour the number and leave the cell background alone. "Red under 100."
+- **Auto colors** — one base colour for the background, shaded into seven tints across the column's own lowest-to-highest value. **You do not control the text colour**: it is contrast-derived per cell (dark on light tints, white on dark). "Heatmap this column."
+
+**A metric uses one mode or the other, never both.** The renderer prefers the auto shade and never looks at the rules, so setting one mode clears the other and says so in `warnings`.
 
 **Table (`102`) only.** Only the table renderer paints these colours. Every other widget type is rejected rather than storing rules that never draw. Offline tables (`126`) are not supported either — see "Faking a heatmap" for those.
 
 ```
 list-widgets action=conditional_formats report_id=<id> widget_id=<id>
-# → every rule on every metric of the row, in evaluation order
+# → per metric: mode (`manual` | `auto` | `none`), auto_color, and every rule in evaluation order
 # → narrow with metric_external_id=<id>
 
 manage-widgets action=set_conditional_formats report_id=<id> widget_id=<id>
@@ -756,6 +761,19 @@ manage-widgets action=set_conditional_formats report_id=<id> widget_id=<id>
 manage-widgets action=add_conditional_formats ...   # appends, keeps existing rules
 ```
 
+### Auto colors
+
+No thresholds to author — pick a base colour and the column shades itself.
+
+```
+manage-widgets action=set_auto_colors report_id=<id> widget_id=<id>
+   metric_external_id="impressions" auto_color="#059669"
+
+manage-widgets action=set_auto_colors ... auto_color=null   # back to unformatted
+```
+
+The seven tints run light-to-dark from the column's own minimum to its maximum, recomputed on every render, and each cell's text colour is contrast-derived — auto colors takes no `text_color`, so if the ask names a specific text colour you need manual rules. Because the range is derived from the data, the colours move when the data does — which is what you want for "show me the big numbers" and wrong for "flag anything under target". Use manual rules when a specific number matters.
+
 ### Rules
 
 | Field | Notes |
@@ -763,7 +781,7 @@ manage-widgets action=add_conditional_formats ...   # appends, keeps existing ru
 | `operator` | `greater_than`, `greater_or_equal`, `less_than`, `less_or_equal`, `equal`, `not_equal`, `between` |
 | `value` | Number to compare the cell against. Required. |
 | `value_end` | **Required for `between`**, which matches `value`..`value_end` inclusive. Ignored otherwise. |
-| `text_color`, `background_color` | 6-digit hex (`#059669`). Colour names and 3-digit hex are rejected — they render as nothing. |
+| `text_color`, `background_color` | 6-digit hex (`#059669`). Independent and both optional — omit one to leave that half of the cell alone. Colour names and 3-digit hex are rejected; they render as nothing. |
 | `position` | Evaluation order. Defaults to the array order you send. |
 
 **First match wins.** The rules are evaluated in `position` order and the first one that matches paints the cell. Order from narrowest to widest, or a catch-all `greater_than 0` first will swallow every band after it.
@@ -787,6 +805,8 @@ Rules are stored against the widget **config** the row binds — the first confi
 - **`remove_row` discards them**, and reports how many in `warnings`.
 
 `duplicate` and `batch_duplicate` carry formatting across correctly; no extra work needed.
+
+Auto colors is stored in the config's `options.auto_colors`, so it rides along with any config edit — but a full row rebuild loses it the same way manual rules do.
 
 ## Layout grid model
 
@@ -1087,7 +1107,6 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - Cross-report widget copy — duplicate within the same report only (use `target_tab_id` for cross-tab duplication).
 - **Edit the generated AI text itself** — `update_ai_text` configures the settings and triggers generation, but the produced text can only be hand-edited in the UI.
 - **Conditional formatting outside the live table (`102`)** — the colour rules are exposed (see "Conditional formatting"), but only the live table renders them. KPI cards and offline tables cannot carry them; see "Faking a heatmap" below.
-- **"Auto colors" shading** — the UI's second conditional-formatting mode, which shades a column in seven tints of one base colour from its own min to max, is stored in `rows[].configs[].options.auto_colors` and computed in the browser. Not exposed as a tool action.
 
 ### Faking a heatmap
 
@@ -1134,6 +1153,8 @@ For a single value that must carry its own colour, put it in a Comment widget in
 - **`"offline_single_value"` and friends** — the `offline_`-prefixed string names resolve to the writable current-generation types (`125`+). On deployments before Aug 2026 they resolved to the pre-new-architecture types (`25`+) and were then rejected as too old — pass the integer ID there.
 - **Conditional formatting that vanished after an unrelated edit** — the rules hang off the widget config, so a row rebuilt from scratch (the "omit `rows[].id`" workaround) cannot keep them. Read them out with `list-widgets action=conditional_formats` before any structural edit and write them back after. `manage-widgets` re-attaches them when only the config is replaced and warns in `warnings` when a row removal discarded them, so check `warnings` on every table update.
 - **`set_conditional_formats` wiping the rules you didn't send** — it is replace-all, not a merge. Use `add_conditional_formats` to append a band, and `set_conditional_formats` with an empty array only when you mean to clear the column.
+- **Manual rules that store fine and never paint** — the metric is in auto-colors mode, which the renderer prefers. Both write actions now clear the other mode and tell you in `warnings`, but a metric that was set up in the UI before this can hold both; check `mode` in `list-widgets action=conditional_formats`.
+- **Auto colours that shift between runs** — the seven tints are anchored to the column's own min and max, so new data remaps every cell. Expected. Use manual rules when a threshold must stay put.
 - **Only the top band ever colouring** — the rules are evaluated in `position` order and the first match wins. A wide rule sent first (`greater_than 0`) matches everything and the narrower bands after it never fire. Order narrowest first.
 - **A conditional format that stores fine and never paints** — the widget is not a live table (`102`). This is now rejected outright, but on deployments before Aug 2026 the rule was stored silently against a type that never draws it.
 - **Literal `\n` in comment text** — a comment widget whose rendered text shows a visible `\n` (and renders entirely in heading size) received a double-escaped newline: the string contained the two characters backslash + n instead of a line break. Recreate with real newlines, or split into a header widget + a separate text-block widget.
