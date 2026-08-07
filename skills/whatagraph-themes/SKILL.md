@@ -48,6 +48,20 @@ Both `list_themes` and `list_colors` include context fields:
 - `applied_theme_source` / `applied_color_source` — `"team"`, `"report"`, `"system"`, or `null`. When `"system"`, the applied theme/palette is a built-in premade not included in the list — `team_has_themes: false` with a non-null `applied_theme_id` is expected in this case
 - `team_has_themes` / `team_has_colors` — whether the team has any custom themes/palettes
 
+### Colouring one widget differently
+
+The `id` of a palette from `list_colors` is exactly what a widget's `active_theme_color_id` takes. Pass it verbatim through `manage-widgets`:
+
+```
+list-themes action=list_colors report_id=<report_id>
+   → [{"id": "<colour_id>", "name": "Signal Red", "theme_id": "<theme_id>", "source": "team", "is_active": false}, ...]
+
+manage-widgets action=update report_id=<report_id> widget_id=<widget_id>
+   options={"active_theme_color_id": <colour_id>}
+```
+
+Two things to be clear about. It is a **palette id, not a single colour** — you are switching that widget to a whole palette, not picking one swatch out of one. And `is_active` marks the palette currently applied to the *report*, which is unrelated to what an individual widget overrides.
+
 ## Apply a theme to a report
 
 ```

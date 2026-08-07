@@ -242,6 +242,24 @@ Stored as strings. Numbers are accepted and converted, so `1450` and `"1450"` ar
 - **Omitting `data` on create leaves placeholder sample values.** A new offline widget is built from a template seeded with demo numbers (200,000 impressions against 15,000) and renders them verbatim. The tool warns when you do this — treat that warning as a widget not yet finished, and never leave one in a client-facing report.
 - **One row is the norm.** Multiple values belong in a single row's `data` array, not in separate rows — a 3-item List or a 3-line Goal is one row with three entries.
 - **`data` is per row.** If you do build a multi-row offline widget (e.g. two series on a line chart), give every row its own `data`; rows added beyond the template's count start empty and render "Couldn't find data to display" until they have values.
+- **Hide the footer.** Every offline widget draws a footer that identifies the data as offline. In a client-facing or leadership report that is exactly wrong. Set `hide_footer: true` on every offline widget — easiest as one `manage-widgets action=batch_change_settings` pass after the report is built.
+
+### Types with no offline counterpart
+
+The offline range is `125`-`136`, but **`134` does not exist**. It is the position that Image holds in the equivalent non-offline range, and there is no offline Image type — use the normal Image widget, or a Comment widget with a background image (see "Comment and text widgets").
+
+Heatmap, Gauge, GeoMap and Dynamic chart also have **no offline version**. They were added after the offline range was fixed. If you need a heatmap from manual data, use an offline Table with block shading (see "Faking a heatmap").
+
+### Confirming your values landed
+
+An offline row echoes a `data_summary` on create, on update, and on `list-widgets action=show`:
+
+- Table and time-series shapes return `headers` and `data_row_count`.
+- Every other shape returns `entry_names` and `entry_count`.
+
+Read that to confirm your write. Offline rows return no `metrics` or `dimensions`, because an offline widget binds nothing.
+
+One trap: a widget created **without** `data` reports the *template's* sample headers, because those sample values are what it will render. The placeholder warning on the same response tells you the numbers are not real. Do not read the summary as proof your data arrived without checking that the headers are yours.
 
 ## Apply a premade widget
 
@@ -410,9 +428,9 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 | `content_scrollable` | boolean | Table, Media (vertical scroll) |
 | `content_horizontal_scrollable` | boolean | Table only |
 | `display_dimensions_as_columns` | boolean | Table only |
-| `wrap_text` | boolean | Table only |
+| `wrap_text` | boolean | Table only. **Breaks by character, not by word** — see the pitfall below |
 | `show_search_bar` | boolean | Table, List (shows a row search box) |
-| `active_theme_color_id` | integer | Any widget — overrides the theme color for this widget. Get available color IDs from the report's theme via `list-themes` |
+| `active_theme_color_id` | integer | Any widget — overrides the report's colour palette for this one widget. Pass the `id` of a palette from `list-themes action=list_colors`, verbatim. It is a **palette id**, not an index into a palette's colours — you select a whole palette, not one colour |
 
 #### Value formatting
 
@@ -428,7 +446,7 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 
 | Option | Type | Notes |
 |---|---|---|
-| `chart_label_position` | string | `top`, `bottom`, `left`, `right`, `insideTop`, `insideTopLeft`, `insideTopRight`, `insideBottom`, `insideBottomLeft`, `insideBottomRight`, `insideLeft`, `insideRight`. Default: `insideRight` for bar types, `top` for vertical charts |
+| `chart_label_position` | string | `top`, `bottom`, `left`, `right`, `insideTop`, `insideTopLeft`, `insideTopRight`, `insideBottom`, `insideBottomLeft`, `insideBottomRight`, `insideLeft`, `insideRight`. Default: `insideRight` for bar types, `top` for vertical charts. **On bar types, keep an `inside*` position** — see the pitfall below |
 | `chart_label_rotation` | `horizontal` \| `vertical` | |
 | `chart_label_size` | integer | 10 (very small), 12 (small), 14 (medium), 16 (large) |
 | `chart_label_distance` | integer 0–15 | |
@@ -480,27 +498,60 @@ Known `options` shapes:
   - **Three formatting layers** — supply `text` OR `description` inside `comment_widget_text`, never both (verified Jun 2026):
     1. Plain `text` string → paragraphs.
     2. `text` with **markdown** → headings, bold, italic, lists, links (converted to a Tiptap document on save).
-    3. A prebuilt **Tiptap doc** via `description` → `textStyle` marks (`color`, `fontSize`), `textAlign` attrs, `underline`, `highlight`, `link`. This is the **only** path to text colour, font size, and alignment — markdown has no syntax for them. The doc persists intact through update and round-trips through `list-widgets action=show`.
+    3. A prebuilt **Tiptap doc** via `description` → **the full-capability path.** It does everything markdown does *and more*. Do not read it as a list of inline marks: it is the better option for any block that needs structure or styling. The doc persists intact through update and round-trips through `list-widgets action=show`.
+
+    **Full vocabulary of a comment document:**
+
+    | Category | Available |
+    |---|---|
+    | Block nodes | `paragraph`, `heading` (levels 1-3), `bulletList`, `orderedList`, `listItem`, `blockquote`, `horizontalRule`, `codeBlock`, `hardBreak` |
+    | Marks | `bold`, `italic`, `strike`, `underline`, `highlight`, `link`, `code` |
+    | `textStyle` attrs | `color`, `fontSize` |
+    | Block attrs | `textAlign` on `paragraph` and `heading`; `class` on `paragraph` |
+
+    **Prefer the named text styles over a raw `fontSize`.** The product's own styles are:
+
+    | Style | Size | Write it as |
+    |---|---|---|
+    | Heading 1 | 40px | `{"type": "heading", "attrs": {"level": 1}}` |
+    | Heading 2 | 30px | `{"type": "heading", "attrs": {"level": 2}}` |
+    | Heading 3 | 21px | `{"type": "heading", "attrs": {"level": 3}}` |
+    | Paragraph 1 | 18px | `{"type": "paragraph", "attrs": {"class": "p1"}}` |
+    | Paragraph 2 | 16px | `{"type": "paragraph", "attrs": {"class": "p2"}}` |
+    | Paragraph 3 | 14px | `{"type": "paragraph", "attrs": {"class": "p3"}}` — the default |
+    | Paragraph 4 | 13px | `{"type": "paragraph", "attrs": {"class": "p4"}}` |
+
+    A `textStyle` `fontSize` is written into the CSS **verbatim and unvalidated**. Any CSS length works; an invalid one fails silently and the text keeps its inherited size. Worse, a person who later touches the style picker in the UI **strips every custom `fontSize`** in the block. The named styles above survive that. Use `fontSize` only for a size the named styles do not offer.
+
+    `highlight` is **on or off** — it takes no colour attribute. A `{"type": "highlight", "attrs": {"color": "#..."}}` is accepted and the colour is ignored.
+
+    **Worked example — kicker, heading, rule, body with value-coded emphasis.** This is the shape most report text blocks want:
 
     ```
-    "comment_widget_text": {
-      "description": {
-        "type": "doc",
-        "content": [{
-          "type": "paragraph",
-          "attrs": {"textAlign": "center"},
-          "content": [{
-            "type": "text",
-            "text": "Q2 Revenue",
-            "marks": [{"type": "textStyle", "attrs": {"color": "#1A73E8", "fontSize": "24px"}}]
-          }]
-        }]
-      },
-      "contentAlign": "top"
-    }
+    rows=[{"options": {"comment_widget_text": {
+      "contentAlign": "top",
+      "description": {"type": "doc", "content": [
+        {"type": "paragraph", "attrs": {"class": "p4"}, "content": [
+          {"type": "text", "text": "SECTION LABEL",
+           "marks": [{"type": "bold"}, {"type": "textStyle", "attrs": {"color": "#8A94A6"}}]}]},
+        {"type": "heading", "attrs": {"level": 2, "textAlign": "left"},
+         "content": [{"type": "text", "text": "The finding, in one line"}]},
+        {"type": "horizontalRule"},
+        {"type": "paragraph", "content": [
+          {"type": "text", "text": "Throughput rose to "},
+          {"type": "text", "text": "49.0",
+           "marks": [{"type": "bold"}, {"type": "textStyle", "attrs": {"color": "#1E8E3E"}}]},
+          {"type": "text", "text": " while merge rate fell to "},
+          {"type": "text", "text": "74.6%", "marks": [{"type": "highlight"}, {"type": "bold"}]},
+          {"type": "text", "text": "."}]}
+      ]}}}]
     ```
+
+  - **`contentAlign`** is `top`, `center` or `bottom`, and sets where the text sits vertically in the widget box. It defaults to `top`. Use `center` for a short hero line in a tall box — a one-line statement pinned to the top of a `6×3` widget looks like a mistake.
   - On **read**, `list-widgets action=show` returns the Tiptap document under `options.comment_widget_text.description`. A text/font **colour** baked into the comment content overrides the theme's `text_color` (CSS specificity), so applying a palette won't recolour comment text — set the colour via a `textStyle` mark for white-on-dark headers, or leave it uncoloured to inherit the theme.
-  - **Background image**: set `background_image_url` (public http/https URL) or `background_image_data` (base64-encoded JPG/PNG, max 10 MB) with optional `background_image_filename` in `rows[].options`. This adds a full-bleed background behind the comment text.
+  - **Background image — the cover and section-divider pattern.** Set `background_image_url` (public http/https URL) or `background_image_data` (base64-encoded JPG/PNG, max 10 MB), with optional `background_image_filename`, in `rows[].options`. The image renders full-bleed behind the text.
+
+    This is how you build a report cover or a section divider in **one** widget instead of stacking an image widget above a text widget. Put the heading in the Tiptap doc, set `contentAlign: "center"`, and give the text a light `textStyle` colour so it reads against the image. Import remote images first (see the assets skill) and check the resolution against the rendered width.
   - **Updating a comment widget — `rows[].id` is optional.** `manage-widgets update` carries forward the existing config's `integration_id` (and `source_id` / `report_type`) when you omit it. A row supplied **without** `rows[].id` updates the existing row in the same position, keeping its configs and their bindings — as of Jul 2026 it no longer rebuilds the row from scratch, which used to discard the comment's body and leave a blank widget. Pass `rows[0].id` (from `list-widgets action=show`) when you need to reorder rows or be explicit about which row you mean. Setting the text to `""` or whitespace is still refused — it renders as a blank box.
 - **Image widget** (`widget_type_id=34`): supply `{"image_url": "<url>"}` or `{"image_data": "<base64 JPG/PNG>"}` (max 10 MB) with optional `image_filename` in `rows[].options`. `image_data` accepts a base64-encoded image directly — no multipart upload needed. The tool auto-propagates this to the config-side canonical shape `configs[].options.images: [{url, title}]`, on **update** as well as create (fixed Jul 2026 — swapping an image through update previously wrote nothing and left the old one in place). You can also supply the config shape directly in `rows[].configs[].options`. Additional display options: `background_size` (`auto_fit` | `scale_to_fit` | `scale_to_fill`) and `alignment` (`left` | `center` | `right`) — pass these in row options alongside `image_url`.
   - A malformed `image_url` (no scheme/host, or a non-http scheme) and invalid or oversized base64 are now rejected on update too, before anything is written — previously update accepted both silently.
@@ -686,7 +737,9 @@ Use `currency_exchange` first to discover which metrics are convertible and thei
 
 The report uses a **6-column grid**. Every widget occupies a rectangle defined by four properties:
 
-> **Grid width follows the report's layout.** Landscape (`printing_landscape_6x6`, the default) is the 6-column grid documented here. Portrait (`printing_portrait_4x8`) is a **4-column** grid — every width / `position_x` rule below caps at 4 instead of 6. Orientation is chosen at report create time (see `whatagraph-reports` → "Create a blank report in a space") and can't change once widgets exist. Landscape renders a wider, shorter page: favor wide rows and keep per-tab height in check for clean PDF pagination.
+> **Grid width follows the report's layout.** Landscape (`printing_landscape_6x6`, the default) is the 6-column grid documented here. Portrait (`printing_portrait_4x8`) is a **4-column** grid — every width / `position_x` rule below caps at 4 instead of 6. Orientation is chosen at report create time (see `whatagraph-reports` → "Create a blank report in a space") and can't change once widgets exist. Landscape renders a wider, shorter page: favor wide rows.
+
+> **A tab is a page.** In a PDF, each visible tab becomes exactly one page, as tall as its own content — tabs are never split and never combined. Thus a tall tab makes a tall page, not two pages. Put a section break on a new tab, not lower down the grid. See `whatagraph-sharing` → "Generate a PDF".
 
 | Property | Range | Default | Notes |
 |---|---|---|---|
@@ -827,6 +880,22 @@ Pick each widget's size from what its content needs to be legible, then fit it i
 
 **Hard constraints (always):** `width` 1..6, `height` ≥ 1, `position_x + width ≤ 6`, and no two widgets overlap.
 
+### Titles: when they show, and how long they can be
+
+**A `height: 1` widget shows no title at all** — at that size the renderer hides the title, the description, the icon and the footer. The same applies at `width: 1`, with one exception: a SingleValue that is 1 wide and 2 or more tall does show its title. So a `6×1` Comment used as a section header is fine (its heading is body text), but a `4×1` chart with a `name` renders that name nowhere.
+
+When a title does show, it is **clamped to one line** and cut with an ellipsis. It never wraps. Budget:
+
+| `width` | Title space | Safe title length |
+|---|---|---|
+| 1 | 184 px | ~16 characters |
+| 2 | 426 px | ~38 characters |
+| 3 | 668 px | ~60 characters |
+| 4 | 910 px | ~84 characters |
+| 6 | 1394 px | ~128 characters |
+
+The pixel figures are exact. The character counts are measured against a wide bold sans at the default title size, so they are a safe floor — a narrower theme font fits more. A theme with a larger title font fits less, so verify if the theme is not the default.
+
 ### Placing widgets cleanly
 
 Once you know the structure, lay it out top to bottom:
@@ -883,6 +952,32 @@ Different requests produce different shapes. **Copy the user's intent or referen
 
 If your output looks like the same example every time, you've defaulted to a template — go back to the user's request or reference.
 
+## Tables truncate silently
+
+**A Table or List renders only the rows that fit its box. It drops the rest with no marker** — no ellipsis, no cut-off row, no scrollbar in the PDF, and no warning when you write the widget. `csv_export` and `export-report` still return every row. Thus a data check passes while the rendered report is wrong.
+
+This is why the defect survives review: on screen the widget scrolls, so a person who scrolls the report sees all the rows. A PDF cannot scroll, so it keeps only the first screenful. The same widget is correct on screen and wrong in the file.
+
+### What sets the number of rows that fit
+
+Two quantities are fixed. Neither one adapts to your data:
+
+- **Row height is fixed.** Rows do not shrink to fit. A row is short when the table shows dimensions as columns. It is taller when the table does not, and it grows with the number of dimensions.
+- **Widget height is fixed by grid units, not by the tab.** A widget with `height: h` always renders the same number of pixels tall, whatever else is on the tab. Two tabs with the same widget give that widget the same height. Height is linear in grid units.
+
+As a working figure, **a table shows approximately `3.5 × height − 3` rows.** A `height: 5` table shows approximately 14 rows.
+
+Use that number to budget, not to prove. The exact count moves with the theme font size and with the number of dimensions. Tall tables have also been seen to stop well short of the figure. **Never trust the arithmetic alone. Always confirm the last row.**
+
+### What to do
+
+1. **Budget the height from the row count before you place the widget.** Give a table a `height` of at least `(rows + 3) ÷ 3.5`.
+2. **For 20 or more rows, split the data into two side-by-side tables** (`3 + 3`). Each table then shows half the rows. This is the most reliable fix.
+3. **For 15 or more rows that carry one value each, use a Bar chart.** Charts scale to the space they get. They never drop a series.
+4. **After you render, confirm that the last row of every table is present.** This is the only check that finds the defect.
+
+A taller widget does show more rows, but sometimes fewer than the arithmetic promises. Verify — do not assume.
+
 ## Filtering a widget
 
 There are three ways to filter a widget. Pick the simplest one that fits:
@@ -936,6 +1031,13 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - Set widget-level permissions — UI only.
 - Cross-report widget copy — duplicate within the same report only (use `target_tab_id` for cross-tab duplication).
 - **Edit the generated AI text itself** — `update_ai_text` configures the settings and triggers generation, but the produced text can only be hand-edited in the UI.
+- **Conditional formatting on table and KPI metrics** — value-threshold colour rules exist in the product but are not exposed here; UI only. Two workarounds get close — see "Faking a heatmap" below.
+
+### Faking a heatmap
+
+Cell values in an offline table are strings, so encode the intensity in the text itself. Prefix a shade glyph per bucket — `█` highest, then `▓`, `▒`, `░`, and `·` for none — or use a proportional bar like `██████░░░░`. This survives PDF rendering and needs no colour support. Keep it to one glyph plus the number in a narrow column: a ten-cell bar overflows and the column truncates.
+
+For a single value that must carry its own colour, put it in a Comment widget instead. There you *do* control colour per run of text — a `textStyle` colour mark for a good or bad number, or a `highlight` mark for a background chip. This is the only place in an MCP-built report where a number can carry meaning through colour.
 
 ## Idempotency
 
@@ -947,6 +1049,9 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **A tab with one or two widgets floating in an empty grid** — the tab list in the instructions was misread as a widget list. A named tab ("Google Ads", "Weather Report for New York") is a full themed page, not a slot for one widget per named metric — compose it per "Composing a full tab", whoever named the tab.
 - **Date dimension ambiguity** — a source may expose more than one date-typed dimension (e.g. `universal_dimension_1137` "Date" and `universal_dimension_150` "Date OLD"). Prefer the plainly-named current one and verify with `csv_export`. This is integration-dependent.
 - **Full-width single-value widgets** — looks like a section header; use 2×2 or 2×1 instead.
+- **`wrap_text: true` splitting words in half** — a wrapped table cell breaks at the character, not at the word, so a finished PDF shows things like `instabilit y` and `2 026 commits`. No option changes this. Keep table cells short enough to sit on one line — roughly 40 to 45 characters in a four-column full-width table, less in narrower columns — and move longer prose into a Comment widget, which wraps correctly.
+- **Bar-chart value labels that disappear** — on bar types (horizontal bars, including the offline Bar chart) the label colour is calculated to contrast with the **bar fill**, because the label is expected to sit on the bar. An *outside* position (`top`, `bottom`, `left`, `right`) puts the label on the chart background but keeps that colour, so a pale label lands on a pale background and becomes invisible. The labels are drawn; you cannot see them. Keep an `inside*` position on bar types — the default `insideRight` is correct — or, if you must put the label outside, set `chart_label_bg_enabled: true`, which draws a chip in the bar colour behind the text and makes it legible again. Vertical charts (Column, Line, Area) are not affected: their labels are always dark.
+- **A table that looks complete but is missing its last rows** — the widget shows only the rows that fit its box and drops the rest with no marker. `csv_export` still returns every row, so data checks pass. See "Tables truncate silently".
 - **Table summary row sums percentages** — the footer sums percent columns as numbers (25% + 30% = 55%); disable footer for percent-heavy tables.
 - **Updating metrics on a widget that uses a source group** — after the group's sources change, the widget may need to re-save to pick up field definitions. Verify via `list-widgets action=show`.
 - **Metric-only update drops the binding ("Unavailable report type")** — when updating a config in place, always carry its `integration_id`, `source_id`, and `report_type` alongside the new `metrics`/`dimensions`. Omitting them on a source-group or report-type-bound widget can rebuild the config without its report-type binding and leave the widget blank. Prefer name/position-only edits on those widgets, and verify data with `csv_export` after any metric change.
