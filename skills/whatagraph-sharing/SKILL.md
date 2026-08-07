@@ -72,9 +72,13 @@ manage-sharing action=update report_id=<report_id>
 manage-sharing action=download_pdf report_id=<report_id>
 ```
 
-Starts PDF generation. Layout is fixed: A4 landscape, 1440px width. The response contains the downloadable PDF URL or a job identifier; polling may be required for large reports.
+Starts PDF generation in the background. **The response does not contain the PDF.** It confirms that the job was queued. It returns no URL and no job id that you can poll — there is currently no way to get the rendered file through MCP. To see the result, the user must download it from the UI.
+
+**What gets produced:** each visible report tab renders as **exactly one page**. A tab is never split across two pages, and two tabs never share one page. Hidden tabs are not rendered. Page width is fixed at 1440 CSS px. **Page height changes from tab to tab**, because each page is as tall as that tab's rendered content. Thus pages in one document can have different sizes. The orientation is landscape. You cannot change any of this from MCP.
 
 **Warning**: `download_pdf` auto-creates a public share link if one does not already exist (required for PDF rendering). This is a side effect — the report becomes publicly accessible even if you only wanted a PDF.
+
+**To verify a PDF that you generated:** a multi-page PDF can mix page sizes, and most tools show only the first page's dimensions. Examine every page. Also check the last row of every table (see `whatagraph-widgets` → "Tables truncate silently").
 
 ## Export to Excel
 
