@@ -68,6 +68,8 @@ manage-widgets action=create
 
 The tool validates that the correct dimensions are provided based on the widget type. **Dimensions must be in `rows[].configs[].options.dimensions`** (data binding), not in row-level options (which are display labels only).
 
+Both ends of each range are enforced at create and update (Aug 2026): too few dimensions and too many are refused the same way. A count below is a hard limit, not a suggestion — an over-bound widget used to be accepted and then rendered wrong.
+
 | Widget type | Dimension requirement |
 |---|---|
 | Time-series charts (104–107, 118–119) | **1 dimension required** — must be the integration's date dimension (e.g. `date`, `segments.date`, `ga:date`). Binding a non-date dimension while `breakdowns_enabled` is off is **rejected at create/update** (left unchecked it renders an empty/aggregated chart, and hard-errors on some sources such as Google Sheets). To split a bar/column chart by a category instead, set `breakdowns_enabled=true` (see Breakdown vs non-breakdown below) — then column/bar/stacked accept a categorical dimension (up to 2). |
@@ -76,18 +78,20 @@ The tool validates that the correct dimensions are provided based on the widget 
 | GeoMap (140) | **1 geographic dimension required**. |
 | Media (110, 111) | **At least 1 dimension required** — typically `creative_thumbnail_url` or similar. |
 | Pie/Donut (108, 109) | **No dimension** unless `breakdowns_enabled=true` (then exactly 1). |
-| SingleValue (101), Gauge (139), List (103), Funnel (115), Goal (123) | **No dimension needed**. |
+| SingleValue (101), Gauge (139), List (103), Funnel (115), Goal (123) | **No dimension** — binding one is rejected. |
 | Comment (21), Calendar (22), Image (34) | **Skipped** — utility widgets with no data binding. |
+
+**Metric counts are capped too.** Every data type above takes **exactly 1 metric per config** — including List (`103`) and the charts. The exceptions are Table (`102`) and Media expanded (`111`), which take any number, Media compact (`110`), which takes at most 2, and the offline types, which bind nothing. To show a second metric on a capped type, add a second row (non-breakdown mode) or use a Table.
 
 Use `list-sources action=list_dimensions_and_metrics` to find the correct dimension external_ids for a source. The date dimension external_id varies by integration — always look it up rather than guessing.
 
-> **A single value (101) always aggregates the whole dataset into one total** — it has no dimension and cannot rank or isolate a single entity. It will **not** show the "best" or "worst" campaign: a `sort` passed on its row/metric options is silently ignored (the tool returns a warning saying so). To surface a top/bottom performer, use a **Table (102)** with the entity dimension bound and the metric sorted desc/asc, or a saved filter (`whatagraph-filters`) pinning the specific entity.
+> **A single value (101) always aggregates the whole dataset into one total** — it has no dimension and cannot rank or isolate a single entity. It will **not** show the "best" or "worst" campaign: a `sort` passed on its row or metric options is ignored (the tool returns a warning saying so). To surface a top/bottom performer, use a **Table (102)** with the entity dimension bound and the metric sorted desc/asc, or a saved filter (`whatagraph-filters`) pinning the specific entity.
 
 ### Surfacing a top / bottom N
 
 "Top 10 campaigns", "worst-performing ads", "biggest spenders" are ranking asks — they need an **entity dimension bound and the metric sorted**, on a widget type that shows multiple rows (Table `102`, List `103`, or a bar/column chart). A SingleValue can't do this (see the callout above).
 
-- **Sort** on the ranking metric: set the direction in the row/metric options (`sort: "desc"` for top, `"asc"` for bottom) so the highest/lowest values lead.
+- **Sort** on the ranking metric: set `sort: "desc"` (top) or `"asc"` (bottom) on that metric's entry in `rows[].options.metrics[]` so the highest/lowest values lead. Full rules in "Sorting a widget" below.
 - **Limit the rows** so "top N" actually shows N: the `manage-widgets` schema exposes **no** row-count / limit parameter on Table, List, or bar/column widgets, so cap the set another way — a `whatagraph-filters` condition that scopes to the entities of interest, or (when the report only needs the leaders) size the widget height to show N rows and rely on the sort. Do **not** fabricate a limit parameter that the tool doesn't accept.
 - **Verify** with `export-report` / `list-widgets action=csv_export` that the leading rows are the intended ones and the ordering is correct — a mis-set sort silently returns the data in the wrong order.
 
@@ -296,7 +300,7 @@ manage-widgets action=update
      {
        "options": {
          "metrics": [
-           {"sort": 0, "identifier": 0, "external_id": "universal_metric_3"}
+           {"identifier": 0, "external_id": "universal_metric_3"}
          ]
        },
        "configs": [
@@ -334,7 +338,6 @@ For multi-row chart widgets (Column, Line, Area, Bar), rows support additional o
 | `cumulative` | boolean | Show cumulative values for this row. |
 | `trend_line` | string | Trend line type. |
 | `trend_line_period` | integer | Trend line period. |
-| `sort` | `asc` \| `desc` | Sort direction on this row's metric. |
 | `icon` | string | Row icon (for List and SingleValue widgets). Must be a filename from the icon library — see [Row icons](#row-icons). |
 
 Example — mixed column + line chart:
@@ -348,13 +351,48 @@ rows=[
 Example — cross-channel column chart (compare one metric across sources, no date dimension):
 ```
 rows=[
-  {"options": {"type": "column", "axis": "left", "title": "Source A", "metrics": [{"sort": 0, "identifier": 0, "external_id": "<metric>"}]},
+  {"options": {"type": "column", "axis": "left", "title": "Source A", "metrics": [{"identifier": 0, "external_id": "<metric>"}]},
    "configs": [{"source_id": <A>, "integration_id": <channel>, "options": {"metrics": [{"identifier": 0, "external_id": "<metric>"}], "report_type": "<rt>"}}]},
-  {"options": {"type": "column", "axis": "left", "title": "Source B", "metrics": [{"sort": 0, "identifier": 0, "external_id": "<metric>"}]},
+  {"options": {"type": "column", "axis": "left", "title": "Source B", "metrics": [{"identifier": 0, "external_id": "<metric>"}]},
    "configs": [{"source_id": <B>, "integration_id": <channel>, "options": {"metrics": [{"identifier": 0, "external_id": "<metric>"}], "report_type": "<rt>"}}]}
 ]
 ```
 > One row per source, each with a single config (its source) and the **same** metric, and **no** dimension — the sources become the columns. Set `axis: "left"` on every row; without it the editor's Left/Right axis sections render empty even though the data is bound.
+
+### Sorting a widget
+
+Sorting is a **row display option**, not a config one. Set `sort` on the entry in `rows[].options.metrics[]` or `rows[].options.dimensions[]` whose `identifier` matches the binding you want to order by. This is the same field the UI writes when a user clicks a table column header.
+
+| Field | Values | Notes |
+|---|---|---|
+| `sort` | `"asc"` \| `"desc"` \| `null` | The **direction**. `null` clears the sort. Anything else — a number, `"descending"` — is rejected. |
+| `sort_type` | `"value"` \| `"change"` | Metrics only. `value` (the default) sorts by the number; `change` sorts by its movement against the comparison period. |
+| `sort_order` | integer from 0 | Precedence when several columns are sorted — 0 is applied first. Filled in request order when omitted. |
+
+```
+manage-widgets action=update report_id=<id> widget_id=<id>
+   rows=[{"id": <row_id>,
+          "options": {"metrics": [{"identifier": 0, "external_id": "sessions", "sort": "desc"},
+                                  {"identifier": 1, "external_id": "clicks"}]},
+          "configs": [{"id": <config_id>, "channel_id": <channel_id>, "source_id": <source_id>,
+                       "options": {"report_type": "<report_type>",
+                                   "metrics": [{"external_id": "sessions", "name": "Sessions", "identifier": 0},
+                                               {"external_id": "clicks", "name": "Clicks", "identifier": 1}]}}]}]
+```
+
+**Sort a table by its dimension column** — same shape, on `dimensions[]`. `"asc"` is A–Z, `"desc"` is Z–A:
+
+```
+rows=[{"id": <row_id>,
+       "options": {"dimensions": [{"identifier": 0, "external_id": "campaign_name", "sort": "asc"}]},
+       "configs": [...]}]
+```
+
+**Metrics and dimensions are separate sort groups, and only one can be active.** The UI clears every sort in one group whenever the other is sorted, so a request that sorts a metric *and* a dimension on the same row is rejected. To switch groups, set `sort: null` on the entries of the group you are leaving in the same call.
+
+Read the current state back from `list-widgets action=show` — the three fields sit on each entry of `rows[].options.metrics` / `rows[].options.dimensions`, in the shape `manage-widgets` accepts back.
+
+There is **no** row-level `sort`. `rows[].options.sort` is a pre-new-architecture key that nothing on a `101`+ widget reads; setting it stores a value, orders nothing, and returns a warning saying so.
 
 ### Row icons
 
@@ -396,7 +434,7 @@ Both icon sets render on all three types. Two entries in the library have no fil
 - Each config pairs a metric with an optional dimension.
 - Replace-style: supplied `rows` replace previous rows. Row metadata (`title`, `description`) from existing rows is preserved when the new row omits them.
 - Each row carries **two parallel metric arrays** that must agree:
-  - `rows[].options.metrics: [{sort, identifier, external_id}]` — drives the rendered label and the value the renderer prints.
+  - `rows[].options.metrics: [{identifier, external_id}]` — the row's display entry, and where per-column display settings live (`sort`, `decimal_place`, `width`). See "Sorting a widget".
   - `rows[].configs[].options.metrics: [{name, identifier, external_id}]` — drives the actual data binding.
   - Both must be set; mismatched values between the two cause the widget to render the row's label with the config's data. The same parallelism applies for dimensions: `rows[].options.dimensions` (rendered label) vs. `configs[].options.dimensions` (binding).
   - **The tool rejects updates where row-level metrics/dimensions are provided but the config has no matching `options.metrics`/`options.dimensions`.** Row-level fields are display labels only — the actual data binding lives in config options. If you get this error, move your metrics/dimensions into `rows[].configs[].options.metrics` (and `options.dimensions`).
@@ -562,7 +600,7 @@ Known `options` shapes:
 - **Goal widget** (`widget_type_id=123`): set `options.goal_date_range` with `start_date`, `end_date`, and `visible_time_line` (boolean — controls the "Time passed" indicator line). Each row represents a goal line and requires `options.title` (goal name), `options.start_value` (baseline, typically 0), and `options.end_value` (target number). Note that `options.title` only labels the line while it has no data — once the goal loads, the rendered label is the config metric's `name` (see "Renaming a metric caption"), so set both to the same text. `end_value` must be greater than `start_value`. The metric in `configs[].options.metrics` tracks progress toward the target.
 - **Filter control** (`widget_type_id=137`): bind a **dimension** (not a metric) via rows — the widget renders as a dropdown filter that other widgets on the tab respond to. No date range is needed. Does not load data itself.
 - **Gauge** (`widget_type_id=139`): dial-style single metric display. Same configuration as SingleValue (`101`) but different visual rendering — use when a circular dial is more appropriate than a plain number. Supports `start_value` and `end_value` in row options to set the gauge range.
-- **Heatmap** (`widget_type_id=138`): heat-colored grid showing metric values across time/dimension. Same configuration as SingleValue (`101`).
+- **Heatmap** (`widget_type_id=138`): heat-coloured grid of one metric across two dimensions — one becomes the rows, the other the columns (e.g. `sessions` by `deviceCategory` × `browser`). Bind **exactly 2 dimensions and exactly 1 metric** in a single config; anything else is rejected. `breakdowns_enabled` stays off. This is **not** configured like a SingleValue (`101`), which takes no dimensions at all.
 - **GeoMap** (`widget_type_id=140`, BETA): geographic map. Set `options.geo_map_region` to control the displayed region (see Type-specific options table above). Bind a dimension with country/region data.
 - **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads.
 - **Report shortcut** (`widget_type_id=141`): a drill-down card linking to another report in the same team. `channel_id=7`, no `source_id`, no metrics/dimensions. Set the link in `rows[].configs[].options`:
@@ -827,6 +865,14 @@ The report uses a **6-column grid**. Every widget occupies a rectangle defined b
 
 **Overlap rule:** On `create`, `update`, and `duplicate`, the server rejects widgets that overlap an existing widget — unless `auto_place=true`, which picks the nearest free slot instead. On `create`, when `position_x`/`position_y` are omitted entirely, auto-placement is the default. On `update`, overlap is checked when `position_x` or `position_y` is provided (the widget being updated is excluded from the check). `duplicate` and `batch_duplicate` auto-position the copy at the next available row.
 
+**Inserting between two existing rows:** there is no widget-level way to do this — the row you want is occupied, and `auto_place=true` sends the widget to the nearest free slot instead of the row you asked for. Open the row first with `manage-report-tabs action=insert_row_space` (`position_y` = the row to open, `row_count` = the height of the widget you're adding), then `create` at that exact position. Never shift widgets one at a time to make room, and never rebuild the tab elsewhere — see `whatagraph-report-tabs` → "Insert or remove rows in a tab".
+
+**Removing empty rows — "close the gaps", "compact the tab", "tighten it up", "remove the blank rows":** use `manage-report-tabs action=remove_row_space` (`position_y` = the first empty row, `row_count` = how many). Do **not** close gaps by moving widgets up one `manage-widgets action=update` at a time — that works (upward moves never collide) but takes one call per widget with no transaction, and it reflows the tab silently.
+
+To clear **every** gap on a tab, expand each widget's rows from `position_y` + `height`, find the gaps between them, then call `remove_row_space` once per gap **working bottom-up** — closing a gap renumbers every row below it, so a top-down pass invalidates the ranges you computed. The rows must already be empty: the call is rejected if a widget occupies or reaches into them, and the error names both the blocking widget ids and the rows that *are* free.
+
+⚠️ **A request for "a row" or "a line" is a request for empty space, not for a widget.** `insert_row_space` completes it on its own. Don't invent a widget to fill the gap — a placeholder Comment reading "New row" is filler in a client-facing report. Only create a widget when the user named one, and never guess its type or content.
+
 ### The layout comes from the data and the user, not from a default
 
 **There is no house layout, and no default report structure.** The tab's shape is decided fresh each time, in this order of priority:
@@ -1049,7 +1095,7 @@ Use that number to budget, not to prove. The exact count moves with the theme fo
 1. **Budget the height from the row count before you place the widget.** Give a table a `height` of at least `(rows + 3) ÷ 3.5`.
 2. **For 20 or more rows, split the data into two side-by-side tables** (`3 + 3`). Each table then shows half the rows. This is the most reliable fix.
 3. **For 15 or more rows that carry one value each, use a Bar chart.** Charts scale to the space they get. They never drop a series.
-4. **After you render, confirm that the last row of every table is present.** This is the only check that finds the defect.
+4. **After you render, confirm that the last row of every table is present.** This is the only check that finds the defect. Render with `manage-sharing action=download_pdf`, then get the file with `manage-sharing action=get_pdf` — see `whatagraph-sharing`. Examine the PDF yourself when you can read files; otherwise ask the user to look, and tell them which tables and which rows to check.
 
 A taller widget does show more rows, but sometimes fewer than the arithmetic promises. Verify — do not assume.
 
@@ -1103,6 +1149,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 ## What MCP can't do here
 
 - Move widgets to another tab — use `manage-report-tabs action=move_widgets`.
+- Open or close space between existing rows — use `manage-report-tabs action=insert_row_space` / `remove_row_space`. There is no batch reposition on `manage-widgets`, so this is how you make room; moving widgets individually fails on overlap.
 - Set widget-level permissions — UI only.
 - Cross-report widget copy — duplicate within the same report only (use `target_tab_id` for cross-tab duplication).
 - **Edit the generated AI text itself** — `update_ai_text` configures the settings and triggers generation, but the produced text can only be hand-edited in the UI.
@@ -1145,7 +1192,8 @@ For a single value that must carry its own colour, put it in a Comment widget in
 - **A comment/image edit that "worked" but changed nothing** — row-level `comment_widget_text`, the legacy `text`/`comment` aliases, and image `image_url` / `image_data` were only applied on create; on update they were accepted and dropped. Fixed Jul 2026. If you hit this on an older deployment, write the config shape directly in `rows[].configs[].options` instead.
 - **Duplicate metric/dimension bindings** — binding the same `external_id` twice in one config is silently de-duplicated (keeps first occurrence). A warning is returned, but the widget ends up with one series, not two. To chart two series of the same metric, use separate rows.
 - **`tab_id` missing on create** — required. Find via `list-report-tabs action=list`.
-- **`sort` warning on single-value widgets** — the "`sort` has no effect" warning only fires for row-level `sort` (a data-sort directive). The `sort` field inside `rows[].options.metrics[]` is a positional ordinal index required by the dual-array pattern — it does not trigger the warning.
+- **A sort that stores fine and orders nothing** — `sort` is the sort **direction**, `"asc"` / `"desc"` / `null`, on the entry in `rows[].options.metrics[]` or `rows[].options.dimensions[]`. It is not a position or an index. `sort: 0` used to be accepted and skipped outright by the backend (which matches on truthiness), so the write returned success and the widget came back in the source's own order; it is rejected now. See "Sorting a widget".
+- **`sort` on a single-value widget** — inert wherever you put it: a `101` aggregates everything into one number and has no rows to order. The tool warns. Use a Table (`102`) with the dimension bound.
 - **AI text (`update_ai_text`) errors** — if generation fails with a timeout, the settings are saved; retry after ~30 seconds. A non-timeout error may indicate the AI feature is not available on the team's plan.
 - **An offline widget showing 200,000 impressions you never entered** — it was created without `rows[].data`, so it still holds the template's placeholder sample numbers. The create response warns about this. Send an `update` with the row's `data` to replace them.
 - **Offline values passed as row options** — `rows[].options.value` / `previous_value` bind nothing. Row `options` is a free-form blob, so these used to persist silently and the call still reported success; they now come back as an "unrecognized `options` keys" warning. Offline values belong in the row's `data` array.

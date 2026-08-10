@@ -1,7 +1,7 @@
 ---
 name: whatagraph-sharing
 type: domain
-description: Create and update public share links for reports with optional password protection, generate PDFs, and export reports to Excel. Use when a user wants to give a client a view-only link, generate a PDF, or download report data as a spreadsheet.
+description: Create and update public share links for reports with optional password protection, generate and download PDFs, and export reports to Excel. Use when a user wants to give a client a view-only link, generate a PDF and get the rendered file, or download report data as a spreadsheet.
 required_tools:
   - view-sharing
   - manage-sharing
@@ -19,7 +19,7 @@ A **share** is a public, view-only URL for a report. Anyone with the link (and o
 ## Use this when
 
 - A client asks for a link to their report.
-- Generating a PDF of the current report state.
+- Generating a PDF of the current report state, and getting the rendered file.
 - Exporting report data as Excel for client deliverables.
 - Locking the date range so viewers can't change it.
 - Enabling or disabling AI chat (IQ) inside the shared view.
@@ -72,11 +72,29 @@ manage-sharing action=update report_id=<report_id>
 manage-sharing action=download_pdf report_id=<report_id>
 ```
 
-Starts PDF generation in the background. **The response does not contain the PDF.** It confirms that the job was queued. It returns no URL and no job id that you can poll — there is currently no way to get the rendered file through MCP. To see the result, the user must download it from the UI.
+Starts PDF generation in the background. **The response does not contain the PDF** — rendering takes time. The response contains a `pdf_job_id`. Give that id to `get_pdf` to get the file.
 
 **What gets produced:** each visible report tab renders as **exactly one page**. A tab is never split across two pages, and two tabs never share one page. Hidden tabs are not rendered. Page width is fixed at 1440 CSS px. **Page height changes from tab to tab**, because each page is as tall as that tab's rendered content. Thus pages in one document can have different sizes. The orientation is landscape. You cannot change any of this from MCP.
 
 **Warning**: `download_pdf` auto-creates a public share link if one does not already exist (required for PDF rendering). This is a side effect — the report becomes publicly accessible even if you only wanted a PDF.
+
+## Get the generated PDF
+
+```
+manage-sharing action=get_pdf
+   report_id=<report_id>
+   pdf_job_id=<pdf_job_id>
+```
+
+Gets a PDF that `download_pdf` started. The `status` field tells you what to do next:
+
+- `pending` — the render is still running. Wait a few seconds, then call again.
+- `ready` — the file is available. The response contains `download_url`, `expires_in_seconds`, `file_name` and `file_size_bytes`.
+- `expired` — the job id is unknown, or the file is too old to get. Run `download_pdf` again for a new one.
+
+A small report is usually ready in a few seconds. A report with many tabs takes longer. Wait between calls — do not poll in a tight loop.
+
+**The `download_url` expires one hour after you get it.** Use it immediately. If it expires, call `get_pdf` again with the same `pdf_job_id` for a new URL.
 
 **To verify a PDF that you generated:** a multi-page PDF can mix page sizes, and most tools show only the first page's dimensions. Examine every page. Also check the last row of every table (see `whatagraph-widgets` → "Tables truncate silently").
 
@@ -94,6 +112,9 @@ Returns an Excel file with the report's widget data. Layout: one sheet per repor
 - **Forgetting `require_password=true` when setting `password`** — password is ignored when `require_password` is `false`.
 - **Sending the URL without the password in a separate channel** — password in URL/chat defeats protection.
 - **Password reset required to invalidate** — there's no revoke-all-sessions button; change the password to invalidate cookies.
+- **Reading the `download_pdf` response as the finished PDF** — it only starts the render. The file comes from `get_pdf`.
+- **Calling `get_pdf` once and giving up** — a first call almost always returns `pending`. Wait, then call again.
+- **Keeping a `download_url` for later** — it expires in one hour. Call `get_pdf` again for a fresh one.
 - **PDF with Meta/Google creative images** — platform creative URLs rotate; long-lived PDFs may have broken thumbnails.
 - **Iq_chat on reports without AI setup** — IQ requires the team's AI feature. If disabled at team level, the toggle has no effect.
 - **Excel export for non-tabular widgets** — comment, image, and filter-control widgets produce no rows.
