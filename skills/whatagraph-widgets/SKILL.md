@@ -68,6 +68,8 @@ manage-widgets action=create
 
 The tool validates that the correct dimensions are provided based on the widget type. **Dimensions must be in `rows[].configs[].options.dimensions`** (data binding), not in row-level options (which are display labels only).
 
+Both ends of each range are enforced at create and update (Aug 2026): too few dimensions and too many are refused the same way. A count below is a hard limit, not a suggestion — an over-bound widget used to be accepted and then rendered wrong.
+
 | Widget type | Dimension requirement |
 |---|---|
 | Time-series charts (104–107, 118–119) | **1 dimension required** — must be the integration's date dimension (e.g. `date`, `segments.date`, `ga:date`). Binding a non-date dimension while `breakdowns_enabled` is off is **rejected at create/update** (left unchecked it renders an empty/aggregated chart, and hard-errors on some sources such as Google Sheets). To split a bar/column chart by a category instead, set `breakdowns_enabled=true` (see Breakdown vs non-breakdown below) — then column/bar/stacked accept a categorical dimension (up to 2). |
@@ -76,8 +78,10 @@ The tool validates that the correct dimensions are provided based on the widget 
 | GeoMap (140) | **1 geographic dimension required**. |
 | Media (110, 111) | **At least 1 dimension required** — typically `creative_thumbnail_url` or similar. |
 | Pie/Donut (108, 109) | **No dimension** unless `breakdowns_enabled=true` (then exactly 1). |
-| SingleValue (101), Gauge (139), List (103), Funnel (115), Goal (123) | **No dimension needed**. |
+| SingleValue (101), Gauge (139), List (103), Funnel (115), Goal (123) | **No dimension** — binding one is rejected. |
 | Comment (21), Calendar (22), Image (34) | **Skipped** — utility widgets with no data binding. |
+
+**Metric counts are capped too.** Every data type above takes **exactly 1 metric per config** — including List (`103`) and the charts. The exceptions are Table (`102`) and Media expanded (`111`), which take any number, Media compact (`110`), which takes at most 2, and the offline types, which bind nothing. To show a second metric on a capped type, add a second row (non-breakdown mode) or use a Table.
 
 Use `list-sources action=list_dimensions_and_metrics` to find the correct dimension external_ids for a source. The date dimension external_id varies by integration — always look it up rather than guessing.
 
@@ -596,7 +600,7 @@ Known `options` shapes:
 - **Goal widget** (`widget_type_id=123`): set `options.goal_date_range` with `start_date`, `end_date`, and `visible_time_line` (boolean — controls the "Time passed" indicator line). Each row represents a goal line and requires `options.title` (goal name), `options.start_value` (baseline, typically 0), and `options.end_value` (target number). Note that `options.title` only labels the line while it has no data — once the goal loads, the rendered label is the config metric's `name` (see "Renaming a metric caption"), so set both to the same text. `end_value` must be greater than `start_value`. The metric in `configs[].options.metrics` tracks progress toward the target.
 - **Filter control** (`widget_type_id=137`): bind a **dimension** (not a metric) via rows — the widget renders as a dropdown filter that other widgets on the tab respond to. No date range is needed. Does not load data itself.
 - **Gauge** (`widget_type_id=139`): dial-style single metric display. Same configuration as SingleValue (`101`) but different visual rendering — use when a circular dial is more appropriate than a plain number. Supports `start_value` and `end_value` in row options to set the gauge range.
-- **Heatmap** (`widget_type_id=138`): heat-colored grid showing metric values across time/dimension. Same configuration as SingleValue (`101`).
+- **Heatmap** (`widget_type_id=138`): heat-coloured grid of one metric across two dimensions — one becomes the rows, the other the columns (e.g. `sessions` by `deviceCategory` × `browser`). Bind **exactly 2 dimensions and exactly 1 metric** in a single config; anything else is rejected. `breakdowns_enabled` stays off. This is **not** configured like a SingleValue (`101`), which takes no dimensions at all.
 - **GeoMap** (`widget_type_id=140`, BETA): geographic map. Set `options.geo_map_region` to control the displayed region (see Type-specific options table above). Bind a dimension with country/region data.
 - **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads.
 - **Report shortcut** (`widget_type_id=141`): a drill-down card linking to another report in the same team. `channel_id=7`, no `source_id`, no metrics/dimensions. Set the link in `rows[].configs[].options`:
