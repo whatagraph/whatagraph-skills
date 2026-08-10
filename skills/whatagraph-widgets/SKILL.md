@@ -1095,7 +1095,7 @@ Use that number to budget, not to prove. The exact count moves with the theme fo
 1. **Budget the height from the row count before you place the widget.** Give a table a `height` of at least `(rows + 3) ÷ 3.5`.
 2. **For 20 or more rows, split the data into two side-by-side tables** (`3 + 3`). Each table then shows half the rows. This is the most reliable fix.
 3. **For 15 or more rows that carry one value each, use a Bar chart.** Charts scale to the space they get. They never drop a series.
-4. **After you render, confirm that the last row of every table is present.** This is the only check that finds the defect.
+4. **After you render, confirm that the last row of every table is present.** This is the only check that finds the defect. Render with `manage-sharing action=download_pdf`, then get the file with `manage-sharing action=get_pdf` — see `whatagraph-sharing`. Examine the PDF yourself when you can read files; otherwise ask the user to look, and tell them which tables and which rows to check.
 
 A taller widget does show more rows, but sometimes fewer than the arithmetic promises. Verify — do not assume.
 

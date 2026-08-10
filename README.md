@@ -48,7 +48,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-templates` | Convert a report into a reusable template and apply templates to new reports. |
 | `whatagraph-themes` | Apply and manage themes (logos, fonts, headers/footers) and color palettes. |
 | `whatagraph-assets` | Import, find, read and publish files — brand images for reports and themes, and searchable documents. |
-| `whatagraph-sharing` | Create and update public share links, generate PDFs, and export reports. |
+| `whatagraph-sharing` | Create and update public share links, generate and download PDFs, and export reports. |
 | `whatagraph-automations` | Schedule automated report delivery by email. |
 | `whatagraph-snapshots` | Save and restore the structural state of a report. |
 | `whatagraph-integrations-admin` | Connect sources from already-authenticated accounts and assign them to spaces. |
