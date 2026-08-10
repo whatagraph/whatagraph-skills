@@ -865,6 +865,8 @@ The report uses a **6-column grid**. Every widget occupies a rectangle defined b
 
 **Overlap rule:** On `create`, `update`, and `duplicate`, the server rejects widgets that overlap an existing widget — unless `auto_place=true`, which picks the nearest free slot instead. On `create`, when `position_x`/`position_y` are omitted entirely, auto-placement is the default. On `update`, overlap is checked when `position_x` or `position_y` is provided (the widget being updated is excluded from the check). `duplicate` and `batch_duplicate` auto-position the copy at the next available row.
 
+**Inserting between two existing rows:** there is no widget-level way to do this — the row you want is occupied, and `auto_place=true` sends the widget to the nearest free slot instead of the row you asked for. Open the row first with `manage-report-tabs action=insert_row_space` (`position_y` = the row to open, `row_count` = the height of the widget you're adding), then `create` at that exact position. `remove_row_space` closes empty rows again. Never shift widgets one at a time to make room, and never rebuild the tab elsewhere — see `whatagraph-report-tabs` → "Insert or remove rows in a tab".
+
 ### The layout comes from the data and the user, not from a default
 
 **There is no house layout, and no default report structure.** The tab's shape is decided fresh each time, in this order of priority:
@@ -1141,6 +1143,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 ## What MCP can't do here
 
 - Move widgets to another tab — use `manage-report-tabs action=move_widgets`.
+- Open or close space between existing rows — use `manage-report-tabs action=insert_row_space` / `remove_row_space`. There is no batch reposition on `manage-widgets`, so this is how you make room; moving widgets individually fails on overlap.
 - Set widget-level permissions — UI only.
 - Cross-report widget copy — duplicate within the same report only (use `target_tab_id` for cross-tab duplication).
 - **Edit the generated AI text itself** — `update_ai_text` configures the settings and triggers generation, but the produced text can only be hand-edited in the UI.

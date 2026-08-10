@@ -1,7 +1,7 @@
 ---
 name: whatagraph-report-tabs
 type: domain
-description: Create, duplicate, rename, and reorder tabs within a report. Each tab is a page of widgets. Use when a report needs a new section (e.g. "Paid Search", "Social", "Organic") or when existing tabs need to be re-ordered or duplicated. Handles asks like "add a new page to this report", "rename the second tab", or "reorder the report sections".
+description: Create, duplicate, rename, and reorder tabs within a report, and open or close rows in a tab's grid. Each tab is a page of widgets. Use when a report needs a new section (e.g. "Paid Search", "Social", "Organic"), when existing tabs need to be re-ordered or duplicated, or when a widget has to go between two existing rows. Handles asks like "add a new page to this report", "rename the second tab", "reorder the report sections", or "insert a widget between these two rows".
 required_tools:
   - list-report-tabs
   - manage-report-tabs
@@ -94,6 +94,34 @@ manage-report-tabs action=move_widgets
 
 Widgets retain their configs and sources; only their tab assignment changes.
 
+## Insert or remove rows in a tab
+
+`manage-widgets` cannot add a widget between two existing rows — every position it would need to move through overlaps something, so each call is rejected. Open the space at the tab level first, then place the widget:
+
+```
+manage-report-tabs action=insert_row_space report_id=<id> tab_id=<id>
+   position_y=4          # first row to open
+   row_count=2           # how many rows (defaults to 1)
+
+manage-widgets action=create report_id=<id> tab_id=<id>
+   position_x=0 position_y=4 options={width: 6, height: 2} …
+```
+
+Every widget starting at `position_y` or below moves down by `row_count`, in one call. Match `row_count` to the height of the widget you are about to add, or the new widget still overlaps the row below it.
+
+`remove_row_space` is the inverse — it closes empty rows and moves everything below up:
+
+```
+manage-report-tabs action=remove_row_space report_id=<id> tab_id=<id>
+   position_y=4 row_count=2
+```
+
+**The rows must already be empty.** This never deletes or resizes a widget: if anything occupies or reaches into the range, the call is rejected and the error names both the blocking widget ids and the rows that *are* free (`Free rows on this tab: 4–5.`). Read that list rather than guessing a second range — free rows are the gaps between widget spans, so they don't appear as any widget's `position_y`. To close a row that holds a widget, move or delete the widget first.
+
+A widget that starts *above* the insertion row and reaches into it stays where it is, at its original height — nothing is resized. The gap then doesn't span every column, so the response returns `spanning_widget_ids` and says so; check those widgets' columns before choosing `position_x`.
+
+Neither action works on a linked report — its widgets are managed by the linked template.
+
 ## Set report layout (print-ready)
 
 ```
@@ -130,4 +158,6 @@ Soft-delete — the tab's widgets soft-delete and restore with it. A report must
 - **Duplicate tab with widgets on disconnected sources** — duplication preserves broken state; `change_sources` on the report after duplicating.
 - **Too many tabs (10+)** — client-facing reports with 10+ tabs overwhelm readers. Consolidate into a few themes.
 - **Moving widgets across reports** — not supported; widgets are scoped to their report. Duplicate the widget in target report, delete original.
+- **Rebuilding a tab to insert one widget** — never move widgets one at a time to open a row, and never rebuild the tab in a temporary tab. `insert_row_space` does it in one call.
+- **`insert_row_space` with a `row_count` smaller than the new widget** — the widget overlaps the row below and the create is rejected. Open as many rows as the widget is tall.
 - **Deep-link to a specific tab** — share URL `#tab:<tab_id>` hash selects the tab (pattern: `https://live.whatagraph.com/client/<team_client_id>/live-report/<report_id>#tab:<tab_id>`).
