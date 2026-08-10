@@ -52,6 +52,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-automations` | Schedule automated report delivery by email. |
 | `whatagraph-snapshots` | Save and restore the structural state of a report. |
 | `whatagraph-integrations-admin` | Connect sources from already-authenticated accounts and assign them to spaces. |
+| `whatagraph-dynamic-integrations` | Build a new data source Whatagraph does not support yet, from the API's own documentation — no code deploy. |
 | `whatagraph-team-and-members` | View team settings and subscription; invite and update team members. |
 | `whatagraph-customer-patterns` | Common multi-tool flows and decision trees across skills. |
 | `whatagraph-deleting` | Safe deletion, removal, and revocation across Whatagraph entities. |
