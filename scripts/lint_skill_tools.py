@@ -12,6 +12,11 @@ Rules enforced (per the agent-skill-permissions plan, section 1):
      happy path is deletion. Destructive tools gate a skill behind a permission
      the grant flow never auto-grants, making the skill unreachable; they belong
      in `optional_tools` (or dropped) for every domain skill.
+  5. `group`, when declared, is one of the seven agreed functional categories.
+     The key is OPTIONAL: read/analysis workflow skills and the orientation meta
+     skills intentionally carry no group, and an absent key is not an error. Only
+     a group that does not exist in the taxonomy is, since it would silently fail
+     to match anything the frontend groups by.
 
 `optional_tools` entries may be either a bare string or a mapping with a
 `tool_name` key (and an optional `purpose`). `optional_tools` is optional; an
@@ -87,12 +92,31 @@ DESTRUCTIVE_TOOLS = {t for t in CANONICAL_TOOLS if t.startswith("delete-")} | {
 # Skills exempt from Rule 4 — deletion is their happy path.
 DESTRUCTIVE_CORE_EXEMPT = {"whatagraph-deleting"}
 
+# Valid `group:` values. Must stay in sync with the backend's
+# App\Domain\Agent\Enums\AgentToolGroup cases (minus `custom`, which is the
+# registry's fallback bucket for an unannotated tool, never an authored value).
+VALID_GROUPS = {
+    "data_modeling",
+    "data_connections",
+    "report_building",
+    "monitoring_kpis",
+    "distribution_lifecycle",
+    "team_workspace_branding",
+    "deletion",
+}
+
 
 def split_frontmatter(text: str):
     m = re.match(r"^---\n(.*?)\n---\n(.*)$", text, re.S)
     if not m:
         return None, text
     return m.group(1), m.group(2)
+
+
+def parse_scalar(frontmatter: str, key: str):
+    """Return the scalar value declared under `key`, or None when absent."""
+    m = re.search(rf"^{key}:[ \t]*(\S.*?)\s*$", frontmatter, re.M)
+    return m.group(1) if m else None
 
 
 def parse_tool_list(frontmatter: str, key: str):
@@ -178,6 +202,14 @@ def main():
                     f"{rel}: destructive tool '{name}' must not be in required_tools "
                     f"(move it to optional_tools or drop it)"
                 )
+
+        # Rule 5: a declared group must exist in the taxonomy (absent is fine).
+        group = parse_scalar(fm, "group")
+        if group is not None and group not in VALID_GROUPS:
+            errors.append(
+                f"{rel}: unknown group '{group}' (expected one of: "
+                f"{', '.join(sorted(VALID_GROUPS))})"
+            )
 
         # Rule 1: body-invoked tools must be declared.
         body_tools = find_body_tools(body)

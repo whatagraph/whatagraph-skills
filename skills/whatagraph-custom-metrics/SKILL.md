@@ -1,6 +1,7 @@
 ---
 name: whatagraph-custom-metrics
 type: domain
+group: data_modeling
 description: Create calculated or unified metrics on top of a data source — formulas (ROAS, CPA, CPL), cross-source sum metrics (data_aggregation), and metric aliases / unified names. Use when a standard channel metric isn't enough. A data_aggregation metric sums the same metric across sources into one total; a cross-source ratio (blended ROAS/CPA) still needs a source group or blend (see whatagraph-source-groups / whatagraph-blends).
 required_tools:
   - list-custom-metrics

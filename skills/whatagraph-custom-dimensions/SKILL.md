@@ -1,6 +1,7 @@
 ---
 name: whatagraph-custom-dimensions
 type: domain
+group: data_modeling
 description: Create derived dimensions — tag-based groupings, condition-based buckets, AI-classified categories, or metadata aliases. Use when the user wants to group/label dimension values (e.g. "Branded vs Non-branded", "Account Manager", "Channel Bucket") that aren't native to any source.
 required_tools:
   - list-custom-dimensions

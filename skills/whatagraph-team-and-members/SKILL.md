@@ -1,6 +1,7 @@
 ---
 name: whatagraph-team-and-members
 type: domain
+group: team_workspace_branding
 description: View team settings and subscription, update team name/localization, and invite or update team member invitations. Use when a user wants to onboard a new team member, change roles, update team timezone/currency defaults, or inspect plan limits.
 required_tools:
   - list-automations

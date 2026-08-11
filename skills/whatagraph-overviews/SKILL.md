@@ -1,6 +1,7 @@
 ---
 name: whatagraph-overviews
 type: domain
+group: monitoring_kpis
 description: Create overviews — KPI dashboards that track metrics over time. The UI calls these "Measurements". Use when a user wants a single-page KPI dashboard with trend visualizations and comparisons, independent of any report.
 required_tools:
   - list-overviews

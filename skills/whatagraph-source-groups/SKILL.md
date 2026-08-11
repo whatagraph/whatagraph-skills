@@ -1,6 +1,7 @@
 ---
 name: whatagraph-source-groups
 type: domain
+group: data_modeling
 description: Combine multiple data sources into one virtual aggregated source — same-channel (e.g. five Google Ads sub-accounts) or cross-channel (e.g. Meta + Google + Reddit + TikTok). Use when an agency wants unified reporting without building a blend.
 required_tools:
   - list-source-groups
