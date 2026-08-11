@@ -84,7 +84,13 @@ These read-only workflow skills sit on top of the domain skills above — reach 
 5. **Check `show` after a write.** After a create/update, re-fetch via `show` to confirm the change landed as expected.
 6. **Attach a source to the report before pointing a widget at it.** `manage-widgets` only accepts the report-local `sources.id`. Use `manage-reports action=attach_source integration_source_id=<global_id>` first — the response includes the report-local `source_id` to pass into `manage-widgets`. The same flow works for source groups and blends (they are data sources too). When updating a widget config without supplying the existing `config.id`, the platform creates a fresh report-local source mapping rather than reusing the existing one — leading to duplicate report-local sources for the same global integration source. Either always pass the existing `config.id` (recommended) or run `list-reports action=list_sources` after each such update to detect orphans.
 7. **Some write/delete tools require access.** If a `manage-*` / `delete-*` call is not available for a team, continue with the available read tools and explain which action needs enablement.
-8. **Use field IDs exactly as returned by the tools.** Custom fields usually use `universal_metric_<id>` / `universal_dimension_<id>`. Blends and source groups may expose different field-id families for reading than for creating related custom fields, so check the domain skill before writing.
+8. **Use field IDs exactly as returned by the tools — and know which family you are holding.** Wrong-family ids are the single most common cause of a failed call, so this is worth naming up front rather than deferring:
+   - **Native source** — the channel's own ids, often dotted (`metrics.clicks`, `campaign.name`).
+   - **Unified / custom fields** — `universal_metric_<id>` / `universal_dimension_<id>`. Keep the prefix.
+   - **Source group** — `universal_*` for the rollup, with `..._integration_<id>` (one channel) and `..._integration_source_<id>` (one sub-source) variants for drilling in.
+   - **Blend** — `aggregation_metric_*` / `aggregation_dimension_*` for the combined output, `blend_metric_*` / `blend_dimension_*` for one sub-source's own column.
+
+   **Read shape ≠ write shape.** A tool can return an id family that its own create action rejects — most sharply on a blend, where a formula metric must be built from `blend_metric_*` even though reads return `aggregation_*`. So never feed a read id straight into a create without checking. The full table lives in `whatagraph-sources-and-data` → "Field-id family by source type"; the blend-specific write rules are in `whatagraph-blends` → "Custom fields on a blend".
 9. **`show` responses may be summarized.** Some endpoints omit advanced settings, especially widget display options. For widget data/config verification, use `list-widgets action=csv_export` or `export-report`.
 
 ## How users describe things (UI ↔ MCP parameter mapping)
