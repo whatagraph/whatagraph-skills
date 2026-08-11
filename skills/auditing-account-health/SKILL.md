@@ -43,8 +43,9 @@ view-team action: members
 Review:
 - **Subscription plan** and limits (sources, reports, users) — from `show_subscription`
 - **Team settings** and configuration — from `show`
-- **Usage vs. limits** — compare `sources_used` vs `sources_total`, `users_used` vs `users_total`, `reports_count` vs `reports_total`
-- **Null limits**: `sources_total: null`, `users_total: null`, or `reports_total: null` means "unlimited/unenforced" — do not flag as over-utilization
+- **Usage vs. limits** — compare `sources_used` vs `sources_total` and `users_used` vs `users_total`. These are the two comparisons worth making.
+- **`reports_total` is always `null`** — no report limit is reported, so `reports_count` is a count, not a utilization figure. Report it as "N reports", never as "N of M". Don't present a report-limit percentage; there is nothing to divide by.
+- **A null limit means "not enforced here" — not necessarily "unlimited".** `sources_total` / `users_total` come back null when no limit is set on the team, so treat them as unknown: never flag over-utilization against a null, and never claim the plan is unlimited on that basis. If the user needs the real entitlement, `list_plans` describes the plans.
 
 ### 2. Integration Health
 
