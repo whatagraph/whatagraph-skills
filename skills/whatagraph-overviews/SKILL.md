@@ -126,7 +126,7 @@ Permanent — no restore path. See `whatagraph-deleting` for cascades and recove
 ## What MCP can't do here
 
 - Duplicate an overview — UI only (use `action=update` to modify an existing one).
-- Sharing — overviews inherit sharing from their space; share the space (UI) instead.
+- Sharing — an overview **can** carry its own share settings, but not through MCP. `list-overviews action=show` reports `has_share_settings` (a read-only boolean, so you can tell whether one exists), and there is no MCP path to create, change, or remove it — the sharing tools take a report, never an overview. Share via the space or the UI, and when reporting on an account's sharing, read `has_share_settings` rather than assuming an overview inherits everything from its space.
 - Set a target value on an overview metric — use `whatagraph-goals` to track goals alongside.
 
 ## Common pitfalls
