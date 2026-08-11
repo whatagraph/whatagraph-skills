@@ -91,7 +91,17 @@ manage-sources action=tag
 manage-sources action=set_currency
    source_ids=[<id>, <id>]
    currency="EUR"
+
+manage-sources action=refresh
+   source_ids=[<id>, <id>]          # max 10 per call
 ```
+
+**`refresh`** clears the cached data for those sources so the next read re-fetches from the provider.
+Reach for it after a reconnect, a currency change, or a "my numbers are stale / nothing is showing"
+report — it is the fix for a stale cache, not for a broken connection. It is capped at **10 sources per
+call** (more is rejected, so split into batches) because each refreshed source triggers a fresh
+provider fetch and the cap protects the provider's rate limits. It clears caches only; it does not
+re-run history, so give the next read a moment to repopulate.
 
 Find `tag_id` and `tag_value_ids` via `list-sources action=list_metadata` (scope `tags`).
 
