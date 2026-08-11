@@ -174,6 +174,20 @@ Source groups are particularly useful for agencies managing many accounts of the
    list-custom-metrics action: show, metric_id: <id>
    ```
 
+   Reading the result: `formula` is written in terms of bare operand letters (`A/B`), and `fields`
+   resolves each one — every entry pairs an `identifier` (the letter) with the `external_id` and `name`
+   of the field it stands for, plus the `channel_id` or `integration_source_id` it was mapped on. So
+   read `formula` and `fields` together: `A/B` alone says nothing until `fields` tells you `A` is Spend
+   on one channel and `B` is Conversions on another.
+
+   `show` also returns `aggregation_level` and `accumulator` / `summary_accumulator`, which decide
+   whether a ratio is computed per row and then rolled up, or recomputed from the summed totals. Two
+   metrics with an identical `formula` can legitimately report different totals because of this — it is
+   the usual explanation for "the total doesn't match the rows".
+
+   For what these settings do, how to change any of it, and the full field-id rules per source type,
+   load `whatagraph-custom-metrics`. This skill only reads.
+
 3. **List custom dimensions**:
    ```
    list-custom-dimensions action: list
