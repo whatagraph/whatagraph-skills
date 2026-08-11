@@ -45,40 +45,49 @@ import os
 import re
 import sys
 
-# Canonical Whatagraph MCP tool inventory. Keep in sync with the MCP server's
-# registered tools (mcp__..._Whatagraph_Dev7_MCP__<name>). This is the single
-# source of truth for valid tool names.
+# Canonical Whatagraph MCP tool inventory — the single source of truth for valid
+# tool names. Generated from the backend, NOT hand-edited:
+#
+#   php artisan tinker --execute 'echo implode("\n", \
+#     App\Domain\MCP\WhatagraphServer::allCanonicalToolNames());'
+#
+# Regenerate after any tool is added, renamed, or removed in whatagraph-api-v7.
+# Drift is silent in both directions: a stale name passes lint but logs
+# "skill declares unknown tools" at sync time and never gates anything, while a
+# missing name fails lint for a tool that is perfectly real.
 CANONICAL_TOOLS = {
-    "create-agent", "edit-agent",
-    "list-agent-tools", "list-agents",
-    "list-assets", "manage-assets", "search-assets",
+    "list-agent-tools",
+    "list-agents", "manage-agents", "delete-agents",
+    "list-assets", "manage-assets",
     "list-automations", "manage-automations", "delete-automations",
     "list-blends", "manage-blends", "delete-blends",
-    "list-builder-conversations", "manage-builder-conversations",
-    "delete-conversations",
+    "list-conversations", "manage-conversations", "delete-conversations",
     "list-custom-dimensions", "manage-custom-dimensions", "delete-custom-dimensions",
     "list-custom-metrics", "manage-custom-metrics", "delete-custom-metrics",
     "list-destinations", "manage-destinations", "delete-destinations",
+    "export-report",
+    "list-external-connectors",
+    "fetch-data",
     "list-filters", "manage-filters", "delete-filters",
+    "manage-goals", "view-goals", "delete-goals",
     "list-integrations", "manage-integrations", "remove-integrations",
-    "list-inter-agent-conversations", "manage-inter-agent-conversations",
+    "load-skill",
+    "manage-members", "remove-members",
     "list-overviews", "manage-overviews", "delete-overviews",
+    "read-document",
     "list-report-tabs", "manage-report-tabs", "delete-report-tabs",
     "list-reports", "manage-reports", "delete-reports",
-    "list-skills", "load-skill",
+    "search-assets",
+    "manage-sharing", "view-sharing", "delete-sharing",
+    "list-skills",
     "list-snapshots", "manage-snapshots", "delete-snapshots",
     "list-source-groups", "manage-source-groups", "delete-source-groups",
     "list-sources", "manage-sources", "delete-sources",
     "list-spaces", "manage-spaces", "delete-spaces",
+    "manage-team", "view-team",
     "list-templates", "manage-templates", "delete-templates",
     "list-themes", "manage-themes", "delete-themes",
-    "list-user-conversations", "manage-user-conversations",
     "list-widgets", "manage-widgets", "delete-widgets",
-    "manage-goals", "delete-goals", "view-goals",
-    "manage-members", "remove-members",
-    "manage-sharing", "delete-sharing", "view-sharing",
-    "manage-team", "view-team",
-    "export-report", "fetch-data", "preview-widget", "read-document",
 }
 
 # Destructive tools must never be CORE (`required_tools`) of a domain skill:
