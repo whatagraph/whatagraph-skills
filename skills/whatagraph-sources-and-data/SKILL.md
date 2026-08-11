@@ -235,6 +235,8 @@ manage-sources action=refresh
 
 **`refresh`** clears cached data so the next read re-fetches fresh data from the provider. Useful for "my data isn't showing" troubleshooting after a source reconnect or data delay.
 
+**`tag` only assigns values that already exist.** It is not a create path — an unknown `tag_id` or `tag_value_ids` is rejected, not created. To make a new tag (the tag dimension plus its values, optionally assigning sources in the same call), use `manage-custom-dimensions action=create map_type=tag`, then come back here for later assignments. See `whatagraph-custom-dimensions`.
+
 **Currency override** is the most common fix when numbers look wrong — a USD Google Ads account reporting into a EUR-default team needs an explicit override here. Override affects display only; historical data rows keep their stored currency.
 
 ## Deleting sources
