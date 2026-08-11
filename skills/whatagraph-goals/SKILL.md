@@ -98,8 +98,12 @@ manage-goals action=create
 
 ### `period` + `repeat`
 
-- `daily` / `weekly` / `monthly` / `quarterly` / `yearly` — recurring; combine with `repeat="1"`.
-- `static` — one-off bounded period; combine with `repeat="0"`.
+The two are **independent** settings, both required on `create`. Nothing rejects an "odd" combination, so these are conventions that match user intent, not validation rules:
+
+- `daily` / `weekly` / `monthly` / `quarterly` / `yearly` — a recurring timeframe; normally `repeat="1"`.
+- `static` — a one-off bounded period; normally `repeat="0"`.
+
+Pairing them the other way is accepted and simply means what it says (a `monthly` goal with `repeat="0"` measures one month and does not roll forward). So do not treat a mismatch as an error to fix — check what the user actually wanted.
 
 ### Goal with dimension filter
 
