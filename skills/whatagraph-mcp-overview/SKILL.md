@@ -52,6 +52,8 @@ Data flows into widgets from:
 | Inviting teammates, roles, subscription | `whatagraph-team-and-members` |
 | Connecting a new integration account to the team | `whatagraph-integrations-admin` |
 | Deleting, removing, disconnecting, revoking anything | `whatagraph-deleting` |
+| Target/pacing progress — reading where a goal stands right now | `whatagraph-goals` (`view-goals`) |
+| Logos, uploaded images, brand files; reading a document's contents | `whatagraph-assets` (`list-assets`, `search-assets`, `read-document`) |
 | Patterns that cross multiple domains | `whatagraph-customer-patterns` |
 
 ## Analysis, insight & troubleshooting tasks
