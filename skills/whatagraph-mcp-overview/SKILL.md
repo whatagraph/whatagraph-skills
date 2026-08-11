@@ -33,6 +33,7 @@ Data flows into widgets from:
 - **Data source** — one connected account (e.g. one Google Ads account).
 - **Source group** — multiple accounts of the same channel rolled up.
 - **Blend** — two or more sources (any channels) joined on shared dimensions.
+- **Values entered by hand** — an offline (manual-data) widget for figures no integration can supply (offline spend, retainer fees, client targets). See `whatagraph-widgets`.
 
 ## Mental model for the tools
 
@@ -108,13 +109,21 @@ Users rarely say "data source"; they say things like "my Google Ads account". Tr
 | "share link", "public link" | sharing + the returned URL |
 | "template report" | a report template (linked report pattern) |
 
+> **⚠️ "Overview" is an overloaded word — resolve it before building.** In Whatagraph, an **Overview** (UI name: "Measurement") is a standalone product entity — a single-page KPI dashboard that lives outside any report (`list-overviews` / `manage-overviews`, see `whatagraph-overviews`). But users and agent instructions also say "overview" for other things. Read the context:
+>
+> - **A tab inside a report** — "Overview" / "General Overview" named in a tab list, "the overview tab", "overview page of the report" → a report tab, not the Overview entity. Build it with `manage-report-tabs` / `manage-widgets`.
+> - **A summary-style report** — "an overview of last month's performance", "a high-level overview report" alongside report language → a report (often its first tab is the summary).
+> - **The Overview entity** — "create an overview", "a Measurement", "KPI dashboard", "add it to Overviews", or the request explicitly contrasts it with reports → `whatagraph-overviews`.
+>
+> **When the signals don't settle it, don't guess — ask the user** one short follow-up before creating anything: e.g. *"Do you mean a Whatagraph Overview (the standalone KPI dashboard, called 'Measurement' in the UI), or an overview tab/summary inside a report?"* Building the wrong artifact type wastes the build and confuses the account. The same check applies in reverse when listing or deleting: "delete the overview" may mean the entity or a report's tab.
+
 ## The golden flow for new users
 
 1. `view-team action=show` — confirm plan, features enabled.
 2. `list-spaces action=list` — see client folders.
 3. `list-sources action=list` (optionally filtered by a space) — see what's connected.
 4. Decide whether you need to aggregate same-channel accounts (`source-groups`) or combine different channels (`blends`).
-5. Build a report: `manage-reports create` → `manage-report-tabs create` → `manage-reports attach_source` (one call per data source the report needs) → `manage-widgets create` (using the report-local `source_id` returned by attach). There is no default report structure — replicate the report they referenced/uploaded, build to the intent they described, or (when there's neither) decide yourself which metrics/dimensions/KPIs are worth showing and the best visualization for each, composing by analytical priority. Don't reach for the same arrangement every time. Load `whatagraph-widgets` for the layout playbook.
+5. Build a report: `manage-reports create` (pass `layout` to set page orientation — landscape by default) → `manage-report-tabs create` → `manage-reports attach_source` (one call per data source the report needs) → `manage-widgets create` (using the report-local `source_id` returned by attach). There is no default report structure — replicate the report they referenced/uploaded, build to the intent they described, or (when there's neither) decide yourself which metrics/dimensions/KPIs are worth showing and the best visualization for each, composing by analytical priority. Don't reach for the same arrangement every time. Load `whatagraph-widgets` for the layout playbook. **Templates are opt-in**: never scan team templates or Whatagraph's pre-made template gallery to shortcut a build — use a template only when the user or agent instructions explicitly say so, and deliver the result unlinked unless the user asks for linking or the context makes auto-sync clearly relevant, e.g. scaling one layout across many clients (see `whatagraph-reports` / `whatagraph-templates`).
 6. Apply a theme with `manage-themes enable_theme` if the user wants custom branding.
 7. **Only when the user explicitly asks for it** — share the report (`manage-sharing create`) or schedule delivery (`manage-automations create`). Building a report does not imply sharing it: never create a share link or an automation unprompted. (Note: downloading a PDF via `manage-sharing download_pdf` creates a public share link as a side effect of rendering — only download a PDF when asked.)
 

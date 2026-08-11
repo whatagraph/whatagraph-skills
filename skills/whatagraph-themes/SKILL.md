@@ -10,6 +10,8 @@ required_tools:
 optional_tools:
   - tool_name: delete-themes
     purpose: Delete a theme or color palette.
+  - tool_name: manage-widgets
+    purpose: Apply a theme colour id to an individual widget.
 ---
 
 # Themes & color palettes
@@ -50,6 +52,20 @@ Both `list_themes` and `list_colors` include context fields:
 - `applied_theme_id` / `applied_color_id` — the ID active on the report, or `null`
 - `applied_theme_source` / `applied_color_source` — `"team"`, `"report"`, `"system"`, or `null`. When `"system"`, the applied theme/palette is a built-in premade not included in the list — `team_has_themes: false` with a non-null `applied_theme_id` is expected in this case
 - `team_has_themes` / `team_has_colors` — whether the team has any custom themes/palettes
+
+### Colouring one widget differently
+
+The `id` of a palette from `list_colors` is exactly what a widget's `active_theme_color_id` takes. Pass it verbatim through `manage-widgets`:
+
+```
+list-themes action=list_colors report_id=<report_id>
+   → [{"id": "<colour_id>", "name": "Signal Red", "theme_id": "<theme_id>", "source": "team", "is_active": false}, ...]
+
+manage-widgets action=update report_id=<report_id> widget_id=<widget_id>
+   options={"active_theme_color_id": <colour_id>}
+```
+
+Two things to be clear about. It is a **palette id, not a single colour** — you are switching that widget to a whole palette, not picking one swatch out of one. And `is_active` marks the palette currently applied to the *report*, which is unrelated to what an individual widget overrides.
 
 ## Apply a theme to a report
 
@@ -142,6 +158,19 @@ manage-themes action=create_color
 - **`additional_colors`** is an **object** controlling the report canvas: `background` (raw CSS), `report_accent`, `report_text_color`, `report_title_color` (bare hex). Set these to drive the report background and title color; omit to keep the theme default.
 - Tie a palette to a theme via `theme_id` in `colors`. Binding is organizational only — any palette can be applied to any report regardless of which theme it's bound to. Omitting `theme_id` creates an unbound palette that works with any theme.
 
+### Designing a palette that hangs together
+
+When you compose a palette yourself (no exact brand values supplied), don't pick each key independently — derive the whole set from one starting point so the report reads as a single design:
+
+- **Start from one accent.** Take the brand/primary color (from the prompt, the client's logo, or the space name's known brand) as `report_accent` / `accent_text_color` / `icon_background`, and derive everything else from it — same temperature (warm accent → warm greys and fills, cool accent → cool ones), never a mix of clashing families.
+- **`chart_colors` are siblings, not a grab-bag.** Use distinct **hues** at broadly similar saturation and lightness so no series shouts over the others — vary the hue around the wheel, not just the shade of one color. Order the array so adjacent entries contrast clearly (series are colored in array order; two near-identical neighbours make consecutive series indistinguishable). Provide 8–12.
+- **Keep semantic colors unambiguous.** `positive_color` stays recognizably green-ish and `negative_color` red-ish, both clearly distinct from the nearby `chart_colors` — if a chart series uses nearly the same red as the negative delta, trend arrows stop reading at a glance. For the same reason avoid leaning the chart series heavily on red+green pairs.
+- **Chrome recedes, data speaks.** `chart_axis_text` and `chart_grid_lines` are quiet, low-saturation greys tinted toward the palette's temperature — grid lines lighter than axis text, both far quieter than any chart color. `neutral_color` sits between `text_color` and the background.
+- **Contrast where text lives.** `text_color` on `widget_background`, `accent_text_color` on `accent_fill_color`, and `report_title_color` / `report_text_color` on `additional_colors.background` must each be comfortably readable (aim for roughly WCAG-AA-level contrast). This is where near-miss palettes fail.
+- **Let the canvas lift the cards.** Make `additional_colors.background` a subtle tint one step away from `widget_background` (slightly darker or warmer/cooler) so widgets read as cards on a page; `list_even_fill` is a barely-visible step from `widget_background`, not a loud stripe.
+- **Theme and palette agree.** The theme's header/footer `text_color` / `background_color` come from the same family as the palette (accent or its neutrals) — a blue-branded header on an earth-toned palette reads as two different reports stapled together. When creating both, derive them from the same accent; when applying a palette to a report with an existing theme, check the pair side by side.
+- **Verify on a real page.** After applying, export a tab that holds a table + chart + KPI (`export-report`) and check: series distinguishable, deltas obviously green/red, text readable on every surface, header matching the page. Adjust with `update_color` rather than shipping a near-miss.
+
 ### Dark themes — set the full key set
 
 When the background is dark you must darken the foreground keys too, or widgets keep their light defaults and text disappears:
@@ -173,6 +202,24 @@ manage-themes action=create_email_theme name="Acme Email" options={...}
 manage-themes action=update_email_theme email_theme_id=<id> options={...}
 manage-themes action=enable_email_theme report_id=<id> email_theme_id=<id>  # report_id optional (omit for team-level)
 ```
+
+`create_email_theme` requires `name`, `web_domain_id`, and `email_domain_id` — get the last two from `list_web_domains` / `list_email_domains`; both must belong to the team or be premade. On `update_email_theme` the theme keeps its current domains when you omit them.
+
+### Email theme `options`
+
+| Key | Notes |
+|---|---|
+| `background_color` | Email body background |
+| `heading_text`, `heading_text_color` | |
+| `body_text`, `body_text_color` | |
+| `footer_text`, `footer_text_color` | `footer_text` is nullable |
+| `button_text`, `button_text_color`, `button_background_color` | The "View report" call to action |
+| `sender_name` | Display name on the From line |
+| `sender_email` | **Local part only** — the part before the `@`. Validated as a full address against `sender_email_domain` |
+| `sender_email_domain` | The domain half, from `list_email_domains` |
+| `subject_text` | |
+| `reply_name`, `reply_to_email` | |
+| `images[]` | `{title, url, alignment, scale_to_fill}`. Import and publish a remote image first — see the header/footer image rule above |
 
 ## Deleting a theme or palette
 

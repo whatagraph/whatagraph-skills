@@ -2,7 +2,7 @@
 name: whatagraph-widgets
 type: domain
 group: report_building
-description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, or bulk-swapping data sources across many widgets at once.
+description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, renaming the metric caption / series label a widget shows, colouring table cells by value with conditional formatting, bulk-swapping data sources across many widgets at once, or entering numbers by hand into an offline / manual-data widget. Also the widget reference for building a whole report out of numbers you already have — an analysis, a spreadsheet, a client's own figures — with no connected source at all; load `whatagraph-offline-reports` for that workflow. Carries the non-negotiable full-tab composition bar for self-directed builds — multi-section pages of 8–14 varied widgets, never a thin strip of KPIs plus a chart.
 required_tools:
   - list-widgets
   - list-reports
@@ -24,6 +24,10 @@ optional_tools:
     purpose: Look up theme colour ids for active_theme_color_id.
   - tool_name: export-report
     purpose: Verify the built layout renders with data.
+  - tool_name: manage-assets
+    purpose: Import and publish a remote image before binding it to a widget.
+  - tool_name: manage-sharing
+    purpose: Render the built layout to PDF to verify every table's last row is present.
 ---
 
 # Widgets
@@ -32,9 +36,12 @@ Tools covered: `list-widgets`, `manage-widgets`.
 
 A **widget** is a visual data component on a tab. Widgets are typed (KPI card, line chart, table, pie chart, etc.) and each has a data source (or no source for comment/image widgets). Widgets expose rows and configs — a row groups metrics and dimensions; configs define the data.
 
+> **The quality bar — read this before building anything.** Unless the user handed you a widget-by-widget spec or a reference to replicate, every tab you build is a **full composed page: two or more sections with header comments, a varied widget mix (KPI row + trend chart + composition chart + detail table + at least one distinctive type the data earns), typically 8–14 widgets**. The instinctive "a few KPIs, a chart, and a table" (~5–6 widgets) is **below the bar** — it is what gets built when nobody reads the data, and it ships thin, repetitive pages. Full rules in "Composing a full tab" below; the bar applies even when the tabs and their themes were named for you. **If your run has a limited step budget, economize on discovery and verification calls — bind `rows` at create, reuse the field catalog across widgets, batch, verify once at the end — never on widget count.**
+
 ## Use this when
 
 - Adding a KPI card, chart, table, or funnel to a tab.
+- Entering numbers by hand — offline spend, retainer fees, client targets — into an offline (manual-data) widget.
 - Swapping the source on a set of widgets (migrating from sample to real data).
 - Changing common settings (currency, footer visibility) across many widgets at once.
 - Duplicating a widget or a set of widgets on a tab.
@@ -45,7 +52,11 @@ A **widget** is a visual data component on a tab. Widgets are typed (KPI card, l
 list-widgets action=list report_id=<id>                    # grouped by tab, sorted by (position_y, position_x); each widget includes `has_filters` boolean and `widget_type_label` (human-readable)
 list-widgets action=show report_id=<id> widget_id=<id>     # full widget details: layout, source binding, options, ai_text_settings, source_filter_off
 list-widgets action=csv_export report_id=<id> widget_id=<id>
+list-widgets action=list_icons                             # the row icon library — see Row icons
+list-widgets action=conditional_formats report_id=<id> widget_id=<id>   # a table widget's cell colour rules — see Conditional formatting
 ```
+
+> ⚠️ **Do not edit a field back just because `show` returned it.** The `show` response repeats the metric's name in `rows[].options.title` as well as `rows[].configs[].options.metrics[].name`, and only the **config** one is the caption the reader sees — the row title is just the placeholder shown until data loads. To rename a metric caption or series label, set `rows[].configs[].options.metrics[].name` — full rule in "Renaming a metric caption".
 
 Notes:
 - All actions include widgets on **hidden tabs** by default. Use `tab_hidden=false` to exclude hidden tabs, or `tab_hidden=true` to show only hidden tabs. The `list` response includes a `tab_hidden` field on each tab. `csv_export` defaults to visible tabs only (`tab_hidden=false`) — pass `tab_hidden=true` to export a widget on a hidden tab.
@@ -60,13 +71,20 @@ manage-widgets action=create
    channel_id=<channel_id>             # integer ID or slug, e.g. 5 or "google-ads"
    widget_type_id=<widget_type>        # prefer 101+ (new architecture)
    source_id=<report_local_source_id>  # omit for sample-data widget
+   name="<widget title>"               # always set on data widgets — see Titles
 ```
 
-You can pass `rows` at create time to bind metrics and dimensions immediately — no separate update needed. If `rows` is omitted, the widget defaults to the first metric in the source catalog.
+**Always pass `name` at create on data widgets** — one created without a name renders the platform's default label. Set each row's rendered metric label in `rows[].configs[].options.metrics[].name` at the same time (see "Titles — every widget and every metric row is labelled").
+
+⚠️ **Four types reject `name` and `options.title` outright** — Comment (`21`), Calendar (`22`), Filter control (`137`), and Report shortcut (`141`). They never render a widget title, so passing one is refused rather than silently stored (Jul 2026). For a Comment, put the heading in the body text instead — `rows[].configs[].options.comment_widget_text.text` with a markdown `#` prefix. Image (`34`) does render a title and still takes `name`.
+
+**Always pass `rows` at create time on data widgets** — bind the metrics and dimensions in the same call. If `rows` is omitted, the widget falls back to the first metric in the source catalog — an arbitrary binding that rarely matches the widget's title, and on some sources no default applies at all, leaving the widget rendering **"Metrics not selected"** in the client-facing report. A create that returns `success` with no explicit binding is not a configured widget. Before binding, look the fields up with `list-sources action=list_dimensions_and_metrics` (never guess `external_id`s), keep every field in one config on the same `report_type`, and verify the result loads data (see "Fit for purpose").
 
 ### Dimension requirements by widget type
 
 The tool validates that the correct dimensions are provided based on the widget type. **Dimensions must be in `rows[].configs[].options.dimensions`** (data binding), not in row-level options (which are display labels only).
+
+Both ends of each range are enforced at create and update (Aug 2026): too few dimensions and too many are refused the same way. A count below is a hard limit, not a suggestion — an over-bound widget used to be accepted and then rendered wrong.
 
 | Widget type | Dimension requirement |
 |---|---|
@@ -76,19 +94,31 @@ The tool validates that the correct dimensions are provided based on the widget 
 | GeoMap (140) | **1 geographic dimension required**. |
 | Media (110, 111) | **At least 1 dimension required** — typically `creative_thumbnail_url` or similar. |
 | Pie/Donut (108, 109) | **No dimension** unless `breakdowns_enabled=true` (then exactly 1). |
-| SingleValue (101), Gauge (139), List (103), Funnel (115), Goal (123) | **No dimension needed**. |
+| SingleValue (101), Gauge (139), List (103), Funnel (115), Goal (123) | **No dimension** — binding one is rejected. |
 | Comment (21), Calendar (22), Image (34) | **Skipped** — utility widgets with no data binding. |
+
+**Metric counts are capped too.** Every data type above takes **exactly 1 metric per config** — including List (`103`) and the charts. The exceptions are Table (`102`) and Media expanded (`111`), which take any number, Media compact (`110`), which takes at most 2, and the offline types, which bind nothing. To show a second metric on a capped type, add a second row (non-breakdown mode) or use a Table.
 
 Use `list-sources action=list_dimensions_and_metrics` to find the correct dimension external_ids for a source. The date dimension external_id varies by integration — always look it up rather than guessing.
 
-> **A single value (101) always aggregates the whole dataset into one total** — it has no dimension and cannot rank or isolate a single entity. It will **not** show the "best" or "worst" campaign: a `sort` passed on its row/metric options is silently ignored (the tool returns a warning saying so). To surface a top/bottom performer, use a **Table (102)** with the entity dimension bound and the metric sorted desc/asc, or a saved filter (`whatagraph-filters`) pinning the specific entity.
+> **A single value (101) always aggregates the whole dataset into one total** — it has no dimension and cannot rank or isolate a single entity. It will **not** show the "best" or "worst" campaign: a `sort` passed on its row or metric options is ignored (the tool returns a warning saying so). To surface a top/bottom performer, use a **Table (102)** with the entity dimension bound and the metric sorted desc/asc, or a saved filter (`whatagraph-filters`) pinning the specific entity.
+
+### Surfacing a top / bottom N
+
+"Top 10 campaigns", "worst-performing ads", "biggest spenders" are ranking asks — they need an **entity dimension bound and the metric sorted**, on a widget type that shows multiple rows (Table `102`, List `103`, or a bar/column chart). A SingleValue can't do this (see the callout above).
+
+- **Sort** on the ranking metric: set `sort: "desc"` (top) or `"asc"` (bottom) on that metric's entry in `rows[].options.metrics[]` so the highest/lowest values lead. Full rules in "Sorting a widget" below.
+- **Limit the rows** so "top N" actually shows N: the `manage-widgets` schema exposes **no** row-count / limit parameter on Table, List, or bar/column widgets, so cap the set another way — a `whatagraph-filters` condition that scopes to the entities of interest, or (when the report only needs the leaders) size the widget height to show N rows and rely on the sort. Do **not** fabricate a limit parameter that the tool doesn't accept.
+- **Verify** with `export-report` / `list-widgets action=csv_export` that the leading rows are the intended ones and the ordering is correct — a mis-set sort silently returns the data in the wrong order.
 
 **Time-series chart example** (area chart with date dimension):
 ```
 manage-widgets action=create
    report_id=<id> tab_id=<tab_id>
    channel_id="google-ads" widget_type_id=105 source_id=<id>
-   rows=[{"configs": [{"options": {"report_type": "campaign", "metrics": ["impressions"], "dimensions": ["segments.date"]}}]}]
+   name="Impressions Over Time"
+   rows=[{"options": {"title": "Impressions"},
+          "configs": [{"options": {"report_type": "campaign", "metrics": ["impressions"], "dimensions": ["segments.date"]}}]}]
 ```
 
 **Table example** (with categorical dimension):
@@ -96,7 +126,9 @@ manage-widgets action=create
 manage-widgets action=create
    report_id=<id> tab_id=<tab_id>
    channel_id="google-ads" widget_type_id=102 source_id=<id>
-   rows=[{"configs": [{"options": {"report_type": "campaign", "metrics": ["impressions", "clicks"], "dimensions": ["campaign_name"]}}]}]
+   name="Campaign Performance"
+   rows=[{"options": {"title": "Campaign Performance"},
+          "configs": [{"options": {"report_type": "campaign", "metrics": ["impressions", "clicks"], "dimensions": ["campaign_name"]}}]}]
 ```
 
 **SingleValue example** (no dimension needed):
@@ -104,7 +136,9 @@ manage-widgets action=create
 manage-widgets action=create
    report_id=<id> tab_id=<tab_id>
    channel_id="google-ads" widget_type_id=101 source_id=<id>
-   rows=[{"configs": [{"options": {"report_type": "campaign", "metrics": ["impressions"]}}]}]
+   name="Total Impressions"
+   rows=[{"options": {"title": "Impressions"},
+          "configs": [{"options": {"report_type": "campaign", "metrics": ["impressions"]}}]}]
 ```
 
 ### `source_id` — global or report-local
@@ -115,7 +149,9 @@ Discover already-attached sources via `list-reports action=list_sources report_i
 
 ### `widget_type_id` — widget types
 
-Widget types are integers. Prefer the modern types (`101+`) unless you have a specific reason to use an older type. Common values exposed by `list-widgets`:
+Widget types are integers. `manage-widgets` writes current-generation types only: `101+`, their offline (manually entered data) counterparts, and the comment / image / calendar utility types. Anything older is rejected on create **and** update — including multi-source table (`37`), which is deprecated in favour of blends and source groups; combine sources there and bind the result to a table (`102`).
+
+Common values exposed by `list-widgets`:
 
 | Widget type | `widget_type_id` |
 |---|---|
@@ -141,8 +177,110 @@ Widget types are integers. Prefer the modern types (`101+`) unless you have a sp
 | Gauge (dial-style single value) | `139` |
 | GeoMap (geographic map, BETA) | `140` |
 | Filter control (dimension dropdown) | `137` |
+| Report shortcut (drill-down link to another report) | `141` (channel_id `7`; no `source_id`) |
 
-Comment, image, and calendar widgets are the only widget types that take `channel_id=7` and no `source_id`. Filter control (`137`) needs a `channel_id` and `source_id` but does not load data — it renders as a dimension dropdown that filters other widgets on the tab. Every other data-bearing widget needs a `channel_id` matching the source's channel and a report-local `source_id`.
+Offline (manual-data) types hold numbers you supply instead of reading a source. All take `channel_id=7` and no `source_id`, and their values go in `rows[].data` — see "Offline (manual-data) widgets" below. String names are the live name with an `offline_` prefix (`"offline_single_value"`, `"offline_table"`, …).
+
+| Offline widget type | `widget_type_id` |
+|---|---|
+| Single value (KPI card) | `125` |
+| Table | `126` |
+| List | `127` |
+| Column chart | `128` |
+| Area chart | `129` |
+| Bar chart | `130` |
+| Line chart | `131` |
+| Pie chart | `132` |
+| Donut chart | `133` |
+| Goal | `135` |
+| Funnel | `136` |
+
+Comment, image, calendar, report shortcut, and the offline types are the only widget types that take `channel_id=7` and no `source_id`. Filter control (`137`) needs a `channel_id` and `source_id` but does not load data — it renders as a dimension dropdown that filters other widgets on the tab. Every other data-bearing widget needs a `channel_id` matching the source's channel and a report-local `source_id`.
+
+## Offline (manual-data) widgets
+
+For numbers that live nowhere Whatagraph can connect to — offline spend, retainer fees, call volumes, a client's own targets. The widget holds the values themselves; there is no source, no metric binding, and no refresh.
+
+Created like any other widget, with `channel_id=7`, an offline `widget_type_id`, and the values in a row-level **`data`** array. `data` is a sibling of `options` and `configs`, not a key inside either:
+
+```
+manage-widgets action=create
+   report_id=<id>
+   tab_id=<tab_id>
+   channel_id=7
+   widget_type_id=125                              # or "offline_single_value"
+   name="Offline spend"
+   options={"width": 2, "height": 2}
+   rows=[{"options": {"title": "Retainer"},
+          "data": [{"name": "Retainer", "value": "4500", "previous_value": "4000"}]}]
+```
+
+Update the same way — supplying `data` replaces that row's values wholesale:
+
+```
+manage-widgets action=update report_id=<id> widget_id=<id>
+   rows=[{"data": [{"name": "Retainer", "value": "5000", "previous_value": "4500"}]}]
+```
+
+### Two `data` shapes, picked by widget type
+
+**Entry list** — Single value (`125`), List (`127`), Pie (`132`), Donut (`133`), Funnel (`136`), Goal (`135`). One entry per KPI, list item, slice, or funnel step:
+
+| Key | Required | Notes |
+|---|---|---|
+| `name` | yes | The visible label. This is where an offline widget's metric name comes from. |
+| `value` | yes | The number. |
+| `previous_value` | no | The comparison value behind the trend delta. |
+| `negative_ratio` | no | `true` when a rise is bad (costs, refunds) so the delta colours correctly. Default `false`. |
+| `start` / `target` | Goal only | The ends of the goal line. `target` is required on Goal; `start` defaults to `"0"`. Rejected on every other type. |
+
+```
+rows=[{"data": [
+  {"name": "New users", "value": "125", "previous_value": "100"},
+  {"name": "Refunds", "value": "1200", "previous_value": "900", "negative_ratio": true}
+]}]
+```
+
+**Header row + data rows** — Table (`126`) and the time-series charts: Column (`128`), Area (`129`), Bar (`130`), Line (`131`). First inner array is the header, the first cell of every row is the dimension label, the rest are values:
+
+```
+rows=[{"data": [
+  ["Page",     "Sessions", "CTR"],
+  ["Homepage", "3000",     "25%"],
+  ["Pricing",  "1450",     "12.5%"]
+]}]
+```
+
+Every row must have as many cells as the header — cells are read by position, so a short or long row shifts every column after the gap, and the tool rejects it.
+
+### Values
+
+Stored as strings. Numbers are accepted and converted, so `1450` and `"1450"` are equivalent. A unit in the string is read by the formatter and drives how the value renders: `"25%"` → percentage, `"100 $"` → currency, `"12.5"` → one decimal place. `null` renders a blank cell.
+
+### Rules worth knowing before you build one
+
+- **No metric or dimension binding.** An offline widget's metrics are derived from its own values (from each entry's `name`, or the header row), so `rows[].configs[].options.metrics` is rejected on these types. The dual metric-array pattern used everywhere else does not apply here.
+- **Omitting `data` on create leaves placeholder sample values.** A new offline widget is built from a template seeded with demo numbers (200,000 impressions against 15,000) and renders them verbatim. The tool warns when you do this — treat that warning as a widget not yet finished, and never leave one in a client-facing report.
+- **One row is the norm.** Multiple values belong in a single row's `data` array, not in separate rows — a 3-item List or a 3-line Goal is one row with three entries.
+- **`data` is per row.** If you do build a multi-row offline widget (e.g. two series on a line chart), give every row its own `data`; rows added beyond the template's count start empty and render "Couldn't find data to display" until they have values.
+- **Hide the footer.** Every offline widget draws a footer that identifies the data as offline. In a client-facing or leadership report that is exactly wrong. Set `hide_footer: true` on every offline widget — easiest as one `manage-widgets action=batch_change_settings` pass after the report is built.
+
+### Types with no offline counterpart
+
+The offline range is `125`-`136`, but **`134` does not exist**. It is the position that Image holds in the equivalent non-offline range, and there is no offline Image type — use the normal Image widget, or a Comment widget with a background image (see "Comment and text widgets").
+
+Heatmap, Gauge, GeoMap and Dynamic chart also have **no offline version**. They were added after the offline range was fixed. If you need a heatmap from manual data, use an offline Table with block shading (see "Faking a heatmap").
+
+### Confirming your values landed
+
+An offline row echoes a `data_summary` on create, on update, and on `list-widgets action=show`:
+
+- Table and time-series shapes return `headers` and `data_row_count`.
+- Every other shape returns `entry_names` and `entry_count`.
+
+Read that to confirm your write. Offline rows return no `metrics` or `dimensions`, because an offline widget binds nothing.
+
+One trap: a widget created **without** `data` reports the *template's* sample headers, because those sample values are what it will render. The placeholder warning on the same response tells you the numbers are not real. Do not read the summary as proof your data arrived without checking that the headers are yours.
 
 ## Apply a premade widget
 
@@ -164,7 +302,9 @@ manage-widgets action=apply_premade                # alias: create_premade
 
 ## Update a widget
 
-Supply metrics on `configs[].options.metrics` (array of objects or strings; singular `metric` is auto-wrapped). On write, the platform converts your `metrics` / `dimensions` payload to its internal storage shape `integration-metrics` / `integration-dimensions`, and `list-widgets action=show` will echo those keys back. That's expected — read paths return `integration-metrics`, write paths accept `metrics`. Do not hand-craft `integration-metrics` on input; supply `metrics` and let the platform convert.
+Supply metrics on `configs[].options.metrics` (array of objects or strings; singular `metric` is auto-wrapped). Reads and writes use the same vocabulary: `list-widgets action=show` returns each config's bindings as `metrics` / `dimensions` / `report_types`, which is exactly what `manage-widgets` accepts back, so a config you read can be sent straight back.
+
+The old storage keys `integration-metrics` / `integration-dimensions` / `integration-report-types` are **rejected** on input (changed Jul 2026) and are no longer returned by any response. They used to bind nothing while still displaying in the widget row, which left widgets rendering "Metrics not selected" after a write that reported success. If you see one in an error message, replace it with `metrics`, `dimensions`, or `report_type`.
 
 ```
 manage-widgets action=update
@@ -176,7 +316,7 @@ manage-widgets action=update
      {
        "options": {
          "metrics": [
-           {"sort": 0, "identifier": 0, "external_id": "universal_metric_3"}
+           {"identifier": 0, "external_id": "universal_metric_3"}
          ]
        },
        "configs": [
@@ -214,8 +354,7 @@ For multi-row chart widgets (Column, Line, Area, Bar), rows support additional o
 | `cumulative` | boolean | Show cumulative values for this row. |
 | `trend_line` | string | Trend line type. |
 | `trend_line_period` | integer | Trend line period. |
-| `sort` | `asc` \| `desc` | Sort direction on this row's metric. |
-| `icon` | string | Row icon (for List and SingleValue widgets). |
+| `icon` | string | Row icon (for List and SingleValue widgets). Must be a filename from the icon library — see [Row icons](#row-icons). |
 
 Example — mixed column + line chart:
 ```
@@ -228,13 +367,81 @@ rows=[
 Example — cross-channel column chart (compare one metric across sources, no date dimension):
 ```
 rows=[
-  {"options": {"type": "column", "axis": "left", "title": "Source A", "metrics": [{"sort": 0, "identifier": 0, "external_id": "<metric>"}]},
+  {"options": {"type": "column", "axis": "left", "title": "Source A", "metrics": [{"identifier": 0, "external_id": "<metric>"}]},
    "configs": [{"source_id": <A>, "integration_id": <channel>, "options": {"metrics": [{"identifier": 0, "external_id": "<metric>"}], "report_type": "<rt>"}}]},
-  {"options": {"type": "column", "axis": "left", "title": "Source B", "metrics": [{"sort": 0, "identifier": 0, "external_id": "<metric>"}]},
+  {"options": {"type": "column", "axis": "left", "title": "Source B", "metrics": [{"identifier": 0, "external_id": "<metric>"}]},
    "configs": [{"source_id": <B>, "integration_id": <channel>, "options": {"metrics": [{"identifier": 0, "external_id": "<metric>"}], "report_type": "<rt>"}}]}
 ]
 ```
 > One row per source, each with a single config (its source) and the **same** metric, and **no** dimension — the sources become the columns. Set `axis: "left"` on every row; without it the editor's Left/Right axis sections render empty even though the data is bound.
+
+### Sorting a widget
+
+Sorting is a **row display option**, not a config one. Set `sort` on the entry in `rows[].options.metrics[]` or `rows[].options.dimensions[]` whose `identifier` matches the binding you want to order by. This is the same field the UI writes when a user clicks a table column header.
+
+| Field | Values | Notes |
+|---|---|---|
+| `sort` | `"asc"` \| `"desc"` \| `null` | The **direction**. `null` clears the sort. Anything else — a number, `"descending"` — is rejected. |
+| `sort_type` | `"value"` \| `"change"` | Metrics only. `value` (the default) sorts by the number; `change` sorts by its movement against the comparison period. |
+| `sort_order` | integer from 0 | Precedence when several columns are sorted — 0 is applied first. Filled in request order when omitted. |
+
+```
+manage-widgets action=update report_id=<id> widget_id=<id>
+   rows=[{"id": <row_id>,
+          "options": {"metrics": [{"identifier": 0, "external_id": "sessions", "sort": "desc"},
+                                  {"identifier": 1, "external_id": "clicks"}]},
+          "configs": [{"id": <config_id>, "channel_id": <channel_id>, "source_id": <source_id>,
+                       "options": {"report_type": "<report_type>",
+                                   "metrics": [{"external_id": "sessions", "name": "Sessions", "identifier": 0},
+                                               {"external_id": "clicks", "name": "Clicks", "identifier": 1}]}}]}]
+```
+
+**Sort a table by its dimension column** — same shape, on `dimensions[]`. `"asc"` is A–Z, `"desc"` is Z–A:
+
+```
+rows=[{"id": <row_id>,
+       "options": {"dimensions": [{"identifier": 0, "external_id": "campaign_name", "sort": "asc"}]},
+       "configs": [...]}]
+```
+
+**Metrics and dimensions are separate sort groups, and only one can be active.** The UI clears every sort in one group whenever the other is sorted, so a request that sorts a metric *and* a dimension on the same row is rejected. To switch groups, set `sort: null` on the entries of the group you are leaving in the same call.
+
+Read the current state back from `list-widgets action=show` — the three fields sit on each entry of `rows[].options.metrics` / `rows[].options.dimensions`, in the shape `manage-widgets` accepts back.
+
+There is **no** row-level `sort`. `rows[].options.sort` is a pre-new-architecture key that nothing on a `101`+ widget reads; setting it stores a value, orders nothing, and returns a warning saying so.
+
+### Row icons
+
+Three widget types render a row icon. `manage-widgets` rejects `options.icon` on every other type, so treat this as a whitelist:
+
+| `widget_type_id` | Type | Behaviour |
+|---|---|---|
+| 101 | SingleValue | Icon on **row 0 only**. Always drawn when set — no toggle. |
+| 125 | Offline SingleValue | Same as 101. |
+| 103 | List | Icon **per row**, gated by the widget option `show_icons`. |
+
+Offline List (127) is **not** on the list, even though plain List is. It builds its lines from the offline data entries inside the row instead of from the rows themselves, so it never reads the icon column.
+
+On 103, new List widgets are created with `show_icons: true`, but the API reports `false` whenever the key is absent. If an icon does not appear, read `options.show_icons` with `action=show` and set it explicitly.
+
+The value is a filename from a fixed library — never invent one. Browse it with:
+
+```
+list-widgets action=list_icons                            # every set, paginated (per_page, cursor)
+list-widgets action=list_icons search=revenue             # matches name, tags and groups
+list-widgets action=list_icons icon_set=sharp-line        # the current library
+```
+
+Each entry returns `icon` (the filename to write), `name`, `icon_set`, `groups` and `tags`. Write it back verbatim:
+
+```
+manage-widgets action=update report_id=<id> widget_id=<id>
+   rows=[{"options": {"icon": "Visible--Streamline-Sharp.svg", ...}, "configs": [...]}]
+```
+
+Read it back with `list-widgets action=show`: `rows[].icon` is the authoritative value, even though you write it under `rows[].options.icon`. Ignore any `icon` still sitting in `rows[].options` — that is legacy data the renderer does not read. Pass `"icon": null` to clear the icon.
+
+Both icon sets render on all three types. Two entries in the library have no file behind them — `twitter.svg` and `twitter-ads.svg` — and draw blank; pick another icon.
 
 ### `rows` → `configs` shape
 
@@ -243,7 +450,7 @@ rows=[
 - Each config pairs a metric with an optional dimension.
 - Replace-style: supplied `rows` replace previous rows. Row metadata (`title`, `description`) from existing rows is preserved when the new row omits them.
 - Each row carries **two parallel metric arrays** that must agree:
-  - `rows[].options.metrics: [{sort, identifier, external_id}]` — drives the rendered label and the value the renderer prints.
+  - `rows[].options.metrics: [{identifier, external_id}]` — the row's display entry, and where per-column display settings live (`sort`, `decimal_place`, `width`). See "Sorting a widget".
   - `rows[].configs[].options.metrics: [{name, identifier, external_id}]` — drives the actual data binding.
   - Both must be set; mismatched values between the two cause the widget to render the row's label with the config's data. The same parallelism applies for dimensions: `rows[].options.dimensions` (rendered label) vs. `configs[].options.dimensions` (binding).
   - **The tool rejects updates where row-level metrics/dimensions are provided but the config has no matching `options.metrics`/`options.dimensions`.** Row-level fields are display labels only — the actual data binding lives in config options. If you get this error, move your metrics/dimensions into `rows[].configs[].options.metrics` (and `options.dimensions`).
@@ -251,6 +458,8 @@ rows=[
 ### `date_range`
 
 Overrides the report-level date for this widget. Fields: `from`, `till`, `period`, `compare_type`. Omit to inherit report date.
+
+> **Comparison deltas depend on a report-level comparison being set.** A KPI/SingleValue configured with `comparison_display_type` (`percentage` / `absolute` / `combined`) only renders a delta if there's a comparison window to diff against — which normally comes from the **report-level** `compare_type` that the widget inherits (`compare_type` is a date-range field, not a widget option — the widget rejects it). If your KPI cards show no trend, confirm the report has a `compare_type` set (see `whatagraph-reports` → "Set the date range at creation"), or give the widget its own `date_range` with a `compare_type`.
 
 ### `options`
 
@@ -274,9 +483,9 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 | `content_scrollable` | boolean | Table, Media (vertical scroll) |
 | `content_horizontal_scrollable` | boolean | Table only |
 | `display_dimensions_as_columns` | boolean | Table only |
-| `wrap_text` | boolean | Table only |
+| `wrap_text` | boolean | Table only. **Breaks by character, not by word** — see the pitfall below |
 | `show_search_bar` | boolean | Table, List (shows a row search box) |
-| `active_theme_color_id` | integer | Any widget — overrides the theme color for this widget. Get available color IDs from the report's theme via `list-themes` |
+| `active_theme_color_id` | integer | Any widget — overrides the report's colour palette for this one widget. Pass the `id` of a palette from `list-themes action=list_colors`, verbatim. It is a **palette id**, not an index into a palette's colours — you select a whole palette, not one colour |
 
 #### Value formatting
 
@@ -292,7 +501,7 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 
 | Option | Type | Notes |
 |---|---|---|
-| `chart_label_position` | string | `top`, `bottom`, `left`, `right`, `insideTop`, `insideTopLeft`, `insideTopRight`, `insideBottom`, `insideBottomLeft`, `insideBottomRight`, `insideLeft`, `insideRight`. Default: `insideRight` for bar types, `top` for vertical charts |
+| `chart_label_position` | string | `top`, `bottom`, `left`, `right`, `insideTop`, `insideTopLeft`, `insideTopRight`, `insideBottom`, `insideBottomLeft`, `insideBottomRight`, `insideLeft`, `insideRight`. Default: `insideRight` for bar types, `top` for vertical charts. **On bar types, keep an `inside*` position** — see the pitfall below |
 | `chart_label_rotation` | `horizontal` \| `vertical` | |
 | `chart_label_size` | integer | 10 (very small), 12 (small), 14 (medium), 16 (large) |
 | `chart_label_distance` | integer 0–15 | |
@@ -320,44 +529,106 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 |---|---|---|
 | `geo_map_region` | string | GeoMap (`140`). Values: `world`, `north-america`, `south-america`, `europe`, `asia`, `africa`, `oceania`, `emea`, `apac`, `latam`, `mena`, `noram`, `eu-eea`, `nordics`, `baltics`, `dach`, `benelux`, `iberia`, `uk-ireland`, `anz` |
 | `goal_date_range` | object | Goal (`123`). `{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD", "visible_time_line": true}` |
+| `pie_top_n` | integer | Pie (`108`), Donut (`109`). `5`, `10`, or `20` — keep the top N slices and sum the remainder into a single "Other". Omit or set `null` to show every slice |
+| `background_size` | string | Image (`34`). `auto_fit`, `scale_to_fit`, `scale_to_fill` |
+| `alignment` | string | Image (`34`). `left`, `center`, `right` |
+| `description` | string | SingleValue (`101`) — the only type that renders it. Omitting it clears the template's "Edit description" placeholder rather than printing it |
+
+#### Goal / target line (Column, Area, Bar, Line charts)
+
+A horizontal reference line drawn at a fixed y-axis value. Unrelated to the Goal widget type (`123`).
+
+| Option | Type | Notes |
+|---|---|---|
+| `goal_line_enabled` | boolean | Turns the line on |
+| `goal_line_value` | number | The y-axis value to draw at. Required when enabled |
+| `goal_line_label` | string | Optional caption |
+| `goal_line_color` | string | Optional hex |
 
 Known `options` shapes:
 
-- **Comment / text widget** (`widget_type_id=21`): on **write**, supply `{"comment_widget_text": {"text": "Hello\nWorld", "contentAlign": "top"}}` in `rows[].options` — `text` is a plain string, the platform converts it. The tool auto-propagates this to `configs[].options.comment_widget_text.text`. The legacy `{"text": "<html>", "comment": "<html>"}` shape also works for older accounts.
+- **Comment / text widget** (`widget_type_id=21`): on **write**, supply `{"comment_widget_text": {"text": "Hello\nWorld", "contentAlign": "top"}}` in `rows[].options` — `text` is a plain string, the platform converts it. The tool auto-propagates this to `configs[].options.comment_widget_text.text`, on **update** as well as create (fixed Jul 2026 — update previously accepted these row options and wrote nothing, so the change appeared to succeed and the widget kept its old content). The legacy `{"text": "<html>", "comment": "<html>"}` shape also works for older accounts.
+  - ⚠️ **Body text is required — a comment is nothing but its body.** `create` refuses a comment widget with no body content (Jul 2026): it would persist as a blank box while the call returned `success`, which is exactly how agents came to report section headers that were nowhere on the report. Supply the text, a background image, or `ai_text` (see "AI text on comment widgets"). Empty and whitespace-only text count as no body, because both normalise to a valid-but-blank document.
+  - ⚠️ **Newlines must be real newline characters in the string — never the literal two-character sequence `\n` (backslash + n).** LLM tool-callers frequently double-escape control characters; a literal `\n` is not a line break. The platform then sees one long line, so a leading `##` turns the *entire* text — heading **and** body — into one oversized heading that overflows the widget and displays a visible `\n` in the rendered report. If a rendered comment shows a literal `\n`, the payload was double-escaped: recreate the widget with real newlines. When in doubt, avoid multi-line `text` entirely — put the heading and the body copy in **separate** comment widgets (see "Section headers").
   - **Three formatting layers** — supply `text` OR `description` inside `comment_widget_text`, never both (verified Jun 2026):
     1. Plain `text` string → paragraphs.
     2. `text` with **markdown** → headings, bold, italic, lists, links (converted to a Tiptap document on save).
-    3. A prebuilt **Tiptap doc** via `description` → `textStyle` marks (`color`, `fontSize`), `textAlign` attrs, `underline`, `highlight`, `link`. This is the **only** path to text colour, font size, and alignment — markdown has no syntax for them. The doc persists intact through update and round-trips through `list-widgets action=show`.
+    3. A prebuilt **Tiptap doc** via `description` → **the full-capability path.** It does everything markdown does *and more*. Do not read it as a list of inline marks: it is the better option for any block that needs structure or styling. The doc persists intact through update and round-trips through `list-widgets action=show`.
+
+    **Full vocabulary of a comment document:**
+
+    | Category | Available |
+    |---|---|
+    | Block nodes | `paragraph`, `heading` (levels 1-3), `bulletList`, `orderedList`, `listItem`, `blockquote`, `horizontalRule`, `codeBlock`, `hardBreak` |
+    | Marks | `bold`, `italic`, `strike`, `underline`, `highlight`, `link`, `code` |
+    | `textStyle` attrs | `color`, `fontSize` |
+    | Block attrs | `textAlign` on `paragraph` and `heading`; `class` on `paragraph` |
+
+    **Prefer the named text styles over a raw `fontSize`.** The product's own styles are:
+
+    | Style | Size | Write it as |
+    |---|---|---|
+    | Heading 1 | 40px | `{"type": "heading", "attrs": {"level": 1}}` |
+    | Heading 2 | 30px | `{"type": "heading", "attrs": {"level": 2}}` |
+    | Heading 3 | 21px | `{"type": "heading", "attrs": {"level": 3}}` |
+    | Paragraph 1 | 18px | `{"type": "paragraph", "attrs": {"class": "p1"}}` |
+    | Paragraph 2 | 16px | `{"type": "paragraph", "attrs": {"class": "p2"}}` |
+    | Paragraph 3 | 14px | `{"type": "paragraph", "attrs": {"class": "p3"}}` — the default |
+    | Paragraph 4 | 13px | `{"type": "paragraph", "attrs": {"class": "p4"}}` |
+
+    A `textStyle` `fontSize` is written into the CSS **verbatim and unvalidated**. Any CSS length works; an invalid one fails silently and the text keeps its inherited size. Worse, a person who later touches the style picker in the UI **strips every custom `fontSize`** in the block. The named styles above survive that. Use `fontSize` only for a size the named styles do not offer.
+
+    `highlight` is **on or off** — it takes no colour attribute. A `{"type": "highlight", "attrs": {"color": "#..."}}` is accepted and the colour is ignored.
+
+    **Worked example — kicker, heading, rule, body with value-coded emphasis.** This is the shape most report text blocks want:
 
     ```
-    "comment_widget_text": {
-      "description": {
-        "type": "doc",
-        "content": [{
-          "type": "paragraph",
-          "attrs": {"textAlign": "center"},
-          "content": [{
-            "type": "text",
-            "text": "Q2 Revenue",
-            "marks": [{"type": "textStyle", "attrs": {"color": "#1A73E8", "fontSize": "24px"}}]
-          }]
-        }]
-      },
-      "contentAlign": "top"
-    }
+    rows=[{"options": {"comment_widget_text": {
+      "contentAlign": "top",
+      "description": {"type": "doc", "content": [
+        {"type": "paragraph", "attrs": {"class": "p4"}, "content": [
+          {"type": "text", "text": "SECTION LABEL",
+           "marks": [{"type": "bold"}, {"type": "textStyle", "attrs": {"color": "#8A94A6"}}]}]},
+        {"type": "heading", "attrs": {"level": 2, "textAlign": "left"},
+         "content": [{"type": "text", "text": "The finding, in one line"}]},
+        {"type": "horizontalRule"},
+        {"type": "paragraph", "content": [
+          {"type": "text", "text": "Throughput rose to "},
+          {"type": "text", "text": "49.0",
+           "marks": [{"type": "bold"}, {"type": "textStyle", "attrs": {"color": "#1E8E3E"}}]},
+          {"type": "text", "text": " while merge rate fell to "},
+          {"type": "text", "text": "74.6%", "marks": [{"type": "highlight"}, {"type": "bold"}]},
+          {"type": "text", "text": "."}]}
+      ]}}}]
     ```
+
+  - **`contentAlign`** is `top`, `center` or `bottom`, and sets where the text sits vertically in the widget box. It defaults to `top`. Use `center` for a short hero line in a tall box — a one-line statement pinned to the top of a `6×3` widget looks like a mistake.
   - On **read**, `list-widgets action=show` returns the Tiptap document under `options.comment_widget_text.description`. A text/font **colour** baked into the comment content overrides the theme's `text_color` (CSS specificity), so applying a palette won't recolour comment text — set the colour via a `textStyle` mark for white-on-dark headers, or leave it uncoloured to inherit the theme.
-  - **Background image**: set `background_image_url` (public http/https URL) or `background_image_data` (base64-encoded JPG/PNG, max 10 MB) with optional `background_image_filename` in `rows[].options`. This adds a full-bleed background behind the comment text.
-  - **Updating a comment widget with omitted row/config IDs now works.** `manage-widgets update` carries forward the existing config's `integration_id` (and `source_id` / `report_type`) when you omit it, so a comment-widget rows-update that leaves out `rows[].id` / `configs[].id` succeeds rather than erroring on a missing `integration_id`. Pre-fetching the IDs via `list-widgets action=show` (capture `rows[0].id` and `rows[0].configs[0].id` and pass them back) is still the cleanest way to update one specific row in place and avoid replacing the rows — but it is no longer required to avoid a failure.
-- **Image widget** (`widget_type_id=34`): supply `{"image_url": "<url>"}` or `{"image_data": "<base64 JPG/PNG>"}` (max 10 MB) with optional `image_filename` in `rows[].options`. `image_data` accepts a base64-encoded image directly — no multipart upload needed. The tool auto-propagates this to the config-side canonical shape `configs[].options.images: [{url, title}]`. You can also supply the config shape directly in `rows[].configs[].options`. Additional display options: `background_size` (`auto_fit` | `scale_to_fit` | `scale_to_fill`) and `alignment` (`left` | `center` | `right`) — pass these in row options alongside `image_url`.
+  - **Background image — the cover and section-divider pattern.** Set `background_image_url` (public http/https URL) or `background_image_data` (base64-encoded JPG/PNG, max 10 MB), with optional `background_image_filename`, in `rows[].options`. The image renders full-bleed behind the text.
+
+    This is how you build a report cover or a section divider in **one** widget instead of stacking an image widget above a text widget. Put the heading in the Tiptap doc, set `contentAlign: "center"`, and give the text a light `textStyle` colour so it reads against the image. Import remote images first (see the assets skill) and check the resolution against the rendered width.
+  - **Updating a comment widget — `rows[].id` is optional.** `manage-widgets update` carries forward the existing config's `integration_id` (and `source_id` / `report_type`) when you omit it. A row supplied **without** `rows[].id` updates the existing row in the same position, keeping its configs and their bindings — as of Jul 2026 it no longer rebuilds the row from scratch, which used to discard the comment's body and leave a blank widget. Pass `rows[0].id` (from `list-widgets action=show`) when you need to reorder rows or be explicit about which row you mean. Setting the text to `""` or whitespace is still refused — it renders as a blank box.
+- **Image widget** (`widget_type_id=34`): supply `{"image_url": "<url>"}` or `{"image_data": "<base64 JPG/PNG>"}` (max 10 MB) with optional `image_filename` in `rows[].options`. `image_data` accepts a base64-encoded image directly — no multipart upload needed. The tool auto-propagates this to the config-side canonical shape `configs[].options.images: [{url, title}]`, on **update** as well as create (fixed Jul 2026 — swapping an image through update previously wrote nothing and left the old one in place). You can also supply the config shape directly in `rows[].configs[].options`. Additional display options: `background_size` (`auto_fit` | `scale_to_fit` | `scale_to_fill`) and `alignment` (`left` | `center` | `right`) — pass these in row options alongside `image_url`.
+  - A malformed `image_url` (no scheme/host, or a non-http scheme) and invalid or oversized base64 are now rejected on update too, before anything is written — previously update accepted both silently.
+- **Remote image URLs must be imported before widget use.** For `image_url` and a comment widget's `background_image_url`, do not pass an external URL: call `manage-assets action=import_url` with `target_scope=team` so the asset stays reusable, then `manage-assets action=publish` with the `asset.ulid` the import returned, and pass only the `url` that `publish` returns. A Whatagraph URL that is already published needs no import. `image_data` / `background_image_data` are unaffected — they carry the bytes already. If import or publish fails, fix the URL or ask the user for the image and leave the widget unchanged; never fall back to the raw URL and never invent a replacement. `manage-widgets` stores the URL verbatim and only checks its scheme and host, so an external URL stays a live hotlink: it can rot, sit behind a login, or block hotlinking, and one recalled rather than fetched may not exist at all — which is how a broken image reaches a customer's report. The same rule applies to theme header/footer `images[].url` via `manage-themes`.
 - **Single-value KPI** (`widget_type_id=101`): set `{"comparison_display_type": "combined"}` (or `"percentage"` / `"absolute"`) to surface the trend delta vs. the comparison window inherited from the report. `compare_type` is not a valid widget option key — it is a date-range field and the widget rejects it.
 - **Funnel** (`widget_type_id=115`): each funnel **stage is its own row** with a single metric — one metric per row, in stage order. Putting multiple metrics in one config renders a single 100% stage instead of a multi-stage funnel.
-- **Goal widget** (`widget_type_id=123`): set `options.goal_date_range` with `start_date`, `end_date`, and `visible_time_line` (boolean — controls the "Time passed" indicator line). Each row represents a goal line and requires `options.title` (goal name), `options.start_value` (baseline, typically 0), and `options.end_value` (target number). `end_value` must be greater than `start_value`. The metric in `configs[].options.metrics` tracks progress toward the target.
+- **Goal widget** (`widget_type_id=123`): set `options.goal_date_range` with `start_date`, `end_date`, and `visible_time_line` (boolean — controls the "Time passed" indicator line). Each row represents a goal line and requires `options.title` (goal name), `options.start_value` (baseline, typically 0), and `options.end_value` (target number). Note that `options.title` only labels the line while it has no data — once the goal loads, the rendered label is the config metric's `name` (see "Renaming a metric caption"), so set both to the same text. `end_value` must be greater than `start_value`. The metric in `configs[].options.metrics` tracks progress toward the target.
 - **Filter control** (`widget_type_id=137`): bind a **dimension** (not a metric) via rows — the widget renders as a dropdown filter that other widgets on the tab respond to. No date range is needed. Does not load data itself.
 - **Gauge** (`widget_type_id=139`): dial-style single metric display. Same configuration as SingleValue (`101`) but different visual rendering — use when a circular dial is more appropriate than a plain number. Supports `start_value` and `end_value` in row options to set the gauge range.
-- **Heatmap** (`widget_type_id=138`): heat-colored grid showing metric values across time/dimension. Same configuration as SingleValue (`101`).
+- **Heatmap** (`widget_type_id=138`): heat-coloured grid of one metric across two dimensions — one becomes the rows, the other the columns (e.g. `sessions` by `deviceCategory` × `browser`). Bind **exactly 2 dimensions and exactly 1 metric** in a single config; anything else is rejected. `breakdowns_enabled` stays off. This is **not** configured like a SingleValue (`101`), which takes no dimensions at all.
 - **GeoMap** (`widget_type_id=140`, BETA): geographic map. Set `options.geo_map_region` to control the displayed region (see Type-specific options table above). Bind a dimension with country/region data.
 - **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads.
+- **Report shortcut** (`widget_type_id=141`): a drill-down card linking to another report in the same team. `channel_id=7`, no `source_id`, no metrics/dimensions. Set the link in `rows[].configs[].options`:
+
+  ```
+  "rows": [{"configs": [{"options": {
+    "linked_report_id": <report_id>,                # must belong to the team — cross-team IDs are rejected
+    "linked_report_thumbnail_style": "card"         # card | image | title_only (optional)
+  }}]}]
+  ```
+
+  Find target report IDs with `list-reports`. On read, `list-widgets action=show` returns a `linked_report` field with the target's name, URL, space, and last-edit info. Default size is 2×2. **Sharing cascade:** when the parent report is shared, every report reachable via report shortcuts is shared automatically (recursively, inheriting the parent share's password and date-lock settings) so drill-down keeps working in the public view.
 
 ## Breakdown vs non-breakdown (pie / donut / bar)
 
@@ -376,6 +647,7 @@ manage-widgets action=create
    channel_id=<channel_id>
    widget_type_id=109                    # donut, pie, bar, column
    source_id=<report_local_source_id>
+   name="Clicks by Ad Group"
    options={"width": 4, "height": 3, "breakdowns_enabled": true, "breakdowns_show": true}
    rows=[
      {
@@ -394,6 +666,7 @@ manage-widgets action=create
    channel_id=<channel_id>
    widget_type_id=109
    source_id=<report_local_source_id>
+   name="Impressions vs Clicks"
    options={"width": 4, "height": 3, "breakdowns_enabled": false, "breakdowns_show": true}
    rows=[
      {
@@ -432,6 +705,8 @@ manage-widgets action=update_ai_text report_id=<id> widget_id=<id>
 
 Only comment widgets (`widget_type_id=21`) are supported. Unless `auto_update` is `true`, the call also triggers an immediate summary generation.
 
+**`ai_text` is also accepted on `create`** (Jul 2026), taking the same fields, so an AI-narration comment is one call instead of a create followed by `update_ai_text`. When `auto_update` is `false` the summary is generated during the create and returned as `ai_text_content` in the response; with `auto_update: true` only the settings are saved and no such key comes back. This is also how you create a comment with no hand-written body — `ai_text` satisfies the body-text requirement, since the AI supplies the content. Passing `ai_text` on any other widget type is rejected.
+
 ## Duplicate
 
 ```
@@ -466,7 +741,7 @@ manage-widgets action=remove_row report_id=<id> widget_id=<id> row_id=<row_id>
 ```
 
 - `add_row` copies the last row's config (integration, source, report type) into a new row. Update the new row's metric afterwards with a regular `update`.
-- `remove_row` deletes the row and all its config children (metrics, dimensions, report types). Cannot remove the last remaining row.
+- `remove_row` deletes the row and all its config children (metrics, dimensions, report types) — including any conditional formatting on it, which the response reports in `warnings`. Cannot remove the last remaining row.
 - Find row IDs with `list-widgets action=show`.
 
 ## Batch operations
@@ -492,6 +767,8 @@ manage-widgets action=batch_change_filter_visibility
 
 `batch_change_source` accepts both global and report-local source IDs — auto-attaches if needed. The new source's channel must match the widgets' channel — cross-channel source swaps are rejected with an error naming the mismatched widgets. `batch_change_date_range` sets a widget-level date range override on all specified widgets. `batch_delete_date_range` removes date range overrides (widgets revert to the report date). `batch_change_filter_visibility` toggles `source_filter_off` across many widgets — set `true` to disable source-level filters, `false` to re-enable them.
 
+`batch_change_settings` takes the same option keys as `options`, so a `title` in `settings` is refused when any selected widget is a Comment (`21`), Calendar (`22`), Filter control (`137`), or Report shortcut (`141`) — the error names the offending widgets. Drop those from `widget_ids`, or drop `title` from `settings`.
+
 Use when swapping ~10+ widgets at once — much faster than per-widget updates.
 
 ## Currency conversion
@@ -511,9 +788,87 @@ manage-widgets action=restore_currency report_id=<id> widget_id=<id>
 
 Use `currency_exchange` first to discover which metrics are convertible and their current `external_id` (a converted metric's id becomes `universal_metric_*`).
 
+## Conditional formatting
+
+Colour a table cell by its own value. Two modes, per metric (per column):
+
+- **Manual rules** — your thresholds, and **both** colours per rule: `text_color` and `background_color`, each independent and each optional. Set only `text_color` to recolour the number and leave the cell background alone. "Red under 100."
+- **Auto colors** — one base colour for the background, shaded into seven tints across the column's own lowest-to-highest value. **You do not control the text colour**: it is contrast-derived per cell (dark on light tints, white on dark). "Heatmap this column."
+
+**A metric uses one mode or the other, never both.** The renderer prefers the auto shade and never looks at the rules, so setting one mode clears the other and says so in `warnings`.
+
+**Table (`102`) only.** Only the table renderer paints these colours. Every other widget type is rejected rather than storing rules that never draw. Offline tables (`126`) are not supported either — see "Faking a heatmap" for those.
+
+```
+list-widgets action=conditional_formats report_id=<id> widget_id=<id>
+# → per metric: mode (`manual` | `auto` | `none`), auto_color, and every rule in evaluation order
+# → narrow with metric_external_id=<id>
+
+manage-widgets action=set_conditional_formats report_id=<id> widget_id=<id>
+   metric_external_id="clicks"
+   conditional_formats=[
+     {"operator": "greater_than",  "value": 1000,                  "text_color": "#ffffff", "background_color": "#059669"},
+     {"operator": "between",       "value": 100, "value_end": 1000, "text_color": "#2a2b30", "background_color": "#fde68a"},
+     {"operator": "less_or_equal", "value": 100,                   "text_color": "#ffffff", "background_color": "#dc2626"}
+   ]
+
+manage-widgets action=add_conditional_formats ...   # appends, keeps existing rules
+```
+
+### Auto colors
+
+No thresholds to author — pick a base colour and the column shades itself.
+
+```
+manage-widgets action=set_auto_colors report_id=<id> widget_id=<id>
+   metric_external_id="impressions" auto_color="#059669"
+
+manage-widgets action=set_auto_colors ... auto_color=null   # back to unformatted
+```
+
+The seven tints run light-to-dark from the column's own minimum to its maximum, recomputed on every render, and each cell's text colour is contrast-derived — auto colors takes no `text_color`, so if the ask names a specific text colour you need manual rules. Because the range is derived from the data, the colours move when the data does — which is what you want for "show me the big numbers" and wrong for "flag anything under target". Use manual rules when a specific number matters.
+
+### Rules
+
+| Field | Notes |
+| --- | --- |
+| `operator` | `greater_than`, `greater_or_equal`, `less_than`, `less_or_equal`, `equal`, `not_equal`, `between` |
+| `value` | Number to compare the cell against. Required. |
+| `value_end` | **Required for `between`**, which matches `value`..`value_end` inclusive. Ignored otherwise. |
+| `text_color`, `background_color` | 6-digit hex (`#059669`). Independent and both optional — omit one to leave that half of the cell alone. Colour names and 3-digit hex are rejected; they render as nothing. |
+| `position` | Evaluation order. Defaults to the array order you send. |
+
+**First match wins.** The rules are evaluated in `position` order and the first one that matches paints the cell. Order from narrowest to widest, or a catch-all `greater_than 0` first will swallow every band after it.
+
+### `set` is replace-all
+
+`set_conditional_formats` makes the rules you send the metric's **complete** set — anything already there is deleted. Read first with `list-widgets action=conditional_formats`, or you will silently drop rules a user set in the UI. Two safe shapes:
+
+- **Adding a band** → `add_conditional_formats`, which appends and leaves the rest alone.
+- **Clearing a column** → `set_conditional_formats` with `conditional_formats=[]`.
+
+### Reading back
+
+`list-widgets action=show` flags each table metric with `has_conditional_format`, so you can tell which columns already carry rules without a second call. The flag appears only on table widgets. Use `action=conditional_formats` to read the rules themselves.
+
+### Formatting is attached to the config, not the metric
+
+Rules are stored against the widget **config** the row binds — the first config of the row, which is where the UI writes them too. Two consequences:
+
+- **A rebuilt row loses its formatting.** The "omit `rows[].id` to rebuild the binding" workaround (see Common pitfalls) recreates the row, and formatting cannot outlive the row it hangs off. `manage-widgets` re-attaches the rules when only the config is replaced, and warns you in `warnings` when a removed row took its rules with it — but there is no way to move them across a full row rebuild. **Read the rules out first, rebuild, then write them back.**
+- **`remove_row` discards them**, and reports how many in `warnings`.
+
+`duplicate` and `batch_duplicate` carry formatting across correctly; no extra work needed.
+
+Auto colors is stored in the config's `options.auto_colors`, so it rides along with any config edit — but a full row rebuild loses it the same way manual rules do.
+
 ## Layout grid model
 
 The report uses a **6-column grid**. Every widget occupies a rectangle defined by four properties:
+
+> **Grid width follows the report's layout.** Landscape (`printing_landscape_6x6`, the default) is the 6-column grid documented here. Portrait (`printing_portrait_4x8`) is a **4-column** grid — every width / `position_x` rule below caps at 4 instead of 6. Orientation is chosen at report create time (see `whatagraph-reports` → "Create a blank report in a space") and can't change once widgets exist. Landscape renders a wider, shorter page: favor wide rows.
+
+> **A tab is a page.** In a PDF, each visible tab becomes exactly one page, as tall as its own content — tabs are never split and never combined. Thus a tall tab makes a tall page, not two pages. Put a section break on a new tab, not lower down the grid. See `whatagraph-sharing` → "Generate a PDF".
 
 | Property | Range | Default | Notes |
 |---|---|---|---|
@@ -526,13 +881,21 @@ The report uses a **6-column grid**. Every widget occupies a rectangle defined b
 
 **Overlap rule:** On `create`, `update`, and `duplicate`, the server rejects widgets that overlap an existing widget — unless `auto_place=true`, which picks the nearest free slot instead. On `create`, when `position_x`/`position_y` are omitted entirely, auto-placement is the default. On `update`, overlap is checked when `position_x` or `position_y` is provided (the widget being updated is excluded from the check). `duplicate` and `batch_duplicate` auto-position the copy at the next available row.
 
+**Inserting between two existing rows:** there is no widget-level way to do this — the row you want is occupied, and `auto_place=true` sends the widget to the nearest free slot instead of the row you asked for. Open the row first with `manage-report-tabs action=insert_row_space` (`position_y` = the row to open, `row_count` = the height of the widget you're adding), then `create` at that exact position. Never shift widgets one at a time to make room, and never rebuild the tab elsewhere — see `whatagraph-report-tabs` → "Insert or remove rows in a tab".
+
+**Removing empty rows — "close the gaps", "compact the tab", "tighten it up", "remove the blank rows":** use `manage-report-tabs action=remove_row_space` (`position_y` = the first empty row, `row_count` = how many). Do **not** close gaps by moving widgets up one `manage-widgets action=update` at a time — that works (upward moves never collide) but takes one call per widget with no transaction, and it reflows the tab silently.
+
+To clear **every** gap on a tab, expand each widget's rows from `position_y` + `height`, find the gaps between them, then call `remove_row_space` once per gap **working bottom-up** — closing a gap renumbers every row below it, so a top-down pass invalidates the ranges you computed. The rows must already be empty: the call is rejected if a widget occupies or reaches into them, and the error names both the blocking widget ids and the rows that *are* free.
+
+⚠️ **A request for "a row" or "a line" is a request for empty space, not for a widget.** `insert_row_space` completes it on its own. Don't invent a widget to fill the gap — a placeholder Comment reading "New row" is filler in a client-facing report. Only create a widget when the user named one, and never guess its type or content.
+
 ### The layout comes from the data and the user, not from a default
 
 **There is no house layout, and no default report structure.** The tab's shape is decided fresh each time, in this order of priority:
 
 1. **A reference was provided** — a PDF, screenshot, live-report URL, or an existing report → **replicate its structure** (see "Replicating a reference report"). Don't normalize it to a layout you prefer.
-2. **The user described what they want** → build to that intent: the metrics, breakdowns, and emphasis they asked for.
-3. **No reference and no specific ask** → *you* decide what's worth showing and how. This is a judgment call, not a fallback skeleton: look at the data that's actually available (which metrics, which dimensions), pick the most meaningful KPIs, choose the best visualization for each (see below), and arrange them in a sensible information hierarchy. Different sources and metrics should produce different reports — if every report you build looks the same, you've defaulted to a template.
+2. **The user described what they want** → build to that intent: the metrics, breakdowns, and emphasis they asked for. But a description of *what a tab is about* is not a description of *the layout*: a tab named with a theme or a metric list ("Google Ads: performance widgets for spend, clicks, impressions, conversions") fixes the tab's focus and which metrics must appear — the page composition around them still follows case 3 and "Composing a full tab" in full. Only an actual widget-by-widget spec pins the layout itself.
+3. **No reference and no widget-level spec** → *you* decide what's worth showing and how. This is a judgment call, not a fallback skeleton: look at the data that's actually available (which metrics, which dimensions), pick the most meaningful KPIs, choose the best visualization for each (see below), and arrange them in a sensible information hierarchy. Different sources and metrics should produce different reports — if every report you build looks the same, you've defaulted to a template.
 
 Sizing and positioning (further down) only make *whatever you chose* render cleanly — they are not a recipe for what to build.
 
@@ -550,9 +913,95 @@ When you're deciding what to show — case 3 above, or filling gaps in a loose r
 - **Ad / creative performance with thumbnails** → Media.
 - **Narration or context** → a Comment (AI-text comment for an auto summary) — only when it adds value.
 
+**Let dimension cardinality narrow the choice.** How many values a dimension has decides which of the above actually reads well:
+
+- **Few categories (≈2–7)** → pie / donut work as a share-of-whole; a bar / column chart also reads cleanly.
+- **Many categories (dozens+)** → a pie/donut becomes an illegible confetti of slices and a bar chart runs off the axis. Use a **table** sorted by the primary metric, or a bar/column chart **limited to the top N** (see "Surfacing a top / bottom N" below). Never bind a high-cardinality dimension to a pie or donut.
+- **Continuous over time** → line / area with the date dimension, regardless of how many dates.
+
+Canonical mappings that follow from this: **gender split → pie/donut, never a table**; device category → donut; channel grouping mix → donut; age brackets → column chart; campaign / landing-page / search-term detail → table sorted desc by the primary metric; staged conversion path → funnel; country/region → GeoMap; ad creatives → Media with the thumbnail dimension.
+
+When unsure of a dimension's cardinality, check it before choosing the widget — a breakdown that looks fine on sample data can overflow on the real account.
+
 Compose by analytical priority: surface the few numbers that matter most first, then the main trend, then the breakdowns and detail. But the **selection, mix, and count** of widgets follow from what the data supports — so they vary from report to report. Don't force a fixed set or a minimum count.
 
+**Pick metrics for meaning, not availability.** When choosing metrics yourself, the most valuable numbers are outcomes and efficiency, not raw volume: conversions, revenue, cost per conversion / ROAS tell the reader what they *got*; impressions and clicks only tell them what happened along the way. A strong headline row reads like a sentence — *what went in → what came out → what it cost per result* (e.g. spend → conversions → cost per conversion) — not a lineup of disconnected counters. Volume metrics still belong in the report, but paired with the rate that makes them meaningful (impressions with CTR, clicks with conversion rate), usually in the trend and breakdown sections rather than the headline row. And each tab answers its own question: a conversions tab leads with conversion outcomes, an audience tab with audience splits — not the same spend/impressions cards repeated from the overview. (If the user named the metrics, bind exactly those — this heuristic only fills gaps.)
+
+**Show a variety of widget types.** When you are choosing the layout yourself — no reference and no specific ask — a good report uses a *mix* of the types above rather than a wall of the same widget: typically a row of KPI / SingleValue cards for the headline numbers, one or more charts (a trend line/area plus a breakdown bar / column / donut), a detail table, and media or funnel widgets where the data supports them. Match each type to the data as described above; the point is that a self-directed report should demonstrate the format's range, not repeat one widget. If the user specified the widget types, follow their choice instead of diversifying. For how to arrange the mix into a complete page — headers, pairing, row rhythm — see "Composing a full tab" below.
+
+### Titles — every widget and every metric row is labelled
+
+Every data widget carries a **title**, and every metric row carries a **row label** — never ship an untitled widget or an unlabelled series. A reader scanning the report should know what each widget shows without opening its config.
+
+- Set the widget title via `name` on create/update, and confirm it isn't suppressed by `hide_title` (see Display toggles).
+- Set each row's metric label in **`rows[].configs[].options.metrics[].name`** — on every current-generation type (`101`–`123`, `137`–`140`) that is the caption the reader sees. For multi-row charts, funnels, and non-breakdown pie/donut, give **each** row's metric its own `name` so every series / stage / slice is named. Rename a dimension label the same way, with `rows[].configs[].options.dimensions[].name`.
+- **Never label a row with `rows[].options.title` or `rows[].options.metrics[].label`.** The first is only a pre-data placeholder, the second is read by nothing — writing to either succeeds and shows nothing. See "Renaming a metric caption" below for the full rule and its exceptions.
+- Utility widgets (Comment `21`, Image `34`, Calendar `22`) are exempt from the metric-row rule, but a Comment used as a section header still carries its heading text.
+- **Comment (`21`), Calendar (`22`), Filter control (`137`), and Report shortcut (`141`) render no title at all and reject `name` / `options.title`.** Don't try to label them — a Comment's heading lives in its body text (`comment_widget_text.text`, markdown `#`), and the other three are labelled by what they contain. Image (`34`) does render a title.
+- The title states what's shown (metric + scope). Because the title makes a promise to the reader, the bound fields must actually deliver it — see "Fit for purpose" below.
+
+#### Renaming a metric caption
+
+⚠️ **There is exactly one writable field for this, and the widget carries decoys that look more like it.** A `list-widgets action=show` response shows the old metric name in both `rows[].options.title` and `rows[].configs[].options.metrics[].name`. Only the config one is the rendered caption; the row title is the pre-data placeholder. Writing to the row title is accepted, returns `success`, changes the stored row, and changes nothing the reader sees. Do not copy the shape you see in the `show` response — go straight to the config metric. `manage-widgets` returns a warning if you set a row-level label without a config metric `name`.
+
+To change the metric label a reader sees — "Clicks" → "Hot Leads" — set the `name` on the **config** metric:
+
+```
+manage-widgets action=update widget_id=<id>
+  rows=[{id: <row_id>, configs: [{id: <config_id>, channel_id: <channel_id>, source_id: <source_id>,
+    options: {report_type: "<report_type>",
+              metrics: [{external_id: "clicks", name: "Hot Leads", identifier: 0}]}}]}]
+```
+
+Carry `channel_id`, `source_id`, and `report_type` on the config, exactly as with any other in-place config edit — a metric-only update can rebuild the config without its report-type binding and blank the widget.
+
+Nothing else is needed: when a request leaves `rows[].options.title` unset, `manage-widgets` copies the config metric names into the row display options for you, so the editor chip and the rendered caption stay in step.
+
+**Why the two decoys fail, in detail:**
+
+- `rows[].options.title` is the placeholder the renderer shows *before* data arrives; once the widget loads, the caption is the config metric's name. Setting it on its own reads back as `success`, looks right for a moment, then reverts to the old metric name as soon as the data lands. Worse, an explicit `options.title` in the request suppresses the automatic mirroring above, so the two fields stay in disagreement — which is the state that produces this bug.
+- `rows[].options.metrics[].label` is not read at all on a current-generation widget — not by the renderer, not by the editor, not by the backend. It is a leftover from the pre-new-architecture widget shape that premade and seeded widgets still carry. New-arch code reads only `decimal_place`, `width`, and `sort` out of `rows[].options.metrics[]`. A rename written to `label` is invisible from the moment it is stored. Since Aug 2026 the widget tools strip it from responses on types `101`+, so you should not see it at all; on an older deployment it still comes back holding the metric's name, and it is still inert there.
+
+Change the config metric name; leave both of these alone.
+
+This holds for every type that renders a metric label:
+
+| Type | Where the rendered label comes from |
+|---|---|
+| SingleValue `101`, Gauge `139`, List `103` | Config metric `name`. Row `options.title` shows only until data loads. |
+| Charts `104`–`107`, `115`, `118`, `119`, Pie/Donut `108`/`109` | Config metric `name`. Series names never fall back to the row title. |
+| Table `102`, Media `110`/`111`, Heatmap `138`, GeoMap `140` | Config metric / dimension `name` — column headers included. |
+| Goal `123` | Config metric `name` for the goal line's label. `options.title` is still required at create, and is what shows while the line has no data. |
+
+Three real exceptions, where the row-level field **is** the label:
+
+- **Multi-channel formula rows** — a row carrying `options.operators` is captioned by `rows[].options.formula_title`, falling back to `options.title`. There is no config metric to name.
+- **Offline widgets (`125`–`136`)** — the label is the `name` on each entry of the row's `data` array. Config bindings are rejected on these types.
+- **Pre-new-architecture types (below `101`)** — the old renderer really does read `rows[].options.title` first. Only relevant on legacy widgets; create everything new at `101`+.
+
+### Section headers — introduce each section of a tab with a Comment widget
+
+A tab that holds more than one group of content (a KPI block, then a trend section, then a breakdown / detail section) should **introduce each group with a section header**: a full-width Comment widget (`21`, `channel_id=7`) carrying a short markdown heading — the report-page equivalent of an `##` heading in a document.
+
+- **Shape:** full row (`width: 6`), `height: 1` for a bare heading (a heading plus a one-line subtitle needs `height: 2` — see Comment sizing above). Place it as the first row of the section it introduces.
+- **Text:** a markdown heading in `rows[].options.comment_widget_text.text` — e.g. `## Campaign performance` — naming the section's theme, not repeating the widget titles below it. Keep it to a few words; optionally add one plain-text line of context beneath the heading. For styled headers (color, size, alignment) use a Tiptap `description` — see the Comment widget notes under `### options`.
+- **When to use one:** whenever a tab has two or more distinct sections — which a full, self-directed tab always does by default, since two sections is the floor (see "Composing a full tab"). The tab's *first* header also serves as the page title when the tab name alone isn't enough.
+- **When not to:** a tab that is genuinely one section (a single full-page table the user asked for, a lean one-pager) doesn't need a header row per widget — headers earn their row only when they separate something. Never stack two headers with no content between them.
+- **A section header holds ONLY the `## …` line.** Body copy — an intro paragraph, narrative text, or an AI summary — is a **separate** comment widget sized per the Comment sizing rule (`height: 2` for 1–2 sentences, `height: 3` per paragraph, `height: 4+` for a multi-paragraph AI text block), and body copy never carries a `##` prefix. Never append body text to a 6×1 header — a 6×1 comment fits exactly one short heading line, nothing more.
+
+### Fit for purpose — fields must match the intent and each other
+
+Whatever the widget's stated purpose is — the user's prompt, or the widget's own title — the bound fields must serve it, and they must be mutually compatible. Selecting fields that don't fit the title, or that don't belong together, produces a misleading, blank, or erroring widget.
+
+- **Fit the purpose.** A widget titled "Spend by campaign" binds a cost metric and a campaign dimension — not impressions and date. A "Conversion rate over time" widget binds a rate metric and the date dimension. Read the intent (prompt or title), then pick the metric(s) and dimension(s) that answer it. If you set the title, the fields must deliver what the title promises.
+- **Metric ↔ dimension compatibility.** Only bind dimensions the metric can actually be broken down by. Look up what a source exposes with `list-sources action=list_dimensions_and_metrics` rather than assuming a dimension exists — availability is integration- and report-type-specific.
+- **`report_type` compatibility.** Every metric and dimension in a config must belong to the **same `report_type`**. Mixing a metric from one report type with a dimension from another yields an "Unavailable report type" error or a blank widget. Choose the report type that carries all the fields the widget needs, and set it in `configs[].options.report_type`.
+- **Widget-type compatibility.** Respect the "Dimension requirements by widget type" table above — e.g. a time-series chart needs the integration's date dimension, a heatmap needs exactly two dimensions, a SingleValue takes none, a GeoMap needs a geographic dimension. Don't bind a field the widget type can't use.
+- **Verify.** After binding, confirm with `export-report` or `list-widgets action=csv_export` that the widget returns the metric and breakdown the title implies — not an unrelated or empty result. (`list-widgets action=show` echoes ids, not loaded data.)
+
 ### Sizing — driven by content, not a fixed table
+
+Size scales with data density: the more rows / series / columns a widget carries, the larger it should be — grow a table's height with its row count and give the tab's centerpiece chart the widest slot, rather than shrinking dense content to fit a slot. **A widget carrying a lot of data gets more area, not a scrollbar.**
 
 Pick each widget's size from what its content needs to be legible, then fit it into the row you're building. These are affordances, not defaults:
 
@@ -568,6 +1017,22 @@ Pick each widget's size from what its content needs to be legible, then fit it i
 
 **Hard constraints (always):** `width` 1..6, `height` ≥ 1, `position_x + width ≤ 6`, and no two widgets overlap.
 
+### Titles: when they show, and how long they can be
+
+**A `height: 1` widget shows no title at all** — at that size the renderer hides the title, the description, the icon and the footer. The same applies at `width: 1`, with one exception: a SingleValue that is 1 wide and 2 or more tall does show its title. So a `6×1` Comment used as a section header is fine (its heading is body text), but a `4×1` chart with a `name` renders that name nowhere.
+
+When a title does show, it is **clamped to one line** and cut with an ellipsis. It never wraps. Budget:
+
+| `width` | Title space | Safe title length |
+|---|---|---|
+| 1 | 184 px | ~16 characters |
+| 2 | 426 px | ~38 characters |
+| 3 | 668 px | ~60 characters |
+| 4 | 910 px | ~84 characters |
+| 6 | 1394 px | ~128 characters |
+
+The pixel figures are exact. The character counts are measured against a wide bold sans at the default title size, so they are a safe floor — a narrower theme font fits more. A theme with a larger title font fits less, so verify if the theme is not the default.
+
 ### Placing widgets cleanly
 
 Once you know the structure, lay it out top to bottom:
@@ -575,7 +1040,33 @@ Once you know the structure, lay it out top to bottom:
 1. **Work in rows.** Each row's widths sum to ≤ 6. Track the running `y` — a row of height-2 widgets at `y=0` means the next row starts at `y=2`.
 2. **Set `position_x` / `position_y` / `width` / `height` explicitly** on every widget so rows land where you intend. `auto_place=true` (the default when you omit position) just drops a widget in the next free slot — fine for a one-off add, not for a designed or replicated layout.
 3. **Pack to match your intent** — no gaps and no overlaps, but mirror the *reference's* density: don't tighten a deliberately sparse page, don't pad a dense one.
-4. **Build, then verify** with `export-report` (or `list-widgets action=csv_export`) — confirm the layout and that every widget loaded data. `list-widgets action=show` echoes positions but not rendered data.
+4. **Fill each row left-to-right and start the next row flush against the previous one.** A row's widths sum to ≤ 6; if a row doesn't reach 6, widen a widget or add another rather than leaving a trailing gap. Don't leave an empty column mid-row or an empty row between populated rows — the only intentional blank space is one a *reference* deliberately shows (see "Replicating a reference report").
+5. **Standard row recipes on the 6-column grid** (starting points, not the only options): three KPI cards = `2+2+2` (h2); two charts = `3+3` or `4+2` (h3); full-width table or trend = `6` (h3, taller as row count grows — a widget carrying a lot of data gets more area, not a scrollbar); section header comment = `6×1`; three creative tiles = `2+2+2` (h3).
+6. **Build, then verify** with `export-report` (or `list-widgets action=csv_export`) — confirm the layout and that every widget loaded data. `list-widgets action=show` echoes positions but not rendered data.
+7. **Finish with styling.** Once every tab is composed and verified, load `whatagraph-themes` and apply a theme and color palette (client branding when known, otherwise a coherent team theme). An unstyled report is an unfinished report — see `whatagraph-reports` → "Style the report before handing it over".
+
+### Composing a full tab (self-directed builds)
+
+When you're deciding the layout yourself — no reference, no explicit widget list — each tab is a **complete page with a visual rhythm**, not a strip of cards or a lone widget. **This section applies just as fully when the tabs were named for you** — by the user's prompt or an agent's instructions ("build these 6 tabs: Overview, Google Ads, Meta Ads, …"). A named tab with a theme or metric list scopes the page's *subject*; the page itself is still yours to compose, and it gets the complete treatment below. The failure modes to design against: a tab holding one or two widgets adrift in an empty grid (the classic outcome of misreading a tab list as a widget list); a row of identical KPI cards plus one chart and nothing else; a tab whose only occupant is a single table floating in empty space; every tab in the report shaped the same way.
+
+**Every tab carries at least two sections — three or more where the data supports it.** A *section* is a header Comment plus the two-to-four widgets beneath it that answer one question (e.g. a "Traffic overview" section = a KPI row plus the trend chart that explains it). **One section is not a page:** a KPI strip plus a single chart is half a tab, and with only one section there is no room to showcase more than a couple of widget types — which is exactly what makes a report feel thin and repetitive. So plan each tab as a *sequence of sections* before you place anything, and only fall back to a single section when the user explicitly asked for a lean one-pager.
+
+**Anatomy of a well-composed tab** (an ordering principle, not a fixed list — every element must still be justified by the data):
+
+1. **Section 1 — a header** (Comment `6×1`) naming the page or its first section.
+2. **A headline row** — 2–3 small KPI cards (`2×2` or `3×2`) carrying the tab's most important totals. Vary the form across tabs: a Gauge or Goal where there's a target, a List where several small numbers belong together.
+3. **A main visual row** — the tab's centrepiece, usually a wide trend or comparison chart. Pair it rather than leaving it alone: a `4×3` chart beside a `2×3` list/donut/KPI, or two `3×3` charts side by side.
+4. **Section 2 — another header**, then **breakdown / detail rows** — a full-width table, or a table beside the donut/bar that summarizes it; a GeoMap for geography; Media tiles for creatives; a Funnel for staged conversions.
+5. **Section 3 where the data supports it** — a further header plus secondary breakdowns, a narration Comment, or an AI-summary block. Most metric-rich sources support a third section on at least some tabs; reach for it rather than stopping at two.
+
+**Composition rules that make it read well:**
+
+- **Pair, don't strand.** No widget sits alone on a row unless it's genuinely full-width (a `6`-wide table, trend chart, or header). A small widget with 4 empty columns beside it is a layout bug — widen it, pair it, or move it into another row.
+- **Adjacency is meaning.** Widgets that answer the same question sit next to each other: the KPI and the trend that explains it, the donut and the table that details it, the map and the top-regions list. A reader should be able to say what each *row* is about, not just each widget.
+- **Vary the forms — within the tab and across tabs.** A tab drawing only on KPI cards and one chart type looks machine-generated. Draw on the full range the data supports (see "Choosing a visualization"), and don't repeat the same overview shape on every tab — the spend tab, audience tab, and creative tab should each look like what they're about.
+- **Depth over sprawl.** A full tab typically lands around **8–14 widgets across two or more sections and five or more rows** — enough to develop its theme with headline, trend, breakdown, and detail. That's a description of what a developed theme tends to need, not a quota: never pad with near-duplicate widgets to hit a count — but equally, never stop at one section or two rows just because something rendered.
+- **End flush.** The last row fills its width like every other row. If the tab ends with a `2`-wide orphan, rebalance the final rows (widen the table, resize the pair) so the page bottom is a clean edge.
+- **Too thin to fill?** If a theme can't sustain a full page from the available fields, don't pad it — merge it into a related tab (see `whatagraph-reports` → "Building a report when the request doesn't specify structure").
 
 ### Replicating a reference report (the priority when one is given)
 
@@ -591,12 +1082,38 @@ Reproduce the reference faithfully — do not substitute a default arrangement:
 
 Different requests produce different shapes. **Copy the user's intent or reference — never copy these.** They exist only to show that the structure should vary:
 
-- **Dense paid-media page (varied, many widgets):** a `6×1` header comment; a row of three KPIs `2×2`; a donut `3×3` beside a table `3×3`; a full-width detail table `6×3`; a row of three ad creatives `2×3`. (Coordinates for this one shape: comment `x0 y0 6×1`; KPIs `x0/x2/x4 y1 2×2`; donut `x0 y3 3×3` + table `x3 y3 3×3`; table `x0 y6 6×3`; media `x0/x2/x4 y9 2×3`.)
-- **Lean summary (sparse, few widgets):** three KPIs `2×2` across the top, then one full-width trend chart `6×3`. Nothing more — don't pad it out.
+- **Dense paid-media page (varied, many widgets, two sections):** *Section 1* — a `6×1` header comment; a row of three KPIs `2×2`; a donut `3×3` beside a table `3×3`. *Section 2* — a second `6×1` header; a full-width detail table `6×3`; a row of three ad creatives `2×3`. (Coordinates for this one shape: header `x0 y0 6×1`; KPIs `x0/x2/x4 y1 2×2`; donut `x0 y3 3×3` + table `x3 y3 3×3`; header `x0 y6 6×1`; table `x0 y7 6×3`; media `x0/x2/x4 y10 2×3`.)
+- **Lean summary (sparse, few widgets):** three KPIs `2×2` across the top, then one full-width trend chart `6×3`. Nothing more — don't pad it out. This shape is for when the user *asked* for a lean one-pager — an open-ended "create a report" gets a full composition (see "Composing a full tab"), not this.
 - **Exec narrative (text-led):** an AI-summary comment `6×3` at the top, then two supporting visuals `3×3 + 3×3`.
 - **Uneven split:** a wide trend chart `4×3` beside a tall KPI list `2×3`.
 
 If your output looks like the same example every time, you've defaulted to a template — go back to the user's request or reference.
+
+## Tables truncate silently
+
+**A Table or List renders only the rows that fit its box. It drops the rest with no marker** — no ellipsis, no cut-off row, no scrollbar in the PDF, and no warning when you write the widget. `csv_export` and `export-report` still return every row. Thus a data check passes while the rendered report is wrong.
+
+This is why the defect survives review: on screen the widget scrolls, so a person who scrolls the report sees all the rows. A PDF cannot scroll, so it keeps only the first screenful. The same widget is correct on screen and wrong in the file.
+
+### What sets the number of rows that fit
+
+Two quantities are fixed. Neither one adapts to your data:
+
+- **Row height is fixed.** Rows do not shrink to fit. A row is short when the table shows dimensions as columns. It is taller when the table does not, and it grows with the number of dimensions.
+- **Widget height is fixed by grid units, not by the tab.** A widget with `height: h` always renders the same number of pixels tall, whatever else is on the tab. Two tabs with the same widget give that widget the same height. Height is linear in grid units.
+
+As a working figure, **a table shows approximately `3.5 × height − 3` rows.** A `height: 5` table shows approximately 14 rows.
+
+Use that number to budget, not to prove. The exact count moves with the theme font size and with the number of dimensions. Tall tables have also been seen to stop well short of the figure. **Never trust the arithmetic alone. Always confirm the last row.**
+
+### What to do
+
+1. **Budget the height from the row count before you place the widget.** Give a table a `height` of at least `(rows + 3) ÷ 3.5`.
+2. **For 20 or more rows, split the data into two side-by-side tables** (`3 + 3`). Each table then shows half the rows. This is the most reliable fix.
+3. **For 15 or more rows that carry one value each, use a Bar chart.** Charts scale to the space they get. They never drop a series.
+4. **After you render, confirm that the last row of every table is present.** This is the only check that finds the defect. Render with `manage-sharing action=download_pdf`, then get the file with `manage-sharing action=get_pdf` — see `whatagraph-sharing`. Examine the PDF yourself when you can read files; otherwise ask the user to look, and tell them which tables and which rows to check.
+
+A taller widget does show more rows, but sometimes fewer than the arithmetic promises. Verify — do not assume.
 
 ## Filtering a widget
 
@@ -648,9 +1165,17 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 ## What MCP can't do here
 
 - Move widgets to another tab — use `manage-report-tabs action=move_widgets`.
+- Open or close space between existing rows — use `manage-report-tabs action=insert_row_space` / `remove_row_space`. There is no batch reposition on `manage-widgets`, so this is how you make room; moving widgets individually fails on overlap.
 - Set widget-level permissions — UI only.
 - Cross-report widget copy — duplicate within the same report only (use `target_tab_id` for cross-tab duplication).
 - **Edit the generated AI text itself** — `update_ai_text` configures the settings and triggers generation, but the produced text can only be hand-edited in the UI.
+- **Conditional formatting outside the live table (`102`)** — the colour rules are exposed (see "Conditional formatting"), but only the live table renders them. KPI cards and offline tables cannot carry them; see "Faking a heatmap" below.
+
+### Faking a heatmap
+
+Only the live table (`102`) can colour cells by value. For an offline table, cell values are strings, so encode the intensity in the text itself. Prefix a shade glyph per bucket — `█` highest, then `▓`, `▒`, `░`, and `·` for none — or use a proportional bar like `██████░░░░`. This survives PDF rendering and needs no colour support. Keep it to one glyph plus the number in a narrow column: a ten-cell bar overflows and the column truncates.
+
+For a single value that must carry its own colour, put it in a Comment widget instead. There you *do* control colour per run of text — a `textStyle` colour mark for a good or bad number, or a `highlight` mark for a background chip. This is the only place in an MCP-built report where a number can carry meaning through colour.
 
 ## Idempotency
 
@@ -658,8 +1183,13 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 
 ## Common pitfalls
 
+- **A widget rendering "Metrics not selected"** — it was created without `rows` (or with a config whose `options.metrics` is empty), so nothing is bound. The create still returns `success`, which is why this reaches shipped reports. Always bind at create, and always verify with `export-report` / `csv_export` — see "Always pass `rows` at create time".
+- **A tab with one or two widgets floating in an empty grid** — the tab list in the instructions was misread as a widget list. A named tab ("Google Ads", "Weather Report for New York") is a full themed page, not a slot for one widget per named metric — compose it per "Composing a full tab", whoever named the tab.
 - **Date dimension ambiguity** — a source may expose more than one date-typed dimension (e.g. `universal_dimension_1137` "Date" and `universal_dimension_150` "Date OLD"). Prefer the plainly-named current one and verify with `csv_export`. This is integration-dependent.
 - **Full-width single-value widgets** — looks like a section header; use 2×2 or 2×1 instead.
+- **`wrap_text: true` splitting words in half** — a wrapped table cell breaks at the character, not at the word, so a finished PDF shows things like `instabilit y` and `2 026 commits`. No option changes this. Keep table cells short enough to sit on one line — roughly 40 to 45 characters in a four-column full-width table, less in narrower columns — and move longer prose into a Comment widget, which wraps correctly.
+- **Bar-chart value labels that disappear** — on bar types (horizontal bars, including the offline Bar chart) the label colour is calculated to contrast with the **bar fill**, because the label is expected to sit on the bar. An *outside* position (`top`, `bottom`, `left`, `right`) puts the label on the chart background but keeps that colour, so a pale label lands on a pale background and becomes invisible. The labels are drawn; you cannot see them. Keep an `inside*` position on bar types — the default `insideRight` is correct — or, if you must put the label outside, set `chart_label_bg_enabled: true`, which draws a chip in the bar colour behind the text and makes it legible again. Vertical charts (Column, Line, Area) are not affected: their labels are always dark.
+- **A table that looks complete but is missing its last rows** — the widget shows only the rows that fit its box and drops the rest with no marker. `csv_export` still returns every row, so data checks pass. See "Tables truncate silently".
 - **Table summary row sums percentages** — the footer sums percent columns as numbers (25% + 30% = 55%); disable footer for percent-heavy tables.
 - **Updating metrics on a widget that uses a source group** — after the group's sources change, the widget may need to re-save to pick up field definitions. Verify via `list-widgets action=show`.
 - **Metric-only update drops the binding ("Unavailable report type")** — when updating a config in place, always carry its `integration_id`, `source_id`, and `report_type` alongside the new `metrics`/`dimensions`. Omitting them on a source-group or report-type-bound widget can rebuild the config without its report-type binding and leave the widget blank. Prefer name/position-only edits on those widgets, and verify data with `csv_export` after any metric change.
@@ -667,12 +1197,28 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **Creating without `widget_type_id`** — required; verify via existing widgets on the tab.
 - **Passing an invalid `source_id`** — the tool accepts both global and report-local IDs, but will error if the ID doesn't exist. Use `list-sources` or `list-reports action=list_sources` to find valid IDs.
 - **`metrics=[]` as a top-level param** — wrong shape. Metrics live inside `rows[].options.metrics` (row label) and `rows[].configs[].options.metrics` (data binding).
-- **Hand-crafting `integration-metrics` / `integration-dimensions` on input** — supply `metrics` and `dimensions` instead; the platform converts to the internal storage keys automatically. `list-widgets action=show` echoes the internal keys back — that's expected, not an error.
+- **Sending `integration-metrics` / `integration-dimensions` / `integration-report-types`** — rejected with an error naming the key to use instead (`metrics`, `dimensions`, `report_type`). These are pre-new-architecture storage keys that bind nothing on a current widget. No response returns them any more either, so there is nothing to copy them from.
 - **Batch operations without `widget_ids`** — the array is required. Empty array = no-op, not "all widgets".
 - **Widget breaks after batch source swap** — the new source may not have the same report type or fields; always verify with `list-widgets action=show` after.
 - **`metric.external_id` change appears to no-op** — when the widget already has a config bound to a metric on a source group / blend, re-supplying a different `metric.external_id` in the same config sometimes leaves the original metric in place. The `list-widgets action=show` response masks this (it only echoes channel + source ids, not the metric). Always confirm via `list-widgets action=csv_export` or `export-report` after a metric swap; if the CSV still shows the previous metric name, delete and recreate the widget rather than trying to update it in place.
-- **Widget `name` vs row-level `title`** — `name` sets `options.title`, the heading above the chart/table. `rows[].options.title` labels individual data rows (metric name in a KPI, series name in a chart legend). To rename the visible metric label, update `rows[].options.title`, not `name`.
+- **A metric rename that returns `success` and changes nothing on screen** — the new caption was written to `rows[].options.title` or `rows[].options.metrics[].label`. Neither is an input; the rendered caption is `rows[].configs[].options.metrics[].name`. The row title version looks correct until the data arrives, then snaps back; the `label` version is invisible immediately, because nothing reads it. A warning now flags this on write. Set the config metric `name` instead — see "Renaming a metric caption".
+- **Widget `name` vs row-level `title`** — `name` sets the widget-level `options.title`, the heading above the chart/table. `rows[].options.title` is a row display option, not the metric caption; don't reach for it to rename a metric.
+- **Titling a type that has no title** — `name` / `options.title` on a Comment (`21`), Calendar (`22`), Filter control (`137`), or Report shortcut (`141`) is rejected, on create, update, and `batch_change_settings`. These types render no title, so the value used to be stored and never shown — which read back as success and led to reporting headers that did not exist. A Comment's heading belongs in its body text.
+- **A comment widget that renders as an empty box** — the body text never arrived. Either it was never supplied (now rejected at create), or an update rebuilt the row without it: a row passed without `rows[].id` is recreated from scratch and drops the existing text. Pass the row's `id`, or re-send `comment_widget_text`. Both failure modes are refused now rather than returning success.
+- **A comment/image edit that "worked" but changed nothing** — row-level `comment_widget_text`, the legacy `text`/`comment` aliases, and image `image_url` / `image_data` were only applied on create; on update they were accepted and dropped. Fixed Jul 2026. If you hit this on an older deployment, write the config shape directly in `rows[].configs[].options` instead.
 - **Duplicate metric/dimension bindings** — binding the same `external_id` twice in one config is silently de-duplicated (keeps first occurrence). A warning is returned, but the widget ends up with one series, not two. To chart two series of the same metric, use separate rows.
 - **`tab_id` missing on create** — required. Find via `list-report-tabs action=list`.
-- **`sort` warning on single-value widgets** — the "`sort` has no effect" warning only fires for row-level `sort` (a data-sort directive). The `sort` field inside `rows[].options.metrics[]` is a positional ordinal index required by the dual-array pattern — it does not trigger the warning.
+- **A sort that stores fine and orders nothing** — `sort` is the sort **direction**, `"asc"` / `"desc"` / `null`, on the entry in `rows[].options.metrics[]` or `rows[].options.dimensions[]`. It is not a position or an index. `sort: 0` used to be accepted and skipped outright by the backend (which matches on truthiness), so the write returned success and the widget came back in the source's own order; it is rejected now. See "Sorting a widget".
+- **`sort` on a single-value widget** — inert wherever you put it: a `101` aggregates everything into one number and has no rows to order. The tool warns. Use a Table (`102`) with the dimension bound.
 - **AI text (`update_ai_text`) errors** — if generation fails with a timeout, the settings are saved; retry after ~30 seconds. A non-timeout error may indicate the AI feature is not available on the team's plan.
+- **An offline widget showing 200,000 impressions you never entered** — it was created without `rows[].data`, so it still holds the template's placeholder sample numbers. The create response warns about this. Send an `update` with the row's `data` to replace them.
+- **Offline values passed as row options** — `rows[].options.value` / `previous_value` bind nothing. Row `options` is a free-form blob, so these used to persist silently and the call still reported success; they now come back as an "unrecognized `options` keys" warning. Offline values belong in the row's `data` array.
+- **Binding a metric on an offline widget** — rejected. These widgets derive their metrics from their own values, and a binding written here is reverted before the response is built, so it used to return success with a metric the widget never had. Use `data` instead; `name` on each entry is the metric label.
+- **`"offline_single_value"` and friends** — the `offline_`-prefixed string names resolve to the writable current-generation types (`125`+). On deployments before Aug 2026 they resolved to the pre-new-architecture types (`25`+) and were then rejected as too old — pass the integer ID there.
+- **Conditional formatting that vanished after an unrelated edit** — the rules hang off the widget config, so a row rebuilt from scratch (the "omit `rows[].id`" workaround) cannot keep them. Read them out with `list-widgets action=conditional_formats` before any structural edit and write them back after. `manage-widgets` re-attaches them when only the config is replaced and warns in `warnings` when a row removal discarded them, so check `warnings` on every table update.
+- **`set_conditional_formats` wiping the rules you didn't send** — it is replace-all, not a merge. Use `add_conditional_formats` to append a band, and `set_conditional_formats` with an empty array only when you mean to clear the column.
+- **Manual rules that store fine and never paint** — the metric is in auto-colors mode, which the renderer prefers. Both write actions now clear the other mode and tell you in `warnings`, but a metric that was set up in the UI before this can hold both; check `mode` in `list-widgets action=conditional_formats`.
+- **Auto colours that shift between runs** — the seven tints are anchored to the column's own min and max, so new data remaps every cell. Expected. Use manual rules when a threshold must stay put.
+- **Only the top band ever colouring** — the rules are evaluated in `position` order and the first match wins. A wide rule sent first (`greater_than 0`) matches everything and the narrower bands after it never fire. Order narrowest first.
+- **A conditional format that stores fine and never paints** — the widget is not a live table (`102`). This is now rejected outright, but on deployments before Aug 2026 the rule was stored silently against a type that never draws it.
+- **Literal `\n` in comment text** — a comment widget whose rendered text shows a visible `\n` (and renders entirely in heading size) received a double-escaped newline: the string contained the two characters backslash + n instead of a line break. Recreate with real newlines, or split into a header widget + a separate text-block widget.

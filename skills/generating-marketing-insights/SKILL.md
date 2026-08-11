@@ -124,12 +124,20 @@ For cross-channel comparison:
 
 ### Goal Progress Framework
 
-If goals are set (check with `view-goals`):
+If goals are set (`view-goals action: list`), measure them before saying anything about progress:
 
-1. **Progress vs. target** — What percentage of the goal has been achieved?
-2. **Pace analysis** — Is the current pace sufficient to hit the target?
-3. **Gap analysis** — How much improvement is needed to close any gap?
-4. **Contributing factors** — What's driving or hindering progress?
+```
+view-goals action: status goal_ids: [<up to 20 ids>]
+```
+
+The response answers the first three questions directly — don't derive them by hand:
+
+1. **Progress vs. target** — `percentage`, `current_value` vs `goal_value`.
+2. **Pace analysis** — `projected_value` (where the metric lands at the current run-rate) against `goal_value`, plus `current_pacing` and `days_remaining`. `status: off_track` already encodes "the current pace misses".
+3. **Gap analysis** — `remaining_value`.
+4. **Contributing factors** — the one part `status` cannot answer; break the metric down by dimension with `fetch-data`.
+
+Goals reported as `unknown` were not measured — name them as unchecked rather than folding them into the healthy pile.
 
 ## Writing Style for Marketing Insights
 

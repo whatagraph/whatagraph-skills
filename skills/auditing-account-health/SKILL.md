@@ -168,6 +168,14 @@ Review:
 - Are overviews (KPI dashboards) configured?
 - Do goals align with the channels and sources that are connected?
 
+`list` covers goal **setup** only — it says nothing about whether goals are being met. If the audit is meant to report attainment, measure it:
+
+```
+view-goals action: status goal_ids: [<up to 20 ids from the list above>]
+```
+
+Batch in twenties, and report `unknown` goals as blind spots. Do not describe goals as healthy, on track, or within limit unless a `status` call said so — `active: true` in the `list` response only means the goal is still running.
+
 ### 9. Blend & Source Group Review
 
 ```

@@ -58,10 +58,14 @@ Does this filter apply to EVERY widget using this source?
 
 ### Template linked vs one-off
 
+Templates only enter the flow when the request or agent instructions explicitly call for one — an open report request is a scratch build (see `whatagraph-reports`). When a template IS in play:
+
 ```
-Will this client ever need heavy structural custom changes?
-├── Yes → Duplicate from an existing report (manage-reports action=duplicate) — independent copy
-└── No  → Create from template (manage-reports action=create_from_template) — linked, auto-updates
+Does the user ask for auto-sync, or does the context clearly call for it (one template kept in step across many client reports)?
+├── Yes → Create from template and keep it linked (manage-reports action=create_from_template)
+└── No  → Independent report (the default):
+         • From a template → create_from_template → duplicate the new report → delete the linked intermediate
+         • From an existing report → manage-reports action=duplicate
 ```
 
 ### Overview (measurement) vs report
@@ -93,8 +97,8 @@ Are all the sources the same channel (e.g. all Google Ads)?
 7. Decide: single-source report, source group, or blend?
    - Multiple accounts on the same channel → source group.
    - Multi-channel view → blend.
-8. `manage-reports action=create_from_template client_id=<client_id> template_id=<tpl>` — apply the team's standard report template.
-9. `manage-reports action=change_sources report_id=<new_id> source_mapping={"0": <new_source_id>, "<old>": <new>}` — swap template sample data for the client's sources.
+8. Build the client report **from scratch by default** (`manage-reports action=create` → tabs → widgets, per `whatagraph-reports`). Use `create_from_template client_id=<client_id> template_id=<tpl>` only when the instructions name the team's own template — and deliver it unlinked (duplicate the new report, delete the linked intermediate) unless the user asked for auto-sync or the context makes it clearly relevant (this onboarding is part of a many-client rollout kept in step with a master template). Never pull a template from Whatagraph's pre-made gallery unprompted.
+9. If a template was used: `manage-reports action=change_sources report_id=<new_id> source_mapping={"0": <new_source_id>, "<old>": <new>}` — swap template sample data for the client's sources.
 10. `manage-themes action=enable_theme report_id=<id> theme_id=<client_theme_id>` + `enable_color` with the brand palette.
 11. `manage-sharing action=create report_id=<id> require_password=true password="<share_password>"` — generate the client share link.
 12. `manage-automations action=create` — schedule monthly delivery.
@@ -159,6 +163,7 @@ Only applicable if those reports are linked to a template.
 - **Reference IDs from the wrong domain** — spaces use `client_id`, sources use `source_id` (integration_source_id), widgets use `widget_id`. Skills state the required naming.
 - **Mixing up channel-native vs Whatagraph-native report type names** — custom metrics use channel-native names (e.g. `campaign`); source groups use Whatagraph-native names (e.g. `campaign_performance`). Wrong family → "Report type X not found for channel Y".
 - **Creating widgets before attaching sources** — `manage-widgets` validates `source_id` against report-local sources. Always run `manage-reports action=attach_source` first and use the returned `source_id`.
+- **Defaulting to a template (or the pre-made gallery) when no one asked** — open report requests are scratch builds; templates are opt-in, and template-created reports ship unlinked unless the user asked for auto-sync or the context clearly calls for it.
 - **Creating from template without running `change_sources`** — widgets stay on sample data.
 - **Automations without `time_zone`** — always include IANA timezone; local time ≠ team timezone by default.
 - **Sharing link without password on confidential reports** — anyone with the URL can view.

@@ -56,7 +56,7 @@ Tools covered: every `delete-*` tool, `remove-integrations`, `remove-members`, p
 
 **Deletion is the highest-risk operation on this MCP surface.** Four rules before any call:
 
-1. **Confirm intent with the user.** There is no `confirm` parameter in any delete tool's schema. The agent should confirm with the user conversationally before calling any destructive tool.
+1. **Confirm intent with the user.** There is no `confirm` parameter in any delete tool's schema. The agent should confirm with the user conversationally before calling any destructive tool. One exception: intermediate artifacts the agent itself created moments earlier as scaffolding within a documented flow (e.g. the linked intermediate report in the template → duplicate → delete flow, see `whatagraph-reports`) hold no user content and can be deleted without a confirmation round-trip.
 2. **Check usage first** (table below) — know what breaks before it breaks.
 3. **Know the recovery class** — some deletes have a `restore` action, some need support, some are gone forever.
 4. **Prefer update over delete-and-recreate** wherever dependents bind by id (source groups, blends, goals).

@@ -50,6 +50,28 @@ manage-integrations action=add_sources
 - `source_ids` are the external ids returned by `list_available_sources`.
 - After `add_sources`, the source appears in `list-sources action=list` with an `integration_source_id`.
 
+### Sub-source integrations (Google Sheets, BigQuery, Snowflake, Google My Business)
+
+Some integrations have a two-level hierarchy: **parent source** (spreadsheet, dataset) → **sub-source** (tab, table). When `list_available_sources` returns `has_sub_sources: true`, you must discover sub-sources before adding:
+
+```
+# 1. List parent sources — response includes has_sub_sources: true
+list-integrations action=list_available_sources account_id=<id>
+
+# 2. Pick a parent and list its sub-sources
+list-integrations action=list_available_sub_sources
+   account_id=<id>
+   source_external_id=<parent_external_id>
+
+# 3. Connect using the sub-source external_id (JSON format)
+manage-integrations action=add_sources
+   channel_id=<channel_id>
+   account_id=<id>
+   source_ids=["<sub_source_external_id>"]
+```
+
+Sub-source `external_id` values are JSON strings like `{"integration_source_id":"<spreadsheet_id>","sub_source_id":<tab_gid>}` — copy them verbatim from step 2. Both `list_available_sources` and `list_available_sub_sources` support `search` for name filtering.
+
 ## Assign a source to spaces
 
 ```
@@ -97,6 +119,7 @@ All three are high-impact: always check `list-sources action=list_usage source_i
 
 ## Common pitfalls
 
+- **Passing a parent ID to `add_sources` for sub-source integrations** — returns an error explaining you need `list_available_sub_sources` first. Always check `has_sub_sources` in the `list_available_sources` response.
 - **Adding a source that's already connected** — may be skipped or surfaced as "already exists".
 - **`source_ids` in `add_sources` vs `remove_sources`** — `add_sources` takes external string IDs from `list_available_sources`; `remove_sources` takes integer integration source IDs from `list-sources`. Same parameter name, different ID spaces.
 - **Currency override without matching cost data** — `set_currency` sets display currency; it does not convert existing rows. Historical data keeps its stored currency.

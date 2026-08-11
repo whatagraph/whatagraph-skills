@@ -110,7 +110,9 @@ manage-custom-dimensions action=create
    ]
 ```
 
-Supported `operator` values (verified Jun 2026): `contains`, `includes`, `not_contain`, `exactly_matches`, `not_exactly_matches`, `starts_with`, `not_starts_with`, `ends_with`, `not_ends_with`, `matches_regex`, `not_matches_regex`. There is no `equals` — use `exactly_matches`. A condition's `value` also accepts an **array** for multi-value matching (e.g. `"operator": "includes", "value": ["Brand_US", "Brand_EU"]`) — one condition instead of one map per value. The same operator family is used by `manage-filters` (with the `_dimension` / `_metric` suffix added there).
+Supported `operator` values (verified Jul 2026): `contains`, `includes`, `not_contain`, `exactly_matches`, `not_exactly_matches`, `starts_with`, `not_starts_with`, `ends_with`, `not_ends_with`, `matches_regex`, `not_matches_regex`, `is_empty`, `is_not_empty`. There is no `equals` — use `exactly_matches`. A condition's `value` also accepts an **array** for multi-value matching (e.g. `"operator": "includes", "value": ["Brand_US", "Brand_EU"]`) — one condition instead of one map per value. The same operator family is used by `manage-filters` (with the `_dimension` / `_metric` suffix added there).
+
+`is_empty` / `is_not_empty` match the **not-set** state of the field (null / empty — what the UI shows as `N/A`) and carry no comparison `value` (omit it, or send `null`). Use `is_empty` to relabel not-set rows — e.g. map an empty platform to "Facebook". This is the correct way to catch not-set rows: matching the literal string `"N/A"` with `exactly_matches` does **not** work, because `N/A` is only a display fallback applied after rule matching, not the value seen at match time.
 
 ### Simplified `maps` shortcuts (MCP-only)
 
@@ -125,7 +127,7 @@ maps=[
 ```
 
 - `{when, value, then}` — single-condition map; `then` is the bucket label, `when`/`value` describe the operator + comparison value, fields default to the top-level `fields` array.
-- `{default: "<label>"}` — fallback bucket that catches anything not matched by earlier maps. Persists as a map with `operator: "contains", value: ""` on the underlying field, which matches every non-null value. Add it as the **last** entry; first match wins.
+- `{default: "<label>"}` — fallback bucket that catches anything not matched by earlier maps. Persists as a map with `operator: "contains", value: ""` on the underlying field, which matches every **non-null** value — it does **not** catch not-set rows. To relabel not-set rows too, add an explicit `is_empty` map. Add fallbacks as the **last** entries; first match wins.
 
 Use the full shape when you need multiple conditions per bucket, cross-field comparisons, or to bind each map to a specific field different from the top-level `fields`. Use the simplified shape for the common "label by substring" pattern with an optional fallback.
 

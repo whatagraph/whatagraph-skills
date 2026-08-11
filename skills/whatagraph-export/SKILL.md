@@ -86,7 +86,7 @@ Response:
 ## Other export paths
 
 - **Excel via sharing**: `manage-sharing action=export_excel report_id=<id>` — same xlsx output as `export-report`.
-- **PDF**: `manage-sharing action=download_pdf report_id=<id>` — generates a PDF asynchronously. **Warning**: this auto-creates a public share link if none exists.
+- **PDF**: `manage-sharing action=download_pdf report_id=<id>` — starts the render and returns a `pdf_job_id`. Then `manage-sharing action=get_pdf report_id=<id> pdf_job_id=<pdf_job_id>` returns the download URL once `status` is `ready`. See `whatagraph-sharing`. **Warning**: `download_pdf` auto-creates a public share link if none exists.
 
 ## What MCP can't do here
 
