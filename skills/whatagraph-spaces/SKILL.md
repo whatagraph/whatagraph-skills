@@ -54,6 +54,8 @@ manage-spaces action=create
    font="inter"
 ```
 
+**The create response carries the id you need next.** It returns the new space under `space`, whose `id` is the value every other tool calls `client_id` — pass it as `client_id` to `manage-spaces action=update`, as `parent_id` to nest a child under it, and as `client_id` to `manage-reports action=create` to put a report inside it. Read it from `space.id` rather than listing spaces again to find what you just made; note the response key is `id`, not `client_id`, so do not go looking for a `client_id` key that is not there.
+
 ## Create a sub-space (nested)
 
 ```
