@@ -93,7 +93,13 @@ manage-sources action=set_currency
    currency="EUR"
 ```
 
-Find `tag_id` and `tag_value_ids` via `list-sources action=list_metadata`.
+Find `tag_id` and `tag_value_ids` via `list-sources action=list_metadata` (scope `tags`).
+
+**`tag` only ASSIGNS tag values that already exist — it never creates them.** So "tag these EMEA"
+when there is no EMEA tag yet is a two-step job, and step one belongs to a different tool: create the
+tag dimension and its values with `manage-custom-dimensions action=create map_type=tag` (that call can
+assign sources at the same time), then use `manage-sources action=tag` for later assignments. Passing a
+`tag_id` or `tag_value_ids` that doesn't exist is rejected — it does not silently create one.
 
 ## Removing sources or an entire account
 
