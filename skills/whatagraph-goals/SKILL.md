@@ -27,7 +27,9 @@ A **goal** is a target value on a metric for a specific period (daily, weekly, m
 ## Known limitations
 
 - Goal creation may not be available for every team or MCP server version. If `manage-goals action=create` is unavailable, use `view-goals` for existing goals and create new goals in the Whatagraph UI.
-- Goals are identified by `metric_external_id` + `integration_source_id` (+ `report_type_external_id` + `dimension_key`); do not rely on `name` as the unique identifier.
+- Goals are identified by `metric_external_id` + `integration_source_id` + `report_type_external_id` + `dimension_key` (plus the measurement, when the goal sits on one); do not rely on `name` as the unique identifier.
+- **The report type is part of that key even when you never passed it.** On a single-report-type source it is resolved for you and then matched exactly, so "I left it blank" does not make the key looser. Two goals differing *only* by report type are fine; a second goal identical in every other respect is refused as a conflict, and the error names the existing `goal_id` to view or update instead.
+- **The timeframe is *not* part of the key.** So one metric on one source cannot carry both a monthly and a quarterly goal at the same scope — the second attempt is a conflict, not a second goal. To track the same metric over two timeframes, separate them by `dimension_key` or by measurement, or update the existing goal instead.
 - **One goal per (metric, source, report type, dimension filter) combination.** Creating a second goal with the same `metric_external_id`, `integration_source_id`, `report_type_external_id`, and `dimension_key` returns a conflict error:
   ```
   {"category":"conflict","message":"A goal already exists for metric universal_metric_3 on source ID 632871"}
