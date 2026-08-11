@@ -119,6 +119,20 @@ Source groups are particularly useful for agencies managing many accounts of the
    ```
    Shows all sources in the group and their ETL configurations.
 
+   **Check `configs_count` before you interpret anything.** A group holds one or more *configs*, each
+   an output the group produces, and `show` returns per-config `id`, `name`, `output_name`, plus
+   `etl_config_ids` and `etl_configs` (each with its `channel_name`).
+
+   - **One config** — the normal, current shape. One unified output; read it as a single source.
+   - **More than one config** — an older group shape. Each config aggregates its own set of fields and
+     is read separately, so a metric present in one config is not necessarily available in another. If
+     a field you expect is missing, check whether you are reading the right config before concluding
+     the group is broken.
+
+   `output_name` is **read-only** — it is computed from the config's structure, not something anyone
+   set. Use `etl_configs[].channel_name` to see which channels actually back a config; a channel absent
+   there contributes nothing, whatever the group's source list suggests.
+
 3. **Check for sync issues**:
    ```
    list-source-groups action: source_issues, group_id: <id>
