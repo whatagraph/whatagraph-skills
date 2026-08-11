@@ -127,7 +127,13 @@ Permanent — no restore path. See `whatagraph-deleting` for cascades and recove
 
 - Duplicate an overview — UI only (use `action=update` to modify an existing one).
 - Sharing — an overview **can** carry its own share settings, but not through MCP. `list-overviews action=show` reports `has_share_settings` (a read-only boolean, so you can tell whether one exists), and there is no MCP path to create, change, or remove it — the sharing tools take a report, never an overview. Share via the space or the UI, and when reporting on an account's sharing, read `has_share_settings` rather than assuming an overview inherits everything from its space.
-- Set a target value on an overview metric — use `whatagraph-goals` to track goals alongside.
+- Set a target value on an overview metric — an overview has **no target column**. Its configs carry metrics, report types, and comparison display settings, and nothing else; there is nowhere to put a target.
+
+## Overviews and goals are separate objects
+
+They are often confused because both show "a metric with a number to hit", but they are independent: an overview is a KPI dashboard bound to one source, a goal is a target on a metric, and neither contains the other. Creating an overview does not create a goal, deleting one does not touch the other, and a goal is not scoped to an overview just because both cover the same metric.
+
+So "show spend against our $50k cap" is two objects: the goal holds the target (see `whatagraph-goals`), the overview displays the metric. Set them up separately, and when a user says a target "isn't showing on the dashboard", check whether a goal exists at all before looking for an overview setting that does not exist.
 
 ## Common pitfalls
 
