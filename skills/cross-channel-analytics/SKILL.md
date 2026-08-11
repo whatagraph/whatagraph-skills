@@ -144,8 +144,30 @@ Source groups are particularly useful for agencies managing many accounts of the
 1. **List custom metrics**:
    ```
    list-custom-metrics action: list
+   list-custom-metrics action: list, semantic_search: "customer acquisition cost"   # by meaning
+   list-custom-metrics action: list, type: "channel"                                # by scope
    ```
-   Custom metrics enable cross-channel calculations like total spend, blended ROAS, or weighted averages.
+
+   **Know which kind of metric you are looking at** — it decides what the number means:
+
+   | Kind | What it does |
+   |---|---|
+   | `data_aggregation` | Sums the **same** metric across the sources it maps, into one total. This is the primitive behind "total spend across accounts" — no group or blend involved. |
+   | `data_formula` | Calculates from other fields (ROAS, CPA, CPC). Its operands are named `A`, `B`, … |
+   | `metadata` | An alias / unified name for an existing field. No maths. |
+
+   Scope matters just as much: a metric's **transformation level** is either `channel` (applies to every
+   source of that channel) or `source` (one specific account). Filter by it with `type:`. A metric
+   scoped to one source will look "missing" on the others — that is the scope, not a fault.
+
+   **The cross-source ratio caveat.** A `data_aggregation` metric totals one metric across sources, but
+   a *ratio* whose numerator and denominator each need aggregating first (blended ROAS, blended CPA)
+   cannot be done by one metric alone — it needs a group or blend underneath, then a `data_formula` on
+   top of that combined source. So when a "blended" ratio looks wrong, check whether it was built on a
+   combined source at all, or is quietly averaging per-source ratios.
+
+   `list_with_premades` additionally filters by `map_type` (the full set, including
+   `currency_exchange`, `tag`, `system`, `ai`) and by `integrations`.
 
 2. **Inspect a custom metric formula**:
    ```
