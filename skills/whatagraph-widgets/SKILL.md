@@ -62,6 +62,8 @@ manage-widgets action=create
 
 ⚠️ **Four types reject `name` and `options.title` outright** — Comment (`21`), Calendar (`22`), Filter control (`137`), and Report shortcut (`141`). They never render a widget title, so passing one is refused rather than silently stored (Jul 2026). For a Comment, put the heading in the body text instead — `rows[].configs[].options.comment_widget_text.text` with a markdown `#` prefix. Image (`34`) does render a title and still takes `name`.
 
+**On a SingleValue (`101`), List (`103`) or Offline SingleValue (`125`), pass `rows[].options.icon` in the same call** — those three types draw a row icon, and a row created without one falls back to a single hardcoded eye, identical on every card. See "Row icons".
+
 **Always pass `rows` at create time on data widgets** — bind the metrics and dimensions in the same call. If `rows` is omitted, the widget falls back to the first metric in the source catalog — an arbitrary binding that rarely matches the widget's title, and on some sources no default applies at all, leaving the widget rendering **"Metrics not selected"** in the client-facing report. A create that returns `success` with no explicit binding is not a configured widget. Before binding, look the fields up with `list-sources action=list_dimensions_and_metrics` (never guess `external_id`s), keep every field in one config on the same `report_type`, and verify the result loads data (see "Fit for purpose").
 
 ### Dimension requirements by widget type
@@ -396,6 +398,8 @@ There is **no** row-level `sort`. `rows[].options.sort` is a pre-new-architectur
 
 ### Row icons
 
+> ⚠️ **Set the icon yourself on every 101 / 103 / 125 row you build. There is no useful default.** When `rows[].options.icon` is absent, the backend copies the icon from the bound metric's catalog definition — and almost no metric has one (GA4, Google Ads, Meta and the rest all store `NULL`), so it falls back to a single hardcoded file, `Visible--Streamline-Sharp.svg`, the eye. Every KPI card in the report then carries the same eye. The write returns `success` and the card renders, so nothing tells you afterwards. Reports built without this step have shipped with 15 identical eye icons.
+
 Three widget types render a row icon. `manage-widgets` rejects `options.icon` on every other type, so treat this as a whitelist:
 
 | `widget_type_id` | Type | Behaviour |
@@ -416,12 +420,25 @@ list-widgets action=list_icons search=revenue             # matches name, tags a
 list-widgets action=list_icons icon_set=sharp-line        # the current library
 ```
 
-Each entry returns `icon` (the filename to write), `name`, `icon_set`, `groups` and `tags`. Write it back verbatim:
+**One call covers a whole report.** Pull the library once — `list-widgets action=list_icons icon_set=sharp-line per_page=500` — before you start building, and pick from that one response for every card on every tab. Match the icon to the *meaning* of the metric: sessions/users → a user or traffic icon, revenue/spend → money, clicks → a cursor, conversions → a target, impressions/views → visibility, time on page → a clock. The `groups` and `tags` on each entry are there for exactly this, and `search` matches both (`search=money`, `search=click`). Cards sitting in one row should differ from each other — that contrast is most of what the icon is for.
+
+Each entry returns `icon` (the filename to write), `name`, `icon_set`, `groups` and `tags`. Write it back verbatim, at create as well as on update:
+
+```
+manage-widgets action=create report_id=<id> tab_id=<id> widget_type_id=101
+   channel_id=<id> source_id=<id> name="Sessions"
+   rows=[{"options": {"icon": "User-Group--Streamline-Sharp.svg"},
+          "configs": [{"channel_id": <id>, "source_id": <id>,
+                       "options": {"report_type": "session",
+                                   "metrics": [{"external_id": "sessions", "name": "Sessions", "identifier": 0}]}}]}]
+```
 
 ```
 manage-widgets action=update report_id=<id> widget_id=<id>
    rows=[{"options": {"icon": "Visible--Streamline-Sharp.svg", ...}, "configs": [...]}]
 ```
+
+Bind it at create — it costs no extra call, and an icon added later needs a second `update` per widget.
 
 Read it back with `list-widgets action=show`: `rows[].icon` is the authoritative value, even though you write it under `rows[].options.icon`. Ignore any `icon` still sitting in `rows[].options` — that is legacy data the renderer does not read. Pass `"icon": null` to clear the icon.
 
@@ -1045,6 +1062,7 @@ When you're deciding the layout yourself — no reference, no explicit widget li
 - **Adjacency is meaning.** Widgets that answer the same question sit next to each other: the KPI and the trend that explains it, the donut and the table that details it, the map and the top-regions list. A reader should be able to say what each *row* is about, not just each widget.
 - **Vary the forms — within the tab and across tabs.** A tab drawing only on KPI cards and one chart type looks machine-generated. Draw on the full range the data supports (see "Choosing a visualization"), and don't repeat the same overview shape on every tab — the spend tab, audience tab, and creative tab should each look like what they're about.
 - **Depth over sprawl.** A full tab typically lands around **8–14 widgets across two or more sections and five or more rows** — enough to develop its theme with headline, trend, breakdown, and detail. That's a description of what a developed theme tends to need, not a quota: never pad with near-duplicate widgets to hit a count — but equally, never stop at one section or two rows just because something rendered.
+- **Give every KPI card its own icon.** A headline row of SingleValue cards is where the reader's eye lands first, and the icons are half of what distinguishes one card from the next. Pick each one for the metric it sits on (see "Row icons") — a row of identical eye icons is the signature of icons left unset.
 - **End flush.** The last row fills its width like every other row. If the tab ends with a `2`-wide orphan, rebalance the final rows (widen the table, resize the pair) so the page bottom is a clean edge.
 - **Too thin to fill?** If a theme can't sustain a full page from the available fields, don't pad it — merge it into a related tab (see `whatagraph-reports` → "Building a report when the request doesn't specify structure").
 
@@ -1166,6 +1184,7 @@ For a single value that must carry its own colour, put it in a Comment widget in
 - **A widget rendering "Metrics not selected"** — it was created without `rows` (or with a config whose `options.metrics` is empty), so nothing is bound. The create still returns `success`, which is why this reaches shipped reports. Always bind at create, and always verify with `export-report` / `csv_export` — see "Always pass `rows` at create time".
 - **A tab with one or two widgets floating in an empty grid** — the tab list in the instructions was misread as a widget list. A named tab ("Google Ads", "Weather Report for New York") is a full themed page, not a slot for one widget per named metric — compose it per "Composing a full tab", whoever named the tab.
 - **Date dimension ambiguity** — a source may expose more than one date-typed dimension (e.g. `universal_dimension_1137` "Date" and `universal_dimension_150` "Date OLD"). Prefer the plainly-named current one and verify with `csv_export`. This is integration-dependent.
+- **Every KPI card carrying the same eye icon** — `rows[].options.icon` was never set, so each row fell back to the hardcoded default `Visible--Streamline-Sharp.svg`. Metric catalogs carry no icons of their own, so this happens on every integration and on every card. Pull the library once with `list-widgets action=list_icons` and bind an icon per row at create — see "Row icons".
 - **Full-width single-value widgets** — looks like a section header; use 2×2 or 2×1 instead.
 - **`wrap_text: true` splitting words in half** — a wrapped table cell breaks at the character, not at the word, so a finished PDF shows things like `instabilit y` and `2 026 commits`. No option changes this. Keep table cells short enough to sit on one line — roughly 40 to 45 characters in a four-column full-width table, less in narrower columns — and move longer prose into a Comment widget, which wraps correctly.
 - **Bar-chart value labels that disappear** — on bar types (horizontal bars, including the offline Bar chart) the label colour is calculated to contrast with the **bar fill**, because the label is expected to sit on the bar. An *outside* position (`top`, `bottom`, `left`, `right`) puts the label on the chart background but keeps that colour, so a pale label lands on a pale background and becomes invisible. The labels are drawn; you cannot see them. Keep an `inside*` position on bar types — the default `insideRight` is correct — or, if you must put the label outside, set `chart_label_bg_enabled: true`, which draws a chip in the bar colour behind the text and makes it legible again. Vertical charts (Column, Line, Area) are not affected: their labels are always dark.
