@@ -129,7 +129,16 @@ manage-goals action=update goal_id=<id>
 
 ## Attaching a goal to a widget
 
-The widget type "Goal" is how a goal renders in a report. Create via `manage-widgets action=create` with the goal-widget type on the target tab. Goals also surface in overviews, measurement dashboards, and the dedicated Goals page in the UI.
+A goal renders in a report through a goal widget. Create it via `manage-widgets action=create` with the goal-widget type on the target tab. Goals also surface in overviews, measurement dashboards, and the dedicated Goals page in the UI.
+
+**There is more than one goal widget type.** Pick by where the numbers come from:
+
+- **Goal** — the standard one, tracking a metric on a connected source. This is the default choice.
+- **Offline goal** — for manually entered (offline) data rather than a connected source. See `whatagraph-offline-reports`.
+
+Each also exists in an older, pre-current-generation form that `manage-widgets` **rejects** on create and update. So take the type id from the current set rather than an older reference or a legacy report you are copying — an id that renders fine in an existing report is not necessarily one you can create. See `whatagraph-widgets` for the writable type ids.
+
+Colour note: goal progress bars are filled with the palette's accent fill colour, which falls back to the first chart colour when unset — so set it deliberately on a report built around goals (see `whatagraph-themes`).
 
 ## Deleting a goal
 
