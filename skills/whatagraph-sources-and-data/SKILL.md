@@ -149,6 +149,21 @@ Values: `previous` (matching-length previous period), `last_year` (same dates, y
 
 If `fetch-data` returns `Invalid metrics: X` or `Invalid dimensions: X`, do not retry with a variant spelling. Re-run `list_dimensions_and_metrics` and pick the value verbatim from the response — including dots and prefixes.
 
+### Fetching from a source group or blend
+
+A group and a blend each get their **own** `integration_source_id`, and you fetch from that id exactly like a native source — same call, only the field-id family changes (see the table above).
+
+```
+fetch-data
+   source_id=<group_or_blend_integration_source_id>
+   report_type="<the virtual source's own report type>"   # only if it has more than one
+   metrics=["universal_metric_3"]                          # group form; a blend uses aggregation_metric_*
+   dimensions=["universal_dimension_1131","universal_dimension_1137"]
+   period="lastMonth"
+```
+
+**`report_type` follows the same rule as anywhere else, judged against the virtual source's own report types — not its sub-sources'.** Run `list-sources action=list_report_types source_id=<virtual source id>` first: one report type (or none) means omit `report_type`; more than one means it is required, and leaving it out fails with "This source has multiple report types". A group mirrors report types from the channels it rolls up, so a group over a multi-report-type channel usually needs it. Never pass a sub-source's report type — resolve it on the virtual source.
+
 ### Source-group breakdown metrics — pick the variant, don't filter
 
 Every universal metric on a source group exists in **three tiers**:
