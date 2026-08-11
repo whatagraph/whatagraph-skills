@@ -186,7 +186,13 @@ For each source group, inspect per-config detail:
 ```
 list-source-groups action: show, group_id: <id>
 ```
-Returns each config's `id`, `output_name`, and `etl_config_ids` — useful for understanding the group's data pipeline setup.
+Returns `configs_count` plus each config's `id`, `name`, `output_name`, and `etl_config_ids` — along with `etl_configs`, where each entry names the `channel_name` backing it. Read it as an audit, not just a pipeline dump:
+
+- **`configs_count` > 1** is an older group shape. Each config is read separately, so note it — a metric present in one is not necessarily available in another.
+- **`etl_configs` is the honest membership list.** A channel in the group's sources but absent from `etl_configs` contributes nothing, however healthy the source itself looks.
+- **`output_name` is computed, read-only.** Don't report it as a naming choice someone made or suggest changing it.
+
+`source_issues` reports `disabled_configs_count` per source — that count is how many of a source's configs are switched off, so a source can appear healthy in the sources list while feeding nothing into the group.
 
 Check for sync issues — omit `group_id` to scan all groups at once:
 ```
