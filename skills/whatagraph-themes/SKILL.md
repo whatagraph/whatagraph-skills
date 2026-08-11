@@ -70,6 +70,7 @@ list-themes action=show_color color_id=<id>
 - **It reads the built-in premades.** When `list_colors` reports `applied_color_source: "system"`, the applied palette isn't in the list, but `show_color` still resolves its `applied_color_id` — that's how you read "Whatagraph Dark" and copy it into a new palette.
 - **Team and premade palettes need no `report_id`.** A **report-level** palette does — without it you get a not-found error. Pass `report_id` also when you want `is_active` to mean anything; without it, it's always `false`.
 - **`colors` is exactly the shape `create_color` / `update_color` take.** So `show_color` → tweak a few keys → `update_color` is the safe way to edit a palette without dropping the keys you didn't mean to touch.
+- **`update_color` merges per key — except `chart_colors`, which is replaced whole.** `widget_colors` and `additional_colors` are merged key by key, so sending only `{"widget_colors": {"text_color": "2B2B2B"}}` changes that one key and leaves the rest intact. `chart_colors` is an ordered list, so merging it by position would mix old and new series colours; instead, **any** `chart_colors` you send replaces the entire array. Send two colours and the palette has exactly two — the rest are gone. To change one series colour, read the array with `show_color`, edit that position, and send the whole array back.
 - Use `fields=id,name` to skip the `colors` payload when you only need to identify it.
 
 ### Colouring one widget differently
