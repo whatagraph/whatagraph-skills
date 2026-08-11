@@ -108,16 +108,16 @@ Budget first: a table shows roughly `3.5 x height - 3` rows. So `height: 5` fits
 
 In a report built this way, Comment widgets usually carry a third of the page — every heading, every piece of framing, every methodology note. Treat them as layout, not as leftovers.
 
-Supply `description` as a Tiptap document, not a plain `text` string, whenever a block needs any structure. It does everything markdown does *and* colour, size and alignment. You get `heading` levels 1-3, `bulletList`, `orderedList`, `blockquote`, `horizontalRule`, plus `bold`, `italic`, `underline`, `highlight` and `link`.
+Supply the body as **HTML** in `comment_widget_text.text` whenever a block needs any structure — markdown is rejected, and so is a hand-written Tiptap document (one bad node blanks the whole widget). You get `<h1>`-`<h3>`, `<ul>`, `<ol>`, `<blockquote>`, `<hr>`, plus `<strong>`, `<em>`, `<u>`, `<mark>`, `<a href>` and `<span style>` for colour and size.
 
 Four patterns carry most of the work:
 
-- **Section heading** — a `6x1` Comment at the top of each tab with a `heading` node. A `height: 1` widget shows no *title*, but a Comment's heading is body text, so it renders.
-- **Kicker + heading + rule** — a small muted paragraph, then a `heading`, then a `horizontalRule`. This reads as a designed section opener rather than a stray sentence.
-- **Value-coded emphasis.** Offline tables have no conditional formatting, but inside a Comment you *do* control colour per run of text. A `textStyle` colour mark on a good or bad number, or a `highlight` mark for a background chip, is the only place in an MCP-built report where a number carries its own colour. `highlight` is on or off — it takes no colour.
+- **Section heading** — a `6x1` Comment at the top of each tab with an `<h2>`. A `height: 1` widget shows no *title*, but a Comment's heading is body text, so it renders.
+- **Kicker + heading + rule** — a small muted `<p class="p4">`, then an `<h2>`, then an `<hr>`. This reads as a designed section opener rather than a stray sentence.
+- **Value-coded emphasis.** Offline tables have no conditional formatting, but inside a Comment you *do* control colour per run of text. A `<span style="color: #1e8e3e">` on a good or bad number, or a `<mark>` for a background chip, is the only place in an MCP-built report where a number carries its own colour. `<mark>` is on or off — it takes no colour.
 - **Cover and section dividers.** A Comment accepts a background image that renders full-bleed behind the text. That makes a cover **one** widget, not an image band stacked above a text block. Set `contentAlign: "center"` and a light text colour. Import the image first — see `whatagraph-assets`.
 
-Use the product's named text styles rather than a raw `fontSize`: headings 1-3, and paragraphs `p1` to `p4` via a `class` attribute. A custom `fontSize` is stripped the moment somebody edits that block in the UI; the named styles survive.
+Use the product's named text styles rather than a raw `font-size`: `<h1>`-`<h3>`, and `<p class="p1">` to `<p class="p4">`. A custom `font-size` is stripped the moment somebody edits that block in the UI; the named styles survive.
 
 ## Faking a heatmap
 

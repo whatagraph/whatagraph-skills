@@ -531,66 +531,62 @@ A horizontal reference line drawn at a fixed y-axis value. Unrelated to the Goal
 
 Known `options` shapes:
 
-- **Comment / text widget** (`widget_type_id=21`): on **write**, supply `{"comment_widget_text": {"text": "Hello\nWorld", "contentAlign": "top"}}` in `rows[].options` — `text` is a plain string, the platform converts it. The tool auto-propagates this to `configs[].options.comment_widget_text.text`, on **update** as well as create (fixed Jul 2026 — update previously accepted these row options and wrote nothing, so the change appeared to succeed and the widget kept its old content). The legacy `{"text": "<html>", "comment": "<html>"}` shape also works for older accounts.
-  - ⚠️ **Body text is required — a comment is nothing but its body.** `create` refuses a comment widget with no body content (Jul 2026): it would persist as a blank box while the call returned `success`, which is exactly how agents came to report section headers that were nowhere on the report. Supply the text, a background image, or `ai_text` (see "AI text on comment widgets"). Empty and whitespace-only text count as no body, because both normalise to a valid-but-blank document.
-  - ⚠️ **Newlines must be real newline characters in the string — never the literal two-character sequence `\n` (backslash + n).** LLM tool-callers frequently double-escape control characters; a literal `\n` is not a line break. The platform then sees one long line, so a leading `##` turns the *entire* text — heading **and** body — into one oversized heading that overflows the widget and displays a visible `\n` in the rendered report. If a rendered comment shows a literal `\n`, the payload was double-escaped: recreate the widget with real newlines. When in doubt, avoid multi-line `text` entirely — put the heading and the body copy in **separate** comment widgets (see "Section headers").
-  - **Three formatting layers** — supply `text` OR `description` inside `comment_widget_text`, never both (verified Jun 2026):
-    1. Plain `text` string → paragraphs.
-    2. `text` with **markdown** → headings, bold, italic, lists, links (converted to a Tiptap document on save).
-    3. A prebuilt **Tiptap doc** via `description` → **the full-capability path.** It does everything markdown does *and more*. Do not read it as a list of inline marks: it is the better option for any block that needs structure or styling. The doc persists intact through update and round-trips through `list-widgets action=show`.
+- **Comment / text widget** (`widget_type_id=21`): on **write**, supply `{"comment_widget_text": {"text": "<h2>Hello</h2><p>World</p>", "contentAlign": "top"}}` in `rows[].options`. **The body is HTML** (Aug 2026 — see "The body is HTML, and only HTML" below). The tool auto-propagates this to `configs[].options.comment_widget_text`, on **update** as well as create (fixed Jul 2026 — update previously accepted these row options and wrote nothing, so the change appeared to succeed and the widget kept its old content). The legacy `{"text": "<html>", "comment": "<html>"}` row aliases also work for older accounts.
+  - ⚠️ **Body text is required — a comment is nothing but its body.** `create` refuses a comment widget with no body content (Jul 2026): it would persist as a blank box while the call returned `success`, which is exactly how agents came to report section headers that were nowhere on the report. Supply the text, a background image, or `ai_text` (see "AI text on comment widgets"). Empty and whitespace-only text count as no body, because both normalise to a valid-but-blank paragraph.
+  - ⚠️ **Structure comes from tags, not from newlines.** `<h2>Heading</h2><p>Body</p>` is two blocks whether or not there is a line break between them; `"Heading\nBody"` with no tags is one paragraph. LLM tool-callers also frequently double-escape control characters, sending the literal two characters `\` and `n` instead of a newline — those are converted on save, but they were never what created the blocks. If a rendered comment runs everything together, the body was missing its `<p>` and `<h2>` tags.
+  - **The body is HTML, and only HTML** (Aug 2026). Put it in `comment_widget_text.text`. Two formats that used to be accepted are now **rejected**, because each failed in a way the tool reported as `success`:
 
-    **Full vocabulary of a comment document:**
+    - **Markdown** — a comment renders it literally. `# Heading` reached the reader with the hash still on it. Send `<h1>Heading</h1>`.
+    - **A Tiptap/ProseMirror document** in `description` — the renderer loads it strictly, so one unknown node, mark or attribute *anywhere* in the document blanks the **entire widget**. This is what put empty white boxes at the top of five customer report pages. There is no partial failure and no warning; the widget just renders nothing.
+
+    Text with **no tags at all** is not rejected — it is kept as a single paragraph, and the response says so in `warnings`. If you wanted headings or separate paragraphs, add the markup.
+
+    **Full vocabulary.** Everything outside this list is stripped on save and reported in `warnings`:
 
     | Category | Available |
     |---|---|
-    | Block nodes | `paragraph`, `heading` (levels 1-3), `bulletList`, `orderedList`, `listItem`, `blockquote`, `horizontalRule`, `codeBlock`, `hardBreak` |
-    | Marks | `bold`, `italic`, `strike`, `underline`, `highlight`, `link`, `code` |
-    | `textStyle` attrs | `color`, `fontSize` |
-    | Block attrs | `textAlign` on `paragraph` and `heading`; `class` on `paragraph` |
+    | Blocks | `<p>`, `<h1>`–`<h3>`, `<ul>`, `<ol>`, `<li>`, `<blockquote>`, `<pre>`, `<hr>`, `<br>` |
+    | Inline | `<strong>`, `<em>`, `<u>`, `<s>`, `<mark>`, `<code>`, `<a href>`, `<span>` |
+    | Styles | `color` and `font-size` (8–96px) on `<span>`; `text-align` (`left`/`center`/`right`/`justify`) on `<p>` and `<h1>`–`<h3>`; `class` on `<p>` |
 
-    **Prefer the named text styles over a raw `fontSize`.** The product's own styles are:
+    `<h4>`–`<h6>` are demoted to `<h3>`, the deepest the editor renders. Unknown tags are unwrapped and their text kept. `<script>`, `<style>` and `<iframe>` are dropped with their contents. Link `href`s must be `http`, `https`, `mailto` or `tel` — anything else is stripped, because the report refuses to open it anyway.
+
+    **Prefer the named paragraph classes over a raw `font-size`.** The product's own styles are:
 
     | Style | Size | Write it as |
     |---|---|---|
-    | Heading 1 | 40px | `{"type": "heading", "attrs": {"level": 1}}` |
-    | Heading 2 | 30px | `{"type": "heading", "attrs": {"level": 2}}` |
-    | Heading 3 | 21px | `{"type": "heading", "attrs": {"level": 3}}` |
-    | Paragraph 1 | 18px | `{"type": "paragraph", "attrs": {"class": "p1"}}` |
-    | Paragraph 2 | 16px | `{"type": "paragraph", "attrs": {"class": "p2"}}` |
-    | Paragraph 3 | 14px | `{"type": "paragraph", "attrs": {"class": "p3"}}` — the default |
-    | Paragraph 4 | 13px | `{"type": "paragraph", "attrs": {"class": "p4"}}` |
+    | Heading 1 | 40px | `<h1>` |
+    | Heading 2 | 30px | `<h2>` |
+    | Heading 3 | 21px | `<h3>` |
+    | Paragraph 1 | 18px | `<p class="p1">` |
+    | Paragraph 2 | 16px | `<p class="p2">` |
+    | Paragraph 3 | 14px | `<p class="p3">` — the default |
+    | Paragraph 4 | 13px | `<p class="p4">` |
 
-    A `textStyle` `fontSize` is written into the CSS **verbatim and unvalidated**. Any CSS length works; an invalid one fails silently and the text keeps its inherited size. Worse, a person who later touches the style picker in the UI **strips every custom `fontSize`** in the block. The named styles above survive that. Use `fontSize` only for a size the named styles do not offer.
+    A custom `font-size` is validated for range but still has a cost: a person who later touches the style picker in the UI **strips every custom size** in the block. The named classes above survive that. Use `font-size` only for a size the named styles do not offer.
 
-    `highlight` is **on or off** — it takes no colour attribute. A `{"type": "highlight", "attrs": {"color": "#..."}}` is accepted and the colour is ignored.
+    `<mark>` is **on or off** — the highlight takes no colour.
 
     **Worked example — kicker, heading, rule, body with value-coded emphasis.** This is the shape most report text blocks want:
 
     ```
     rows=[{"options": {"comment_widget_text": {
       "contentAlign": "top",
-      "description": {"type": "doc", "content": [
-        {"type": "paragraph", "attrs": {"class": "p4"}, "content": [
-          {"type": "text", "text": "SECTION LABEL",
-           "marks": [{"type": "bold"}, {"type": "textStyle", "attrs": {"color": "#8A94A6"}}]}]},
-        {"type": "heading", "attrs": {"level": 2, "textAlign": "left"},
-         "content": [{"type": "text", "text": "The finding, in one line"}]},
-        {"type": "horizontalRule"},
-        {"type": "paragraph", "content": [
-          {"type": "text", "text": "Throughput rose to "},
-          {"type": "text", "text": "49.0",
-           "marks": [{"type": "bold"}, {"type": "textStyle", "attrs": {"color": "#1E8E3E"}}]},
-          {"type": "text", "text": " while merge rate fell to "},
-          {"type": "text", "text": "74.6%", "marks": [{"type": "highlight"}, {"type": "bold"}]},
-          {"type": "text", "text": "."}]}
-      ]}}}]
+      "text": "<p class=\"p4\"><strong><span style=\"color: #8a94a6\">SECTION LABEL</span></strong></p>"
+              "<h2>The finding, in one line</h2>"
+              "<hr>"
+              "<p>Throughput rose to <strong><span style=\"color: #1e8e3e\">49.0</span></strong>"
+              " while merge rate fell to <mark><strong>74.6%</strong></mark>.</p>"
+    }}}]
     ```
 
+    **Editing an existing comment.** Read `list-widgets action=show` and write `comment_widget_text.description` straight back — it always comes back as HTML, even for a comment written in the UI (which is stored as a Tiptap document and converted on read). So a read-modify-write round trip works, and saving an editor-written comment quietly migrates it to HTML.
+
   - **`contentAlign`** is `top`, `center` or `bottom`, and sets where the text sits vertically in the widget box. It defaults to `top`. Use `center` for a short hero line in a tall box — a one-line statement pinned to the top of a `6×3` widget looks like a mistake.
-  - On **read**, `list-widgets action=show` returns the Tiptap document under `options.comment_widget_text.description`. A text/font **colour** baked into the comment content overrides the theme's `text_color` (CSS specificity), so applying a palette won't recolour comment text — set the colour via a `textStyle` mark for white-on-dark headers, or leave it uncoloured to inherit the theme.
+  - On **read**, `list-widgets action=show` returns the body as **HTML** under `options.comment_widget_text.description`, whatever it was written with — a comment authored in the UI is stored as a Tiptap document and converted on read, so what you read is what you can write. The plain text comes back under `.text`. A text/font **colour** baked into the comment content overrides the theme's `text_color` (CSS specificity), so applying a palette won't recolour comment text — set the colour with a `<span style="color: …">` for white-on-dark headers, or leave it uncoloured to inherit the theme.
   - **Background image — the cover and section-divider pattern.** Set `background_image_url` (public http/https URL) or `background_image_data` (base64-encoded JPG/PNG, max 10 MB), with optional `background_image_filename`, in `rows[].options`. The image renders full-bleed behind the text.
 
-    This is how you build a report cover or a section divider in **one** widget instead of stacking an image widget above a text widget. Put the heading in the Tiptap doc, set `contentAlign: "center"`, and give the text a light `textStyle` colour so it reads against the image. Import remote images first (see the assets skill) and check the resolution against the rendered width.
+    This is how you build a report cover or a section divider in **one** widget instead of stacking an image widget above a text widget. Put the heading in the HTML body, set `contentAlign: "center"`, and give the text a light `<span style="color: …">` so it reads against the image. Import remote images first (see the assets skill) and check the resolution against the rendered width.
   - **Updating a comment widget — `rows[].id` is optional.** `manage-widgets update` carries forward the existing config's `integration_id` (and `source_id` / `report_type`) when you omit it. A row supplied **without** `rows[].id` updates the existing row in the same position, keeping its configs and their bindings — as of Jul 2026 it no longer rebuilds the row from scratch, which used to discard the comment's body and leave a blank widget. Pass `rows[0].id` (from `list-widgets action=show`) when you need to reorder rows or be explicit about which row you mean. Setting the text to `""` or whitespace is still refused — it renders as a blank box.
 - **Image widget** (`widget_type_id=34`): supply `{"image_url": "<url>"}` or `{"image_data": "<base64 JPG/PNG>"}` (max 10 MB) with optional `image_filename` in `rows[].options`. `image_data` accepts a base64-encoded image directly — no multipart upload needed. The tool auto-propagates this to the config-side canonical shape `configs[].options.images: [{url, title}]`, on **update** as well as create (fixed Jul 2026 — swapping an image through update previously wrote nothing and left the old one in place). You can also supply the config shape directly in `rows[].configs[].options`. Additional display options: `background_size` (`auto_fit` | `scale_to_fit` | `scale_to_fill`) and `alignment` (`left` | `center` | `right`) — pass these in row options alongside `image_url`.
   - A malformed `image_url` (no scheme/host, or a non-http scheme) and invalid or oversized base64 are now rejected on update too, before anything is written — previously update accepted both silently.
@@ -965,13 +961,13 @@ Three real exceptions, where the row-level field **is** the label:
 
 ### Section headers — introduce each section of a tab with a Comment widget
 
-A tab that holds more than one group of content (a KPI block, then a trend section, then a breakdown / detail section) should **introduce each group with a section header**: a full-width Comment widget (`21`, `channel_id=7`) carrying a short markdown heading — the report-page equivalent of an `##` heading in a document.
+A tab that holds more than one group of content (a KPI block, then a trend section, then a breakdown / detail section) should **introduce each group with a section header**: a full-width Comment widget (`21`, `channel_id=7`) carrying a short heading — the report-page equivalent of an `<h2>` in a document.
 
 - **Shape:** full row (`width: 6`), `height: 1` for a bare heading (a heading plus a one-line subtitle needs `height: 2` — see Comment sizing above). Place it as the first row of the section it introduces.
-- **Text:** a markdown heading in `rows[].options.comment_widget_text.text` — e.g. `## Campaign performance` — naming the section's theme, not repeating the widget titles below it. Keep it to a few words; optionally add one plain-text line of context beneath the heading. For styled headers (color, size, alignment) use a Tiptap `description` — see the Comment widget notes under `### options`.
+- **Text:** an HTML heading in `rows[].options.comment_widget_text.text` — e.g. `<h2>Campaign performance</h2>` — naming the section's theme, not repeating the widget titles below it. Keep it to a few words; optionally add one `<p>` of context beneath the heading. Colour, size and alignment go inline — see the Comment widget notes under `### options`.
 - **When to use one:** whenever a tab has two or more distinct sections — which a full, self-directed tab always does by default, since two sections is the floor (see "Composing a full tab"). The tab's *first* header also serves as the page title when the tab name alone isn't enough.
 - **When not to:** a tab that is genuinely one section (a single full-page table the user asked for, a lean one-pager) doesn't need a header row per widget — headers earn their row only when they separate something. Never stack two headers with no content between them.
-- **A section header holds ONLY the `## …` line.** Body copy — an intro paragraph, narrative text, or an AI summary — is a **separate** comment widget sized per the Comment sizing rule (`height: 2` for 1–2 sentences, `height: 3` per paragraph, `height: 4+` for a multi-paragraph AI text block), and body copy never carries a `##` prefix. Never append body text to a 6×1 header — a 6×1 comment fits exactly one short heading line, nothing more.
+- **A section header holds ONLY the `<h2>` line.** Body copy — an intro paragraph, narrative text, or an AI summary — is a **separate** comment widget sized per the Comment sizing rule (`height: 2` for 1–2 sentences, `height: 3` per paragraph, `height: 4+` for a multi-paragraph AI text block), and body copy is `<p>`, never a heading. Never append body text to a 6×1 header — a 6×1 comment fits exactly one short heading line, nothing more.
 
 ### Fit for purpose — fields must match the intent and each other
 
