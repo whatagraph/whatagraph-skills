@@ -41,6 +41,25 @@ Help users analyze marketing performance across multiple channels by leveraging 
    ```
    This reveals which sources are blended and how metrics map across them.
 
+   **Read the join, not just the source list.** `show` returns the sub-sources *and* the joins between
+   them, and the join is what decides whether a number looks wrong. Each join names a `type` and the
+   dimensions the two sides are matched on:
+
+   | Join type | Keeps |
+   |---|---|
+   | `full` | Every row from both sides; unmatched rows appear with the other side's fields empty |
+   | `inner` | Only rows whose join-key values exist on **both** sides |
+   | `left` / `right` | Every row from that one side, plus matches from the other |
+   | `union` | Rows stacked rather than matched side by side |
+   | `cross` | Every combination — multiplies rows, so almost never what a report wants |
+
+   Diagnosing from this: **totals lower than the channels added up** usually means `inner` silently
+   dropped rows whose join key existed on only one side. **Rows where a dimension is empty** are the
+   normal, expected sign of a `full` join whose join-key values don't overlap — which itself tells you
+   the keys don't align (a campaign-name join across an ad platform and an analytics property rarely
+   matches, so a date-level join is often the honest one). **Row counts far larger than either source**
+   points at `cross`, or at a join key that is not unique on either side.
+
 3. **Fetch cross-channel data from the blend**:
 
    Blend field ids use one of two prefix families — always look them up before fetching:
@@ -49,9 +68,19 @@ Help users analyze marketing performance across multiple channels by leveraging 
    list-sources action: list_dimensions_and_metrics, source_id: <blend_source_id>
    ```
 
-   Depending on how the blend was configured you will see either:
-   - **`aggregation_*` prefixes** — universal blends: `aggregation_metric_universal_metric_1`, `aggregation_dimension_universal_dimension_1137`
-   - **`blend_*` prefixes** — channel-native blends: `blend_metric_spend`, `blend_dimension_date`
+   The two families mean different things, and picking the wrong one is a common cause of a number
+   that looks "wrong" rather than an error:
+
+   - **`aggregation_*`** — the **combined** value across sub-sources, e.g.
+     `aggregation_metric_universal_metric_1`, `aggregation_dimension_universal_dimension_1137`. This is
+     the one unified column. Use it for "total spend across channels".
+   - **`blend_*`** — **one sub-source's own** column, e.g. `blend_metric_spend`, `blend_dimension_date`.
+     Use it to show channels side by side, or as the operand of a per-channel calculation.
+
+   So a single "Spend" figure comes from the `aggregation_*` field; reaching for a `blend_*` field
+   instead silently gives you one channel's spend presented as the total. Note also that `blend_*`
+   fields carry **no channel label** — the same metric on two sub-sources comes back with the same
+   display name, so map each id to its sub-source via `list-blends action: show` before using it.
 
    Use the verbatim ids from that response in `fetch-data`:
 
