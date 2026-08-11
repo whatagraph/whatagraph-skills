@@ -77,6 +77,7 @@ manage-destinations action=update transfer_id=<id> backfill_until=<date>
 ```
 
 - `resync` requires the transfer to be ACTIVE — resume a stopped transfer first. It also rejects when a backfill is still in progress; wait for it to finish.
+- **`resync` takes `from` / `to` — not `from` / `till`.** Every neighbouring tool (exports, fetches, share settings) ends a date range with `till`, and this one action does not. `till` is not accepted here, so a copied range silently fails validation on a parameter name rather than on the dates. `to` must be on or after `from`.
 - `update` needs at least one of `name` / `backfill_until`. `backfill_until` must be on or before yesterday. Moving it further back queues additional ETL jobs for the newly-covered dates.
 
 ## Deleting a transfer
