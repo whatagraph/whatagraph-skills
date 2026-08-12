@@ -15,7 +15,7 @@ optional_tools:
   - tool_name: export-report
     purpose: Verify tab structure renders after changes.
   - tool_name: manage-reports
-    purpose: Set a new report's layout/orientation at create instead of after the fact.
+    purpose: Set report orientation at create (`layout`) instead of via `set_layout`.
 ---
 
 # Report tabs (pages)

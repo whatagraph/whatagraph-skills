@@ -27,7 +27,7 @@ optional_tools:
   - tool_name: list-widgets
     purpose: csv_export a widget to verify the blend renders correctly.
   - tool_name: manage-filters
-    purpose: Attach or adjust a filter on a widget rendering the blend.
+    purpose: Create or attach a filter on one of the blend's sub-sources.
 ---
 
 # Blends
