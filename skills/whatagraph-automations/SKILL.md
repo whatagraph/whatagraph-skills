@@ -1,6 +1,7 @@
 ---
 name: whatagraph-automations
 type: domain
+group: distribution_lifecycle
 description: Schedule automated report delivery by email — daily, weekly, monthly, etc. — with optional PDF attachment, comparison-period framing, and manual approval gates. Use when a user wants a recurring report sent to clients or a distribution list.
 required_tools:
   - list-automations

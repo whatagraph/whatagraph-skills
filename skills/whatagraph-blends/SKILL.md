@@ -1,6 +1,7 @@
 ---
 name: whatagraph-blends
 type: domain
+group: data_modeling
 description: Combine data from different channels (Google Ads + Meta + GA4) into one virtual source by joining on shared dimensions (date, campaign name, etc.). Use when a widget needs to show cross-channel rows side-by-side or a computed metric needs numerator/denominator from separate sources.
 required_tools:
   - list-blends
@@ -8,13 +9,25 @@ required_tools:
   - list-sources
   - fetch-data
   - manage-blends
-  - manage-custom-dimensions
-  - manage-custom-metrics
-  - manage-filters
-  - manage-reports
-  - manage-source-groups
-  - manage-sources
-  - manage-widgets
+optional_tools:
+  - tool_name: manage-custom-metrics
+    purpose: Build a data_formula metric (e.g. Blended ROAS) on top of the blend.
+  - tool_name: manage-custom-dimensions
+    purpose: Add a custom dimension / alias on the blend to align join keys.
+  - tool_name: manage-sources
+    purpose: Normalise source currency / create a dimension alias before joining.
+  - tool_name: manage-source-groups
+    purpose: Decision-table alternative — a source group when no row-level join is needed.
+  - tool_name: manage-reports
+    purpose: Attach the blend's virtual source to a report before charting it.
+  - tool_name: manage-widgets
+    purpose: Render the blend in a widget once it is attached to a report.
+  - tool_name: export-report
+    purpose: Verify the built widgets show ready, non-empty data.
+  - tool_name: list-widgets
+    purpose: csv_export a widget to verify the blend renders correctly.
+  - tool_name: manage-filters
+    purpose: Attach or adjust a filter on a widget rendering the blend.
 ---
 
 # Blends

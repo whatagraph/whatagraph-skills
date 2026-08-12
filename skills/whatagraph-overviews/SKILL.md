@@ -1,13 +1,16 @@
 ---
 name: whatagraph-overviews
 type: domain
+group: monitoring_kpis
 description: Create overviews — KPI dashboards that track metrics over time. The UI calls these "Measurements". Use when a user wants a single-page KPI dashboard with trend visualizations and comparisons, independent of any report. Caution — "overview" in a prompt often means a report tab or a summary report instead of this entity; load this skill to run the disambiguation check (and ask the user a follow-up) whenever the meaning isn't clear from context.
 required_tools:
   - list-overviews
   - list-sources
   - manage-overviews
   - manage-sources
-  - delete-overviews
+optional_tools:
+  - tool_name: delete-overviews
+    purpose: Permanently delete an overview.
 ---
 
 # Overviews (Measurements)

@@ -1,6 +1,7 @@
 ---
 name: whatagraph-sources-and-data
 type: domain
+group: data_connections
 description: Discover and query Whatagraph data sources — find which accounts are connected, list report types and the available metrics and dimensions (narrowing large catalogs with the filter parameter), pull raw numbers via fetch-data, and check where a source is used. Covers native channels, source groups, and blends. Use this before any reporting task to establish what data is available.
 required_tools:
   - list-integrations
@@ -8,6 +9,11 @@ required_tools:
   - fetch-data
   - manage-integrations
   - manage-sources
+optional_tools:
+  - tool_name: list-widgets
+    purpose: Read a widget's bound fields to tell a retired metric apart from a typo.
+  - tool_name: manage-custom-dimensions
+    purpose: Create a tag dimension and its values; `tag` only assigns ones that already exist.
 ---
 
 # Data sources and fetching data

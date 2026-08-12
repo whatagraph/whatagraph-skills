@@ -1,6 +1,7 @@
 ---
 name: whatagraph-integrations-admin
 type: domain
+group: data_connections
 description: Browse available integrations, connect sources from already-authenticated accounts, and assign sources to spaces. Use when onboarding a new client (adding their sub-accounts into Whatagraph) or when reallocating existing sources across client folders.
 required_tools:
   - list-integrations
@@ -8,7 +9,11 @@ required_tools:
   - list-spaces
   - manage-integrations
   - manage-sources
-  - remove-integrations
+optional_tools:
+  - tool_name: remove-integrations
+    purpose: Detach sources from an account or disconnect an authenticated account.
+  - tool_name: manage-custom-dimensions
+    purpose: Create the tag dimension and its values before manage-sources action=tag can assign them.
 ---
 
 # Integrations & sources admin

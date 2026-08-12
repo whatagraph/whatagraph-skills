@@ -1,6 +1,7 @@
 ---
 name: whatagraph-offline-reports
 type: workflow
+group: report_building
 description: >-
   Build a complete Whatagraph report from numbers you already have, with no
   connected data source. Use when the user says "here is my analysis, make me a
@@ -15,6 +16,9 @@ required_tools:
   - manage-widgets
   - list-widgets
   - manage-themes
+optional_tools:
+  - tool_name: manage-sharing
+    purpose: Render the finished report to PDF to check the built output.
 ---
 
 # Building a report from data you already have

@@ -1,12 +1,17 @@
 ---
 name: whatagraph-themes
 type: domain
+group: team_workspace_branding
 description: Apply themes (logos, fonts, header/footer) and color palettes (chart series colors, widget chrome, report canvas) to reports, and create or update reusable palettes and themes. Use when branding a report for a client, applying consistent colors across widgets, fixing off-brand charts, or building a dark / black-background report. Covers the exact palette schema (widget_colors object, chart_colors array, additional_colors), how to read an existing palette's colors, and the built-in premade palette values.
 required_tools:
   - list-themes
   - list-widgets
   - manage-themes
-  - delete-themes
+optional_tools:
+  - tool_name: delete-themes
+    purpose: Delete a theme or color palette.
+  - tool_name: manage-widgets
+    purpose: Apply a theme colour id to an individual widget.
 ---
 
 # Themes & color palettes

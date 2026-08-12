@@ -1,11 +1,18 @@
 ---
 name: whatagraph-spaces
 type: domain
+group: team_workspace_branding
 description: Create and manage spaces (also called client folders). Spaces are the top-level containers for reports and data sources. Use when onboarding a new client, organizing reports into folders, or nesting folders for multi-brand/agency hierarchies. Handles asks like "create a folder for a new client", "organize my reports into folders", or "set up a sub-folder under this client".
 required_tools:
   - list-spaces
   - manage-spaces
-  - delete-spaces
+optional_tools:
+  - tool_name: delete-spaces
+    purpose: Soft-delete a space and its reports/measurements.
+  - tool_name: manage-reports
+    purpose: Pass the new space's id as client_id when a report is created for it.
+  - tool_name: manage-integrations
+    purpose: Referenced for sync_to_clients, which whatagraph-integrations-admin owns.
 ---
 
 # Spaces (client folders)

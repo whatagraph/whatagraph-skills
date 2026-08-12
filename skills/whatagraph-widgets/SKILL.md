@@ -1,17 +1,33 @@
 ---
 name: whatagraph-widgets
 type: domain
+group: report_building
 description: Build and lay out widgets on the 6-column grid — KPI rows, chart pairings, full-width tables, comment narration, image dividers — and create, update, duplicate, or batch-modify them. Use when designing a report tab's layout, sizing and positioning widgets on the grid, replicating the layout of a reference report (PDF/screenshot/existing report), swapping metrics on an existing widget, renaming the metric caption / series label a widget shows, colouring table cells by value with conditional formatting, bulk-swapping data sources across many widgets at once, or entering numbers by hand into an offline / manual-data widget. Also the widget reference for building a whole report out of numbers you already have — an analysis, a spreadsheet, a client's own figures — with no connected source at all; load `whatagraph-offline-reports` for that workflow. Carries the non-negotiable full-tab composition bar for self-directed builds — multi-section pages of 8–14 varied widgets, never a thin strip of KPIs plus a chart.
 required_tools:
-  - list-blends
-  - list-report-tabs
-  - list-reports
-  - list-source-groups
-  - list-sources
   - list-widgets
-  - export-report
-  - manage-report-tabs
+  - list-reports
+  - list-report-tabs
+  - list-sources
   - manage-widgets
+optional_tools:
+  - tool_name: list-blends
+    purpose: Resolve a blend's id when binding a blend as the widget's source.
+  - tool_name: list-source-groups
+    purpose: Resolve a source group's id when binding a group as the widget's source.
+  - tool_name: manage-report-tabs
+    purpose: Move widgets to another tab (move_widgets).
+  - tool_name: manage-filters
+    purpose: Create or attach a filter on a widget config.
+  - tool_name: list-filters
+    purpose: Find an existing team-level filter to attach inline.
+  - tool_name: list-themes
+    purpose: Look up theme colour ids for active_theme_color_id.
+  - tool_name: export-report
+    purpose: Verify the built layout renders with data.
+  - tool_name: manage-assets
+    purpose: Import and publish a remote image before binding it to a widget.
+  - tool_name: manage-sharing
+    purpose: Render the built layout to PDF to verify every table's last row is present.
 ---
 
 # Widgets

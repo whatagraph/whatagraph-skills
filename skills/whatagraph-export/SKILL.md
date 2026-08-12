@@ -1,6 +1,7 @@
 ---
 name: whatagraph-export
 type: domain
+group: report_building
 description: Export report data as an Excel (.xlsx) download or get inline widget data via csv_export. Use when a user wants raw data out of a report as spreadsheet rows, or needs a downloadable file.
 required_tools:
   - list-sources

@@ -1,12 +1,21 @@
 ---
 name: whatagraph-report-tabs
 type: domain
+group: report_building
 description: Create, duplicate, rename, and reorder tabs within a report, and open or close rows in a tab's grid. Each tab is a page of widgets. Use when a report needs a new section (e.g. "Paid Search", "Social", "Organic"), when existing tabs need to be re-ordered or duplicated, when a widget has to go between two existing rows, or when a tab has blank rows to close up. Handles asks like "add a new page to this report", "rename the second tab", "reorder the report sections", "insert a row between these two widgets", or "remove the empty rows / close the gaps / compact the tab".
 required_tools:
   - list-report-tabs
   - manage-report-tabs
-  - delete-report-tabs
   - manage-widgets
+optional_tools:
+  - tool_name: delete-report-tabs
+    purpose: Soft-delete or restore a report tab.
+  - tool_name: list-widgets
+    purpose: Inspect / csv_export widgets on a tab when verifying.
+  - tool_name: export-report
+    purpose: Verify tab structure renders after changes.
+  - tool_name: manage-reports
+    purpose: Set a new report's layout/orientation at create instead of after the fact.
 ---
 
 # Report tabs (pages)

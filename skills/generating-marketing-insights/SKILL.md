@@ -11,6 +11,7 @@ required_tools:
   - list-integrations
   - list-overviews
   - list-reports
+  - list-sources
   - view-goals
   - fetch-data
 ---

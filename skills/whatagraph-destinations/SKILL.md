@@ -1,11 +1,14 @@
 ---
 name: whatagraph-destinations
 type: domain
+group: data_connections
 description: View configured data transfers that push Whatagraph-ingested data to external destinations (BigQuery, LookerStudio, local storage, Whatagraph storage), inspect their job history, and control existing transfers (stop, resume, resync, update). Creating a new transfer is UI-only.
 required_tools:
   - list-destinations
   - manage-destinations
-  - delete-destinations
+optional_tools:
+  - tool_name: delete-destinations
+    purpose: Permanently stop and delete a configured data transfer.
 ---
 
 # Destinations & data transfers

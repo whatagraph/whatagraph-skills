@@ -7,6 +7,13 @@ required_tools:
   - list-sources
   - list-spaces
   - view-team
+optional_tools:
+  - tool_name: list-reports
+    purpose: Illustrative call when routing to the reports workflow.
+  - tool_name: list-widgets
+    purpose: Illustrative call when routing to the widgets/analysis workflow.
+  - tool_name: manage-reports
+    purpose: Illustrative call when routing to the reports workflow.
 ---
 
 # Whatagraph MCP overview

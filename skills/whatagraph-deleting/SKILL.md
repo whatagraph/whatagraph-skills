@@ -1,6 +1,7 @@
 ---
 name: whatagraph-deleting
 type: meta
+group: deletion
 description: Safe deletion, removal, and revocation across all Whatagraph entities — what each delete tool actually does, what cascades, what is recoverable, and when NOT to delete. Use when the user asks to delete, remove, disconnect, revoke, clean up, or undo anything, or before calling any delete-* / remove-* tool.
 required_tools:
   - list-blends
@@ -32,6 +33,21 @@ required_tools:
   - delete-widgets
   - remove-integrations
   - remove-members
+optional_tools:
+  - tool_name: manage-reports
+    purpose: Detach a source / remove a widget reference before deleting it.
+  - tool_name: manage-sharing
+    purpose: Revoke sharing before deleting a report.
+  - tool_name: manage-snapshots
+    purpose: Manage snapshot references during cleanup.
+  - tool_name: manage-source-groups
+    purpose: Detach sub-sources before deleting a source group.
+  - tool_name: manage-themes
+    purpose: Reassign a theme before deleting one in use.
+  - tool_name: manage-goals
+    purpose: Remove goal references before deleting a metric.
+  - tool_name: manage-integrations
+    purpose: Detach integration sources during cleanup.
 ---
 
 # Deleting things safely

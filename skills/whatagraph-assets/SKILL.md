@@ -1,12 +1,16 @@
 ---
 name: whatagraph-assets
 type: domain
+group: team_workspace_branding
 description: Import, find, read and publish files in the team's asset library — brand images for report widgets and themes, and documents you can search and read. Use when a report needs a logo, a cover image or a background, when you must turn a remote image URL into one that is safe to put in a report, or when the answer lives in an uploaded document rather than in marketing data.
 required_tools:
   - list-assets
   - search-assets
   - read-document
   - manage-assets
+optional_tools:
+  - tool_name: manage-widgets
+    purpose: Point a widget at a published asset URL once the import returns it.
 ---
 
 # Assets: files, images and documents

@@ -9,19 +9,26 @@ description: >-
   asks "is my account set up correctly?", needs a health check, or wants to
   understand their subscription and usage.
 required_tools:
-  - list-automations
-  - list-blends
-  - list-custom-dimensions
-  - list-custom-metrics
+  - view-team
   - list-integrations
-  - list-overviews
-  - list-reports
-  - list-source-groups
   - list-sources
   - list-spaces
-  - view-goals
+  - list-reports
+  - list-automations
   - view-sharing
-  - view-team
+optional_tools:
+  - tool_name: view-goals
+    purpose: Goals & KPI tracking review (step 8).
+  - tool_name: list-overviews
+    purpose: Overview / KPI dashboard review (step 8).
+  - tool_name: list-blends
+    purpose: Blend review (step 9).
+  - tool_name: list-source-groups
+    purpose: Source-group review and sync-issue scan (step 9).
+  - tool_name: list-custom-metrics
+    purpose: Custom-fields usage review (step 10).
+  - tool_name: list-custom-dimensions
+    purpose: Custom-fields usage review (step 10).
 ---
 
 # Auditing Account Health
