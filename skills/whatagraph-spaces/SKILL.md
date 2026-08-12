@@ -9,6 +9,10 @@ required_tools:
 optional_tools:
   - tool_name: delete-spaces
     purpose: Soft-delete a space and its reports/measurements.
+  - tool_name: manage-reports
+    purpose: Pass the new space's id as client_id when a report is created for it.
+  - tool_name: manage-integrations
+    purpose: Referenced for sync_to_clients, which whatagraph-integrations-admin owns.
 ---
 
 # Spaces (client folders)

@@ -12,6 +12,8 @@ required_tools:
 optional_tools:
   - tool_name: list-widgets
     purpose: Read a widget's bound fields to tell a retired metric apart from a typo.
+  - tool_name: manage-custom-dimensions
+    purpose: Create a tag dimension and its values; `tag` only assigns ones that already exist.
 ---
 
 # Data sources and fetching data

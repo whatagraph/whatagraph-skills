@@ -9,6 +9,12 @@ required_tools:
 optional_tools:
   - tool_name: delete-snapshots
     purpose: Remove an old snapshot when pruning version history.
+  - tool_name: list-widgets
+    purpose: Re-read widgets after a restore to find ones broken by source changes.
+  - tool_name: manage-reports
+    purpose: Repair a widget's broken source binding after a restore.
+  - tool_name: manage-sharing
+    purpose: Produce a PDF/Excel compliance artifact — snapshots re-query at view time.
 ---
 
 # Snapshots

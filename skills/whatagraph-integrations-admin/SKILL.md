@@ -12,6 +12,8 @@ required_tools:
 optional_tools:
   - tool_name: remove-integrations
     purpose: Detach sources from an account or disconnect an authenticated account.
+  - tool_name: manage-custom-dimensions
+    purpose: Create the tag dimension and its values before manage-sources action=tag can assign them.
 ---
 
 # Integrations & sources admin
