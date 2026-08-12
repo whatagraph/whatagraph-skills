@@ -710,13 +710,21 @@ manage-widgets action=update_ai_text report_id=<id> widget_id=<id>
      "types": ["summary"],          # summary | wins | issues | recommendations | custom (≥1 required)
      "load_type": "report_page",    # or "full_report" or "full_report_visible" (excludes hidden tabs)
      "language": "English",
-     "summary_length": "short",     # or "long"
+     "summary_length": "long",      # or "short" — a sentence count, not a style; see below
      "custom_prompt": "...",        # required when types includes "custom"
      "auto_update": false           # false triggers immediate generation; true regenerates automatically
    }
 ```
 
 Only comment widgets (`widget_type_id=21`) are supported. Unless `auto_update` is `true`, the call also triggers an immediate summary generation.
+
+> `summary_length` is a **sentence count per type**: `short` = 3 sentences, `long` = 8. `types` stack — each one generates its own block — so `["summary","wins","issues","recommendations"]` at `long` produces roughly 32 sentences, and `["summary"]` at `short` produces three.
+>
+> - **`short` is for a caption beside a single chart.** Never use it on a full-width page-level block — a three-sentence summary in a full-width comment is the floor of what the feature can produce, and it reads that way.
+> - Page-level default: `summary_length: "long"` with `types: ["summary","recommendations"]`; on an outcome or conclusion tab, `["summary","wins","issues","recommendations"]`.
+> - On the report's **first** tab use `load_type: "full_report"`. A page-scoped summary of tab 1 cannot reference what the later tabs show, which is the entire point of an executive summary.
+> - Pass `auto_update: false` on a build-and-hand-over run: the summary is generated during the call and returned in the response, so you can confirm the length you actually got. With `auto_update: true` only the settings are saved and the widget stays empty until the next refresh.
+> - **Size the host comment to the text**: `6×3` minimum for `long` single-type, `6×4`–`6×6` for `long` multi-type. A long summary in a `6×2` clips or scrolls, and a scrolled block truncates in PDF export — check with `export-report` before shipping.
 
 **`ai_text` is also accepted on `create`** (Jul 2026), taking the same fields, so an AI-narration comment is one call instead of a create followed by `update_ai_text`. When `auto_update` is `false` the summary is generated during the create and returned as `ai_text_content` in the response; with `auto_update: true` only the settings are saved and no such key comes back. This is also how you create a comment with no hand-written body — `ai_text` satisfies the body-text requirement, since the AI supplies the content. Passing `ai_text` on any other widget type is rejected.
 
@@ -1023,7 +1031,19 @@ Where a bare `## …` header labels a dashboard section, an **editorial tab** op
 }
 ```
 
-- **Size:** `6×2` for kicker + headline + a sentence or two; `6×3`–`6×4` when the body runs to full paragraphs (a closing "what it all means" block). Hold the copy to the box's budget (see Comment sizing under "Sizing"): if the prose outgrows the height, trim it or grow the widget before writing — overflow is invisible to the API and only shows up in the rendered report.
+- **Size:** `6×2` for kicker + headline + a sentence or two; `6×3`–`6×4` when the body runs to full paragraphs (a closing "what it all means" block). Hold the copy to the box's budget (see Comment sizing under "Sizing"): if the prose outgrows the height, trim it or grow the widget before writing — overflow is invisible to the API and only shows up in the rendered report. Size the block to its content and never leave a dead grid row at the bottom of a comment.
+- **Comment typography has no automatic spacing between a heading and the text under it.** The stylesheet's tightest elements carry no bottom margin (`p.p4` none, `h2` almost none, `<hr>` unstyled), so a heading stacked directly on body text renders as a cramped block with the body touching the headline. Build openers with explicit spacing:
+
+  ```html
+  <p class="p3"><strong><span style="color: #7c8794">EYEBROW · CLIENT</span></strong></p>
+  <h2>The chapter's claim in one line</h2>
+  <p class="p3"><br></p>
+  <p class="p3">One or two sentences of scope, with real numbers.</p>
+  ```
+
+  - Put the kicker in `p3`, which has a bottom margin — not `p4`, which has none.
+  - An empty `<p class="p3"><br></p>` between the headline and the body is the only reliable spacer — its Tiptap equivalent is an empty `{"type": "paragraph"}` node between the headline and body paragraphs. Without it the body touches the heading.
+  - **Do not put `<hr>` between the headline and the body.** If a rule is wanted, put an empty paragraph on both sides of it.
 - **Write the numbers in.** A narrative comment with real figures from the data reads as insight; one full of generic filler ("performance was strong this period") reads as padding — pull the figures from the widgets you just built (`csv_export`) or skip the claim.
 - **Colors:** the muted-gray kicker is safe on light themes; for the headline and body, prefer setting `fontSize` only and letting the text color inherit from the theme — a hard-coded near-black breaks on dark themes (a baked-in color overrides the theme's `text_color`). Bake colors in only when you know the theme.
 - **Takeaways close the loop.** A tab that argues something ends with a `6×2`+ narrative comment stating what the evidence means (kicker + body, no big headline needed). Don't bolt the takeaway text onto a header or an existing comment — it's its own widget, last row of the tab.
@@ -1080,7 +1100,7 @@ Once you know the structure, lay it out top to bottom:
 2. **Set `position_x` / `position_y` / `width` / `height` explicitly** on every widget so rows land where you intend. `auto_place=true` (the default when you omit position) just drops a widget in the next free slot — fine for a one-off add, not for a designed or replicated layout.
 3. **Pack to match your intent** — no gaps and no overlaps, but mirror the *reference's* density: don't tighten a deliberately sparse page, don't pad a dense one.
 4. **Fill each row left-to-right and start the next row flush against the previous one.** A row's widths sum to ≤ 6; if a row doesn't reach 6, widen a widget or add another rather than leaving a trailing gap. Don't leave an empty column mid-row or an empty row between populated rows — the only intentional blank space is one a *reference* deliberately shows (see "Replicating a reference report").
-5. **Standard row recipes on the 6-column grid** (starting points, not the only options): three KPI cards = `2+2+2` (h2); two charts = `3+3` or `4+2` (h3); full-width table or trend = `6` (h3, taller as row count grows — a widget carrying a lot of data gets more area, not a scrollbar); section header comment = `6×1`; three creative tiles = `2+2+2` (h3).
+5. **Standard row recipes on the 6-column grid** (starting points, not the only options): three KPI cards = `2+2+2` (h2 — never `3+3` two-across; the value font doesn't grow with width, see "KPI card geometry" under Composing a full tab); two charts = `3+3` or `4+2` (h3); full-width table or trend = `6` (h3, taller as row count grows — a widget carrying a lot of data gets more area, not a scrollbar); section header comment = `6×1`; three creative tiles = `2+2+2` (h3).
 6. **Build, then verify** with `export-report` (or `list-widgets action=csv_export`) — confirm the layout and that every widget loaded data. `list-widgets action=show` echoes positions but not rendered data.
 7. **Finish with styling.** Once every tab is composed and verified, load `whatagraph-themes` and apply a theme and color palette (client branding when known, otherwise a coherent team theme). An unstyled report is an unfinished report — see `whatagraph-reports` → "Style the report before handing it over".
 
@@ -1098,10 +1118,25 @@ When the user's ask reads like a deliverable someone will *read* (client story, 
 **Anatomy of a dashboard tab** (an ordering principle, not a fixed list — every element must still be justified by the data):
 
 1. **Section 1 — a header** (Comment `6×1`) naming the page or its first section.
-2. **A headline row** — 2–3 small KPI cards (`2×2` or `3×2`) carrying the tab's most important totals. Vary the form across tabs: a Gauge or Goal where there's a target, a List where several small numbers belong together.
+2. **A headline row** — 2–3 small KPI cards (`2×2`, three across — see "KPI card geometry" below) carrying the tab's most important totals. Vary the form across tabs: a Gauge or Goal where there's a target, a List where several small numbers belong together.
 3. **A main visual row** — the tab's centrepiece, usually a wide trend or comparison chart. Pair it rather than leaving it alone: a `4×3` chart beside a `2×3` list/donut/KPI, or two `3×3` charts side by side.
 4. **Section 2 — another header**, then **breakdown / detail rows** — a full-width table, or a table beside the donut/bar that summarizes it; a GeoMap for geography; Media tiles for creatives; a Funnel for staged conversions.
 5. **Section 3 where the data supports it** — a further header plus secondary breakdowns, a narration Comment, or an AI-summary block. Most metric-rich sources support a third section on at least some tabs; reach for it rather than stopping at two.
+
+**KPI card geometry decides how big the number looks.** The SingleValue value font is tiered by card size, not fluid — three fixed steps, not a smooth scale:
+
+| card size | how the number reads |
+|---|---|
+| exactly 1 column wide | smallest tier; footer and icon are hidden (the title too, unless the card is ≥2 rows tall) |
+| 2–3 cols wide, ≤3 rows tall | standard tier — the same size at `2×2` and at `3×2` |
+| ≥3 cols wide **and** ≥4 rows tall | large tier (roughly double) |
+
+- **Default KPI cards are `2×2`, three across.** Never `3×2` two-across: identical number, twice the box, half the card empty — it reads as a small number in a large frame, which is the most common complaint about agent-built KPI rows.
+- A hero number needs a card that is **at least 3 columns wide AND at least 4 rows tall**. `3×3` is still the standard tier — height is the lever people miss.
+- Make a SingleValue exactly 1 column wide only deliberately (a narrow editorial KPI strip at height ≥2, where the title survives) — never for a headline number, and never at height 1, where the title vanishes too.
+- Set `vertical_text_alignment: "center"` and `horizontal_text_alignment: "center"` on every SingleValue unless you have a reason not to. The defaults park the value in the bottom-left corner of the card, which makes a wide card look emptier still.
+- **Never let the widget title and the metric caption be the same string.** A card showing "Sessions" in bold, "Sessions" again small, then the number, is two labels doing one job. `hide_title` is rejected on SingleValue, so the caption is the only lever: set `rows[].configs[].options.metrics[].name` to something complementary (`"Last 30 days"`, `"vs previous period"`) and keep the metric name in the widget `title`.
+- `shorten_numbers: true` only on cards ≤2 columns wide, where 6+ digits would clip.
 
 **Anatomy of an editorial tab** (equally a principle, not a template):
 
