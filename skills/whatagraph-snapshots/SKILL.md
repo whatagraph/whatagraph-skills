@@ -5,9 +5,6 @@ group: distribution_lifecycle
 description: Save (create) and restore the structural state of a report — tabs, widgets, layout. Use when a user wants a checkpoint before a risky edit, to revert to a prior version, or to view snapshot history. Handles asks like "save a backup of this report before I change it", "undo my changes and go back to the previous version", or "show me this report's version history".
 required_tools:
   - list-snapshots
-  - list-widgets
-  - manage-reports
-  - manage-sharing
   - manage-snapshots
 optional_tools:
   - tool_name: delete-snapshots

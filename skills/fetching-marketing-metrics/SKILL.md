@@ -156,7 +156,13 @@ Alternatively, pass a `period` preset instead of `from`/`till` and let the sourc
 - **Custom rolling**: `customRollingDaily`, `customRollingWeekly`, `customRollingMonthly`
 - **Custom range**: `customRangeTwoDaysAgo`, `customRangeYesterday`, `customRangeToday`
 
-The tool schema now lists **all** valid periods dynamically — check the `period` field description in the schema for the complete list. Do not pass both `period` and `from`/`till` — `period` takes precedence and the dates are silently ignored.
+The tool schema now lists **all** valid periods dynamically — check the `period` field description in the schema for the complete list.
+
+**One or the other, and one is mandatory.** Pass `period`, or pass both `from` and `till`:
+
+- Both `from` **and** `till` are required whenever there is no `period` — supplying only a start date fails validation. `till` must be on or after `from`.
+- Pass both a `period` and dates and `period` wins: the preset's own range is used and your dates are silently ignored, with no warning. So never send a preset "for safety" alongside an exact range — you get the preset's range, not yours.
+- An unrecognised `period` is rejected outright, and the error lists the valid values.
 
 ## Interpreting Results
 

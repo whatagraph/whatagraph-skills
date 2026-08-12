@@ -50,8 +50,9 @@ view-team action: members
 Review:
 - **Subscription plan** and limits (sources, reports, users) — from `show_subscription`
 - **Team settings** and configuration — from `show`
-- **Usage vs. limits** — compare `sources_used` vs `sources_total`, `users_used` vs `users_total`, `reports_count` vs `reports_total`
-- **Null limits**: `sources_total: null`, `users_total: null`, or `reports_total: null` means "unlimited/unenforced" — do not flag as over-utilization
+- **Usage vs. limits** — compare `sources_used` vs `sources_total` and `users_used` vs `users_total`. These are the two comparisons worth making.
+- **`reports_total` is always `null`** — no report limit is reported, so `reports_count` is a count, not a utilization figure. Report it as "N reports", never as "N of M". Don't present a report-limit percentage; there is nothing to divide by.
+- **A null limit means "not enforced here" — not necessarily "unlimited".** `sources_total` / `users_total` come back null when no limit is set on the team, so treat them as unknown: never flag over-utilization against a null, and never claim the plan is unlimited on that basis. If the user needs the real entitlement, `list_plans` describes the plans.
 
 ### 2. Integration Health
 
@@ -192,7 +193,13 @@ For each source group, inspect per-config detail:
 ```
 list-source-groups action: show, group_id: <id>
 ```
-Returns each config's `id`, `output_name`, and `etl_config_ids` — useful for understanding the group's data pipeline setup.
+Returns `configs_count` plus each config's `id`, `name`, `output_name`, and `etl_config_ids` — along with `etl_configs`, where each entry names the `channel_name` backing it. Read it as an audit, not just a pipeline dump:
+
+- **`configs_count` > 1** is an older group shape. Each config is read separately, so note it — a metric present in one is not necessarily available in another.
+- **`etl_configs` is the honest membership list.** A channel in the group's sources but absent from `etl_configs` contributes nothing, however healthy the source itself looks.
+- **`output_name` is computed, read-only.** Don't report it as a naming choice someone made or suggest changing it.
+
+`source_issues` reports `disabled_configs_count` per source — that count is how many of a source's configs are switched off, so a source can appear healthy in the sources list while feeding nothing into the group.
 
 Check for sync issues — omit `group_id` to scan all groups at once:
 ```

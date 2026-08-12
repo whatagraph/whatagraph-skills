@@ -69,6 +69,14 @@ list-destinations action=list_jobs transfer_id=<id> config_id=<id>
 
 `state` values: `queued`, `running`, `completed`, `issue`.
 
+**A transfer is not pass-or-fail — it is a set of configs, one per source and report-type combination, each syncing on its own.** So one config can be failing while the rest complete happily, and the transfer still reports as active. When a user says "the export is broken", find out *which part*:
+
+1. `action=show` to list the transfer's configs.
+2. `action=list_jobs transfer_id=<id> state="issue"` to see only the failing jobs, then read each job's `config_id` to identify the affected source / report type.
+3. Narrow to one config with `config_id=<id>` to read just its history.
+
+This matters when interpreting a resync too: a resync re-fetches the range for the transfer, so a range that only one config missed is re-pulled for all of them. Confirm the scope before promising a targeted fix, and check `list_jobs` afterwards rather than assuming success.
+
 ## Controlling a transfer
 
 ```
@@ -80,6 +88,7 @@ manage-destinations action=update transfer_id=<id> backfill_until=<date>
 ```
 
 - `resync` requires the transfer to be ACTIVE — resume a stopped transfer first. It also rejects when a backfill is still in progress; wait for it to finish.
+- **`resync` takes `from` / `to` — not `from` / `till`.** Every neighbouring tool (exports, fetches, share settings) ends a date range with `till`, and this one action does not. `till` is not accepted here, so a copied range silently fails validation on a parameter name rather than on the dates. `to` must be on or after `from`.
 - `update` needs at least one of `name` / `backfill_until`. `backfill_until` must be on or before yesterday. Moving it further back queues additional ETL jobs for the newly-covered dates.
 
 ## Deleting a transfer
