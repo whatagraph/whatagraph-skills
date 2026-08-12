@@ -4,8 +4,6 @@ type: domain
 description: Create and manage spaces (also called client folders). Spaces are the top-level containers for reports and data sources. Use when onboarding a new client, organizing reports into folders, or nesting folders for multi-brand/agency hierarchies. Handles asks like "create a folder for a new client", "organize my reports into folders", or "set up a sub-folder under this client".
 required_tools:
   - list-spaces
-  - manage-integrations
-  - manage-members
   - manage-spaces
   - delete-spaces
 ---
@@ -53,6 +51,8 @@ manage-spaces action=create
    icon_type="emoji" icon_emoji="🚀"
    font="inter"
 ```
+
+**The create response carries the id you need next.** It returns the new space under `space`, whose `id` is the value every other tool calls `client_id` — pass it as `client_id` to `manage-spaces action=update`, as `parent_id` to nest a child under it, and as `client_id` to `manage-reports action=create` to put a report inside it. Read it from `space.id` rather than listing spaces again to find what you just made; note the response key is `id`, not `client_id`, so do not go looking for a `client_id` key that is not there.
 
 ## Create a sub-space (nested)
 
@@ -114,11 +114,11 @@ Soft-deletes the space and all its reports/measurements (support-restorable with
 ## What MCP can't do here
 
 - Bulk-move multiple spaces at once — move them one at a time with `manage-spaces action=update parent_id=<id>`.
-- Assign users/permissions to a space — via `manage-members` for editor role.
+- Assign users/permissions to a space — not done here. Editor access is granted with `manage-members`; see `whatagraph-team-and-members` (and note that for editors the space list is a full replace, so omitting a space removes access).
 
 ## Common pitfalls
 
 - **`space_id` vs `client_id`** — MCP uses `client_id`. The UI says "space/folder"; the code says `team_client`. All point at the same thing.
 - **Nesting too deep** — 1–2 levels is manageable; 4+ creates a clicky navigation.
-- **Assuming a space owns sources** — sources are assigned to spaces via `manage-integrations action=sync_to_clients`, not at source creation.
+- **Assuming a space owns sources** — sources are assigned to spaces via `manage-integrations action=sync_to_clients` — owned by `whatagraph-integrations-admin`, not this skill — and not at source creation.
 - **Deleting a space cascades to its reports** — reports that live in the space are soft-deleted with it; they can be restored via support but not MCP.

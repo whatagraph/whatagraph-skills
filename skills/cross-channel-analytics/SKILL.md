@@ -41,6 +41,25 @@ Help users analyze marketing performance across multiple channels by leveraging 
    ```
    This reveals which sources are blended and how metrics map across them.
 
+   **Read the join, not just the source list.** `show` returns the sub-sources *and* the joins between
+   them, and the join is what decides whether a number looks wrong. Each join names a `type` and the
+   dimensions the two sides are matched on:
+
+   | Join type | Keeps |
+   |---|---|
+   | `full` | Every row from both sides; unmatched rows appear with the other side's fields empty |
+   | `inner` | Only rows whose join-key values exist on **both** sides |
+   | `left` / `right` | Every row from that one side, plus matches from the other |
+   | `union` | Rows stacked rather than matched side by side |
+   | `cross` | Every combination — multiplies rows, so almost never what a report wants |
+
+   Diagnosing from this: **totals lower than the channels added up** usually means `inner` silently
+   dropped rows whose join key existed on only one side. **Rows where a dimension is empty** are the
+   normal, expected sign of a `full` join whose join-key values don't overlap — which itself tells you
+   the keys don't align (a campaign-name join across an ad platform and an analytics property rarely
+   matches, so a date-level join is often the honest one). **Row counts far larger than either source**
+   points at `cross`, or at a join key that is not unique on either side.
+
 3. **Fetch cross-channel data from the blend**:
 
    Blend field ids use one of two prefix families — always look them up before fetching:
@@ -49,9 +68,19 @@ Help users analyze marketing performance across multiple channels by leveraging 
    list-sources action: list_dimensions_and_metrics, source_id: <blend_source_id>
    ```
 
-   Depending on how the blend was configured you will see either:
-   - **`aggregation_*` prefixes** — universal blends: `aggregation_metric_universal_metric_1`, `aggregation_dimension_universal_dimension_1137`
-   - **`blend_*` prefixes** — channel-native blends: `blend_metric_spend`, `blend_dimension_date`
+   The two families mean different things, and picking the wrong one is a common cause of a number
+   that looks "wrong" rather than an error:
+
+   - **`aggregation_*`** — the **combined** value across sub-sources, e.g.
+     `aggregation_metric_universal_metric_1`, `aggregation_dimension_universal_dimension_1137`. This is
+     the one unified column. Use it for "total spend across channels".
+   - **`blend_*`** — **one sub-source's own** column, e.g. `blend_metric_spend`, `blend_dimension_date`.
+     Use it to show channels side by side, or as the operand of a per-channel calculation.
+
+   So a single "Spend" figure comes from the `aggregation_*` field; reaching for a `blend_*` field
+   instead silently gives you one channel's spend presented as the total. Note also that `blend_*`
+   fields carry **no channel label** — the same metric on two sub-sources comes back with the same
+   display name, so map each id to its sub-source via `list-blends action: show` before using it.
 
    Use the verbatim ids from that response in `fetch-data`:
 
@@ -90,6 +119,20 @@ Source groups are particularly useful for agencies managing many accounts of the
    ```
    Shows all sources in the group and their ETL configurations.
 
+   **Check `configs_count` before you interpret anything.** A group holds one or more *configs*, each
+   an output the group produces, and `show` returns per-config `id`, `name`, `output_name`, plus
+   `etl_config_ids` and `etl_configs` (each with its `channel_name`).
+
+   - **One config** — the normal, current shape. One unified output; read it as a single source.
+   - **More than one config** — an older group shape. Each config aggregates its own set of fields and
+     is read separately, so a metric present in one config is not necessarily available in another. If
+     a field you expect is missing, check whether you are reading the right config before concluding
+     the group is broken.
+
+   `output_name` is **read-only** — it is computed from the config's structure, not something anyone
+   set. Use `etl_configs[].channel_name` to see which channels actually back a config; a channel absent
+   there contributes nothing, whatever the group's source list suggests.
+
 3. **Check for sync issues**:
    ```
    list-source-groups action: source_issues, group_id: <id>
@@ -101,13 +144,49 @@ Source groups are particularly useful for agencies managing many accounts of the
 1. **List custom metrics**:
    ```
    list-custom-metrics action: list
+   list-custom-metrics action: list, semantic_search: "customer acquisition cost"   # by meaning
+   list-custom-metrics action: list, type: "channel"                                # by scope
    ```
-   Custom metrics enable cross-channel calculations like total spend, blended ROAS, or weighted averages.
+
+   **Know which kind of metric you are looking at** — it decides what the number means:
+
+   | Kind | What it does |
+   |---|---|
+   | `data_aggregation` | Sums the **same** metric across the sources it maps, into one total. This is the primitive behind "total spend across accounts" — no group or blend involved. |
+   | `data_formula` | Calculates from other fields (ROAS, CPA, CPC). Its operands are named `A`, `B`, … |
+   | `metadata` | An alias / unified name for an existing field. No maths. |
+
+   Scope matters just as much: a metric's **transformation level** is either `channel` (applies to every
+   source of that channel) or `source` (one specific account). Filter by it with `type:`. A metric
+   scoped to one source will look "missing" on the others — that is the scope, not a fault.
+
+   **The cross-source ratio caveat.** A `data_aggregation` metric totals one metric across sources, but
+   a *ratio* whose numerator and denominator each need aggregating first (blended ROAS, blended CPA)
+   cannot be done by one metric alone — it needs a group or blend underneath, then a `data_formula` on
+   top of that combined source. So when a "blended" ratio looks wrong, check whether it was built on a
+   combined source at all, or is quietly averaging per-source ratios.
+
+   `list_with_premades` additionally filters by `map_type` (the full set, including
+   `currency_exchange`, `tag`, `system`, `ai`) and by `integrations`.
 
 2. **Inspect a custom metric formula**:
    ```
    list-custom-metrics action: show, metric_id: <id>
    ```
+
+   Reading the result: `formula` is written in terms of bare operand letters (`A/B`), and `fields`
+   resolves each one — every entry pairs an `identifier` (the letter) with the `external_id` and `name`
+   of the field it stands for, plus the `channel_id` or `integration_source_id` it was mapped on. So
+   read `formula` and `fields` together: `A/B` alone says nothing until `fields` tells you `A` is Spend
+   on one channel and `B` is Conversions on another.
+
+   `show` also returns `aggregation_level` and `accumulator` / `summary_accumulator`, which decide
+   whether a ratio is computed per row and then rolled up, or recomputed from the summed totals. Two
+   metrics with an identical `formula` can legitimately report different totals because of this — it is
+   the usual explanation for "the total doesn't match the rows".
+
+   For what these settings do, how to change any of it, and the full field-id rules per source type,
+   load `whatagraph-custom-metrics`. This skill only reads.
 
 3. **List custom dimensions**:
    ```

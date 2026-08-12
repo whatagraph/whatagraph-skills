@@ -27,7 +27,9 @@ A **goal** is a target value on a metric for a specific period (daily, weekly, m
 ## Known limitations
 
 - Goal creation may not be available for every team or MCP server version. If `manage-goals action=create` is unavailable, use `view-goals` for existing goals and create new goals in the Whatagraph UI.
-- Goals are identified by `metric_external_id` + `integration_source_id` (+ `report_type_external_id` + `dimension_key`); do not rely on `name` as the unique identifier.
+- Goals are identified by `metric_external_id` + `integration_source_id` + `report_type_external_id` + `dimension_key` (plus the measurement, when the goal sits on one); do not rely on `name` as the unique identifier.
+- **The report type is part of that key even when you never passed it.** On a single-report-type source it is resolved for you and then matched exactly, so "I left it blank" does not make the key looser. Two goals differing *only* by report type are fine; a second goal identical in every other respect is refused as a conflict, and the error names the existing `goal_id` to view or update instead.
+- **The timeframe is *not* part of the key.** So one metric on one source cannot carry both a monthly and a quarterly goal at the same scope — the second attempt is a conflict, not a second goal. To track the same metric over two timeframes, separate them by `dimension_key` or by measurement, or update the existing goal instead.
 - **One goal per (metric, source, report type, dimension filter) combination.** Creating a second goal with the same `metric_external_id`, `integration_source_id`, `report_type_external_id`, and `dimension_key` returns a conflict error:
   ```
   {"category":"conflict","message":"A goal already exists for metric universal_metric_3 on source ID 632871"}
@@ -98,8 +100,12 @@ manage-goals action=create
 
 ### `period` + `repeat`
 
-- `daily` / `weekly` / `monthly` / `quarterly` / `yearly` — recurring; combine with `repeat="1"`.
-- `static` — one-off bounded period; combine with `repeat="0"`.
+The two are **independent** settings, both required on `create`. Nothing rejects an "odd" combination, so these are conventions that match user intent, not validation rules:
+
+- `daily` / `weekly` / `monthly` / `quarterly` / `yearly` — a recurring timeframe; normally `repeat="1"`.
+- `static` — a one-off bounded period; normally `repeat="0"`.
+
+Pairing them the other way is accepted and simply means what it says (a `monthly` goal with `repeat="0"` measures one month and does not roll forward). So do not treat a mismatch as an error to fix — check what the user actually wanted.
 
 ### Goal with dimension filter
 
@@ -123,7 +129,16 @@ manage-goals action=update goal_id=<id>
 
 ## Attaching a goal to a widget
 
-The widget type "Goal" is how a goal renders in a report. Create via `manage-widgets action=create` with the goal-widget type on the target tab. Goals also surface in overviews, measurement dashboards, and the dedicated Goals page in the UI.
+A goal renders in a report through a goal widget. Create it via `manage-widgets action=create` with the goal-widget type on the target tab. Goals also surface in overviews, measurement dashboards, and the dedicated Goals page in the UI.
+
+**There is more than one goal widget type.** Pick by where the numbers come from:
+
+- **Goal** — the standard one, tracking a metric on a connected source. This is the default choice.
+- **Offline goal** — for manually entered (offline) data rather than a connected source. See `whatagraph-offline-reports`.
+
+Each also exists in an older, pre-current-generation form that `manage-widgets` **rejects** on create and update. So take the type id from the current set rather than an older reference or a legacy report you are copying — an id that renders fine in an existing report is not necessarily one you can create. See `whatagraph-widgets` for the writable type ids.
+
+Colour note: goal progress bars are filled with the palette's accent fill colour, which falls back to the first chart colour when unset — so set it deliberately on a report built around goals (see `whatagraph-themes`).
 
 ## Deleting a goal
 
