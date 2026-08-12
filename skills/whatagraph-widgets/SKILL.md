@@ -1023,7 +1023,7 @@ Where a bare `## …` header labels a dashboard section, an **editorial tab** op
 }
 ```
 
-- **Size:** `6×2` for kicker + headline + a sentence or two; `6×3`–`6×4` when the body runs to full paragraphs (a closing "what it all means" block).
+- **Size:** `6×2` for kicker + headline + a sentence or two; `6×3`–`6×4` when the body runs to full paragraphs (a closing "what it all means" block). Hold the copy to the box's budget (see Comment sizing under "Sizing"): if the prose outgrows the height, trim it or grow the widget before writing — overflow is invisible to the API and only shows up in the rendered report.
 - **Write the numbers in.** A narrative comment with real figures from the data reads as insight; one full of generic filler ("performance was strong this period") reads as padding — pull the figures from the widgets you just built (`csv_export`) or skip the claim.
 - **Colors:** the muted-gray kicker is safe on light themes; for the headline and body, prefer setting `fontSize` only and letting the text color inherit from the theme — a hard-coded near-black breaks on dark themes (a baked-in color overrides the theme's `text_color`). Bake colors in only when you know the theme.
 - **Takeaways close the loop.** A tab that argues something ends with a `6×2`+ narrative comment stating what the evidence means (kicker + body, no big headline needed). Don't bolt the takeaway text onto a header or an existing comment — it's its own widget, last row of the tab.
@@ -1051,7 +1051,7 @@ Pick each widget's size from what its content needs to be legible, then fit it i
 - **Pie / Donut** — roughly square; a full-row pie wastes space.
 - **List / Funnel** — narrow-to-medium; sit well beside a chart.
 - **Media / creative preview** — one tile per creative, grouped across a row.
-- **Comment** — full-row as a section header/divider, or taller for an AI text block. **Size the height to the text it holds:** `height: 1` fits only a single short heading line; a sentence or two needs `height: 2`; a full paragraph `height: 3`; a multi-paragraph AI summary `4+`. Under-sizing clips or overflows the text in the rendered report, so when in doubt give it more height — and prefer splitting a long block across widgets (or trimming the copy) over cramming it into a short box.
+- **Comment** — full-row as a section header/divider, or taller for an AI text block. **Size the height to the text it holds:** `height: 1` fits only a single short heading line; a sentence or two needs `height: 2`; a full paragraph `height: 3`; a multi-paragraph AI summary `4+`. Under-sizing clips or overflows the text in the rendered report, so when in doubt give it more height — and prefer splitting a long block across widgets (or trimming the copy) over cramming it into a short box. **Budget the copy against the box before writing it:** on the 6-wide grid, one grid row of height holds roughly two lines of 14–15px body text (≈ 160–200 characters), and a large narrative headline (28–32px) consumes most of a row by itself — so a `6×2` opener fits a kicker line, a headline, and about two short sentences, no more. The API gives no overflow signal — the write succeeds whether the text fits or not — so count the text first, and when it exceeds the budget, grow the widget or cut words; never ship prose that outruns its box.
 - **GeoMap** — medium.
 
 **Hard constraints (always):** `width` 1..6, `height` ≥ 1, `position_x + width ≤ 6`, and no two widgets overlap.
