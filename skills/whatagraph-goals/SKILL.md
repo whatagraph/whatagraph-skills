@@ -1,13 +1,16 @@
 ---
 name: whatagraph-goals
 type: domain
+group: monitoring_kpis
 description: Create goals — targets on metrics (monthly spend caps, lead targets, ROAS floors) with time periods and optional dimension filtering. Use when a user wants to track progress toward a number by a deadline.
 required_tools:
   - list-sources
   - view-goals
   - manage-goals
-  - delete-goals
   - manage-widgets
+optional_tools:
+  - tool_name: delete-goals
+    purpose: Delete goals that are no longer tracked.
 ---
 
 # Goals
@@ -27,7 +30,9 @@ A **goal** is a target value on a metric for a specific period (daily, weekly, m
 ## Known limitations
 
 - Goal creation may not be available for every team or MCP server version. If `manage-goals action=create` is unavailable, use `view-goals` for existing goals and create new goals in the Whatagraph UI.
-- Goals are identified by `metric_external_id` + `integration_source_id` (+ `report_type_external_id` + `dimension_key`); do not rely on `name` as the unique identifier.
+- Goals are identified by `metric_external_id` + `integration_source_id` + `report_type_external_id` + `dimension_key` (plus the measurement, when the goal sits on one); do not rely on `name` as the unique identifier.
+- **The report type is part of that key even when you never passed it.** On a single-report-type source it is resolved for you and then matched exactly, so "I left it blank" does not make the key looser. Two goals differing *only* by report type are fine; a second goal identical in every other respect is refused as a conflict, and the error names the existing `goal_id` to view or update instead.
+- **The timeframe is *not* part of the key.** So one metric on one source cannot carry both a monthly and a quarterly goal at the same scope — the second attempt is a conflict, not a second goal. To track the same metric over two timeframes, separate them by `dimension_key` or by measurement, or update the existing goal instead.
 - **One goal per (metric, source, report type, dimension filter) combination.** Creating a second goal with the same `metric_external_id`, `integration_source_id`, `report_type_external_id`, and `dimension_key` returns a conflict error:
   ```
   {"category":"conflict","message":"A goal already exists for metric universal_metric_3 on source ID 632871"}
@@ -44,6 +49,35 @@ view-goals action=show goal_id=<id>                # full details
 ```
 
 Pagination: page-number based (not cursor). `page` (integer, default 1) and `per_page` (integer, default 64, max 500). Use `last_page` from the response to know total pages.
+
+`list` and `show` return **configuration only** — the target, the period, the direction. No current value, no verdict. Their `active` field means the goal is still running, **not** that it is being met. Never conclude from `list` or `show` that a goal is healthy, on track, or within its limit.
+
+## Checking whether goals are being met
+
+```
+view-goals action=status goal_ids=[4455, 4017]
+```
+
+This is the only action that fetches actual data and decides. Per goal it returns:
+
+| Field | Meaning |
+|-------|---------|
+| `status` | `on_track`, `off_track`, or `unknown` |
+| `current_value` | Measured value so far in the goal's period |
+| `goal_value` | The target, pro-rated to the working period |
+| `percentage` | `current_value` as a share of `goal_value` |
+| `projected_value` | Where the metric lands at the end of the period if the current run-rate holds |
+| `current_pacing` | Run-rate per day, measured over a trailing 7-day window |
+| `remaining_value` | How much is still needed (floored at 0) |
+| `days_remaining` | Days left in the goal's period |
+
+Response totals: `off_track_count`, `on_track_count`, `evaluated_count`, `unknown_goal_ids`, `missing_goal_ids`.
+
+`off_track` means the goal is **projected** to miss a target or breach a limit at the current run-rate — not merely that it is behind an even pace. A goal already over a `limit` is off track; a `target` already achieved is on track.
+
+`unknown` means the goal could not be measured at all — a disconnected source, a metric that no longer exists, an empty response. The `error` field says why. Report it as a blind spot; never count it as a pass.
+
+`goal_ids` is **required and capped at 20 per call**, because each goal costs two source fetches (the working period plus the trailing pacing window). To check a whole account: `list` first, then `status` in batches of 20. `missing_goal_ids` tells you which requested IDs did not exist for the team, so a stale ID silently drops out of the batch rather than failing it.
 
 ## Creating a goal
 
@@ -69,8 +103,12 @@ manage-goals action=create
 
 ### `period` + `repeat`
 
-- `daily` / `weekly` / `monthly` / `quarterly` / `yearly` — recurring; combine with `repeat="1"`.
-- `static` — one-off bounded period; combine with `repeat="0"`.
+The two are **independent** settings, both required on `create`. Nothing rejects an "odd" combination, so these are conventions that match user intent, not validation rules:
+
+- `daily` / `weekly` / `monthly` / `quarterly` / `yearly` — a recurring timeframe; normally `repeat="1"`.
+- `static` — a one-off bounded period; normally `repeat="0"`.
+
+Pairing them the other way is accepted and simply means what it says (a `monthly` goal with `repeat="0"` measures one month and does not roll forward). So do not treat a mismatch as an error to fix — check what the user actually wanted.
 
 ### Goal with dimension filter
 
@@ -94,7 +132,16 @@ manage-goals action=update goal_id=<id>
 
 ## Attaching a goal to a widget
 
-The widget type "Goal" is how a goal renders in a report. Create via `manage-widgets action=create` with the goal-widget type on the target tab. Goals also surface in overviews, measurement dashboards, and the dedicated Goals page in the UI.
+A goal renders in a report through a goal widget. Create it via `manage-widgets action=create` with the goal-widget type on the target tab. Goals also surface in overviews, measurement dashboards, and the dedicated Goals page in the UI.
+
+**There is more than one goal widget type.** Pick by where the numbers come from:
+
+- **Goal** — the standard one, tracking a metric on a connected source. This is the default choice.
+- **Offline goal** — for manually entered (offline) data rather than a connected source. See `whatagraph-offline-reports`.
+
+Each also exists in an older, pre-current-generation form that `manage-widgets` **rejects** on create and update. So take the type id from the current set rather than an older reference or a legacy report you are copying — an id that renders fine in an existing report is not necessarily one you can create. See `whatagraph-widgets` for the writable type ids.
+
+Colour note: goal progress bars are filled with the palette's accent fill colour, which falls back to the first chart colour when unset — so set it deliberately on a report built around goals (see `whatagraph-themes`).
 
 ## Deleting a goal
 
@@ -108,10 +155,11 @@ Batch-only — always an array, even for one goal. Goal widgets show an empty st
 
 - Bulk create goals — one at a time.
 - Custom pacing schedules — linear only; for seasonal/custom pacing, reach out to support.
-- Read goal progress/attainment — `view-goals` returns the goal's **configuration only**, no current values. To show progress, render a Goal widget (`widget_type_id=123`) and read it via `export-report`, or `fetch-data` the underlying metric and compare it to `max_value` yourself.
+- Check more than 20 goals in one call — `action=status` caps `goal_ids` at 20; batch larger checks.
 
 ## Common pitfalls
 
+- **Reading `active: true` from `list` as "the goal is being met"** — it only means the goal is still running. Answering "all goals are healthy" off a `list` response states a verdict that was never measured. Call `action=status` or say you have not checked.
 - **`repeat` as int vs string** — MCP expects `"1"` / `"0"` as strings.
 - **`condition=limit` but passing `min_value`** — `min_value` is only used for `range`. Pass `max_value` for limit caps.
 - **Goal on a source group** — pass the source group's integration source id (the exposed virtual source) as `integration_source_id`.

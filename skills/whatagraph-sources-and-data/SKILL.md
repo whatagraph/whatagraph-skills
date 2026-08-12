@@ -1,6 +1,7 @@
 ---
 name: whatagraph-sources-and-data
 type: domain
+group: data_connections
 description: Discover and query Whatagraph data sources — find which accounts are connected, list report types and the available metrics and dimensions (narrowing large catalogs with the filter parameter), pull raw numbers via fetch-data, and check where a source is used. Covers native channels, source groups, and blends. Use this before any reporting task to establish what data is available.
 required_tools:
   - list-integrations
@@ -8,6 +9,11 @@ required_tools:
   - fetch-data
   - manage-integrations
   - manage-sources
+optional_tools:
+  - tool_name: list-widgets
+    purpose: Read a widget's bound fields to tell a retired metric apart from a typo.
+  - tool_name: manage-custom-dimensions
+    purpose: Create a tag dimension and its values; `tag` only assigns ones that already exist.
 ---
 
 # Data sources and fetching data
@@ -96,6 +102,16 @@ list-sources action=list_dimensions_and_metrics source_id=<id> report_type="camp
 - **`is_universal=true`** — only the unified `universal_*` fields (source groups / blends); `false` — only channel-native fields; omit for all.
 - This call is **paginated**: decide whether to continue with `page.has_more` (not `estimated_total`, which is commonly `null` on this action), passing `page.cursor`. Prefer `filter` / `is_universal` / `per_page` over paging the whole catalog.
 
+### Deprecated fields
+
+Fields the channel has retired carry `deprecated_at`, and `deprecated: true` once that date has passed. Both keys are only present when a date is set, so absence means the field is current.
+
+- Fields whose deprecation has **already taken effect** are left out of the catalog entirely — they no longer return data. If a widget is bound to one, `list-widgets action=show` flags it inline (`"deprecated": true` on the bound metric), which is the way to tell a retired binding apart from a typo.
+- Fields with a **future** `deprecated_at` are still listed and still work, but are sorted to the bottom of the catalog (so onto the last page). Treat them as "migrate before this date", not as a choice.
+- `manage-widgets` refuses to bind a field whose deprecation has taken effect, and warns when binding one that is only scheduled.
+
+To replace a retired metric: read the widget with `list-widgets action=show` to see which bound fields are flagged, then look for the current equivalent in the catalog — the replacement usually shares wording with the old name (e.g. a retired "Likes" metric replaced by "Followers"). `resolve_fields` with a natural-language query is the fastest way to find it.
+
 ## Fetching raw data
 
 Field ids in `metrics` and `dimensions` are the channel-native `external_id` returned by `list_dimensions_and_metrics` — not display names, not what the native platform's API calls them. For Google Ads campaign-level fetches that means `metrics.clicks`, `metrics.impressions`, `metrics.cost_micros`, and the dimension is `campaign.name` (dot, not underscore). For source groups and blends the ids are different again — see the family table below.
@@ -138,6 +154,21 @@ Values: `previous` (matching-length previous period), `last_year` (same dates, y
 | Blend — per-sub-source fields (rare in fetch) | `blend_metric_<id>` | `blend_dimension_<id>` |
 
 If `fetch-data` returns `Invalid metrics: X` or `Invalid dimensions: X`, do not retry with a variant spelling. Re-run `list_dimensions_and_metrics` and pick the value verbatim from the response — including dots and prefixes.
+
+### Fetching from a source group or blend
+
+A group and a blend each get their **own** `integration_source_id`, and you fetch from that id exactly like a native source — same call, only the field-id family changes (see the table above).
+
+```
+fetch-data
+   source_id=<group_or_blend_integration_source_id>
+   report_type="<the virtual source's own report type>"   # only if it has more than one
+   metrics=["universal_metric_3"]                          # group form; a blend uses aggregation_metric_*
+   dimensions=["universal_dimension_1131","universal_dimension_1137"]
+   period="lastMonth"
+```
+
+**`report_type` follows the same rule as anywhere else, judged against the virtual source's own report types — not its sub-sources'.** Run `list-sources action=list_report_types source_id=<virtual source id>` first: one report type (or none) means omit `report_type`; more than one means it is required, and leaving it out fails with "This source has multiple report types". A group mirrors report types from the channels it rolls up, so a group over a multi-report-type channel usually needs it. Never pass a sub-source's report type — resolve it on the virtual source.
 
 ### Source-group breakdown metrics — pick the variant, don't filter
 
@@ -224,6 +255,8 @@ manage-sources action=refresh
 ```
 
 **`refresh`** clears cached data so the next read re-fetches fresh data from the provider. Useful for "my data isn't showing" troubleshooting after a source reconnect or data delay.
+
+**`tag` only assigns values that already exist.** It is not a create path — an unknown `tag_id` or `tag_value_ids` is rejected, not created. To make a new tag (the tag dimension plus its values, optionally assigning sources in the same call), use `manage-custom-dimensions action=create map_type=tag`, then come back here for later assignments. See `whatagraph-custom-dimensions`.
 
 **Currency override** is the most common fix when numbers look wrong — a USD Google Ads account reporting into a EUR-default team needs an explicit override here. Override affects display only; historical data rows keep their stored currency.
 

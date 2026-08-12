@@ -1,12 +1,17 @@
 ---
 name: whatagraph-themes
 type: domain
-description: Apply themes (logos, fonts, header/footer) and color palettes (chart series colors, widget chrome, report canvas) to reports, and create or update reusable palettes and themes. Use when branding a report for a client, applying consistent colors across widgets, or fixing off-brand charts. Covers the exact palette schema (widget_colors object, chart_colors array, additional_colors).
+group: team_workspace_branding
+description: Apply themes (logos, fonts, header/footer) and color palettes (chart series colors, widget chrome, report canvas) to reports, and create or update reusable palettes and themes. Use when branding a report for a client, applying consistent colors across widgets, fixing off-brand charts, or building a dark / black-background report. Covers the exact palette schema (widget_colors object, chart_colors array, additional_colors), how to read an existing palette's colors, and the built-in premade palette values.
 required_tools:
   - list-themes
   - list-widgets
   - manage-themes
-  - delete-themes
+optional_tools:
+  - tool_name: delete-themes
+    purpose: Delete a theme or color palette.
+  - tool_name: manage-widgets
+    purpose: Apply a theme colour id to an individual widget.
 ---
 
 # Themes & color palettes
@@ -19,6 +24,10 @@ Two concepts:
 
 Themes and palettes live at the team level. They're applied per-report.
 
+**Light vs dark is a palette, not a theme.** Every surface colour — report page background, widget tile background, text — is a palette key, so a fully dark report (black page, black tiles, white text) is a normal `create_color` call, not a limitation. The built-in "Whatagraph Dark" palette is only `additional_colors.background: "#1a1c1fff"`, `widget_colors.widget_background: "#2a2b30ff"`, `text_color: "FFFFFF"` plus its neutrals. Never tell a user dark mode isn't supported — see [Built-in palette values](#built-in-palette-values) for the full sets to copy.
+
+> **Read a palette before you judge it.** `list_colors` returns names and IDs only — the colours come from `list-themes action=show_color color_id=<id>`, which works on the built-in premades too. Never conclude a key doesn't exist because a list response didn't mention it; `show_color` it, or read [Built-in palette values](#built-in-palette-values) below.
+
 > The `manage-themes` tool description is intentionally brief. Detailed color format rules (bare hex vs raw CSS), resolution order, dark-theme guidance, and email theme setup are documented here in this skill, not in the tool description. Always load this skill before creating or updating themes/palettes.
 
 ## Use this when
@@ -26,6 +35,8 @@ Themes and palettes live at the team level. They're applied per-report.
 - Apply the client's logo and brand fonts to a specific report.
 - Set a consistent color palette across all series in a report's charts.
 - Switch a report to a dark variant of the team theme.
+- Build a dark / black-background report from scratch, or a light one, when no palette exists yet.
+- Read back what a palette actually looks like, or copy a built-in premade as the base for a new one.
 
 ## Listing
 
@@ -37,6 +48,8 @@ list-themes action=list_colors search="dark"            # filter palettes by nam
 list-themes action=list_themes report_id=<id>           # report + team themes, with active status
 list-themes action=list_colors report_id=<id>           # report + team palettes, with active status
 list-themes action=show_theme report_id=<id> theme_id=<id>   # one theme: name, header, footer, style options
+list-themes action=show_color color_id=<id>                  # one palette: its full colors object
+list-themes action=show_color color_id=<id> report_id=<id>   # same, plus is_active for that report
 ```
 
 Pagination: cursor-based with `cursor` parameter; `per_page` up to 500 (default 100).
@@ -47,6 +60,37 @@ Both `list_themes` and `list_colors` include context fields:
 - `applied_theme_id` / `applied_color_id` — the ID active on the report, or `null`
 - `applied_theme_source` / `applied_color_source` — `"team"`, `"report"`, `"system"`, or `null`. When `"system"`, the applied theme/palette is a built-in premade not included in the list — `team_has_themes: false` with a non-null `applied_theme_id` is expected in this case
 - `team_has_themes` / `team_has_colors` — whether the team has any custom themes/palettes
+
+### Reading a palette's colours
+
+```
+list-themes action=show_color color_id=<id>
+   → {"id": "<id>", "name": "Whatagraph Dark", "theme_id": 3, "source": "system",
+      "is_active": false, "options": {...},
+      "colors": {"widget_colors": {...}, "chart_colors": [...], "additional_colors": {...}}}
+```
+
+`show_color` is the only way to see a palette's actual colours — use it before editing one, and before telling a user what a palette does or doesn't support. Notes:
+
+- **It reads the built-in premades.** When `list_colors` reports `applied_color_source: "system"`, the applied palette isn't in the list, but `show_color` still resolves its `applied_color_id` — that's how you read "Whatagraph Dark" and copy it into a new palette.
+- **Team and premade palettes need no `report_id`.** A **report-level** palette does — without it you get a not-found error. Pass `report_id` also when you want `is_active` to mean anything; without it, it's always `false`.
+- **`colors` is exactly the shape `create_color` / `update_color` take.** So `show_color` → tweak a few keys → `update_color` is the safe way to edit a palette without dropping the keys you didn't mean to touch.
+- **`update_color` merges per key — except `chart_colors`, which is replaced whole.** `widget_colors` and `additional_colors` are merged key by key, so sending only `{"widget_colors": {"text_color": "2B2B2B"}}` changes that one key and leaves the rest intact. `chart_colors` is an ordered list, so merging it by position would mix old and new series colours; instead, **any** `chart_colors` you send replaces the entire array. Send two colours and the palette has exactly two — the rest are gone. To change one series colour, read the array with `show_color`, edit that position, and send the whole array back.
+- Use `fields=id,name` to skip the `colors` payload when you only need to identify it.
+
+### Colouring one widget differently
+
+The `id` of a palette from `list_colors` is exactly what a widget's `active_theme_color_id` takes. Pass it verbatim through `manage-widgets`:
+
+```
+list-themes action=list_colors report_id=<report_id>
+   → [{"id": "<colour_id>", "name": "Signal Red", "theme_id": "<theme_id>", "source": "team", "is_active": false}, ...]
+
+manage-widgets action=update report_id=<report_id> widget_id=<widget_id>
+   options={"active_theme_color_id": <colour_id>}
+```
+
+Two things to be clear about. It is a **palette id, not a single colour** — you are switching that widget to a whole palette, not picking one swatch out of one. And `is_active` marks the palette currently applied to the *report*, which is unrelated to what an individual widget overrides.
 
 ## Apply a theme to a report
 
@@ -135,9 +179,23 @@ manage-themes action=create_color
 - **Hex format matters — two groups of keys:**
   - **Text / accent / chart-line colors are bare hex (NO `#`):** `text_color`, `neutral_color`, `neutral_bg`, `positive_color`, `negative_color`, `accent_fill_color`, `accent_text_color`, `chart_axis_text`, `chart_grid_lines`, and `additional_colors.report_accent` / `report_text_color` / `report_title_color`. The renderer prepends the `#` itself, so a value stored **with** a `#` becomes `##RRGGBB` — an invalid color — and the element falls back to a default (commonly **dark, unreadable text/numbers**). Pass `"2B2B2B"`, not `"#2B2B2B"`.
   - **Backgrounds / fills / icons are raw CSS values (KEEP the `#`, or use `rgba()` / `transparent` / a gradient):** `widget_background`, `icon_symbol`, `icon_background`, `list_odd_fill`, `list_even_fill`, and `additional_colors.background`.
+- **`accent_fill_color` is not a generic accent** — it is the **fill of goal-widget progress bars**, plus header accents. That makes it the key to set deliberately on any report holding goals: leave it out and it falls back to your first `chart_colors` entry (a guard against black bars), which means goal bars silently inherit a series colour rather than a chosen one. Its partner `accent_text_color` is the text that sits on that fill, so check the pair for contrast together.
 - **`chart_colors`** is an array of bare hex values (6-digit `"C0392B"` or 8-digit-with-alpha `"6366f1ff"`). A leading `#` is stripped automatically; non-hex values are rejected. Provide 8–12 colors to avoid repetition on large charts.
 - **`additional_colors`** is an **object** controlling the report canvas: `background` (raw CSS), `report_accent`, `report_text_color`, `report_title_color` (bare hex). Set these to drive the report background and title color; omit to keep the theme default.
 - Tie a palette to a theme via `theme_id` in `colors`. Binding is organizational only — any palette can be applied to any report regardless of which theme it's bound to. Omitting `theme_id` creates an unbound palette that works with any theme.
+
+### Designing a palette that hangs together
+
+When you compose a palette yourself (no exact brand values supplied), don't pick each key independently — derive the whole set from one starting point so the report reads as a single design:
+
+- **Start from one accent.** Take the brand/primary color (from the prompt, the client's logo, or the space name's known brand) as `report_accent` / `accent_text_color` / `icon_background`, and derive everything else from it — same temperature (warm accent → warm greys and fills, cool accent → cool ones), never a mix of clashing families.
+- **`chart_colors` are siblings, not a grab-bag.** Use distinct **hues** at broadly similar saturation and lightness so no series shouts over the others — vary the hue around the wheel, not just the shade of one color. Order the array so adjacent entries contrast clearly (series are colored in array order; two near-identical neighbours make consecutive series indistinguishable). Provide 8–12.
+- **Keep semantic colors unambiguous.** `positive_color` stays recognizably green-ish and `negative_color` red-ish, both clearly distinct from the nearby `chart_colors` — if a chart series uses nearly the same red as the negative delta, trend arrows stop reading at a glance. For the same reason avoid leaning the chart series heavily on red+green pairs.
+- **Chrome recedes, data speaks.** `chart_axis_text` and `chart_grid_lines` are quiet, low-saturation greys tinted toward the palette's temperature — grid lines lighter than axis text, both far quieter than any chart color. `neutral_color` sits between `text_color` and the background.
+- **Contrast where text lives.** `text_color` on `widget_background`, `accent_text_color` on `accent_fill_color`, and `report_title_color` / `report_text_color` on `additional_colors.background` must each be comfortably readable (aim for roughly WCAG-AA-level contrast). This is where near-miss palettes fail.
+- **Let the canvas lift the cards.** Make `additional_colors.background` a subtle tint one step away from `widget_background` (slightly darker or warmer/cooler) so widgets read as cards on a page; `list_even_fill` is a barely-visible step from `widget_background`, not a loud stripe.
+- **Theme and palette agree.** The theme's header/footer `text_color` / `background_color` come from the same family as the palette (accent or its neutrals) — a blue-branded header on an earth-toned palette reads as two different reports stapled together. When creating both, derive them from the same accent; when applying a palette to a report with an existing theme, check the pair side by side.
+- **Verify on a real page.** After applying, export a tab that holds a table + chart + KPI (`export-report`) and check: series distinguishable, deltas obviously green/red, text readable on every surface, header matching the page. Adjust with `update_color` rather than shipping a near-miss.
 
 ### Dark themes — set the full key set
 
@@ -148,6 +206,63 @@ When the background is dark you must darken the foreground keys too, or widgets 
 - Set `widget_background` and `additional_colors.background` to your dark colors (raw CSS, keep `#`).
 - After applying a dark palette, re-check a report that contains a **list, table, or funnel** widget — those are where missing zebra fills bite, not the single-value scorecards.
 
+Copy "Whatagraph Dark" below as the starting point rather than inventing dark values.
+
+## Built-in palette values
+
+The premade palettes shipped with the platform, verbatim — the same values `show_color` returns for them, written down here so you can start from a known-good set without a round trip. Copy one into `create_color` and change the accent and `chart_colors`.
+
+Note the alpha form: built-ins commonly use 8-digit `RRGGBBAA` (`"2a2b30ff"`) for the bare-hex keys and `#RRGGBBAA` / `rgba()` for the raw-CSS keys. Both are accepted; the 6-digit forms are equally fine.
+
+**Whatagraph Dark** — black page, dark tiles, white text. This is the whole of what makes a report dark:
+
+```json
+{
+  "widget_colors": {
+    "widget_background": "#2a2b30ff", "text_color": "FFFFFF",
+    "neutral_color": "78828eff",     "neutral_bg": "F3F3F3",
+    "positive_color": "38A169",      "negative_color": "E53E3E",
+    "accent_fill_color": "4A5568",   "accent_text_color": "eff2ffff",
+    "chart_axis_text": "697582ff",   "chart_grid_lines": "3e4552ff",
+    "icon_symbol": "#FFFFFF",        "icon_background": "#1a1c1fff",
+    "list_odd_fill": "transparent",  "list_even_fill": "#ffffff14",
+    "font_family": "inter",
+    "shades": ["6CD094","FEC644","34587C","ECADAD","76D18A","94D1EB"]
+  },
+  "chart_colors": ["6366f1cc","bef264cc","ec4899cc","f97316cc","22d3eecc","a855f7cc","a5b4fccc","86efaccc","3b82f6cc","ffb800cc","ea580ccc","10b981cc"],
+  "additional_colors": {
+    "background": "#1a1c1fff", "report_accent": "2563ebff",
+    "report_text_color": "ffffffff", "report_title_color": "FFFFFF"
+  }
+}
+```
+
+For an even blacker report, drop `background` to `"#000000ff"` and `widget_background` to `"#111111ff"`, and keep `list_even_fill` a translucent white (`"#ffffff14"`) so table rows stay readable.
+
+**Whatagraph Light** — the default. Differences from Dark only:
+
+```json
+{
+  "widget_colors": {
+    "widget_background": "#ffffffff", "text_color": "2a2b30ff",
+    "accent_fill_color": "E2E8F0",   "accent_text_color": "78828eff",
+    "chart_axis_text": "8e97a0ff",   "chart_grid_lines": "e2e8f0ff",
+    "icon_symbol": "#4f5257ff",      "icon_background": "#eff2f6ff",
+    "list_odd_fill": "transparent",  "list_even_fill": "rgba(247, 250, 252, 0.5)",
+    "negative_color": "ff4646ff"
+  },
+  "chart_colors": ["6366f1ff","bef264ff","ec4899ff","f97316ff","22d3eeff","a855f7ff","a5b4fcff","86efacff","3b82f6ff","ffb800ff","ea580cff","10b981ff"],
+  "additional_colors": {
+    "background": "linear-gradient(160deg, rgb(250, 250, 250) 0%, rgb(234, 239, 255) 100%)",
+    "report_accent": "3B82F6", "report_text_color": "4A5568", "report_title_color": "2a2b30ff"
+  }
+}
+```
+
+**Whatagraph White** — flat white page, light-grey tiles, pink accent: `background: "#ffffffff"`, `widget_background: "#f5f6f8ff"`, `text_color: "171e26ff"`, `accent_text_color`/`icon_symbol`/`report_accent`/`report_title_color` = `f53178`, `list_even_fill: "#ebecee80"`.
+
+**Whatagraph Gradient** — proof that `additional_colors.background` takes a full CSS gradient and `widget_background` takes translucency: `background: "linear-gradient(333deg, rgb(7, 8, 77) 14%, rgb(81, 84, 219) 63%, rgb(123, 125, 255) 100%)"`, `widget_background: "#6366f14d"` (translucent tiles over the gradient), `text_color: "FFFFFF"`, `icon_background: "#ffffff4d"`, `list_even_fill: "#678dcd4d"`.
+
 ## Update a palette
 
 ```
@@ -156,7 +271,7 @@ manage-themes action=update_color
    colors={"widget_colors": {...}, "chart_colors": [...hex...], "additional_colors": {...}}
 ```
 
-Same shapes as `create_color` — `widget_colors`/`additional_colors` are objects, `chart_colors` is the hex array (leading `#` stripped automatically). Note `chart_colors` is an indexed array and is replaced entirely on update — pass the full desired list. After updating a palette already enabled on a report, re-check the report render (`list-widgets action=csv_export` or the UI) to confirm the change propagated.
+Same shapes as `create_color` — `widget_colors`/`additional_colors` are objects, `chart_colors` is the hex array (leading `#` stripped automatically). Note `chart_colors` is an indexed array and is replaced entirely on update — pass the full desired list. Read the palette with `show_color` first and submit its `colors` with your edits applied, so you don't drop keys you meant to keep. After updating a palette already enabled on a report, re-check the report render (`list-widgets action=csv_export` or the UI) to confirm the change propagated.
 
 ## Email themes (whitelabel)
 
@@ -170,6 +285,24 @@ manage-themes action=create_email_theme name="Acme Email" options={...}
 manage-themes action=update_email_theme email_theme_id=<id> options={...}
 manage-themes action=enable_email_theme report_id=<id> email_theme_id=<id>  # report_id optional (omit for team-level)
 ```
+
+`create_email_theme` requires `name`, `web_domain_id`, and `email_domain_id` — get the last two from `list_web_domains` / `list_email_domains`; both must belong to the team or be premade. On `update_email_theme` the theme keeps its current domains when you omit them.
+
+### Email theme `options`
+
+| Key | Notes |
+|---|---|
+| `background_color` | Email body background |
+| `heading_text`, `heading_text_color` | |
+| `body_text`, `body_text_color` | |
+| `footer_text`, `footer_text_color` | `footer_text` is nullable |
+| `button_text`, `button_text_color`, `button_background_color` | The "View report" call to action |
+| `sender_name` | Display name on the From line |
+| `sender_email` | **Local part only** — the part before the `@`. Validated as a full address against `sender_email_domain` |
+| `sender_email_domain` | The domain half, from `list_email_domains` |
+| `subject_text` | |
+| `reply_name`, `reply_to_email` | |
+| `images[]` | `{title, url, alignment, scale_to_fill}`. Import and publish a remote image first — see the header/footer image rule above |
 
 ## Deleting a theme or palette
 
@@ -186,6 +319,9 @@ Affected reports fall back to the team default. Switch them to a replacement fir
 
 ## Common pitfalls
 
+- **Calling dark mode unsupported** — a black page with black tiles and white text is a plain palette (see [Built-in palette values](#built-in-palette-values)). It looks impossible because `list_colors` shows no colours, so the keys that control it never appear in a list response. `show_color` a palette, or read this skill — don't infer the schema from what a list happened to return.
+- **Editing a palette from memory** — `update_color` replaces what you send. `show_color` it first and edit the returned `colors`, or you will silently drop the keys you left out.
+- **`show_color` on a report-level palette without `report_id`** — returns not-found. Team and premade palettes resolve without it; a palette owned by a report needs its report passed too.
 - **Palette with fewer colors than chart series** — colors repeat in cycle. Provide 8–12 colors to avoid visible repetition on large charts.
 - **Putting a `#` on a text/accent color** — `text_color`, `neutral_color`, `positive_color`, `negative_color`, `accent_fill_color`, `accent_text_color`, `chart_axis_text`, `chart_grid_lines`, `report_accent`, `report_text_color`, `report_title_color` and `chart_colors` are **bare hex**; the renderer prepends the `#`, so a stored `#RRGGBB` becomes `##RRGGBB` and the text/numbers silently render in a dark default. Only the raw-CSS keys (`widget_background`, `icon_symbol`, `icon_background`, `list_odd_fill`, `list_even_fill`, `background`) keep the `#` (or take `rgba()`/`transparent`/gradient).
 - **Dark theme with default zebra fills** — omitting `list_even_fill` on a dark palette leaves the hardcoded light default, so list/table/funnel even-rows become unreadable. Set `list_even_fill`/`list_odd_fill` explicitly (see "Dark themes" above).

@@ -1,6 +1,7 @@
 ---
 name: whatagraph-team-and-members
 type: domain
+group: team_workspace_branding
 description: View team settings and subscription, update team name/localization, and invite or update team member invitations. Use when a user wants to onboard a new team member, change roles, update team timezone/currency defaults, or inspect plan limits.
 required_tools:
   - list-automations
@@ -8,7 +9,9 @@ required_tools:
   - manage-members
   - manage-sources
   - manage-team
-  - remove-members
+optional_tools:
+  - tool_name: remove-members
+    purpose: Cancel a pending member invitation.
 ---
 
 # Team & members

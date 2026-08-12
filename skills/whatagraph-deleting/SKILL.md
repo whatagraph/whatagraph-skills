@@ -1,6 +1,7 @@
 ---
 name: whatagraph-deleting
 type: meta
+group: deletion
 description: Safe deletion, removal, and revocation across all Whatagraph entities — what each delete tool actually does, what cascades, what is recoverable, and when NOT to delete. Use when the user asks to delete, remove, disconnect, revoke, clean up, or undo anything, or before calling any delete-* / remove-* tool.
 required_tools:
   - list-blends
@@ -32,6 +33,21 @@ required_tools:
   - delete-widgets
   - remove-integrations
   - remove-members
+optional_tools:
+  - tool_name: manage-reports
+    purpose: Detach a source / remove a widget reference before deleting it.
+  - tool_name: manage-sharing
+    purpose: Revoke sharing before deleting a report.
+  - tool_name: manage-snapshots
+    purpose: Manage snapshot references during cleanup.
+  - tool_name: manage-source-groups
+    purpose: Detach sub-sources before deleting a source group.
+  - tool_name: manage-themes
+    purpose: Reassign a theme before deleting one in use.
+  - tool_name: manage-goals
+    purpose: Remove goal references before deleting a metric.
+  - tool_name: manage-integrations
+    purpose: Detach integration sources during cleanup.
 ---
 
 # Deleting things safely
@@ -40,7 +56,7 @@ Tools covered: every `delete-*` tool, `remove-integrations`, `remove-members`, p
 
 **Deletion is the highest-risk operation on this MCP surface.** Four rules before any call:
 
-1. **Confirm intent with the user.** There is no `confirm` parameter in any delete tool's schema. The agent should confirm with the user conversationally before calling any destructive tool.
+1. **Confirm intent with the user.** There is no `confirm` parameter in any delete tool's schema. The agent should confirm with the user conversationally before calling any destructive tool. One exception: intermediate artifacts the agent itself created moments earlier as scaffolding within a documented flow (e.g. the linked intermediate report in the template → duplicate → delete flow, see `whatagraph-reports`) hold no user content and can be deleted without a confirmation round-trip.
 2. **Check usage first** (table below) — know what breaks before it breaks.
 3. **Know the recovery class** — some deletes have a `restore` action, some need support, some are gone forever.
 4. **Prefer update over delete-and-recreate** wherever dependents bind by id (source groups, blends, goals).
@@ -160,7 +176,7 @@ The tool has **no usage guard** — it will happily delete a blend that widgets 
 delete-source-groups action=delete group_id=<id>
 ```
 
-Permanent — cannot be undone. The group's virtual integration source is removed; widgets and custom metrics pointing at it break. Run `list-source-groups action=show group_id=<id>` first. See also "When NOT to delete" — most "delete the group" requests are really update requests.
+Permanent — cannot be undone (re-verified against the tool). It removes the group, **its configs, its member source entries, and the virtual integration source** in one go; widgets and custom metrics pointing at that virtual source break. Note the member sources are only detached from the group — the underlying connected sources themselves survive, so a deleted group is rebuildable from them, just not restorable. Run `list-source-groups action=show group_id=<id>` first. See also "When NOT to delete" — most "delete the group" requests are really update requests.
 
 ### Custom fields
 

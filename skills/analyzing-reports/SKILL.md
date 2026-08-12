@@ -146,9 +146,16 @@ When reviewing widget configurations, you'll encounter three field ID naming con
 |---|---|---|---|
 | **Universal** | `universal_dimension_*`, `universal_metric_*` | `universal_metric_3` (Spend) | Cross-channel unified fields. Used by some channels (e.g. Google Ads) as the only valid metric IDs. |
 | **Channel-native** | Varies by channel | `IMPRESSION_1_GROSS` (Pinterest), `impressions` (GSC), `campaign.name` (Google Ads) | Integration-specific IDs. Naming conventions differ: Pinterest uses ALL_CAPS, GSC uses lowercase, etc. |
-| **Aggregation** | `aggregation_metric_*` | `aggregation_metric_12` | Computed/aggregated metrics layered on top of raw data (e.g. blend metrics, custom formulas). |
+| **Aggregation** (blend, combined) | `aggregation_metric_universal_metric_*`, `aggregation_dimension_universal_dimension_*` | `aggregation_metric_universal_metric_3` | A blend's **combined** value across its sub-sources. Note the doubled prefix — it wraps the inner id rather than carrying a number of its own. |
+| **Per-sub-source** (blend) | `blend_metric_*`, `blend_dimension_*` | `blend_metric_939` | **One** sub-source's own column inside a blend. |
+| **Group drill-down** | `universal_metric_*_integration_*`, `universal_metric_*_integration_source_*` | `universal_metric_3_integration_source_447726` | One channel's, or one sub-source's, contribution inside a source group. |
 
-Use `list-sources action=list_dimensions_and_metrics` to discover the available field IDs for a source. It returns `universal_*` IDs.
+**What each family tells a reviewer.** On a blend widget, an `aggregation_*` field is the unified column while a `blend_*` field is a single channel — so a widget titled "Total Spend" bound to a `blend_*` field is showing one channel's spend under a total's label. That is a genuine finding, not a style note. On a source group, a plain `universal_*` field is the rollup and the `_integration_source_*` variants are single accounts; a "total" built from one of those has the same defect.
+
+Two more review notes:
+
+- **Read shape ≠ write shape.** These families are what the tools *return*; the ids accepted when *creating* a custom field on a blend are narrower. So do not flag a config as wrong merely because its ids differ from what a create call would take.
+- `list-sources action=list_dimensions_and_metrics` discovers the valid ids for a source. The full family table by source type lives in `whatagraph-sources-and-data` → "Field-id family by source type"; blend-specific rules are in `whatagraph-blends`.
 
 ## Template Analysis
 
@@ -180,7 +187,8 @@ list-themes action: list_colors, report_id: <id>, theme_id: <id>
 When auditing reports, look for:
 
 - **Duplicate KPI values across cards**: when several single-value widgets on the same tab display the exact same number — especially a round-looking value like `107,285` — treat it as a misconfiguration signal. The widgets likely all ended up pointing at the source's default metric. Inspect the affected widgets via `list-widgets action: show` (or `csv_export`) and confirm each has the metric the title implies.
-- **Too many widgets per tab**: More than 10-12 widgets per tab can be overwhelming. Suggest splitting into multiple tabs.
+- **Too many widgets per tab**: Well past ~15 widgets on one tab (without section headers breaking it up) can be overwhelming. Suggest splitting into multiple tabs. A composed dashboard page normally runs 8–14 widgets across two or more sections — that range is healthy, not a flag.
+- **Too few widgets per tab**: Judge by page fullness, not raw count. An *editorial* tab of 3–8 substantial widgets wrapped in narrative comments (styled opener, closing takeaway) that fills its grid is a finished page. What reads as unfinished is one or two token widgets in an otherwise empty grid with no narrative — usually a build that stopped after a token widget per tab. There, suggest composing the tab into a full page (dashboard sections, or an editorial opener + evidence + takeaway) or merging thin tabs together.
 - **Missing date context**: Reports without date range widgets leave viewers guessing about the time period.
 - **Inconsistent sources**: Widgets on the same tab pulling from different sources without clear labeling.
 - **Unused tabs**: Tabs with no widgets or only placeholder content.

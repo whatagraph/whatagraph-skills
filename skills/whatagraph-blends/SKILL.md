@@ -1,18 +1,33 @@
 ---
 name: whatagraph-blends
 type: domain
+group: data_modeling
 description: Combine data from different channels (Google Ads + Meta + GA4) into one virtual source by joining on shared dimensions (date, campaign name, etc.). Use when a widget needs to show cross-channel rows side-by-side or a computed metric needs numerator/denominator from separate sources.
 required_tools:
   - list-blends
+  - list-filters
   - list-sources
   - fetch-data
   - manage-blends
-  - manage-custom-dimensions
-  - manage-custom-metrics
-  - manage-reports
-  - manage-source-groups
-  - manage-sources
-  - manage-widgets
+optional_tools:
+  - tool_name: manage-custom-metrics
+    purpose: Build a data_formula metric (e.g. Blended ROAS) on top of the blend.
+  - tool_name: manage-custom-dimensions
+    purpose: Add a custom dimension / alias on the blend to align join keys.
+  - tool_name: manage-sources
+    purpose: Normalise source currency / create a dimension alias before joining.
+  - tool_name: manage-source-groups
+    purpose: Decision-table alternative — a source group when no row-level join is needed.
+  - tool_name: manage-reports
+    purpose: Attach the blend's virtual source to a report before charting it.
+  - tool_name: manage-widgets
+    purpose: Render the blend in a widget once it is attached to a report.
+  - tool_name: export-report
+    purpose: Verify the built widgets show ready, non-empty data.
+  - tool_name: list-widgets
+    purpose: csv_export a widget to verify the blend renders correctly.
+  - tool_name: manage-filters
+    purpose: Attach or adjust a filter on a widget rendering the blend.
 ---
 
 # Blends
@@ -39,8 +54,10 @@ A **blend** joins 2+ sources into a single virtual source. The blend has its own
 
 ```
 list-blends action=list                # paginated; includes source_count, channel_names per blend
-list-blends action=show blend_id=<id>  # full sub-sources, joins, widgets_count
+list-blends action=show blend_id=<id>  # full sub-sources, joins, widgets_count, per-sub-source filter
 ```
+
+Only `show` reports each sub-source's `filter`. `list` does not, so never conclude a blend is unfiltered from a `list` response.
 
 ## Creating a blend
 
@@ -89,6 +106,7 @@ manage-blends action=create
 - `report_type` — the source's report type external id. Auto-resolved when source has exactly one report type; required when multiple exist. **Omit entirely** when the source has zero report types (e.g. Facebook Ads, GA4) — run `list-sources action=list_report_types` to check.
 - `dimensions` — array of dimension external ids.
 - `metrics` — array of metric external ids.
+- `filter_id` — optional. Narrows THIS sub-source's rows before the join runs. See "Filtering one sub-source" below.
 
 ### `joins` — how sub-sources connect
 
@@ -199,13 +217,81 @@ manage-blends action=update blend_id=<id>
 
 Replace-style — full `items` and `joins` lists replace previous values.
 
+## Filtering one sub-source
+
+A sub-source can carry its own filter. That filter runs on that channel's rows **before** the join.
+
+This is not the same as filtering the blend's output, and the two give different answers. Filter Google Search Console to one set of pages before a full outer join and you keep every row from the other sources; filter the joined output instead and you drop the other sources' unmatched rows too. When the user asks to narrow one channel inside a blend, filter that sub-source.
+
+Each sub-source holds **at most one** filter. Attaching a new one replaces the old.
+
+### Three ways to set it
+
+**1. While creating or updating the blend** — `items[].filter_id`, pointing at a team-level filter from `list-filters action=list`:
+
+```
+manage-blends action=create
+   name="MCP articles source"
+   items=[
+     { "integration_source_id": <bigquery_source>, "dimensions": [...], "metrics": [...] },
+     { "integration_source_id": <gsc_source>, "dimensions": [...], "metrics": [...],
+       "filter_id": <mcp_articles_filter_id> }
+   ]
+   joins=[...]
+```
+
+A **copy** of the filter is attached, so the team-level original stays reusable and unchanged.
+
+**2. Directly on an existing sub-source** — `manage-filters action=create` with `blend_sub_source_id`:
+
+```
+manage-filters action=create
+   channel_id=<the sub-source's channel>
+   blend_sub_source_id=<sub_sources[].id from list-blends action=show>
+   dimension="page" dimension_operator="contain_dimension" value="/mcp/"
+```
+
+**3. Copying an existing team filter onto a sub-source** — `manage-filters action=attach`:
+
+```
+manage-filters action=attach filter_id=<team_filter_id> blend_sub_source_id=<sub_source_id>
+```
+
+`blend_sub_source_id` is the `sub_sources[].id` from `list-blends action=show` — NOT the `integration_source_id`, and not a report-local `source_id`.
+
+### Reading it back
+
+`list-blends action=show blend_id=<id>` returns a `filter` on every `sub_sources[]` entry — `null` when none, otherwise `{id, name, version, options}`. Read this before changing a blend so you don't silently drop a filter a user set in the UI.
+
+### Keeping, replacing, and removing on update
+
+`manage-blends action=update` is replace-style for `items`, but filters are the exception:
+
+| You send | Result |
+|---|---|
+| No `filter_id` on the item | Existing filter is **kept** |
+| `filter_id: <id>` | Existing filter is replaced by a copy of that filter |
+| `filter_id: 0` | Existing filter is **removed** |
+
+`filter_id` accepts a team-level filter id or the id `list-blends action=show` reported for that sub-source, so a read round-trips straight back into an update.
+
+### Editing an attached filter
+
+You cannot. `manage-filters action=add` and `action=update` only reach team-level filters, so a filter already sitting on a sub-source is read-only. To change its conditions, build the filter you want at team level and re-attach it (way 1 or 3 above), which replaces the old one.
+
+### Match the channel
+
+The filter must belong to the **sub-source's own channel**. A filter built for another channel matches no rows, so all three routes reject a mismatch up front — you will not get a silently dead filter.
+
+Confirm the channel from `list-blends action=show` → `sub_sources[].channel_name`, then pass that `channel_id` on create or pick a filter from `list-filters action=list channel_id=<that channel>`.
+
 ## Duplicating
 
 ```
 manage-blends action=duplicate blend_id=<id>
 ```
 
-Useful for blend variants ("Inner version of the full blend" to compare).
+Useful for blend variants ("Inner version of the full blend" to compare). Sub-source filters are copied too, so the duplicate is filtered the same way as the original.
 
 ## Unified dimensions and metrics across sub-sources
 
@@ -321,10 +407,22 @@ The first fetch can still come back with `Your data is being processed... please
 
 Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: no usage guard in the tool, widgets referencing the blend break, pre-check `list-blends action=show blend_id=<id>` → `widgets_count`.
 
+## What MCP cannot do here
+
+Know these before you promise a user a result. If one blocks you, say so — do not hand back manual UI instructions as if the tool had no opinion.
+
+- **Edit a filter that is already on a sub-source.** `manage-filters action=add` / `action=update` only reach team-level filters. Build a replacement at team level and re-attach it.
+- **Put more than one filter on a sub-source.** One filter per sub-source; attaching replaces. Express multiple conditions as rows inside a single filter (`manage-filters action=add`, before attaching).
+- **See sub-source filters from `list-blends action=list`.** Only `action=show` returns them.
+- **Reach a blend sub-source with `source_id`.** `source_id` on `manage-filters` means a report-local source. Blend sub-sources need `blend_sub_source_id`.
+- **Use a filter from a different channel.** All three routes reject it.
+
 ## Common pitfalls
 
 - **Picking the wrong field id family when reading** — use `aggregation_metric_*`/`aggregation_dimension_*` to read the blend's unified output, not the sub-source native ids (those won't resolve on the blend itself).
 - **Picking the wrong field id family when writing custom fields on a blend** — a `data_formula` custom metric on a blend takes `blend_metric_<n>` (per-sub-source) ids as its `A`/`B` fields (from `list-sources action=list_dimensions_and_metrics`), each with the blend's `integration_source_id`; `universal_metric_<n>` is **rejected on channel 142** (see "Custom fields on a blend" above). A `manage-custom-dimensions action=create map_type=data` custom dimension is the opposite — it accepts `universal_dimension_<n>`, `blend_dimension_<n>`, or `aggregation_dimension_<n>` on a blend (prefer `universal_dimension_<n>`); none are rejected.
+- **Filtering the blend output when the user meant one channel** — a filter on the widget or on the report-local blend source runs AFTER the join, so on a `full` join it also drops the other sources' unmatched rows. To narrow one channel, filter that sub-source instead (see "Filtering one sub-source").
+- **Dropping a UI-set sub-source filter on update** — `list-blends action=show` first and check `sub_sources[].filter`. Leaving `filter_id` off an item keeps the filter, but sending a different `filter_id` silently replaces it.
 - **`join_type` vs `type`** — use `type` inside each join object.
 - **`join_fields` vs `conditions`** — use `conditions` with `{left_source_id, left_dimension, right_source_id, right_dimension}` per pair.
 - **`inner` join excluding data** — most "where did my data go?" blend issues are caused by `inner` on a dimension that doesn't match across sources (e.g. Google campaign name "Brand_US" vs Meta "Brand - US"). Use `full` unless you specifically want intersection.

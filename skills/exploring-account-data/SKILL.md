@@ -9,21 +9,29 @@ description: >-
   setup, needs to find specific sources or integrations, or asks questions like
   "what channels do I have connected?" or "show me my reports."
 required_tools:
-  - list-blends
-  - list-custom-dimensions
-  - list-custom-metrics
   - list-integrations
-  - list-overviews
-  - list-report-tabs
-  - list-reports
-  - list-source-groups
   - list-sources
   - list-spaces
-  - list-themes
+  - list-reports
+  - list-report-tabs
   - list-widgets
-  - view-goals
-  - view-team
-  - fetch-data
+  - list-custom-metrics
+  - list-custom-dimensions
+optional_tools:
+  - tool_name: list-blends
+    purpose: Explore cross-channel blended sources when present.
+  - tool_name: list-source-groups
+    purpose: Explore aggregated source groups when present.
+  - tool_name: list-overviews
+    purpose: Explore KPI overview dashboards when present.
+  - tool_name: list-themes
+    purpose: Inspect report themes and colour palettes.
+  - tool_name: view-goals
+    purpose: Inspect metric targets and progress.
+  - tool_name: view-team
+    purpose: Cross-domain search and account/subscription lookup.
+  - tool_name: fetch-data
+    purpose: Preview a source's data once the field ids are known.
 ---
 
 # Exploring Account Data
@@ -77,7 +85,7 @@ Help users discover and navigate the data available in their Whatagraph account.
 | `list-custom-dimensions` | `list`, `list_with_premades`, `show`, `usage`, `list_tags` | User-created and premade dimensions; `list_tags` shows tag values + assigned sources for tag-type dimensions |
 | `list-themes` | `list_themes`, `list_colors` | Report visual themes and palettes |
 | `list-overviews` | `list`, `show` | KPI tracking dashboards |
-| `view-goals` | `list`, `show` | Metric targets and progress |
+| `view-goals` | `list`, `show`, `status` | Metric targets (`list` / `show`) and measured attainment (`status`) |
 | `view-team` | `show`, `show_subscription`, `members`, `search`, `roles`, `list_plans` | Account settings, subscription limits, user roster, cross-domain search |
 
 ## Report Types: Required for Most Paid Channels

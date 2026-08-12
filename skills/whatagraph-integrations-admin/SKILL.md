@@ -1,6 +1,7 @@
 ---
 name: whatagraph-integrations-admin
 type: domain
+group: data_connections
 description: Browse available integrations, connect sources from already-authenticated accounts, and assign sources to spaces. Use when onboarding a new client (adding their sub-accounts into Whatagraph) or when reallocating existing sources across client folders.
 required_tools:
   - list-integrations
@@ -8,7 +9,11 @@ required_tools:
   - list-spaces
   - manage-integrations
   - manage-sources
-  - remove-integrations
+optional_tools:
+  - tool_name: remove-integrations
+    purpose: Detach sources from an account or disconnect an authenticated account.
+  - tool_name: manage-custom-dimensions
+    purpose: Create the tag dimension and its values before manage-sources action=tag can assign them.
 ---
 
 # Integrations & sources admin
@@ -91,9 +96,25 @@ manage-sources action=tag
 manage-sources action=set_currency
    source_ids=[<id>, <id>]
    currency="EUR"
+
+manage-sources action=refresh
+   source_ids=[<id>, <id>]          # max 10 per call
 ```
 
-Find `tag_id` and `tag_value_ids` via `list-sources action=list_metadata`.
+**`refresh`** clears the cached data for those sources so the next read re-fetches from the provider.
+Reach for it after a reconnect, a currency change, or a "my numbers are stale / nothing is showing"
+report — it is the fix for a stale cache, not for a broken connection. It is capped at **10 sources per
+call** (more is rejected, so split into batches) because each refreshed source triggers a fresh
+provider fetch and the cap protects the provider's rate limits. It clears caches only; it does not
+re-run history, so give the next read a moment to repopulate.
+
+Find `tag_id` and `tag_value_ids` via `list-sources action=list_metadata` (scope `tags`).
+
+**`tag` only ASSIGNS tag values that already exist — it never creates them.** So "tag these EMEA"
+when there is no EMEA tag yet is a two-step job, and step one belongs to a different tool: create the
+tag dimension and its values with `manage-custom-dimensions action=create map_type=tag` (that call can
+assign sources at the same time), then use `manage-sources action=tag` for later assignments. Passing a
+`tag_id` or `tag_value_ids` that doesn't exist is rejected — it does not silently create one.
 
 ## Removing sources or an entire account
 

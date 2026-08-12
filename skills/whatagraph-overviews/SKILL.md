@@ -1,13 +1,16 @@
 ---
 name: whatagraph-overviews
 type: domain
-description: Create overviews — KPI dashboards that track metrics over time. The UI calls these "Measurements". Use when a user wants a single-page KPI dashboard with trend visualizations and comparisons, independent of any report.
+group: monitoring_kpis
+description: Create overviews — KPI dashboards that track metrics over time. The UI calls these "Measurements". Use when a user wants a single-page KPI dashboard with trend visualizations and comparisons, independent of any report. Caution — "overview" in a prompt often means a report tab or a summary report instead of this entity; load this skill to run the disambiguation check (and ask the user a follow-up) whenever the meaning isn't clear from context.
 required_tools:
   - list-overviews
   - list-sources
   - manage-overviews
   - manage-sources
-  - delete-overviews
+optional_tools:
+  - tool_name: delete-overviews
+    purpose: Permanently delete an overview.
 ---
 
 # Overviews (Measurements)
@@ -15,6 +18,15 @@ required_tools:
 Tools covered: `list-overviews`, `manage-overviews`, `delete-overviews`.
 
 An **overview** (UI name: "Measurement") is a KPI dashboard that tracks selected metrics over time with trend/column/heatmap visualizations and comparison framing. Overviews live at the team level and can optionally be associated with a space.
+
+## First: confirm the user means *this* Overview
+
+"Overview" is one of the most overloaded words in Whatagraph prompts. Before creating, updating, or deleting anything here, confirm the request is about the standalone Overview/Measurement entity and not one of these:
+
+- **A report tab named "Overview"** — "General Overview" in a tab list, "the overview tab", "overview page/section" of a report → `whatagraph-report-tabs` / `whatagraph-widgets`, not this skill.
+- **A summary-style report** — "an overview of last month", "high-level overview report" in report-building context → `whatagraph-reports`.
+
+Clear signals this skill applies: the user says "Measurement", "KPI dashboard", "add to Overviews", references `list-overviews` output, or explicitly contrasts it with reports. **If the wording is ambiguous — e.g. a bare "create an overview for Acme" with no other context — ask the user a short follow-up** ("standalone Overview/Measurement dashboard, or an overview tab inside a report?") rather than guessing. The two artifacts live in different places, are built with different tools, and an Overview delete is permanent — a wrong guess is expensive in both directions.
 
 ## Use this when
 
@@ -117,8 +129,14 @@ Permanent — no restore path. See `whatagraph-deleting` for cascades and recove
 ## What MCP can't do here
 
 - Duplicate an overview — UI only (use `action=update` to modify an existing one).
-- Sharing — overviews inherit sharing from their space; share the space (UI) instead.
-- Set a target value on an overview metric — use `whatagraph-goals` to track goals alongside.
+- Sharing — an overview **can** carry its own share settings, but not through MCP. `list-overviews action=show` reports `has_share_settings` (a read-only boolean, so you can tell whether one exists), and there is no MCP path to create, change, or remove it — the sharing tools take a report, never an overview. Share via the space or the UI, and when reporting on an account's sharing, read `has_share_settings` rather than assuming an overview inherits everything from its space.
+- Set a target value on an overview metric — an overview has **no target column**. Its configs carry metrics, report types, and comparison display settings, and nothing else; there is nowhere to put a target.
+
+## Overviews and goals are separate objects
+
+They are often confused because both show "a metric with a number to hit", but they are independent: an overview is a KPI dashboard bound to one source, a goal is a target on a metric, and neither contains the other. Creating an overview does not create a goal, deleting one does not touch the other, and a goal is not scoped to an overview just because both cover the same metric.
+
+So "show spend against our $50k cap" is two objects: the goal holds the target (see `whatagraph-goals`), the overview displays the metric. Set them up separately, and when a user says a target "isn't showing on the dashboard", check whether a goal exists at all before looking for an overview setting that does not exist.
 
 ## Common pitfalls
 

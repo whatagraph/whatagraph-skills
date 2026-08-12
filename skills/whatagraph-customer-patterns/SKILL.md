@@ -3,6 +3,27 @@ name: whatagraph-customer-patterns
 type: meta
 description: Common multi-tool flows and decision trees across Whatagraph skills. Load alongside domain skills when working on end-to-end capabilities like "onboard a new client", "build a cross-channel report", "fix a data mismatch", or "set up a client portal".
 required_tools: []
+optional_tools:
+  - view-team
+  - list-integrations
+  - list-sources
+  - list-reports
+  - list-widgets
+  - list-filters
+  - list-templates
+  - fetch-data
+  - export-report
+  - manage-spaces
+  - manage-sources
+  - manage-integrations
+  - manage-reports
+  - manage-report-tabs
+  - manage-widgets
+  - manage-custom-metrics
+  - manage-overviews
+  - manage-themes
+  - manage-sharing
+  - manage-automations
 ---
 
 # Customer patterns — end-to-end flows
@@ -37,10 +58,14 @@ Does this filter apply to EVERY widget using this source?
 
 ### Template linked vs one-off
 
+Templates only enter the flow when the request or agent instructions explicitly call for one — an open report request is a scratch build (see `whatagraph-reports`). When a template IS in play:
+
 ```
-Will this client ever need heavy structural custom changes?
-├── Yes → Duplicate from an existing report (manage-reports action=duplicate) — independent copy
-└── No  → Create from template (manage-reports action=create_from_template) — linked, auto-updates
+Does the user ask for auto-sync, or does the context clearly call for it (one template kept in step across many client reports)?
+├── Yes → Create from template and keep it linked (manage-reports action=create_from_template)
+└── No  → Independent report (the default):
+         • From a template → create_from_template → duplicate the new report → delete the linked intermediate
+         • From an existing report → manage-reports action=duplicate
 ```
 
 ### Overview (measurement) vs report
@@ -72,8 +97,8 @@ Are all the sources the same channel (e.g. all Google Ads)?
 7. Decide: single-source report, source group, or blend?
    - Multiple accounts on the same channel → source group.
    - Multi-channel view → blend.
-8. `manage-reports action=create_from_template client_id=<client_id> template_id=<tpl>` — apply the team's standard report template.
-9. `manage-reports action=change_sources report_id=<new_id> source_mapping={"0": <new_source_id>, "<old>": <new>}` — swap template sample data for the client's sources.
+8. Build the client report **from scratch by default** (`manage-reports action=create` → tabs → widgets, per `whatagraph-reports`). Use `create_from_template client_id=<client_id> template_id=<tpl>` only when the instructions name the team's own template — and deliver it unlinked (duplicate the new report, delete the linked intermediate) unless the user asked for auto-sync or the context makes it clearly relevant (this onboarding is part of a many-client rollout kept in step with a master template). Never pull a template from Whatagraph's pre-made gallery unprompted.
+9. If a template was used: `manage-reports action=change_sources report_id=<new_id> source_mapping={"0": <new_source_id>, "<old>": <new>}` — swap template sample data for the client's sources.
 10. `manage-themes action=enable_theme report_id=<id> theme_id=<client_theme_id>` + `enable_color` with the brand palette.
 11. `manage-sharing action=create report_id=<id> require_password=true password="<share_password>"` — generate the client share link.
 12. `manage-automations action=create` — schedule monthly delivery.
@@ -87,7 +112,8 @@ Inputs: Google Ads, Meta Ads, LinkedIn Ads sources; GA4 for revenue.
 1. **Source groups (one config each).** For each channel where the client has multiple ad accounts, build one source group with **one** `configs` entry (e.g. `[{"name": "Campaign Performance", "etl_config_ids": [<ids>]}]` for Google Ads campaign-level data). Note: `output_name` is a read-only field returned by `list-source-groups show`, not a create parameter. If they need campaign-level *and* keyword-level rollups, build two separate groups — one config per group. See `whatagraph-source-groups` for why the legacy multi-config pattern is discouraged.
 2. **Blend.** Build a blend that joins the channel sources (or their source groups) on a shared date dimension (`universal_dimension_1137`) plus a shared grouping key like campaign or channel name. Pick the **same universal dimensions and metrics** on every sub-source of the blend — blends are designed around unified dimensions and integer/summable metrics (impressions, clicks, spend). Use `type="full"` to keep all rows from both sides (nulls where a dimension is missing on one side). Use `type="inner"` to keep only rows present in both sides.
 3. **Custom metrics.**
-   - On each source group: `manage-custom-metrics action=create map_type=data_formula transformation_level=channel` with `aggregation_level="aggregate"` and `formula_increase="positive"` or `"negative"`. Use channel-native field ids (`metrics.clicks`, `metrics.impressions` for Google Ads; `clicks`, `spend` for Meta Ads) or platform-unified `universal_metric_<n>` ids when the formula should work on any channel that exposes the slot.
+   - On each source group: `manage-custom-metrics action=create map_type=data_formula transformation_level=channel` with `aggregation_level="aggregate"` and `formula_increase="positive"` or `"negative"`. Use channel-native field ids, or platform-unified `universal_metric_<n>` ids when the formula should work on any channel that exposes the slot.
+   - **Any channel-native id written in this skill is illustrative, not authoritative.** Names like `metrics.clicks` or `spend` are shapes to recognise, not values to paste: they are channel-specific, differ in punctuation between channels, and change as providers change their APIs. Resolve every one against `list-sources action=list_dimensions_and_metrics` for the actual source before using it, and paste it back verbatim. On several channels the native metric will not resolve at all and the `universal_metric_<n>` form is the only one that works — so treat a rejected native id as "look it up", not "the platform is broken".
    - On the blend: build the cross-channel formula metric at `transformation_level=source` with the constituent sources' native fields as A, B, C, D.
 4. **Report shell.** `manage-reports action=create` → add tabs Overview, Google, Meta, LinkedIn, GA4, Blended (via `manage-report-tabs action=create`).
 5. **Attach the data sources.** For each source group, blend, or per-channel source the report needs, call `manage-reports action=attach_source report_id=<id> integration_source_id=<id>`. Capture the returned report-local `source_id` for each — widgets reference these, not the global ids. When attaching a sample-data placeholder via `manage-reports action=attach_source channel_ids=[<channel_id>]`, the response carries `is_sample_data: true` and `integration_source_id: null` — reference it via the report-local `source_id`. Use `is_sample_data` to distinguish real sources from placeholders in onboarding flows.
@@ -103,7 +129,7 @@ Inputs: Google Ads, Meta Ads, LinkedIn Ads sources; GA4 for revenue.
 4. `fetch-data source_id=<id> metrics=[...] from=... till=...` — does the raw data match the platform's own export?
    - Yes → issue is at widget level (wrong filter, wrong formula, wrong dimension pairing).
    - No → issue is upstream (stale ETL, rate limits, attribution lag). Try again after a few minutes.
-5. Check field ID family — widgets on source groups must use `universal_metric_*` / `universal_dimension_*`; widgets on blends must use `aggregation_metric_*` / `aggregation_dimension_*`; widgets on native sources use channel-native IDs (`metrics.clicks` for Google Ads, `spend` for Meta). Wrong family → wrong or no data.
+5. Check field ID family — widgets on source groups must use `universal_metric_*` / `universal_dimension_*`; widgets on blends must use `aggregation_metric_*` / `aggregation_dimension_*`; widgets on native sources use channel-native IDs (shapes like `metrics.clicks` or `spend` — always resolved per source, never assumed). Wrong family → wrong or no data.
 6. Scan saved filters for stale entries: `list-filters action=list source_id=<id>`.
 7. Cross-check `list-sources action=list_usage source_ids=[<id>]` — a different variant (another source group or blend) may be feeding the widget you think is direct.
 
@@ -138,6 +164,7 @@ Only applicable if those reports are linked to a template.
 - **Reference IDs from the wrong domain** — spaces use `client_id`, sources use `source_id` (integration_source_id), widgets use `widget_id`. Skills state the required naming.
 - **Mixing up channel-native vs Whatagraph-native report type names** — custom metrics use channel-native names (e.g. `campaign`); source groups use Whatagraph-native names (e.g. `campaign_performance`). Wrong family → "Report type X not found for channel Y".
 - **Creating widgets before attaching sources** — `manage-widgets` validates `source_id` against report-local sources. Always run `manage-reports action=attach_source` first and use the returned `source_id`.
+- **Defaulting to a template (or the pre-made gallery) when no one asked** — open report requests are scratch builds; templates are opt-in, and template-created reports ship unlinked unless the user asked for auto-sync or the context clearly calls for it.
 - **Creating from template without running `change_sources`** — widgets stay on sample data.
 - **Automations without `time_zone`** — always include IANA timezone; local time ≠ team timezone by default.
 - **Sharing link without password on confidential reports** — anyone with the URL can view.

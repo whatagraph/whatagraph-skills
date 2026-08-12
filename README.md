@@ -38,6 +38,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-report-tabs` | Create, duplicate, rename, and reorder report tabs. |
 | `whatagraph-widgets` | Build and lay out widgets on the grid. |
 | `whatagraph-dynamic-charts` | Build chart families with no dedicated widget type — scatter, bubble, heatmap, candlestick, combo, top-N. |
+| `whatagraph-offline-reports` | Build a whole report from numbers you already have, with no connected source. |
 | `whatagraph-blends` | Combine data from different channels into one virtual source. |
 | `whatagraph-source-groups` | Roll up multiple accounts of the same channel into one aggregated source. |
 | `whatagraph-custom-metrics` | Create calculated or unified metrics across sources. |
@@ -47,13 +48,39 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-goals` | Create goals — metric targets with a deadline. |
 | `whatagraph-templates` | Convert a report into a reusable template and apply templates to new reports. |
 | `whatagraph-themes` | Apply and manage themes (logos, fonts, headers/footers) and color palettes. |
-| `whatagraph-sharing` | Create and update public share links, generate PDFs, and export reports. |
+| `whatagraph-assets` | Import, find, read and publish files — brand images for reports and themes, and searchable documents. |
+| `whatagraph-sharing` | Create and update public share links, generate and download PDFs, and export reports. |
 | `whatagraph-automations` | Schedule automated report delivery by email. |
 | `whatagraph-snapshots` | Save and restore the structural state of a report. |
 | `whatagraph-integrations-admin` | Connect sources from already-authenticated accounts and assign them to spaces. |
 | `whatagraph-team-and-members` | View team settings and subscription; invite and update team members. |
 | `whatagraph-customer-patterns` | Common multi-tool flows and decision trees across skills. |
 | `whatagraph-deleting` | Safe deletion, removal, and revocation across Whatagraph entities. |
+
+## Skill frontmatter — declaring tools
+
+Each `SKILL.md` declares the MCP tools it uses in YAML frontmatter, split into
+two lists:
+
+- **`required_tools`** — the **core** tools the skill's main happy path invokes.
+  A skill is only offered to an agent that has all of its `required_tools`.
+- **`optional_tools`** — tools used only in optional sub-workflows, verification
+  steps, or decision-table alternatives. Absent = an empty list (identical to
+  declaring none). Each entry is either a bare tool name or a
+  `{tool_name, purpose}` mapping; `purpose` is surfaced downstream when present.
+
+  ```yaml
+  optional_tools:
+    - tool_name: export-report
+      purpose: Verify the built widgets render with data.
+    - list-filters
+  ```
+
+**Authoring rule:** every tool the skill body actually invokes must appear in
+`required_tools` **or** `optional_tools`; alternatives and branch-only tools go
+in `optional_tools`, never in core; and no tool may appear in both lists. These
+rules are enforced in CI by `scripts/lint_skill_tools.py` (run it locally with
+`python3 scripts/lint_skill_tools.py`).
 
 ## License
 
