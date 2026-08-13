@@ -102,13 +102,16 @@ manage-filters action=update filter_id=<id>
 
 **Update replaces all parameters** — it does not merge. If the filter had `view_window_days` + `granularity` and you update with only `{"view_window_days": "DAYS_30"}`, the `granularity` setting is removed. To keep existing parameters, include them all in the update call.
 
-## Field IDs — both universal and channel-native work
+## Field IDs — dimensions and metrics follow different rules
 
-`manage-filters` accepts **both** channel-native IDs (e.g. `campaign.name`, `metrics.cost`) **and** `universal_dimension_*` / `universal_metric_*` IDs.
+Use `list-sources action=list_dimensions_and_metrics` to discover field IDs, and filter on what it returns for that channel. Dimensions and metrics are **not** symmetrical here:
 
-Use `list-sources action=list_dimensions_and_metrics` to discover field IDs — it returns `universal_*` IDs, and these are valid filter fields. Some channels (e.g. Google Ads) resolve metrics **only** via `universal_metric_*` — channel-native metric IDs like `metrics.cost` or `spend` fail validation on those channels. When in doubt, use the universal IDs returned by the discovery tool.
+- **Dimensions** — both channel-native IDs (e.g. `campaign.name`) and `universal_dimension_*` IDs work on any channel.
+- **Metrics** — use the channel's **own** metric ID (e.g. `metrics.cost_micros` on Google Ads). A bare `universal_metric_*` ID works **only on a source group**, which reports universal metrics as its own fields. On a blend, use the aggregated `aggregation_metric_universal_metric_*` form.
 
-The set of filterable dimensions/metrics may be smaller than the full reportable set. If a field is rejected, the error message lists every valid filter field for the channel.
+A universal metric on any other channel is rejected at write time. Before that check existed the filter saved cleanly and then broke every widget it was attached to with "Filter error. Please try recreating the right filter or removing it." — the channel returns its data keyed by its own metric IDs, so the universal ID is never there to compare against.
+
+The set of filterable dimensions/metrics may be smaller than the full reportable set. If a field is rejected, the error message points back at `list_dimensions_and_metrics` for that channel's valid fields.
 
 ## Creating a dimension filter
 
@@ -159,13 +162,13 @@ Valid `dimension_operator`:
 ```
 manage-filters action=create
    channel_id=<channel_id>
-   metric="universal_metric_<id>"
+   metric="<channel_native_metric_id>"
    metric_operator="greater_metric"
    value="100"
    group="AND"
 ```
 
-Discover metric IDs via `list-sources action=list_dimensions_and_metrics`. Use the `universal_metric_*` IDs it returns — on some channels (e.g. Google Ads), only universal metric IDs pass validation.
+Discover metric IDs via `list-sources action=list_dimensions_and_metrics` and use the channel's own metric ID (e.g. `metrics.cost_micros` on Google Ads). A bare `universal_metric_*` ID is only valid on a source group — see *Field IDs* above.
 
 Valid `metric_operator`:
 - `equal_metric`, `not_equal_metric`
@@ -282,7 +285,7 @@ Pass `values[].id` as the value in `filter_parameters` on `manage-filters create
           { "group_id": "g1", "order_id": "o2", "operator": "OR", "dimension": "universal_dimension_1", "metric": null, "filter_operator": "contain_dimension", "value": "competitor" }
         ],
         [
-          { "group_id": "g2", "order_id": "o3", "operator": null, "dimension": null, "metric": "universal_metric_3", "filter_operator": "greater_metric", "value": "100" }
+          { "group_id": "g2", "order_id": "o3", "operator": null, "dimension": null, "metric": "metrics.cost_micros", "filter_operator": "greater_metric", "value": "100" }
         ]
       ],
       "default_inputs": []
@@ -327,4 +330,4 @@ All four actions return the same shape:
 - **Filter created on the wrong `channel_id`** — filters are per-channel; make sure to match the source's channel.
 - **Case sensitivity** — `contain_dimension` is case-insensitive; `exactly_matches_dimension` is case-sensitive.
 - **Forgetting that `value` is a string** — always pass strings, even for numeric metric thresholds (`"100"` not `100`).
-- **Channel-native metric IDs failing** — on some channels (e.g. Google Ads), only `universal_metric_*` IDs work. Always try the universal IDs from `list_dimensions_and_metrics` first.
+- **Reaching for a `universal_metric_*` ID because the dimension equivalent worked** — universal *dimensions* filter on any channel, universal *metrics* do not. Off a source group, filter on the channel's own metric ID. See *Field IDs* above.
