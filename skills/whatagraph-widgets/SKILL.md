@@ -260,6 +260,21 @@ Every row must have as many cells as the header — cells are read by position, 
 
 Stored as strings. Numbers are accepted and converted, so `1450` and `"1450"` are equivalent. A unit in the string is read by the formatter and drives how the value renders: `"25%"` → percentage, `"100 $"` → currency, `"12.5"` → one decimal place. `null` renders a blank cell.
 
+**One value per cell, and one unit on it.** The formatter reads a cell as a single number carrying at most one unit. Anything else either renders wrong or breaks the widget:
+
+| Write | Renders as |
+|---|---|
+| `"4.80"` | `4.80` |
+| `"$4.80"` or `"4.80 $"` | `$4.80` |
+| `"25%"` | `25%` |
+| `"$4.80 - $7.40"` | **breaks the widget** — two symbols, see below |
+| `"4500 USD"` | the literal text `4500 USD` — only symbols are recognised, not ISO codes |
+| `"-5%"` | the literal text `-5%` — the percentage test rejects a leading sign |
+
+A cell holding **two currency symbols** — a range like `"$4.80 - $7.40"`, or a total like `"$1,200 ($400/mo)"` — is classified as currency, but the backend cannot work out which code it is and returns the whole string in the `currency` field. The frontend then throws `RangeError: Invalid currency code` mid-render, and the widget flickers instead of drawing. This is the single most damaging thing you can put in an offline cell, and nothing on the write path rejects it.
+
+To show a range, split it: two entries (`"CPC low"`, `"CPC high"`), or a Table with a `Low` and a `High` column. To annotate a number, put the prose in the entry's `name` or in a Comment widget, never in `value`.
+
 ### Rules worth knowing before you build one
 
 - **No metric or dimension binding.** An offline widget's metrics are derived from its own values (from each entry's `name`, or the header row), so `rows[].configs[].options.metrics` is rejected on these types. The dual metric-array pattern used everywhere else does not apply here.
@@ -1304,6 +1319,7 @@ For a single value that must carry its own colour, put it in a Comment widget in
 - **`sort` on a single-value widget** — inert wherever you put it: a `101` aggregates everything into one number and has no rows to order. The tool warns. Use a Table (`102`) with the dimension bound.
 - **AI text (`update_ai_text`) errors** — if generation fails with a timeout, the settings are saved; retry after ~30 seconds. A non-timeout error may indicate the AI feature is not available on the team's plan.
 - **An offline widget showing 200,000 impressions you never entered** — it was created without `rows[].data`, so it still holds the template's placeholder sample numbers. The create response warns about this. Send an `update` with the row's `data` to replace them.
+- **An offline widget whose icon flickers and never draws** — a cell holds two currency symbols, typically a range like `"$4.80 - $7.40"`. The backend cannot resolve which currency that is and hands the whole string back as the currency code; the frontend throws `RangeError: Invalid currency code` on every render attempt, and the retry loop is the flicker. Nothing rejects this on write, and a human typing it into the offline-data grid hits it too. Split the range into two entries or two table columns. See "Values".
 - **Offline values passed as row options** — `rows[].options.value` / `previous_value` bind nothing. Row `options` is a free-form blob, so these used to persist silently and the call still reported success; they now come back as an "unrecognized `options` keys" warning. Offline values belong in the row's `data` array.
 - **Binding a metric on an offline widget** — rejected. These widgets derive their metrics from their own values, and a binding written here is reverted before the response is built, so it used to return success with a metric the widget never had. Use `data` instead; `name` on each entry is the metric label.
 - **`"offline_single_value"` and friends** — the `offline_`-prefixed string names resolve to the writable current-generation types (`125`+). On deployments before Aug 2026 they resolved to the pre-new-architecture types (`25`+) and were then rejected as too old — pass the integer ID there.
