@@ -35,9 +35,13 @@ A **source group** aggregates multiple sources into one virtual source. Sources 
 | 5 Google Ads accounts → 1 virtual "Google Ads Total" | Source group (same-channel) |
 | Meta + Google + Reddit + TikTok → 1 aggregated source with unified metrics | Source group (cross-channel) |
 | Sum of `spend` across Google + Meta into one total, no row-level join | Source group (cross-channel) |
-| Google Ads + Meta Ads joined/matched on campaign name (side-by-side rows) | Blend |
+| Google Ads + Meta Ads joined/matched on campaign name (side-by-side rows) | Blend (cross-channel) |
+| 2 Google Ads accounts joined on campaign name, one column per account | Blend (same-channel) |
+| Combined numbers that must be **live** — today's data, no warmup wait | Blend (same- or cross-channel) |
 
-**Rule**: source groups handle both same-channel and cross-channel aggregation and are simpler than blending — think of a source group as the templated, stored, auto-summarized version of a blend. Use a blend only when you need to **join** rows across channels on a shared dimension (e.g. matching campaign names between Google Ads and Meta Ads).
+**Rule**: source groups handle both same-channel and cross-channel aggregation and are simpler than blending — think of a source group as the templated, stored, auto-summarized version of a blend. Use a blend when you need to **join** rows on a shared dimension instead of summing them. Blends are not cross-channel-only: sources of the **same** channel can be blended too (e.g. two Google Ads accounts joined on campaign name), which keeps each source as its own column instead of collapsing them into one total.
+
+**Live data → prefer a blend.** A source group is **stored**: its data is written by ETL, so a new group needs a warmup before it returns anything and its numbers are only as fresh as the last sync. A blend stores nothing — it fetches each sub-source and joins in-request, so it is queryable immediately after create and always reads current sub-source data. When the user explicitly asks for live / real-time / up-to-the-minute combined numbers, build a blend even for a plain same-channel rollup that a source group could otherwise cover.
 
 ## Listing
 
