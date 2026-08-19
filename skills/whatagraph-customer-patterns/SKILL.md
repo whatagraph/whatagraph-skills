@@ -37,11 +37,11 @@ Multi-tool patterns that keep coming up. Use alongside the domain skills.
 "I want combined numbers across sources":
 
 ```
-Do you need rows JOINED on a shared key (campaign_name, date) for side-by-side comparison?
-├── Yes → Blend. See whatagraph-blends.
-└── No  → Source group — one virtual aggregated source. See whatagraph-source-groups.
-         • All sources same channel (all Google Ads) → same-channel source group.
-         • Different channels (Google + Meta + TikTok) → cross-channel source group.
+Rows JOINED on a shared key (campaign_name, date), or numbers that must be live?
+├── Yes → Blend, for a handful of sources. See whatagraph-blends.
+└── No  → Source group — summed, scales to dozens or hundreds. See whatagraph-source-groups.
+
+Both work same-channel and cross-channel; channel count decides nothing.
 ```
 
 Combining across sources is always a **source group** or **blend** — never a custom metric (a custom metric only computes on the source it is attached to). For a combined **ratio** (blended ROAS/CPA), build the source group/blend first, then a `data_formula` metric on top of it.
@@ -78,11 +78,7 @@ One-page KPI dashboard with 4–8 tiles that execs want to glance at?
 
 ### Source group vs blend
 
-```
-Are all the sources the same channel (e.g. all Google Ads)?
-├── Yes → Source group (whatagraph-source-groups)
-└── No  → Blend (whatagraph-blends)
-```
+See "I want combined numbers across sources" above — same decision.
 
 ## End-to-end flows
 
@@ -95,8 +91,8 @@ Are all the sources the same channel (e.g. all Google Ads)?
 5. `manage-integrations action=add_sources channel_id=<id> account_id=<id> source_ids=[...]` per channel.
 6. `manage-integrations action=sync_to_clients source_id=<id> client_ids=[<client_id>]` to attach each source to the space.
 7. Decide: single-source report, source group, or blend?
-   - Multiple accounts on the same channel → source group.
-   - Multi-channel view → blend.
+   - Sources summed, or many of them → source group (same channel or across).
+   - Rows joined side by side, or live numbers → blend (a handful).
 8. Build the client report **from scratch by default** (`manage-reports action=create` → tabs → widgets, per `whatagraph-reports`). Use `create_from_template client_id=<client_id> template_id=<tpl>` only when the instructions name the team's own template — and deliver it unlinked (duplicate the new report, delete the linked intermediate) unless the user asked for auto-sync or the context makes it clearly relevant (this onboarding is part of a many-client rollout kept in step with a master template). Never pull a template from Whatagraph's pre-made gallery unprompted.
 9. If a template was used: `manage-reports action=change_sources report_id=<new_id> source_mapping={"0": <new_source_id>, "<old>": <new>}` — swap template sample data for the client's sources.
 10. `manage-themes action=enable_theme report_id=<id> theme_id=<client_theme_id>` + `enable_color` with the brand palette.
