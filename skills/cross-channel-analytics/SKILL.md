@@ -154,7 +154,6 @@ Source groups are where a large account list belongs — dozens or hundreds of s
 
    | Kind | What it does |
    |---|---|
-   | `data_aggregation` | Sums the **same** metric across the sources it maps, into one total. This is the primitive behind "total spend across accounts" — no group or blend involved. |
    | `data_formula` | Calculates from other fields (ROAS, CPA, CPC). Its operands are named `A`, `B`, … |
    | `metadata` | An alias / unified name for an existing field. No maths. |
 
@@ -162,11 +161,12 @@ Source groups are where a large account list belongs — dozens or hundreds of s
    source of that channel) or `source` (one specific account). Filter by it with `type:`. A metric
    scoped to one source will look "missing" on the others — that is the scope, not a fault.
 
-   **The cross-source ratio caveat.** A `data_aggregation` metric totals one metric across sources, but
-   a *ratio* whose numerator and denominator each need aggregating first (blended ROAS, blended CPA)
-   cannot be done by one metric alone — it needs a group or blend underneath, then a `data_formula` on
-   top of that combined source. So when a "blended" ratio looks wrong, check whether it was built on a
-   combined source at all, or is quietly averaging per-source ratios.
+   **The cross-source caveat.** Neither kind combines sources. A custom metric only reads fields on the
+   source it is mapped to, so any cross-source number — a plain total across accounts, or a *ratio*
+   whose numerator and denominator each need aggregating first (blended ROAS, blended CPA) — needs a
+   group or blend underneath, then a `data_formula` on top of that combined source. So when a "blended"
+   number looks wrong, check whether it was built on a combined source at all, or is quietly summing /
+   averaging per-source values.
 
    `list_with_premades` additionally filters by `map_type` (the full set, including
    `currency_exchange`, `tag`, `system`, `ai`) and by `integrations`.
