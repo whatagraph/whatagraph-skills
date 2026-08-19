@@ -22,8 +22,10 @@ Help users analyze marketing performance across multiple channels by leveraging 
 
 ## Key Concepts
 
-- **Blends** combine data from multiple sources into a single virtual source by mapping metrics across platforms (e.g., "Spend" from Google Ads + "Spend" from Facebook Ads). Use `list-blends` to explore them.
-- **Source groups** aggregate multiple sources of the same integration type into one unified source (e.g., 10 Google Ads accounts rolled into one). Use `list-source-groups` to explore them.
+- **Source groups** **sum** many sources (dozens to hundreds) into one virtual source. Read the total with `universal_*`, or one channel's / one source's own contribution with the `..._integration_<id>` / `..._integration_source_<id>` variants (Impressions for Google Ads only) — the aggregate *and* the parts. Stored by ETL. `list-source-groups`.
+- **Blends** **join** a handful of sources on a shared dimension so each keeps its own columns. Combined column = `aggregation_*`, one sub-source's = `blend_*`. Computed live. `list-blends`.
+
+Both work same-channel and cross-channel — channel count decides nothing. **Sum → source group, join → blend**; many → group, live → blend.
 - **Custom metrics** are user-defined calculated metrics that can work across channels (e.g., "Total Spend" = Google Ads spend + Meta spend). Use `list-custom-metrics`.
 - **Custom dimensions** are user-defined dimensions for cross-channel categorization. Use `list-custom-dimensions`.
 
@@ -33,7 +35,7 @@ Help users analyze marketing performance across multiple channels by leveraging 
    ```
    list-blends action: list
    ```
-   Blends are the primary mechanism for cross-channel reporting. Each blend's list entry includes `source_count` and `channel_names` — often enough to pick the right blend without calling `show`.
+   Blends and source groups are both cross-channel capable, so check `list-source-groups` too before concluding an account has no combined source. Each blend's list entry includes `source_count` and `channel_names` — often enough to pick the right blend without calling `show`.
 
 2. **Inspect a blend's configuration**:
    ```
@@ -106,7 +108,7 @@ Help users analyze marketing performance across multiple channels by leveraging 
 
 ## Workflow: Source Group Analysis
 
-Source groups are particularly useful for agencies managing many accounts of the same type.
+Source groups are where a large account list belongs — dozens or hundreds of sub-accounts, on one channel or across several. A blend would need a join per extra source.
 
 1. **List source groups**:
    ```

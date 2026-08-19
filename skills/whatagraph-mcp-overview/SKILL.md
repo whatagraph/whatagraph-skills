@@ -31,9 +31,11 @@ Space  (client folder)
 
 Data flows into widgets from:
 - **Data source** — one connected account (e.g. one Google Ads account).
-- **Source group** — multiple accounts of the same channel rolled up.
-- **Blend** — two or more sources (any channels) joined on shared dimensions.
+- **Source group** — many sources (dozens to hundreds) **summed** into one virtual source; exposes the total *and* each channel's / source's own contribution. Stored by ETL, so it warms up first.
+- **Blend** — a handful of sources **joined** on a shared dimension (date, campaign name), each keeping its own columns. Computed live.
 - **Values entered by hand** — an offline (manual-data) widget for figures no integration can supply (offline spend, retainer fees, client targets). See `whatagraph-widgets`.
+
+Both work same-channel and cross-channel — channel count is not what separates them. **Sum → source group, join → blend**; many → group, live → blend.
 
 ## Mental model for the tools
 
@@ -42,8 +44,8 @@ Data flows into widgets from:
 | Finding what data is connected, what metrics/dimensions are available; pulling raw numbers | `whatagraph-sources-and-data`, `fetching-marketing-metrics` |
 | Client folders, organizing reports under clients | `whatagraph-spaces` |
 | Creating/editing reports, tabs, widgets | `whatagraph-reports`, `whatagraph-report-tabs`, `whatagraph-widgets` |
-| Combining multiple accounts from the same channel | `whatagraph-source-groups` |
-| Combining data from multiple channels into one visualization | `whatagraph-blends` |
+| Summing sources into one total, or combining many of them | `whatagraph-source-groups` |
+| Joining a handful of sources row-by-row, or combined numbers that must be live | `whatagraph-blends` |
 | Building a formula metric or a unified metric across channels | `whatagraph-custom-metrics` |
 | Grouping/bucketing/tagging dimension values | `whatagraph-custom-dimensions` |
 | Saved filter configurations | `whatagraph-filters` |
@@ -112,7 +114,7 @@ Users rarely say "data source"; they say things like "my Google Ads account". Tr
 | "sample data", "demo data" | a read-only placeholder source the platform provides per channel so a report can be built or previewed before real data is connected. Sample sources coexist with real sources of the same channel. In `list-reports action=list_sources` they appear under `sample_integrations` (separate from `integration_sources`). |
 | "page", "section" inside a report | a report tab |
 | "dashboard", "KPI dashboard", "measurement" | an overview (the UI now calls it "Measurement") |
-| "combined data", "aggregated accounts" | source group (same channel) or blend (multi-channel) |
+| "combined data", "aggregated accounts" | source group (sums many) or blend (joins a handful) — both work same-channel and cross-channel |
 | "scheduled send", "auto-send", "delivery" | an automation |
 | "share link", "public link" | sharing + the returned URL |
 | "template report" | a report template (linked report pattern) |
@@ -130,7 +132,7 @@ Users rarely say "data source"; they say things like "my Google Ads account". Tr
 1. `view-team action=show` — confirm plan, features enabled.
 2. `list-spaces action=list` — see client folders.
 3. `list-sources action=list` (optionally filtered by a space) — see what's connected.
-4. Decide whether you need to aggregate same-channel accounts (`source-groups`) or combine different channels (`blends`).
+4. Decide how the sources must combine: summed, or many of them → `source-groups`; joined row-by-row, a handful, or needed live → `blends`. Either works within one channel or across.
 5. Build a report: `manage-reports create` (pass `layout` to set page orientation — landscape by default) → `manage-report-tabs create` → `manage-reports attach_source` (one call per data source the report needs) → `manage-widgets create` (using the report-local `source_id` returned by attach). There is no default report structure — replicate the report they referenced/uploaded, build to the intent they described, or (when there's neither) decide yourself which metrics/dimensions/KPIs are worth showing and the best visualization for each, composing by analytical priority. Don't reach for the same arrangement every time. Load `whatagraph-widgets` for the layout playbook. **Templates are opt-in**: never scan team templates or Whatagraph's pre-made template gallery to shortcut a build — use a template only when the user or agent instructions explicitly say so, and deliver the result unlinked unless the user asks for linking or the context makes auto-sync clearly relevant, e.g. scaling one layout across many clients (see `whatagraph-reports` / `whatagraph-templates`).
 6. Apply a theme with `manage-themes enable_theme` if the user wants custom branding.
 7. **Only when the user explicitly asks for it** — share the report (`manage-sharing create`) or schedule delivery (`manage-automations create`). Building a report does not imply sharing it: never create a share link or an automation unprompted. (Note: downloading a PDF via `manage-sharing download_pdf` creates a public share link as a side effect of rendering — only download a PDF when asked. Its layout is also **fixed and not configurable**: landscape, 1440 CSS px wide, one page per visible tab, each page as tall as that tab's own content — so do not promise a page size, an orientation, or a tab split. Rendering is queued, so the call returns a job id, not the file; collect it with `get_pdf`.)
