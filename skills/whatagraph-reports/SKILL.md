@@ -20,6 +20,8 @@ optional_tools:
     purpose: Verify a built or duplicated report renders with data.
   - tool_name: manage-integrations
     purpose: Attach integration sources to a report.
+  - tool_name: manage-spaces
+    purpose: Create a drafts space to build in when the destination space is not yet approved.
 ---
 
 # Reports
@@ -73,8 +75,30 @@ manage-reports action=create
 ```
 
 - `client_id` = space id (the `team_client` id). Find via `list-spaces action=list`.
+- **Never guess the destination space.** `client_id` is not a detail to fill in from the closest-matching space name — a space can be client-facing, and a half-built report that appears there is visible to the client. Follow "Choosing the destination space" below before you call `create`.
 - A default tab is always created with the report (verified Jun 2026) — pass `tab_name` to name it, otherwise it's unnamed. Add further tabs via `manage-report-tabs action=create`.
 - **Orientation is set here, at create.** `layout` is optional and **defaults to `printing_landscape_6x6`** (wide 6-column grid) when omitted — pass `printing_portrait_4x8` (narrow 4-column grid) only when the user asks for portrait. Setting it inline is the recommended path: a brand-new report has no widgets, so there is no ordering foot-gun and no need to follow up with `manage-report-tabs action=set_layout`. Once widgets exist the layout can no longer be changed via MCP, so decide orientation at create time.
+
+### Choosing the destination space
+
+The space is the user's call, not yours. A report is created in the state you leave it — half-composed, sample data, wrong logo — and if the space is client-facing, that state is what the client sees. Picking the space by name match ("WellJoy Marketing Reports" for a WellJoy report) is the failure this rule exists to stop.
+
+**Ask which space to build in.** One question, before `create`. Show the candidates so the answer is one word:
+
+```
+list-spaces action=list                                     # or search="Acme"
+list-reports action=list filter_space_ids=[<id>] per_page=5  # what this space already holds
+```
+
+If the space already holds finished, client-named reports, treat it as client-facing and say so when you ask.
+
+**When you cannot ask** — an autonomous run, or the user is unavailable — build in a drafts space, then move on approval:
+
+1. Build in the user's own drafts/staging space (a space named like "DRAFTS", "Internal", "Sandbox"). If none exists, create one: `manage-spaces action=create name="Drafts"`.
+2. Hand over the finished report and name the space it is in.
+3. Move it only after the user approves the destination: `manage-reports action=move report_id=<id> client_id=<target_space_id>` (see "Move a report to another space").
+
+Do not skip step 3 by moving the report yourself, and do not share a report out of a drafts space — the move comes first.
 
 ## Create from a template
 
@@ -87,6 +111,8 @@ manage-reports action=create_from_template
    name="Custom Report Name"
    layout="printing_portrait_4x8"    # optional — overrides the template's orientation
 ```
+
+`client_id` follows the same rule as blank `create` — see "Choosing the destination space". The template does not decide the space, and the linked intermediate below is created in whatever space you pass, so build it in a drafts space too.
 
 **Default — one-off report from a template (unlinked delivery).** Most template requests ("use my monthly template for Acme") want an independent report, not one that silently changes whenever the template is edited. Produce the independent copy like this:
 
@@ -143,6 +169,7 @@ An open-ended report is **multi-tab and thematic**:
 5. **Everything is titled and iconed** — report, tabs, widgets, metric rows; dashboard sections get header comments and editorial tabs their opener and takeaway; every SingleValue / List KPI row carries an icon matched to its metric's meaning (`whatagraph-widgets` → "Row icons") — a row of identical default eye icons is unfinished.
 6. **Date range and comparison are set** at report level so KPI deltas render.
 7. **The report is themed** (below).
+8. **It sits in the space the user nominated** — the space was asked for, not inferred. A report still in a drafts space is handed over as such, and moved only after the user approves the destination ("Choosing the destination space").
 
 A report failing any of these is not finished — fix it before reporting the build as done.
 
@@ -191,6 +218,8 @@ manage-reports action=move report_id=<id> client_id=<target_space_id>
 ```
 
 `keep_sources` defaults to `true` — attached sources travel with the report. Pass `keep_sources=false` to reset the report to sample data after the move (verified against the served schema, Jun 2026).
+
+This is also the second half of the build-in-drafts flow: it is how an approved report leaves the drafts space for its real one. Run it only once the user has confirmed the target space — see "Choosing the destination space".
 
 ## Attach a data source to a report
 
@@ -372,6 +401,7 @@ Same as `create` plus `linked_template_id`, `uses_sample_data`, and (when sample
 ## Common pitfalls
 
 - **`space_id` vs `client_id`** — The input key is `client_id` for the space; `space_id` is rejected. The create response echoes the space as `space_id` — don't feed that response key back as input.
+- **Creating a report into a client-facing space nobody nominated** — a space whose name matches the client is not a licence to build there; the client can see what lands in it. Ask which space, or build in a drafts space and `move` after approval (see "Choosing the destination space").
 - **`source_mapping` keys as source names** — keys must be the source id as a string (`"12345"`), values are the new source id as integer.
 - **Creating a widget before attaching the source** — `manage-widgets` validates `source_id` against the report's attached sources. Call `attach_source` first and use the returned report-local `source_id`.
 - **Detaching the last source of a channel without `delete_widgets=true`** — there is no fallback source to remap dependent widgets to; the call fails. Either pass `delete_widgets=true` or attach another source of the same channel first.

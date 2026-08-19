@@ -22,8 +22,10 @@ Help users analyze marketing performance across multiple channels by leveraging 
 
 ## Key Concepts
 
-- **Blends** combine data from multiple sources into a single virtual source by mapping metrics across platforms (e.g., "Spend" from Google Ads + "Spend" from Facebook Ads). Use `list-blends` to explore them.
-- **Source groups** aggregate multiple sources of the same integration type into one unified source (e.g., 10 Google Ads accounts rolled into one). Use `list-source-groups` to explore them.
+- **Source groups** **sum** many sources (dozens to hundreds) into one virtual source. Read the total with `universal_*`, or one channel's / one source's own contribution with the `..._integration_<id>` / `..._integration_source_<id>` variants (Impressions for Google Ads only) — the aggregate *and* the parts. Stored by ETL. `list-source-groups`.
+- **Blends** **join** a handful of sources on a shared dimension so each keeps its own columns. Combined column = `aggregation_*`, one sub-source's = `blend_*`. Computed live. `list-blends`.
+
+Both work same-channel and cross-channel — channel count decides nothing. **Sum → source group, join → blend**; many → group, live → blend.
 - **Custom metrics** are user-defined calculated metrics that can work across channels (e.g., "Total Spend" = Google Ads spend + Meta spend). Use `list-custom-metrics`.
 - **Custom dimensions** are user-defined dimensions for cross-channel categorization. Use `list-custom-dimensions`.
 
@@ -33,7 +35,7 @@ Help users analyze marketing performance across multiple channels by leveraging 
    ```
    list-blends action: list
    ```
-   Blends are the primary mechanism for cross-channel reporting. Each blend's list entry includes `source_count` and `channel_names` — often enough to pick the right blend without calling `show`.
+   Blends and source groups are both cross-channel capable, so check `list-source-groups` too before concluding an account has no combined source. Each blend's list entry includes `source_count` and `channel_names` — often enough to pick the right blend without calling `show`.
 
 2. **Inspect a blend's configuration**:
    ```
@@ -106,7 +108,7 @@ Help users analyze marketing performance across multiple channels by leveraging 
 
 ## Workflow: Source Group Analysis
 
-Source groups are particularly useful for agencies managing many accounts of the same type.
+Source groups are where a large account list belongs — dozens or hundreds of sub-accounts, on one channel or across several. A blend would need a join per extra source.
 
 1. **List source groups**:
    ```
@@ -152,7 +154,6 @@ Source groups are particularly useful for agencies managing many accounts of the
 
    | Kind | What it does |
    |---|---|
-   | `data_aggregation` | Sums the **same** metric across the sources it maps, into one total. This is the primitive behind "total spend across accounts" — no group or blend involved. |
    | `data_formula` | Calculates from other fields (ROAS, CPA, CPC). Its operands are named `A`, `B`, … |
    | `metadata` | An alias / unified name for an existing field. No maths. |
 
@@ -160,11 +161,12 @@ Source groups are particularly useful for agencies managing many accounts of the
    source of that channel) or `source` (one specific account). Filter by it with `type:`. A metric
    scoped to one source will look "missing" on the others — that is the scope, not a fault.
 
-   **The cross-source ratio caveat.** A `data_aggregation` metric totals one metric across sources, but
-   a *ratio* whose numerator and denominator each need aggregating first (blended ROAS, blended CPA)
-   cannot be done by one metric alone — it needs a group or blend underneath, then a `data_formula` on
-   top of that combined source. So when a "blended" ratio looks wrong, check whether it was built on a
-   combined source at all, or is quietly averaging per-source ratios.
+   **The cross-source caveat.** Neither kind combines sources. A custom metric only reads fields on the
+   source it is mapped to, so any cross-source number — a plain total across accounts, or a *ratio*
+   whose numerator and denominator each need aggregating first (blended ROAS, blended CPA) — needs a
+   group or blend underneath, then a `data_formula` on top of that combined source. So when a "blended"
+   number looks wrong, check whether it was built on a combined source at all, or is quietly summing /
+   averaging per-source values.
 
    `list_with_premades` additionally filters by `map_type` (the full set, including
    `currency_exchange`, `tag`, `system`, `ai`) and by `integrations`.

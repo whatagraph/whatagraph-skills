@@ -2,7 +2,7 @@
 name: whatagraph-blends
 type: domain
 group: data_modeling
-description: Combine data from different channels (Google Ads + Meta + GA4) into one virtual source by joining on shared dimensions (date, campaign name, etc.). Use when a widget needs to show cross-channel rows side-by-side or a computed metric needs numerator/denominator from separate sources.
+description: Join a handful of sources on a shared dimension (date, campaign name, etc.) into one virtual source, each source keeping its own columns — across channels (Google Ads + Meta + GA4) or within one channel (two Google Ads accounts side by side). Use when a widget needs rows side-by-side, when a computed metric needs numerator/denominator from separate sources, or when the combined numbers must be live. For summing many sources into one total, use a source group instead.
 required_tools:
   - list-blends
   - list-filters
@@ -34,21 +34,42 @@ optional_tools:
 
 Tools covered: `list-blends`, `manage-blends`.
 
-A **blend** joins 2+ sources into a single virtual source. The blend has its own integration source id, so widgets and custom metrics can treat the blend like any other source.
+A **blend** joins 2+ sources into a single virtual source, keeping each source's own columns. Sources can be from different channels (e.g. Google Ads + Meta + GA4) or from the same channel (e.g. two Google Ads accounts, one column each). The blend has its own integration source id, so widgets and custom metrics can treat the blend like any other source.
 
 ## Use this when
 
 - "Put Google Ads spend and Meta Ads spend in the same table grouped by date."
 - "Compute Blended ROAS = GA4 revenue / (Google Ads spend + Meta Ads spend)." (Blend first, custom metric second.)
 - "Cross-channel performance widget that groups by campaign theme across 3 platforms."
+- "Show these two Google Ads accounts side by side, matched on campaign name." (Same-channel blend — a source group would sum them into one column.)
+- "Combined numbers I can read right now, without waiting for a sync."
 
 ## Blend vs source group — quick decision
 
+| | Source group | Blend |
+|---|---|---|
+| Operation | **sums** sources into one total | **joins** rows on a shared dimension |
+| Output | the total, plus a per-channel and per-source variant of every metric (Impressions for Google Ads only) and Channel/Source name dimensions | each sub-source keeps its own columns |
+| Channels | same or across | same or across |
+| Scale | many — dozens to hundreds | a handful — 2–5 typical |
+| Freshness | **stored** — ETL-written, warms up, as fresh as the last sync | **live** — computed in-request, ready immediately |
+| Read ids | `universal_*` (+ `_integration_<id>` / `_integration_source_<id>`) | `aggregation_*` combined, `blend_*` per sub-source |
+
+**Sum → source group. Join → blend. Live → blend. Many sources → source group.**
+
 | Goal | Use |
 |---|---|
-| Sources are ALL the same channel (5 Google Ads accounts) → one virtual source | Source group (`manage-source-groups`) |
-| Combine the same field across sources/channels into one total, no row-level join needed | Source group (cross-channel rollup) |
-| Sources are DIFFERENT channels that must be JOINED on a shared dimension (campaign, date) for side-by-side rows | Blend |
+| 5 Google Ads accounts → 1 virtual "Google Ads Total" | Source group (same-channel) |
+| Meta + Google + Reddit + TikTok → 1 aggregated source with unified metrics | Source group (cross-channel) |
+| Sum of `spend` across Google + Meta into one total, no row-level join | Source group (cross-channel) |
+| 40 GBP locations / 25 client ad accounts → 1 rollup | Source group — a blend here would need 39 joins |
+| Google Ads + Meta Ads joined/matched on campaign name (side-by-side rows) | Blend (cross-channel) |
+| 2 Google Ads accounts joined on campaign name, one column per account | Blend (same-channel) |
+| Combined numbers that must be **live** — today's data, no warmup wait | Blend (same- or cross-channel) |
+
+**Common mistake**: source group ≠ same-channel-only, blend ≠ cross-channel-only. Both do both — channel count decides nothing.
+
+Why scale differs: a group needs one ETL config **per channel, not per source** and serves precomputed data; a blend needs **N−1 joins** and re-fetches every sub-source per request. No hard cap either way. When live and many collide, scale wins — build the group and accept the warmup, or blend only the few sources watched live and roll the rest up.
 
 ## Listing
 
@@ -363,7 +384,7 @@ manage-custom-metrics action=create
 
 Get the `blend_metric_<n>` ids from `list-sources action=list_dimensions_and_metrics source_id=<blend_id>`. `blend_metric_*` fields require `integration_source_id` (the blend's source) — not `channel_id`.
 
-**A `map_type=data_aggregation` custom metric on a blend is single-column, not cross-channel.** It can only reference `blend_metric_<n>` ids, and each `blend_metric_<n>` is scoped to ONE sub-source's column (e.g. `blend_metric_957` = Facebook Spend only). So a `data_aggregation` metric over a single `blend_metric_<n>` CANNOT produce a cross-channel SUM. For the true cross-channel total, do NOT build a custom metric — READ the auto-exposed `aggregation_metric_universal_metric_<n>` field via `fetch-data` (the blend already sums it across sub-sources). Reserve custom `data_formula` metrics for cross-sub-source ratios (e.g. Blended ROAS above).
+**Never build a custom metric to get a cross-channel total on a blend.** Every `blend_metric_<n>` is scoped to ONE sub-source's column (e.g. `blend_metric_957` = Facebook Spend only), so a custom metric over it stays single-column. For the true cross-channel total, READ the auto-exposed `aggregation_metric_universal_metric_<n>` field via `fetch-data` — the blend already sums it across sub-sources. Reserve custom `data_formula` metrics for cross-sub-source ratios (e.g. Blended ROAS above).
 
 ## Decoding `blend_metric_<n>` / `blend_dimension_<n>` — which channel a field belongs to
 

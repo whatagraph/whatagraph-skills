@@ -2,7 +2,7 @@
 name: whatagraph-source-groups
 type: domain
 group: data_modeling
-description: Combine multiple data sources into one virtual aggregated source — same-channel (e.g. five Google Ads sub-accounts) or cross-channel (e.g. Meta + Google + Reddit + TikTok). Use when an agency wants unified reporting without building a blend.
+description: Sum many data sources into one virtual aggregated source — same-channel (e.g. five Google Ads sub-accounts) or cross-channel (e.g. Meta + Google + Reddit + TikTok). Scales to dozens or hundreds of sources, where a blend would need a join per extra source. Use when an agency wants unified reporting without building a blend.
 required_tools:
   - list-source-groups
   - list-sources
@@ -30,14 +30,30 @@ A **source group** aggregates multiple sources into one virtual source. Sources 
 
 ## Source group vs blend vs custom metric
 
+| | Source group | Blend |
+|---|---|---|
+| Operation | **sums** sources into one total | **joins** rows on a shared dimension |
+| Output | the total, plus a per-channel and per-source variant of every metric (Impressions for Google Ads only) and Channel/Source name dimensions | each sub-source keeps its own columns |
+| Channels | same or across | same or across |
+| Scale | many — dozens to hundreds | a handful — 2–5 typical |
+| Freshness | **stored** — ETL-written, warms up, as fresh as the last sync | **live** — computed in-request, ready immediately |
+| Read ids | `universal_*` (+ `_integration_<id>` / `_integration_source_<id>`) | `aggregation_*` combined, `blend_*` per sub-source |
+
+**Sum → source group. Join → blend. Live → blend. Many sources → source group.**
+
 | Goal | Use |
 |---|---|
 | 5 Google Ads accounts → 1 virtual "Google Ads Total" | Source group (same-channel) |
 | Meta + Google + Reddit + TikTok → 1 aggregated source with unified metrics | Source group (cross-channel) |
 | Sum of `spend` across Google + Meta into one total, no row-level join | Source group (cross-channel) |
-| Google Ads + Meta Ads joined/matched on campaign name (side-by-side rows) | Blend |
+| 40 GBP locations / 25 client ad accounts → 1 rollup | Source group — a blend here would need 39 joins |
+| Google Ads + Meta Ads joined/matched on campaign name (side-by-side rows) | Blend (cross-channel) |
+| 2 Google Ads accounts joined on campaign name, one column per account | Blend (same-channel) |
+| Combined numbers that must be **live** — today's data, no warmup wait | Blend (same- or cross-channel) |
 
-**Rule**: source groups handle both same-channel and cross-channel aggregation and are simpler than blending — think of a source group as the templated, stored, auto-summarized version of a blend. Use a blend only when you need to **join** rows across channels on a shared dimension (e.g. matching campaign names between Google Ads and Meta Ads).
+**Common mistake**: source group ≠ same-channel-only, blend ≠ cross-channel-only. Both do both — channel count decides nothing.
+
+Why scale differs: a group needs one ETL config **per channel, not per source** and serves precomputed data; a blend needs **N−1 joins** and re-fetches every sub-source per request. No hard cap either way. When live and many collide, scale wins — build the group and accept the warmup, or blend only the few sources watched live and roll the rest up.
 
 ## Listing
 
