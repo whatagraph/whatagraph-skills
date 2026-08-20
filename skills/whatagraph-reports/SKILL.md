@@ -170,6 +170,7 @@ An open-ended report is **multi-tab and thematic**:
 6. **Date range and comparison are set** at report level so KPI deltas render.
 7. **The report is themed** (below).
 8. **It sits in the space the user nominated** — the space was asked for, not inferred. A report still in a drafts space is handed over as such, and moved only after the user approves the destination ("Choosing the destination space").
+9. **The confirmation message claims only what the calls proved** — never state a data status ("Verified", "real non-zero data", "pulling through all layers") that no `fetch-data`, `export-report` or `csv_export` call in this run actually returned. No verify call means the data is unverified, and the message says so; a call that came back with warnings, sample data, or a broken source is reported as that, not as a clean bill of health. The same holds for content — name only metrics the report actually holds, never one that appears solely in a "suggested next steps" line.
 
 A report failing any of these is not finished — fix it before reporting the build as done.
 

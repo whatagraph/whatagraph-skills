@@ -30,6 +30,8 @@ optional_tools:
 
 Multi-tool patterns that keep coming up. Use alongside the domain skills.
 
+> **Say only what the calls proved.** Whatever the flow, never state a data status in the closing message — "verified", "real non-zero data", "all widgets pulling" — that no `fetch-data`, `export-report` or `csv_export` call in this run returned. Without a verify call the data is unverified and the message says so; a call that returned warnings, sample data, or a broken source is reported as that. Name only metrics the report actually holds, not ones you offered as a next step.
+
 ## Decision trees
 
 ### Same-channel rollup vs cross-channel rollup vs join
@@ -164,3 +166,4 @@ Only applicable if those reports are linked to a template.
 - **Creating from template without running `change_sources`** — widgets stay on sample data.
 - **Automations without `time_zone`** — always include IANA timezone; local time ≠ team timezone by default.
 - **Sharing link without password on confidential reports** — anyone with the URL can view.
+- **Claiming a data status nothing verified** — a closing "Data Status: Verified" with no `fetch-data`, `export-report`, or `csv_export` call behind it is a false report, however right the build looks. Run the verify call, or say the data is unverified.
