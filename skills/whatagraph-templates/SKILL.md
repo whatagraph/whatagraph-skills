@@ -58,6 +58,8 @@ Name must be at least 4 characters.
 
 ## Editing a template (edit → modify → publish)
 
+> **Needs approval.** `publish` overwrites every linked report with the template's current structure. The first call returns a preview and changes nothing; resend the identical call with the `confirm_token` from that preview to execute it. See `whatagraph-deleting` → "The approval gate".
+
 Structural changes to a template only reach linked reports through this cycle. Editing the original source report does NOT propagate.
 
 **Step 1 — Open a draft:**

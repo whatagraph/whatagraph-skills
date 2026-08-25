@@ -769,6 +769,8 @@ manage-widgets action=batch_duplicate report_id=<id> widget_ids=[...] target_tab
 
 ## Add / remove rows
 
+> **`remove_row` needs approval.** It deletes the row and its conditional formats. The first call returns a preview and changes nothing; resend the identical call with the `confirm_token` from that preview to execute it. `add_row` is not gated. See `whatagraph-deleting` → "The approval gate".
+
 Multi-row widgets (combo charts, funnels, non-breakdown pie/donut) have one row per series or stage. Use `add_row` and `remove_row` to manage them without rebuilding the entire `rows` array.
 
 ```

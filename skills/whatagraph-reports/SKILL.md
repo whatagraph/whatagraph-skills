@@ -214,6 +214,8 @@ The report-level date range is the baseline every widget inherits, and the repor
 
 ## Move a report to another space
 
+> **Needs approval.** `move` can drop the report's attached sources, and widgets reading them break. The first call returns a preview and changes nothing; resend the identical call with the `confirm_token` from that preview to execute it. See `whatagraph-deleting` → "The approval gate".
+
 ```
 manage-reports action=move report_id=<id> client_id=<target_space_id>
 ```
@@ -254,6 +256,8 @@ Returns a report-local `source_id` with `is_sample_data: true`. Widgets created 
 
 ## Detach a data source from a report
 
+> **Needs approval.** `detach_source` removes a source widgets read through, and with `delete_widgets=true` deletes those widgets. The first call returns a preview and changes nothing; resend the identical call with the `confirm_token` from that preview to execute it. See `whatagraph-deleting` → "The approval gate".
+
 Remove a source the report no longer uses. Two modes:
 
 ```
@@ -268,6 +272,8 @@ manage-reports action=detach_source report_id=<id> source_id=<report_local_sourc
 Use `list-reports action=list_sources report_id=<id>` first to discover the report-local `source_id` to detach. See **Response reference** for the response shape.
 
 ## Bulk-swap data sources (`change_sources`)
+
+> **Needs approval.** `change_sources` repoints every widget at once; a wrong mapping breaks the whole report. The first call returns a preview and changes nothing; resend the identical call with the `confirm_token` from that preview to execute it. See `whatagraph-deleting` → "The approval gate".
 
 When a template-derived report comes with sample data, or a client is being migrated from Account A to Account B, swap all widget sources at once.
 

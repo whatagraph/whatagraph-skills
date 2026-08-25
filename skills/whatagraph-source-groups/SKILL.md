@@ -153,6 +153,8 @@ A source group exposes **one** report-type level (e.g. campaign performance). If
 
 ## Updating
 
+> **Needs approval.** `update` and `update_config` replace collections, so a config you leave out of `configs` is deleted — this is the call that caused the Aug 2026 incident. The first call returns a preview and changes nothing; resend the identical call with the `confirm_token` from that preview to execute it. See `whatagraph-deleting` → "The approval gate".
+
 How much you do depends on **what changes**. There are two cases.
 
 ### A — Simple update (no field changes)

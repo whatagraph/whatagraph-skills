@@ -238,6 +238,8 @@ manage-custom-metrics action=create
 
 ## Updating
 
+> **Needs approval.** `update` is replace-style, so field mappings you do not re-send are dropped, and widgets reading the metric break. The first call returns a preview and changes nothing; resend the identical call with the `confirm_token` from that preview to execute it. See `whatagraph-deleting` → "The approval gate".
+
 ```
 manage-custom-metrics action=update metric_id=<id>
    name="..." fields=[...] formula="..." formula_value_type="..." accumulator="..."
