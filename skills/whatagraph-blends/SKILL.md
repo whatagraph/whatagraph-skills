@@ -231,6 +231,8 @@ Only a `cross` join may omit the join definition.
 
 ## Updating
 
+> **Needs approval.** `update` is replace-style, so sub-sources and joins you do not re-send are dropped, and widgets reading them break. The first call returns a preview and changes nothing; resend the identical call with the `confirm_token` from that preview to execute it. See `whatagraph-deleting` → "The approval gate".
+
 ```
 manage-blends action=update blend_id=<id>
    items=[...]  joins=[...]

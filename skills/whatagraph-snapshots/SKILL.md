@@ -56,6 +56,8 @@ Captures the current structure. No `name` parameter — the snapshot is identifi
 
 ## Restore a snapshot (overwrites current structure)
 
+> **Needs approval.** `restore` overwrites the report's current tabs, widgets, and sources. The first call returns a preview and changes nothing; resend the identical call with the `confirm_token` from that preview to execute it. See `whatagraph-deleting` → "The approval gate".
+
 ```
 manage-snapshots action=restore report_id=<id> snapshot_id=<id>
 ```

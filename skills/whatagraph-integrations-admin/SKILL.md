@@ -76,6 +76,8 @@ Sub-source `external_id` values are JSON strings like `{"integration_source_id":
 
 ## Assign a source to spaces
 
+> **Needs approval.** `sync_to_clients` replaces the source's space assignments outright — an empty `client_ids` wipes them all. The first call returns a preview and changes nothing; resend the identical call with the `confirm_token` from that preview to execute it. See `whatagraph-deleting` → "The approval gate".
+
 ```
 manage-integrations action=sync_to_clients
    source_id=<integration_source_id>
@@ -86,6 +88,8 @@ manage-integrations action=sync_to_clients
 - Pass an empty array `[]` to remove from all spaces.
 
 ## Tag / re-currency a source
+
+> **Needs approval.** `manage-sources action=tag` replaces the source's whole tag set, and custom dimensions built on those tags read through it. The first call returns a preview and changes nothing; resend the identical call with the `confirm_token` from that preview to execute it. See `whatagraph-deleting` → "The approval gate".
 
 ```
 manage-sources action=tag

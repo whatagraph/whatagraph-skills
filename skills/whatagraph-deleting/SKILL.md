@@ -56,10 +56,42 @@ Tools covered: every `delete-*` tool, `remove-integrations`, `remove-members`, p
 
 **Deletion is the highest-risk operation on this MCP surface.** Four rules before any call:
 
-1. **Confirm intent with the user.** There is no `confirm` parameter in any delete tool's schema. The agent should confirm with the user conversationally before calling any destructive tool. One exception: intermediate artifacts the agent itself created moments earlier as scaffolding within a documented flow (e.g. the linked intermediate report in the template → duplicate → delete flow, see `whatagraph-reports`) hold no user content and can be deleted without a confirmation round-trip.
+1. **Confirm intent with the user, then confirm the call with its token.** These are two separate things. The server refuses a destructive call and returns a preview with a single-use `confirm_token`; you resend the identical call with that token to execute it (see "The approval gate" below). That mechanism stops an accidental destruction, but it does not know what the user wants — so ask the user first, then confirm. One exception to *asking*: intermediate artifacts the agent itself created moments earlier as scaffolding within a documented flow (e.g. the linked intermediate report in the template → duplicate → delete flow, see `whatagraph-reports`) hold no user content and can be deleted without a confirmation round-trip. They still go through the token round-trip — the gate applies to every caller.
 2. **Check usage first** (table below) — know what breaks before it breaks.
 3. **Know the recovery class** — some deletes have a `restore` action, some need support, some are gone forever.
 4. **Prefer update over delete-and-recreate** wherever dependents bind by id (source groups, blends, goals).
+
+## The approval gate
+
+Every `delete-*` / `remove-*` tool and the destructive `manage-*` actions listed below run behind a two-step gate. The first call **changes nothing** and comes back like this:
+
+```json
+{
+  "success": false,
+  "requires_approval": true,
+  "tool": "delete-source-groups",
+  "action": "delete",
+  "warning": "This permanently deletes data that other objects read through, so it can break them too. It cannot be undone.",
+  "blast_radius": "wide",
+  "cascades_to": ["widgets", "blends", "reports", "transfers"],
+  "arguments": { "action": "delete", "group_id": 1516 },
+  "confirm_token": "UG4SPL8FWxyT90mvHcrmQ8zqYMwMMY9BG54xbC5j",
+  "expires_in_seconds": 300
+}
+```
+
+Read it, tell the user what it says, and only then resend the **identical** call with `confirm_token` set to that value.
+
+Four things to know:
+
+- **`requires_approval: true` is not an error.** Do not retry it as if the call failed, and do not report it to the user as a failure. It is the preview you asked for by making the call.
+- **You cannot invent a token.** A token you were never handed is refused, and the refusal hands you a *fresh* token each time — so retrying a refused call never gets through. There is nothing to guess.
+- **A token is single-use and expires in 300 seconds.** It runs its destruction once. Replaying it gives you another preview.
+- **The token is bound to the exact arguments.** Change any of them and it stops working — you get a new preview for the new call, which is the point. `intent`, `idempotency_key`, and `agent_tool_status` are excluded, so rewording those on the confirming call is fine.
+
+`blast_radius` tells you how far the damage reaches: `local` means only the thing you named, `wide` means other objects read through it and break too. `cascades_to` names the kinds that break.
+
+**Never confirm a destruction the user did not ask for.** If the preview surprises you, report it back to the user instead of spending the token.
 
 ## Use this when
 
@@ -262,11 +294,31 @@ The only action is `cancel_invite` — despite the tool name, it can NOT remove 
 
 ## Deletes hiding in manage tools
 
-These `manage-*` actions are destructive even though their tool names aren't:
+These `manage-*` actions are destructive even though their tool names aren't. All of the ones marked **gated** go through the same preview-and-token round-trip as a `delete-*` call.
 
-- `manage-reports action=detach_source delete_widgets=true` — deletes the dependent widgets along with the source. The default mode (no flag) remaps widgets to another attached source of the same channel instead, and the response discloses `remapped_to` including `is_sample_data` — check it: a remap to sample data is rarely what the user wants.
-- `manage-integrations action=sync_to_clients client_ids=[]` — an empty array wipes all of the source's space assignments.
-- `manage-snapshots action=restore` — destructive overwrite of the report's current structure; take a fresh `manage-snapshots action=create` first.
+| Action | Reach | Why it destroys | Gated |
+|---|---|---|---|
+| `manage-source-groups` `update`, `update_config` | wide | Replaces the config collection — a config you leave out of `configs` is deleted. This is the call that caused the Aug 2026 incident. | yes |
+| `manage-blends` `update` | wide | Replaces collections; sub-sources you do not re-send are dropped. | yes |
+| `manage-custom-dimensions` `update`, `assign_tag_sources` | wide | Replaces fields / tag source assignments. | yes |
+| `manage-custom-dimensions` `remove_tag` | wide | Permanently deletes the tag and its assignments. | yes |
+| `manage-custom-metrics` `update` | wide | Replaces the field mappings. | yes |
+| `manage-reports` `detach_source`, `change_sources` | wide | Detaches a source; with `delete_widgets=true` it deletes the dependent widgets too. | yes |
+| `manage-reports` `move` | wide | Moves the report between spaces; report-local sources can drop. | yes |
+| `manage-integrations` `sync_to_clients` | wide | An empty `client_ids` array wipes all of the source's space assignments. | yes |
+| `manage-sources` `tag` | wide | Replaces the source's tag set. | yes |
+| `manage-templates` `publish` | wide | Overwrites linked reports with the template's current structure. | yes |
+| `manage-snapshots` `restore` | wide | Overwrites the report's current structure. Take a fresh `manage-snapshots action=create` first. | yes |
+| `manage-widgets` `remove_row` | local | Deletes the row and its conditional formats. | yes |
+| `manage-widgets` `update`, `set_conditional_formats`, `set_auto_colors` | local | Replaces the widget's own rows/formats. Routine, so it runs on the first call. | no |
+| `manage-overviews` `update` | local | Replaces notifications and shares on that overview. | no |
+| `manage-automations` `update` | local | Replaces the recipient list. | no |
+| `manage-members` `update_member_role`, `update_invite` | local | Replaces the member's space access. | no |
+| `manage-filters` `create` | local | Replaces a filter already on the target widget or source. | no |
+
+The ungated ones still replace collections — they are just too routine to put an approval round-trip in front of. **Read the current state and send it back complete**, or the parts you omit are gone.
+
+On `manage-reports action=detach_source`: the default mode (no `delete_widgets` flag) remaps widgets to another attached source of the same channel instead of deleting them, and the response discloses `remapped_to` including `is_sample_data` — check it, because a remap to sample data is rarely what the user wants.
 
 ## When NOT to delete
 
@@ -284,7 +336,9 @@ These `manage-*` actions are destructive even though their tool names aren't:
 
 ## Common pitfalls
 
-- **Probing for a `confirm` parameter** — none exists in any delete tool's schema. Deletion is a conversational directive — confirm with the user before calling.
+- **Treating `requires_approval: true` as a failure** — it is the preview, and it is the normal first response to any gated call. Read it, tell the user, then resend the identical call with its `confirm_token`. Do not report it as an error and do not blind-retry it.
+- **Guessing or reusing a `confirm_token`** — a token you were not handed is always refused, and a spent one is refused too. Take the token from the preview of that exact call.
+- **Looking for a plain `confirm` boolean** — there isn't one. The proof of approval is the `confirm_token` from the preview.
 - **All overview tools use `overview_id`** — list, show, update, and delete all use `overview_id` consistently.
 - **`space_id` instead of `client_id`** — `delete-spaces` takes `client_id`; the Home space is rejected.
 - **Assuming `delete-filters` takes only `filter_id`** — the schema requires `action=delete` too.

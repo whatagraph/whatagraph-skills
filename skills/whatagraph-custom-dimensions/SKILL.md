@@ -193,6 +193,8 @@ manage-custom-dimensions action=preview_ai
 
 ## Updating
 
+> **Needs approval.** `update` and `assign_tag_sources` are replace-style, and `remove_tag` deletes the tag outright. Widgets, filters, and reports read through these. The first call returns a preview and changes nothing; resend the identical call with the `confirm_token` from that preview to execute it. See `whatagraph-deleting` → "The approval gate".
+
 ```
 manage-custom-dimensions action=update dimension_id=<id>
    name="..." fields=[...] maps=[...] tags=[...] prompt="..."
