@@ -17,7 +17,7 @@ required_tools:
   - list-widgets
   - manage-themes
 optional_tools:
-  - tool_name: manage-sharing
+  - tool_name: export-report
     purpose: Render the finished report to PDF to check the built output.
 ---
 
@@ -143,7 +143,7 @@ Three checks, and they catch different things:
 
 1. **`list-widgets action=csv_export`** — confirms the *values* are right. It reads every row, including rows that will not render, so it cannot catch truncation.
 2. **The `data_summary` on each write response** — confirms your data landed. Offline rows echo `headers` and `data_row_count`, or `entry_names` and `entry_count`. One trap: a widget created without `data` reports the *template's* sample headers, so check that the headers are yours.
-3. **Look at the rendered output.** This is the only check that catches a dropped table row, a clipped title, an invisible chart label or a soft image. `manage-sharing action=download_pdf` queues the render and returns a `pdf_job_id`; `manage-sharing action=get_pdf` gives you the download URL once it is ready (see `whatagraph-sharing`). Examine the file yourself if you can read it. If you cannot, ask the user to look, and tell them exactly what to look at: the last row of every table, and every page.
+3. **Look at the rendered output.** This is the only check that catches a dropped table row, a clipped title, an invisible chart label or a soft image. `export-report format=pdf` queues the render and returns a `pdf_job_id`; calling it again with that `pdf_job_id` gives you the download URL once it is ready (see `whatagraph-export`). Examine the file yourself if you can read it. If you cannot, ask the user to look, and tell them exactly what to look at: the last row of every table, and every page.
 
 ## Common pitfalls
 
