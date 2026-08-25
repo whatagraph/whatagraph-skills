@@ -49,6 +49,8 @@ list-source-groups action=source_issues group_id=<id> # sources with disabled ET
 
 Note: `output_name` in the `show` response is read-only (computed from the config structure). It is not a create or update parameter.
 
+`show` also returns, per config, `has_premade_channels` and — inside `etl_configs` — an `is_premade` flag per channel. Read both before any update: a premade channel cannot be edited (see *Premade channels are locked*).
+
 ### Valid `fields` paths
 
 Use the `fields` parameter to select only the attributes you need (reduces response size).
@@ -57,6 +59,34 @@ Use the `fields` parameter to select only the attributes you need (reduces respo
 - **`show`**: `id`, `name`, `description`, `currency`, `integration_source_id`, `sources`, `configs_count`, `configs`
 
 Note: `integration_source_id` is only available on `show`, not `list`. To get a group's virtual source ID, use `show`.
+
+## Two things are called a config
+
+The word means two different objects here, and confusing them is how a group gets destroyed. `show` returns both.
+
+| | **Output config** | **Channel ETL config** |
+|---|---|---|
+| What it is | one entry in the group's `configs[]` — the output level the group exposes | one channel's field selection inside that output config |
+| Its id | `configs[].id` | `etl_config_id`, listed in `configs[].etl_config_ids` |
+| Created by | `action=create`, with the group | `action=create_config` |
+| Edited by | nothing but its `name` | `action=update_config` — and only when `is_premade` is false |
+| Removed by | nothing. There is no way to delete one | dropping its id, and only together with its sources |
+
+So: channels move in and out of a group; output configs do not.
+
+## Premade channels are locked
+
+A premade channel is backed by a Whatagraph-managed ETL template rather than one your team owns. `show` marks it `is_premade: true`. It works fine — it just cannot be edited, not through MCP and not in the UI either.
+
+**Never call `update_config` on a premade channel.** The tool refuses it, and the refusal is final.
+
+If the fields a user needs are missing from a premade channel, **this group is not the group to use**. Build a **new** source group carrying the fields they need (creation steps 0-4) and point the new widgets at that. Tell the user that is what you did.
+
+Three things not to do when you hit the lock:
+
+- **Don't send the user to the UI.** It blocks the same edit.
+- **Don't `create_config` a replacement and swap it into `etl_config_ids`.** The tool rejects the swap — and this is the move that turned a blocked edit into a deleted source group.
+- **Don't read `update_config`'s "not found" as a stale id.** On an id `show` just returned, it means locked.
 
 ## Creating a source group
 
@@ -131,9 +161,11 @@ manage-source-groups action=create
 - `configs[].name` defaults to the group `name` when omitted.
 - The response returns the group's virtual `integration_source_id` (use it in widgets) plus a `warmup_hint` — data takes a few minutes to populate.
 
-## One config per group (strongly recommended)
+## One config per group — and legacy groups keep theirs
 
-A source group exposes **one** report-type level (e.g. campaign performance). If the user needs campaign-level *and* keyword-level rollups from the same sources, build **two separate source groups**, one per level. Per group that means one entry in `configs`, with one `etl_config_id` per channel inside it. This keeps each group focused and makes widgets, filters, and blends easier to reason about.
+A source group exposes **one** report-type level (e.g. campaign performance). If the user needs campaign-level *and* keyword-level rollups from the same sources, build **two separate source groups**, one per level. Per group that means one entry in `configs`, with one `etl_config_id` per channel inside it. `create` rejects a second config outright.
+
+Older groups still carry several — `configs_count > 1` on `show`. Those extra configs are **not clutter to tidy up**: widgets and blends read them, and deleting one breaks everything built on it. Leave the count exactly as you found it and re-pass every config on every write (see *Updating*). Never consolidate a legacy group down to one config, even when asked to "clean it up" — that is a rebuild the user has to decide on, not an edit.
 
 ## Updating
 
@@ -159,9 +191,10 @@ Mirror creation, but reuse what exists. First read current state:
 
 ```
 list-source-groups action=show group_id=<id>
-# returns each config's `id` and `etl_config_ids` (+ the integration per id)
+# returns each config's `id` and `etl_config_ids` (+ the integration and `is_premade` per id)
 ```
 
+0. **Check `is_premade` on every channel you intend to change.** Any of them locked → stop and build a new group; nothing below applies.
 1. **Per existing channel whose fields change** — verify-fetch (yesterday) the new selection (only `success:true` proceeds), then PATCH that channel's config (its `etl_config_id` from `show`):
    ```
    manage-source-groups action=update_config
@@ -171,16 +204,26 @@ list-source-groups action=show group_id=<id>
    ```
    The id comes back unchanged. **Skip any channel whose fields don't change.**
 2. **Per new channel added** — verify-fetch → `create_config` → new `etl_config_id` (as in creation step 3).
-3. **Update the group** with the existing config `id` and the **full** id set:
+3. **Update the group**, passing every config it has with the **full** id set:
    ```
    manage-source-groups action=update group_id=<id>
       configs=[{ id:<existing source_group_config id>,
                  etl_config_ids:[<every channel's id — unchanged + patched + new>] }]
       integration_source_ids=[<all sources, incl. any new ones>]
    ```
+   A legacy group (`configs_count > 1`) needs one entry per existing config here — the changed one, and the others copied from `show` untouched.
 
-- **Reuse the existing config `id`** (from `show`) — never omit it; a missing id makes a new config and orphans dependents.
-- The single config's `etl_config_ids` must still cover **every** channel in `integration_source_ids` (one id per channel), exactly like create. Don't drop unchanged channels' ids — re-pass them as-is.
+### The rules `update` enforces
+
+The backend rejects anything below — a refusal is the contract holding, not an obstacle to route around.
+
+- **Check `is_premade` first.** Before touching a channel, read its flag on `show`. A locked channel ends the update — build a new group instead (*Premade channels are locked*).
+- **Pass every config the group has, or none.** When you send `configs`, send **all** of them: the one you changed, plus every other id from `show` with its `etl_config_ids` re-passed as-is. Never a subset. (Omissions are filled back in for you, but write the call correctly rather than relying on that.)
+- **Reuse the existing config `id`** — never omit it. A config cannot be added to an existing group; a second output level is a second group.
+- **Never remove a config.** There is no `delete_config`, and leaving one out of `configs` is not a way to reach one.
+- **One `etl_config_id` per channel** inside a config. Two ids for the same channel is rejected.
+- **Adding or removing a channel is fine** — that is what channel ids are for. Removing one means dropping its `etl_config_id` **and** its sources in the same call. Dropping the id alone, to swap in a different config for a channel that stays, is rejected.
+- The config's `etl_config_ids` must still cover **every** channel in `integration_source_ids` (one id per channel), exactly like create.
 - Channels you didn't touch are **not** re-fetched.
 
 **Always edit a group with `update`, never delete-and-recreate.** A rebuild mints a **new** virtual `source_id`, which silently detaches every source-level custom metric, widget, and report binding that pointed at the old one. `update` preserves the group's virtual `source_id`, so dependents stay attached.
@@ -264,6 +307,10 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 ## What MCP can't do here
 
 - Remove one sub-source from the group without providing the full replacement list — use `update` with the full new `integration_source_ids` list.
+- Edit a premade channel's ETL config. Nothing can; build a new group.
+- Delete an output config, or reduce a legacy group's config count.
+- Add a second output config to an existing group — that is a second source group.
+- Swap one channel's ETL config for another while that channel's sources stay in the group.
 
 ## Common pitfalls
 
@@ -272,6 +319,10 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **Missing a channel's ETL config** — the single create config's `etl_config_ids` must cover **every** channel in `integration_source_ids` (one config per channel from `create_config`). Miss one and `create` is rejected.
 - **Resolving fields once for all channels** — a universal field applies to a channel only if it maps to that channel, and native fields are channel-specific. Each channel's `list_dimensions_and_metrics` is the source of truth — resolve per channel from it (step 1). Pass a field a channel doesn't expose and config-create fails with an opaque server error, not a clear "field X doesn't apply" message.
 - **Editing a group? Use `update`, never delete+recreate** — a rebuild changes the virtual `source_id` and orphans source-level custom metrics and widget bindings.
+- **Reading `update_config`'s "not found" as a stale id** — on an id `show` just returned it means the channel is premade and locked. Don't retry, don't rebuild the config, don't route around it.
+- **Sending a subset of `configs`** — every config the group has goes in the array, or none of them do. A subset used to delete the rest, taking every widget and blend that read them.
+- **Minting a second ETL config for a channel the group already covers** — rejected, and the state it aims at (two configs for one channel) is what left an account with duplicate rows and disabled ETL configs.
+- **"Cleaning up" a legacy multi-config group** — leave `configs_count` alone. Consolidating it is a rebuild for the user to decide, not an edit.
 - **`resolve_issues` on a shared source re-syncs other groups** — scope `integration_source_ids` narrowly and expect a transient re-download on anything sharing those sources.
 - **Empty group right after creation** — ETL needs a few minutes to populate; the create response includes a `warmup_hint` and `retry_after_seconds`. Wait before fetching from the group.
 - **Group not appearing in widget picker immediately** — refresh the report; new groups can take a few seconds to appear.

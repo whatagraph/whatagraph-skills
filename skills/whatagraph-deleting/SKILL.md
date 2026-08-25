@@ -176,7 +176,9 @@ The tool has **no usage guard** — it will happily delete a blend that widgets 
 delete-source-groups action=delete group_id=<id>
 ```
 
-Permanent — cannot be undone (re-verified against the tool). It removes the group, **its configs, its member source entries, and the virtual integration source** in one go; widgets and custom metrics pointing at that virtual source break. Note the member sources are only detached from the group — the underlying connected sources themselves survive, so a deleted group is rebuildable from them, just not restorable. Run `list-source-groups action=show group_id=<id>` first. See also "When NOT to delete" — most "delete the group" requests are really update requests.
+Permanent — cannot be undone (re-verified against the tool). It removes the group, **its configs, its member source entries, and the virtual integration source** in one go; widgets and custom metrics pointing at that virtual source break.
+
+There is no way to delete a single config from a group — deletion is whole-group only, and `manage-source-groups action=update` will not drop one either. If a request is really "remove this output level", it is a group-level decision, not a config edit. Note the member sources are only detached from the group — the underlying connected sources themselves survive, so a deleted group is rebuildable from them, just not restorable. Run `list-source-groups action=show group_id=<id>` first. See also "When NOT to delete" — most "delete the group" requests are really update requests.
 
 ### Custom fields
 

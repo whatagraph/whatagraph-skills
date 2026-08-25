@@ -193,9 +193,10 @@ For each source group, inspect per-config detail:
 ```
 list-source-groups action: show, group_id: <id>
 ```
-Returns `configs_count` plus each config's `id`, `name`, `output_name`, and `etl_config_ids` — along with `etl_configs`, where each entry names the `channel_name` backing it. Read it as an audit, not just a pipeline dump:
+Returns `configs_count` plus each config's `id`, `name`, `output_name`, `etl_config_ids` and `has_premade_channels` — along with `etl_configs`, where each entry names the `channel_name` backing it and whether it `is_premade`. Read it as an audit, not just a pipeline dump:
 
-- **`configs_count` > 1** is an older group shape. Each config is read separately, so note it — a metric present in one is not necessarily available in another.
+- **`configs_count` > 1** is an older group shape. Each config is read separately, so note it — a metric present in one is not necessarily available in another. Report it; never write to such a group with a subset of its configs, and never propose consolidating it as a cleanup.
+- **`is_premade` channels are locked.** Their fields cannot be edited by anyone. If an audit finds fields missing there, the fix is a new source group, not a config edit — say that rather than filing it as something to change.
 - **`etl_configs` is the honest membership list.** A channel in the group's sources but absent from `etl_configs` contributes nothing, however healthy the source itself looks.
 - **`output_name` is computed, read-only.** Don't report it as a naming choice someone made or suggest changing it.
 
