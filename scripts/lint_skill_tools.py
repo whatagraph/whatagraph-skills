@@ -74,6 +74,7 @@ CANONICAL_TOOLS = {
     "load-skill",
     "manage-members", "remove-members",
     "list-overviews", "manage-overviews", "delete-overviews",
+    "preview-report",
     "read-document",
     "list-report-tabs", "manage-report-tabs", "delete-report-tabs",
     "list-reports", "manage-reports", "delete-reports",
