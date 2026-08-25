@@ -13,6 +13,7 @@ optional_tools:
   - list-templates
   - fetch-data
   - export-report
+  - preview-report
   - manage-spaces
   - manage-sources
   - manage-integrations
@@ -136,7 +137,7 @@ Inputs: Google Ads, Meta Ads, LinkedIn Ads sources; GA4 for revenue.
 1. `manage-themes action=create_theme` with client logo (hosted on public CDN) and fonts.
 2. `manage-themes action=create_color` with brand chart + widget palette (8–12 colors).
 3. For each client report: `manage-themes action=enable_theme` + `enable_color`.
-4. Spot-check the first report via `export-report format=pdf` to confirm the branding renders.
+4. Spot-check the first report via `preview-report` to confirm the branding renders.
 
 ### 5. Roll out a new tab across all client reports
 
@@ -152,7 +153,7 @@ Only applicable if those reports are linked to a template.
 
 1. Create or pick the report.
 2. Apply branding (themes + palette).
-3. Data QA: `export-report format=pdf` → skim the PDF → fix issues.
+3. Data QA: `preview-report` → look at the pages → fix issues.
 4. Create share link: `manage-sharing action=create report_id=<id> require_password=true password="<share_password>"`.
 5. Capture the URL from the response and hand it to the client.
 6. If recurring, attach an automation: `manage-automations action=create frequency=monthly receivers=["client@..."] time_zone="Europe/London"`.

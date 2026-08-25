@@ -2,22 +2,28 @@
 name: whatagraph-export
 type: domain
 group: report_building
-description: Export a report as a rendered PDF or an Excel (.xlsx) download, or get inline widget data via csv_export. Use when a user wants a PDF of a report or a single tab, raw data out of a report as spreadsheet rows, or any downloadable file.
+description: Get something out of a report — a rendered PDF, an Excel (.xlsx) download, inline widget data, or page images you can look at yourself. Use when a user wants a PDF or a spreadsheet, when you need the raw rows, or when you must see how a report renders before you call it finished.
 required_tools:
   - list-sources
   - list-widgets
   - export-report
+optional_tools:
+  - tool_name: preview-report
+    purpose: See the rendered report as images, to check your own work.
 ---
 
 # Exporting Report Data
 
-Three export paths exist — pick based on what you need:
+Four paths exist — pick based on what you need:
 
 | Path | Returns | Best for |
 |------|---------|----------|
-| `export-report format=pdf` | PDF download URL (temporary, 1-hour expiry) | The report as a document, for a client or for checking how it renders |
+| `preview-report` | Page images in the response | Seeing the report yourself, to check your own work |
+| `export-report format=pdf` | PDF download URL (temporary, 1-hour expiry) | The report as a document, for a person to open |
 | `export-report` (default `format=xlsx`) | `.xlsx` download URL (temporary, 1-hour expiry) | Giving users a downloadable Excel file |
 | `list-widgets action=csv_export` | Inline `csv_rows: string[][]` (JSON) | AI/LLM processing, per-widget data extraction |
+
+**Which of the first two you want.** `export-report format=pdf` returns a URL, and you cannot open a URL — that path produces a file for a person. `preview-report` puts the pages in front of you as images. To check your own work, use `preview-report`. To give the user a file, use `export-report`.
 
 **Exporting never shares the report.** `export-report` is read-only and leaves a report exactly as shared or unshared as it was. Do not create a share link in order to get a file.
 
@@ -25,12 +31,48 @@ Three export paths exist — pick based on what you need:
 
 ## Use this when
 
+- "Does this report look right?" → `preview-report`
+- "Check the Meta tab you just built." → `preview-report tab_id=<tab_id>`
 - "Give me a PDF of this report." → `export-report format=pdf`
 - "Just the Meta tab as a PDF." → `export-report format=pdf tab_id=<tab_id>`
 - "Give me every widget's data from this report as a spreadsheet." → `export-report`
 - "Export just the Campaigns tab." → `export-report` with `tab_id`
 - "What are the numbers in this widget?" → `csv_export` (inline data)
 - Ad hoc data extraction for analysis in Excel / BigQuery / Python.
+
+## Preview a report (images you can look at)
+
+```
+preview-report report_id=<id>
+preview-report report_id=<id> tab_id=<tab_id>
+```
+
+Returns the report's pages as images in the response, so you can see the rendered
+result and judge it. Use it before you tell a user a report is finished.
+
+Rendering is asynchronous, so it takes **two calls**, the same shape as the PDF path:
+
+1. Call without `pdf_job_id`. You get `status: pending` and a `pdf_job_id`, no images.
+2. Call again with that `pdf_job_id`. `pending` means it is still rendering — wait a
+   few seconds and repeat, do not poll in a tight loop. When it is done you get a text
+   block and then one image per page.
+
+**One tab is one image.** Pass `tab_id` when you only care about one tab. It is faster
+and much cheaper than the whole report. Without `tab_id` you get every visible tab, up
+to five images per call; if the render has more pages the text block says how many were
+left out.
+
+**Read the text block before the images.** It carries the page count, and it tells you
+when a page was cropped because the tab was too tall. A cropped page shows only the top
+of that tab, so do not describe such a tab as fully reviewed.
+
+**What it is good for:** layout and spacing, branding and colors, chart readability, a
+table whose last row is missing, a title that is clipped, an image that failed to load.
+
+**If `preview-report` is not in your tool list**, you cannot see a report yourself. Do
+not pretend otherwise and do not send a `download_url` as if it were a picture. Render
+with `export-report format=pdf`, give the user the link, and tell them exactly what to
+look at.
 
 ## PDF export
 

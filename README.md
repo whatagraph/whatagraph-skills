@@ -26,7 +26,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `generating-marketing-insights` | Turn data into executive summaries, trend analysis, narratives, and recommendations. |
 | `generating-report-digests` | Produce a digest or summary of an existing report from a report URL or ID. |
 | `troubleshooting-data-issues` | Diagnose data discrepancies, source connection problems, blend/source-group/filter issues, and missing data. |
-| `whatagraph-export` | Export a report as a PDF, or a whole report, a single tab, or specific widgets as Excel/CSV. |
+| `whatagraph-export` | Export a report as a PDF or Excel/CSV, or preview its pages as images to check how it renders. |
 | `whatagraph-destinations` | Inspect configured outbound data transfers (BigQuery, Looker Studio, storage) and their job history. |
 
 ### Configure, manage & delete (beta)
