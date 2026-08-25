@@ -23,11 +23,11 @@ optional_tools:
   - tool_name: list-themes
     purpose: Look up theme colour ids for active_theme_color_id.
   - tool_name: export-report
-    purpose: Verify the built layout renders with data.
+    purpose: Render the built layout to PDF for a person to check.
   - tool_name: manage-assets
     purpose: Import and publish a remote image before binding it to a widget.
-  - tool_name: manage-sharing
-    purpose: Render the built layout to PDF to verify every table's last row is present.
+  - tool_name: preview-report
+    purpose: Look at the built layout to verify every table's last row is present.
 ---
 
 # Widgets
@@ -908,7 +908,7 @@ The report uses a **6-column grid**. Every widget occupies a rectangle defined b
 
 > **Grid width follows the report's layout.** Landscape (`printing_landscape_6x6`, the default) is the 6-column grid documented here. Portrait (`printing_portrait_4x8`) is a **4-column** grid — every width / `position_x` rule below caps at 4 instead of 6. Orientation is chosen at report create time (see `whatagraph-reports` → "Create a blank report in a space") and can't change once widgets exist. Landscape renders a wider, shorter page: favor wide rows.
 
-> **A tab is a page.** In a PDF, each visible tab becomes exactly one page, as tall as its own content — tabs are never split and never combined. Thus a tall tab makes a tall page, not two pages. Put a section break on a new tab, not lower down the grid. See `whatagraph-sharing` → "Generate a PDF".
+> **A tab is a page.** In a PDF, each visible tab becomes exactly one page, as tall as its own content — tabs are never split and never combined. Thus a tall tab makes a tall page, not two pages. Put a section break on a new tab, not lower down the grid. See `whatagraph-export` → "PDF export".
 
 | Property | Range | Default | Notes |
 |---|---|---|---|
@@ -1219,7 +1219,7 @@ Use that number to budget, not to prove. The exact count moves with the theme fo
 1. **Budget the height from the row count before you place the widget.** Give a table a `height` of at least `(rows + 3) ÷ 3.5`.
 2. **For 20 or more rows, split the data into two side-by-side tables** (`3 + 3`). Each table then shows half the rows. This is the most reliable fix.
 3. **For 15 or more rows that carry one value each, use a Bar chart.** Charts scale to the space they get. They never drop a series.
-4. **After you render, confirm that the last row of every table is present.** This is the only check that finds the defect. Render with `manage-sharing action=download_pdf`, then get the file with `manage-sharing action=get_pdf` — see `whatagraph-sharing`. Examine the PDF yourself when you can read files; otherwise ask the user to look, and tell them which tables and which rows to check.
+4. **After you render, confirm that the last row of every table is present.** This is the only check that finds the defect. Use `preview-report tab_id=<tab_id>` and look at the returned image. If you do not have `preview-report`, render with `export-report format=pdf` and ask the user to check, and tell them which tables and which rows to look at. See `whatagraph-export`. Examine the PDF yourself when you can read files; otherwise ask the user to look, and tell them which tables and which rows to check.
 
 A taller widget does show more rows, but sometimes fewer than the arithmetic promises. Verify — do not assume.
 

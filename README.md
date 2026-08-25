@@ -26,7 +26,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `generating-marketing-insights` | Turn data into executive summaries, trend analysis, narratives, and recommendations. |
 | `generating-report-digests` | Produce a digest or summary of an existing report from a report URL or ID. |
 | `troubleshooting-data-issues` | Diagnose data discrepancies, source connection problems, blend/source-group/filter issues, and missing data. |
-| `whatagraph-export` | Export a whole report, a single tab, or specific widgets as CSV. |
+| `whatagraph-export` | Export a report as a PDF or Excel/CSV, or preview its pages as images to check how it renders. |
 | `whatagraph-destinations` | Inspect configured outbound data transfers (BigQuery, Looker Studio, storage) and their job history. |
 
 ### Configure, manage & delete (beta)
@@ -49,7 +49,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-templates` | Convert a report into a reusable template and apply templates to new reports. |
 | `whatagraph-themes` | Apply and manage themes (logos, fonts, headers/footers) and color palettes. |
 | `whatagraph-assets` | Import, find, read and publish files — brand images for reports and themes, and searchable documents. |
-| `whatagraph-sharing` | Create and update public share links, generate and download PDFs, and export reports. |
+| `whatagraph-sharing` | Create and update public share links for reports. |
 | `whatagraph-automations` | Schedule automated report delivery by email. |
 | `whatagraph-snapshots` | Save and restore the structural state of a report. |
 | `whatagraph-integrations-admin` | Connect sources from already-authenticated accounts and assign them to spaces. |

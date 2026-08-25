@@ -80,6 +80,6 @@ Permanent — no restore of any kind. Keep at least one recent snapshot on activ
 ## Common pitfalls
 
 - **Restore after source changes** — widgets can break if referenced sources/fields no longer exist. Re-run `list-widgets action=show` after restore and fix any broken sources via `manage-reports action=change_sources`.
-- **Snapshots for compliance archival** — unreliable (data re-queries at view time). Use `manage-sharing action=download_pdf` or `action=export_excel` for compliance artifacts.
+- **Snapshots for compliance archival** — unreliable (data re-queries at view time). Use `export-report` (`format=pdf` or the default `xlsx`) for compliance artifacts.
 - **Accidental destructive restore** — always confirm with the user before `manage-snapshots action=restore`. There is no undo.
 - **Creating a snapshot while widgets are broken** — snapshot captures the broken state. Fix widgets first, then snapshot.
