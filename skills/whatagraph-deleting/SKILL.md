@@ -253,6 +253,8 @@ delete-automations action=delete report_id=<id> automation_id=<id>
 
 Stops future deliveries immediately. Confirm first if recipients rely on the schedule.
 
+This is also how a report is **unautomated**. Removing the automation flips the report's `type` from `automated` back to on-demand and hands the date range back to the report itself — there is no separate unautomate action, and `manage-automations` cannot do it. So a user asking to "make this report manual again" is asking for this call. The recipient list and any pending deliveries go with it and are not recoverable; the report, its widgets and its own saved date range survive.
+
 **Themes & palettes** — two actions, one tool:
 
 ```
