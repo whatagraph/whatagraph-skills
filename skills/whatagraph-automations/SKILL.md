@@ -2,16 +2,21 @@
 name: whatagraph-automations
 type: domain
 group: distribution_lifecycle
-description: Schedule automated report delivery by email — daily, weekly, monthly, etc. — with optional PDF attachment, comparison-period framing, and manual approval gates. Use when a user wants a recurring report sent to clients or a distribution list.
+description: Schedule automated report delivery by email — daily, weekly, monthly, etc. — with optional PDF attachment, comparison-period framing, and manual approval gates. Also covers unautomating a report. Use when a user wants a recurring report sent to clients or a distribution list, or wants to stop one.
 required_tools:
   - list-automations
   - list-sources
   - manage-automations
+optional_tools:
+  - tool_name: delete-automations
+    purpose: Unautomate a report — the only way to make an automated report manual again.
+  - tool_name: manage-reports
+    purpose: Set the report's date range while it is unautomated, before scheduling it again.
 ---
 
 # Automations (scheduled report delivery)
 
-Tools covered: `list-automations`, `manage-automations`.
+Tools covered: `list-automations`, `manage-automations`, `delete-automations`.
 
 An **automation** = one report + a schedule + a list of email recipients. Multiple automations per report are allowed (e.g. weekly to the ops team, monthly to executives).
 
@@ -118,9 +123,33 @@ Changeable fields: `frequency`, `delivery_day`, `send_time`, `time_zone`, `recei
 
 Pass via `options.pdf_settings={...}` for advanced PDF options. Check `list-automations action=show` for current options.
 
-## Deleting an automation
+## Unautomating a report
 
-Destructive — covered in the `whatagraph-deleting` skill (load it for parameters, cascades, and recovery). Quick facts: needs both `report_id` and `automation_id`, stops future deliveries immediately, confirm first if recipients rely on the schedule.
+"Unautomate", "make it manual again", "stop the schedule" and "delete the automation" are all the same operation. There is no separate unautomate action and no pause flag — removing the automation *is* how a report goes back to manual.
+
+```
+delete-automations action=delete report_id=<report_id> automation_id=<id>
+```
+
+The report's `type` flips from `automated` back to on-demand, and it starts using its own date range again. Deliveries stop immediately.
+
+`manage-automations` cannot do this — it has only `create`, `update` and `review`. If a user asks to unautomate and `delete-automations` is not in your tool list, say so and tell them a team owner has to grant it; do not tell them it is impossible.
+
+Destructive, so confirm first, especially if recipients rely on the schedule. The recipient list and any pending deliveries go with the automation and are not recoverable — recreating the schedule afterwards means re-entering the recipients. The report itself, its widgets and its own saved date range are untouched. Full cascade and recovery detail is in the `whatagraph-deleting` skill.
+
+## Changing the date range of an automated report
+
+An automated report does **not** read the date range saved on the report. Its widgets read the range the schedule generates for each delivery, derived from the report's saved range plus the frequency. So `manage-reports action=update` with a `date_range` is rejected on an automated report with a `conflict` error rather than silently doing nothing.
+
+To change the range, unautomate first:
+
+1. `delete-automations` — the report becomes manual.
+2. `manage-reports action=update report_id=<id> date_range={...}`.
+3. `manage-automations action=create` — schedules again from the new range, and re-enter the recipients.
+
+`manage-automations action=update` is not a shortcut here. It regenerates the delivery range from the report's saved range, and that saved range is exactly what step 2 changes. On its own, updating the automation only shifts the delivery window.
+
+Note that a report on a custom date range cannot be automated at all, so step 2 constrains what step 3 can do.
 
 ## What MCP can't do here
 

@@ -208,7 +208,9 @@ The tool has **no usage guard** — it will happily delete a blend that widgets 
 delete-source-groups action=delete group_id=<id>
 ```
 
-Permanent — cannot be undone (re-verified against the tool). It removes the group, **its configs, its member source entries, and the virtual integration source** in one go; widgets and custom metrics pointing at that virtual source break. Note the member sources are only detached from the group — the underlying connected sources themselves survive, so a deleted group is rebuildable from them, just not restorable. Run `list-source-groups action=show group_id=<id>` first. See also "When NOT to delete" — most "delete the group" requests are really update requests.
+Permanent — cannot be undone (re-verified against the tool). It removes the group, **its configs, its member source entries, and the virtual integration source** in one go; widgets and custom metrics pointing at that virtual source break.
+
+There is no way to delete a single config from a group — deletion is whole-group only, and `manage-source-groups action=update` will not drop one either. If a request is really "remove this output level", it is a group-level decision, not a config edit. Note the member sources are only detached from the group — the underlying connected sources themselves survive, so a deleted group is rebuildable from them, just not restorable. Run `list-source-groups action=show group_id=<id>` first. See also "When NOT to delete" — most "delete the group" requests are really update requests.
 
 ### Custom fields
 
@@ -250,6 +252,8 @@ delete-automations action=delete report_id=<id> automation_id=<id>
 ```
 
 Stops future deliveries immediately. Confirm first if recipients rely on the schedule.
+
+This is also how a report is **unautomated**. Removing the automation flips the report's `type` from `automated` back to on-demand and hands the date range back to the report itself — there is no separate unautomate action, and `manage-automations` cannot do it. So a user asking to "make this report manual again" is asking for this call. The recipient list and any pending deliveries go with it and are not recoverable; the report, its widgets and its own saved date range survive.
 
 **Themes & palettes** — two actions, one tool:
 
