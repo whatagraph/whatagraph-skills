@@ -120,7 +120,8 @@ Blends and source groups combine data from multiple sources, which introduces co
    ```
    Check the sources and their ETL configurations. Two things here explain a lot of "the group is wrong" reports:
 
-   - **Read `configs_count` first.** One config is the normal, current shape. More than one is an older shape where each config is a separate output read on its own — so a metric that exists in one config is not necessarily available from another, and a field "missing from the group" may simply be in a different config than the widget reads. Check which one the widget is bound to before changing anything.
+   - **Read `configs_count` first.** One config is the normal, current shape. More than one is an older shape where each config is a separate output read on its own — so a metric that exists in one config is not necessarily available from another, and a field "missing from the group" may simply be in a different config than the widget reads. Check which one the widget is bound to before changing anything, and if you do write, pass every config the group has — never a subset.
+   - **`is_premade` marks a locked channel.** Its fields cannot be edited. A field genuinely missing there is fixed by building a new source group, not by patching the config — see `whatagraph-source-groups`.
    - **`etl_configs` is the real membership list.** Each entry names the `channel_name` behind it. A channel that appears in the group's sources but not in `etl_configs` contributes nothing — the group looks complete and silently under-reports. This is a more common cause of "totals too low" than a broken source, because the source itself still shows healthy.
 
 3. **Check for source issues within the group**:

@@ -129,7 +129,10 @@ Source groups are where a large account list belongs — dozens or hundreds of s
    - **More than one config** — an older group shape. Each config aggregates its own set of fields and
      is read separately, so a metric present in one config is not necessarily available in another. If
      a field you expect is missing, check whether you are reading the right config before concluding
-     the group is broken.
+     the group is broken. Leave the extra configs alone: they are load-bearing, and any write must
+     carry every one of them.
+   - **`is_premade` on an `etl_configs` entry** — that channel is Whatagraph-managed and cannot be
+     edited. Missing fields there mean a new source group, not a config edit.
 
    `output_name` is **read-only** — it is computed from the config's structure, not something anyone
    set. Use `etl_configs[].channel_name` to see which channels actually back a config; a channel absent
