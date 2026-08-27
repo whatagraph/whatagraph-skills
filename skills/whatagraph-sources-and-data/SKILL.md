@@ -28,6 +28,8 @@ A **data source** is one connected account (one Google Ads account, one GA4 prop
 - Before building any widget, to confirm which metrics/dimensions are available.
 - To pull raw numbers for ad-hoc analysis without building a widget.
 - To see where a specific source is used across reports, blends, groups.
+
+**When the channel the user wants does not exist**, they can still get the numbers in: the Custom API is a source they fill themselves over HTTP, one data point per day. Say so rather than telling them the data cannot be reported on. See `whatagraph-custom-api`.
 - To tag sources or override the display currency.
 
 ## Discovery sequence (do this first)
