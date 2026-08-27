@@ -72,12 +72,14 @@ manage-reports action=create
    name="Acme — October 2025"
    tab_name="Overview"          # optional — names the default tab
    layout="printing_landscape_6x6"   # optional — orientation; defaults to landscape
+   layout_whitelabel="first_and_last"  # optional — header and footer; defaults to first_and_last
 ```
 
 - `client_id` = space id (the `team_client` id). Find via `list-spaces action=list`.
 - **Never guess the destination space.** `client_id` is not a detail to fill in from the closest-matching space name — a space can be client-facing, and a half-built report that appears there is visible to the client. Follow "Choosing the destination space" below before you call `create`.
 - A default tab is always created with the report (verified Jun 2026) — pass `tab_name` to name it, otherwise it's unnamed. Add further tabs via `manage-report-tabs action=create`.
 - **Orientation is set here, at create.** `layout` is optional and **defaults to `printing_landscape_6x6`** (wide 6-column grid) when omitted — pass `printing_portrait_4x8` (narrow 4-column grid) only when the user asks for portrait. Setting it inline is the recommended path: a brand-new report has no widgets, so there is no ordering foot-gun and no need to follow up with `manage-report-tabs action=set_layout`. Once widgets exist the layout can no longer be changed via MCP, so decide orientation at create time.
+- **The header and footer are on by default.** `layout_whitelabel` is the toggle that draws the theme header and footer, and it defaults to `first_and_last` (first and last page). Pass `all` to draw them on every page, or `none` to hide them. A team whose plan does not include whitelabelling cannot hide them, and `none` is rejected with an error saying so. Unlike `layout`, this one is not fixed at create: change it later with `manage-report-tabs action=set_layout`, on a report with widgets too. See `whatagraph-report-tabs`.
 
 ### Choosing the destination space
 
@@ -110,6 +112,7 @@ manage-reports action=create_from_template
    template_id=<template_id>
    name="Custom Report Name"
    layout="printing_portrait_4x8"    # optional — overrides the template's orientation
+   layout_whitelabel="none"          # optional — header and footer; defaults to first_and_last
 ```
 
 `client_id` follows the same rule as blank `create` — see "Choosing the destination space". The template does not decide the space, and the linked intermediate below is created in whatever space you pass, so build it in a drafts space too.
@@ -126,6 +129,8 @@ manage-reports action=create_from_template
 Both `create` and `create_from_template` accept `idempotency_key` for retry-safe creation. When the response shows `uses_sample_data: true`, remap sources with `change_sources` before handing the report over.
 
 `layout` is optional here and — unlike blank `create` — is **not** defaulted: omit it to keep the template's own orientation, pass it only to override. An explicit `layout` is honoured only while the new report still has no widgets; a template that already carries widgets rejects the override, so keep the template's orientation in that case.
+
+`layout_whitelabel` works the same way here as on blank `create`, and it does not need `layout` alongside it. The header and footer are not part of the grid, so passing it on its own is accepted even when the template already carries widgets.
 
 ## Duplicate an existing report
 
