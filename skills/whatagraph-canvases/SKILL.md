@@ -335,11 +335,16 @@ data, you decided what the story was, and the page holds exactly the figures you
 **Dates cascade: document → page → block.** Set `date_range` once on the design and every bound
 block follows it; a page or a block overrides it with a period key of its own. `inherit` is the
 default on a binding and is almost always what you want — one picker moving a whole document is
-the point.
+the point. A **share link** can pin a period too, standing in for the document's own rung, which
+is how a client gets March while the dashboard keeps rolling.
 
 ```
 manage-canvases action=update canvas_id=12 data_mode=bound date_range=last30Days compare=previous
 ```
+
+A period is a **calendar key, and it is camelCase**: `last30Days`, `lastMonth`, `thisQuarter`,
+`last12Month`. Snake case looks right and is not — an unknown key is refused with the full list,
+so read the message rather than guessing again.
 
 `data_mode=bound` is what makes a document live. Leave it `inlined` (the default) for a deck.
 
@@ -347,6 +352,14 @@ manage-canvases action=update canvas_id=12 data_mode=bound date_range=last30Days
 bound block once and stores the result as a static twin. The design itself stays live and keeps
 its bindings — freezing is how you make "the report as of March" *without* giving up the
 dashboard.
+
+**Sharing and exporting are the person's, not yours.** A design is published from its own header —
+a link that opens signed out, with an optional password, an expiry, and switches for download and
+date changing — and exported to PDF or PNG from beside it. There is no tool for either, and that is
+deliberate: publishing to a client is a decision, and the file that reaches them is rendered by
+the same renderer the viewer draws with, so there is nothing an exporter could get wrong that the
+page has not already got right. What you can do is make the document worth sharing, which mostly
+means the next section.
 
 ## Composing for the format
 
