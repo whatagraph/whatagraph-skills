@@ -37,6 +37,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-reports` | Create, duplicate, and update reports. |
 | `whatagraph-report-tabs` | Create, duplicate, rename, and reorder report tabs. |
 | `whatagraph-widgets` | Build and lay out widgets on the grid. |
+| `whatagraph-dynamic-charts` | Build chart families with no dedicated widget type — scatter, bubble, heatmap, candlestick, combo, top-N. |
 | `whatagraph-offline-reports` | Build a whole report from numbers you already have, with no connected source. |
 | `whatagraph-blends` | Combine data from different channels into one virtual source. |
 | `whatagraph-source-groups` | Roll up multiple accounts of the same channel into one aggregated source. |

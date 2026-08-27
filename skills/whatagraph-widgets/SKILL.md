@@ -180,6 +180,7 @@ Common values exposed by `list-widgets`:
 | GeoMap (geographic map, BETA) | `140` |
 | Filter control (dimension dropdown) | `137` |
 | Report shortcut (drill-down link to another report) | `141` (channel_id `7`; no `source_id`) |
+| Dynamic chart (scatter, bubble, heatmap, candlestick, combo, top-N) | `142` — needs a `chart_spec`; load the `whatagraph-dynamic-charts` skill |
 
 Offline (manual-data) types hold numbers you supply instead of reading a source. All take `channel_id=7` and no `source_id`, and their values go in `rows[].data` — see "Offline (manual-data) widgets" below. String names are the live name with an `offline_` prefix (`"offline_single_value"`, `"offline_table"`, …).
 
@@ -646,6 +647,7 @@ Known `options` shapes:
 - **Gauge** (`widget_type_id=139`): dial-style single metric display. Same configuration as SingleValue (`101`) but different visual rendering — use when a circular dial is more appropriate than a plain number. Supports `start_value` and `end_value` in row options to set the gauge range.
 - **Heatmap** (`widget_type_id=138`): heat-coloured grid of one metric across two dimensions — one becomes the rows, the other the columns (e.g. `sessions` by `deviceCategory` × `browser`). Bind **exactly 2 dimensions and exactly 1 metric** in a single config; anything else is rejected. `breakdowns_enabled` stays off. This is **not** configured like a SingleValue (`101`), which takes no dimensions at all.
 - **GeoMap** (`widget_type_id=140`, BETA): geographic map. Set `options.geo_map_region` to control the displayed region (see Type-specific options table above). Bind a dimension with country/region data.
+- **Dynamic chart** (`widget_type_id=142`): the type for chart families with no dedicated widget type — scatter, bubble (a third metric as point size), heatmap across two dimensions, candlestick, bars-plus-line combo, and ranked top-N. Bind rows as usual, then describe the chart with a `chart_spec`. Load the `whatagraph-dynamic-charts` skill before writing one; it is refused at create without a spec.
 - **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads.
 - **Report shortcut** (`widget_type_id=141`): a drill-down card linking to another report in the same team. `channel_id=7`, no `source_id`, no metrics/dimensions. Set the link in `rows[].configs[].options`:
 
