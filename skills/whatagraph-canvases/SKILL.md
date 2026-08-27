@@ -187,10 +187,13 @@ which is the difference between a tidy page and a page with a hole in it:
   legibility floor lifts the type. So a six-row table plus its header is `h: 0.22` on a slide or
   a dashboard and `h: 0.27` on A4. Give it more and you get an empty band under it; the
   validator will not complain, because nothing is broken — it just looks unfinished.
-- **A `metric` grows to fill its frame**, which is what makes a hero number work, and also what
-  makes a KPI row inconsistent if you are careless: `"$1.24M"` and `"$41.20"` in equal frames
-  shrink by different amounts and come out at visibly different sizes. Keep the values in a row
-  a similar length, or give the longer one a wider frame.
+- **A `metric` grows to fill its frame**, which is what makes a hero number work. Metrics that
+  form a **row** are sized together — they take the smallest size any of them wants — so you do
+  not have to match the lengths of `"$1.24M"` and `"$41.20"` by hand. A row is decided from the
+  frames: metrics whose frames overlap vertically by more than half of the shorter one, whether
+  they sit side by side or each inside its own `card`. What that means for you: **give a KPI band
+  equal frames at the same `y`** and it will read as one row. A metric you want at hero size
+  belongs at its own `y`, clear of the band, or it will be pulled down to the band's size.
 
 ### The rail
 
