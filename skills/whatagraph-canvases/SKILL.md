@@ -28,9 +28,11 @@ type in three formats**. They differ in exactly three things: the shape of the p
 page boundaries are shown, and the brand the block roles resolve to. Everything else — the
 blocks, the composition rules, this playbook — is shared.
 
-A design is **not a report**. A report is a grid of live widgets that re-query when someone
-opens it. A design is blocks you place, holding the numbers you wrote into them. If the user
-wants something that keeps itself up to date inside the existing reporting product, they want
+A design is **not a report**. A report is a grid of widgets on a layout the product decides. A
+design is blocks you place, on a page you compose. Either can hold live numbers — a design's
+blocks can be **bound** to a widget or a query and re-fetch every time somebody opens it — so
+"does it stay current" is no longer the question that chooses between them. The question is
+whether the output is a composed page. If the user wants the familiar report grid, they want
 `whatagraph-reports`.
 
 ## Use this when
@@ -295,10 +297,53 @@ shrinking it.
   formatted string shown. `horizontal` is a ranked comparison; `vertical` is a short progression.
   Max 6. **Prefer this over a chart for six or fewer figures** — it reads as part of the page
   instead of as a chart dropped onto it.
-- **`widget`** — a live Whatagraph widget. **Not drawn yet**: it validates and reserves its frame
-  and renders as a labelled placeholder. Fetch the numbers and author a `chart`, `metric` or
-  `table` instead. The same goes for a `binding` on any block — bindings do not resolve yet, so a
-  bound block draws nothing.
+- **`widget`** — an existing Whatagraph widget, drawn on the page. Its `binding` names the
+  `widget_id`; the widget keeps its own configuration and picks up the design's brand. Chrome is
+  off by default because the page already has its own text blocks. Give it at least 232 × 110
+  design pixels — below that a widget refuses to render.
+
+## Inline or bound
+
+Every data-bearing block — `metric`, `chart`, `table`, `bar_list` — either **carries** its
+numbers or **fetches** them.
+
+**Inline** is the default and the right answer for a deck or a printed report: you fetched the
+data, you decided what the story was, and the page holds exactly the figures you wrote.
+
+**Bound** is the right answer for a dashboard somebody opens twice a week. Give the block a
+`binding` and no payload of its own — the resolver fills it every time the design is opened:
+
+```json
+{ "id": "sessions", "type": "metric", "frame": {"x": 0.04, "y": 0.16, "w": 0.2, "h": 0.11},
+  "binding": { "kind": "query", "sources": [2], "metrics": ["sessions"], "compare": "previous" } }
+```
+
+- `sources` is one **integration source id** from `list-sources`, and `metrics` / `dimensions`
+  are `external_id`s copied verbatim from the same tool. Do not guess them — the id families
+  differ per channel.
+- The **first metric** is what a `metric` or a `bar_list` draws. The **first dimension** becomes a
+  chart's categories, a table's first column, a bar list's labels.
+- A `metric` draws a delta only when there is a comparison to draw it from — set `compare` on the
+  block, the page, or the document.
+- A bound `table` or `bar_list` is **cut to what its frame holds**, so give it room for the rows
+  you expect rather than assuming everything comes back.
+- `kind: "widget"` with a `widget_id` renders an existing report widget instead.
+
+**Dates cascade: document → page → block.** Set `date_range` once on the design and every bound
+block follows it; a page or a block overrides it with a period key of its own. `inherit` is the
+default on a binding and is almost always what you want — one picker moving a whole document is
+the point.
+
+```
+manage-canvases action=update canvas_id=12 data_mode=bound date_range=last30Days compare=previous
+```
+
+`data_mode=bound` is what makes a document live. Leave it `inlined` (the default) for a deck.
+
+**Freeze** keeps a copy of today: `manage-canvases action=freeze canvas_id=12` resolves every
+bound block once and stores the result as a static twin. The design itself stays live and keeps
+its bindings — freezing is how you make "the report as of March" *without* giving up the
+dashboard.
 
 ## Composing for the format
 
@@ -487,8 +532,6 @@ not only one from the named grid; it is deepened until white type reads on it.
 
 ## What this cannot do yet
 
-- **Live data.** Everything you author is frozen at the numbers you wrote. `widget` blocks and
-  `binding`s validate but do not render.
 - **Share links, PDF and PowerPoint.** A design is read in the app at
   `/client/<space>/design/<id>`. There is no public link and no file export yet.
 - **Changing a format.** Every frame was composed against one page shape. Author again in the new
