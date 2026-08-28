@@ -69,6 +69,10 @@ against one page shape. A different format means authoring the pages again.
 5. **Author it in one call.** `manage-canvases` `action=create` with `pages`.
 6. **Read it back.** `list-canvases` `action=show`, and `show_page` on anything you are unsure
    of. Then fix what is wrong with `patch_blocks`.
+7. **Check it draws.** `list-canvases` `action=validate`. See *Checking a design still draws*
+   below — this is the step that catches a page nobody wrote breaking.
+8. **Look at it.** `preview_canvas`, if you have it. See *Looking at a page* below. A validator
+   tells you a heading does not fit; only the picture tells you the page is ugly.
 
 ## Creating a design
 
@@ -355,11 +359,23 @@ dashboard.
 
 **Sharing and exporting are the person's, not yours.** A design is published from its own header —
 a link that opens signed out, with an optional password, an expiry, and switches for download and
-date changing — and exported to PDF or PNG from beside it. There is no tool for either, and that is
-deliberate: publishing to a client is a decision, and the file that reaches them is rendered by
-the same renderer the viewer draws with, so there is nothing an exporter could get wrong that the
-page has not already got right. What you can do is make the document worth sharing, which mostly
-means the next section.
+date changing — and exported from beside it. There is no tool for either, and that is deliberate:
+publishing to a client is a decision. What you can do is make the document worth sharing, which
+mostly means the next section.
+
+Four exports, and the difference between them is worth knowing when somebody says which one they
+want:
+
+| They ask for | They get | Cost |
+|---|---|---|
+| a PDF, a PNG | the page itself, drawn headlessly | nothing is lost |
+| a PowerPoint file | editable shapes, tables and native charts | a `widget` block becomes a picture |
+| a Google Slides deck | the same, with charts that stay editable in Google | 16:9 only, and no `widget` blocks at all |
+
+PDF and PNG cannot disagree with the screen, because they *are* the screen. The two writers redraw
+each page from the spec, so they are the ones with a cost — and both costs land on `widget` blocks,
+which is worth remembering when you are choosing between a `widget` and a `chart` for something
+that will be presented from PowerPoint.
 
 ## Composing for the format
 
@@ -468,6 +484,8 @@ Hard floors. Hold these whatever direction you chose.
 ```
 list-canvases action=show canvas_id=<id>            # the outline: every page, its layout, its block count
 list-canvases action=show_page canvas_id=<id> page_id=<id>   # one page's full spec
+list-canvases action=validate canvas_id=<id>        # which pages will draw wrong, if any
+list-canvases action=preview canvas_id=<id>         # look at a page (two calls — see below)
 ```
 
 `show` deliberately does not return every page's blocks — a whole document would blow the
@@ -499,6 +517,66 @@ Every page read returns an `updated_at`. Send it back as **`seen_at`** on your n
 page, and a write that would overwrite an edit made since you read it is refused with the current
 timestamp instead of silently winning. People and agents edit the same page; this is what stops
 one of them losing work with no error anywhere.
+
+## Looking at a page
+
+```
+preview_canvas canvas_id=<id> page_id=<id>
+```
+
+Renders one page as an image, by the same renderer that draws it on screen and in the PDF.
+
+**If `preview_canvas` is not in your tool list, use `list-canvases action=preview` instead.** It is
+the same render delivered the other way, in two calls:
+
+```
+list-canvases action=preview canvas_id=<id> page_id=<id>     # returns a render_job_id
+list-canvases action=preview canvas_id=<id> render_job_id=<id>   # returns the image
+```
+
+Wait between the two. A render takes twenty to thirty seconds, and much longer for a design bound
+to live data, so a tight polling loop just spends turns. The turn rule below applies to that shape
+too: until the second call hands you the image, you have not seen the page.
+
+**You cannot see the image in the turn that calls this.** The call answers with a confirmation and
+nothing else. The picture arrives on the *following* turn, which you will be given automatically.
+
+So: call it, then **end your turn without saying anything about the page**. Describing it from the
+spec in the meantime produces a confident and completely wrong answer — the first agent to use this
+invented a kicker, three cards and a revenue figure that were not on the page, then described the
+real page correctly one turn later.
+
+What to do with it: look for what a validator cannot express. A heading colliding with a chart
+that both technically fit. A page that is half empty. Numbers too small to read at the size the
+page is actually viewed. A card whose contents are crowded against its edges. Say what is wrong
+in words first, then fix it with `patch_blocks` and look again.
+
+Use it after authoring a design, after a layout change you are unsure of, and whenever somebody
+says a page looks wrong and you cannot see why from the spec.
+
+## Checking a design still draws
+
+```
+list-canvases action=validate canvas_id=<id>
+```
+
+Every write you make is validated as you make it, so this is not a second check on your own work.
+It answers a question your writes cannot: **has something changed underneath a page that was
+already correct.** The type scale belongs to the brand, so switching a design to a brand with
+larger headings can leave a heading that no longer fits its frame, and nothing was written, so
+nothing was validated.
+
+Call it after a run of edits, after changing a design's brand, and before telling anyone a design
+is ready to share.
+
+It reports content that does not fit the frame it was given, per page, in the same words a
+rejected write uses. It deliberately says nothing about composition — a page where somebody
+dragged a caption over a card is reported by nothing, because that is a choice rather than a
+fault. So `valid: true` means nothing will draw clipped, not that every page follows the rules
+you author by.
+
+Repair each issue the way you would repair a rejected write: give the block more room, or shorten
+its content. Then validate again.
 
 ## When a write is rejected
 
@@ -548,8 +626,8 @@ not only one from the named grid; it is deepened until white type reads on it.
 
 ## What this cannot do yet
 
-- **Share links, PDF and PowerPoint.** A design is read in the app at
-  `/client/<space>/design/<id>`. There is no public link and no file export yet.
+- **Exporting on somebody's behalf.** There is no export tool and there will not be one — the
+  person presses the button. See *Sharing and exporting* above for what each one costs.
 - **Changing a format.** Every frame was composed against one page shape. Author again in the new
   format.
 - **Uploading an image.** `image` blocks take a public `https` URL that already exists.
