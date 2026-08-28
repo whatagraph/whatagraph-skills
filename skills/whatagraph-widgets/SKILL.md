@@ -729,21 +729,40 @@ manage-widgets action=update_ai_text report_id=<id> widget_id=<id>
      "language": "English",
      "summary_length": "long",      # or "short" — a sentence count, not a style; see below
      "custom_prompt": "...",        # required when types includes "custom"
-     "auto_update": false           # false triggers immediate generation; true regenerates automatically
+     "auto_update": false           # false queues the summary now; true regenerates on every refresh
    }
 ```
 
-Only comment widgets (`widget_type_id=21`) are supported. Unless `auto_update` is `true`, the call also triggers an immediate summary generation.
+Only comment widgets (`widget_type_id=21`) are supported. Unless `auto_update` is `true`, the call also queues the summary.
+
+**The summary is not in that response.** Generation runs in the background, because reading every widget in a report takes longer than a tool call is given, so a large report used to return nothing at all. The call returns `status: pending` and a `summary_job_id`. Collect it with a second call:
+
+```
+manage-widgets action=update_ai_text report_id=<id> widget_id=<id> summary_job_id=<id>
+```
+
+`ai_text` is not needed on a collecting call. Read `status`:
+
+| `status` | What to do |
+|---|---|
+| `pending` | Still generating. Wait a few seconds and call again. Do not poll in a tight loop. |
+| `ready` | `content` carries the summary, already written to the widget. |
+| `failed` | `message` says why. Queue a new one with `ai_text`. |
+| `expired` | The job id is unknown or older than 24 hours. Queue a new one with `ai_text`. |
+
+Queueing twice for the same widget returns the **same** `summary_job_id` rather than starting a second pass, so a retry is safe.
+
+A sample-data refusal still comes back on the **first** call, not on a collect, so you learn immediately when every widget the summary would read serves sample data.
 
 > `summary_length` is a **sentence count per type**: `short` = 3 sentences, `long` = 8. `types` stack — each one generates its own block — so `["summary","wins","issues","recommendations"]` at `long` produces roughly 32 sentences, and `["summary"]` at `short` produces three.
 >
 > - **`short` is for a caption beside a single chart.** Never use it on a full-width page-level block — a three-sentence summary in a full-width comment is the floor of what the feature can produce, and it reads that way.
 > - Page-level default: `summary_length: "long"` with `types: ["summary","recommendations"]`; on an outcome or conclusion tab, `["summary","wins","issues","recommendations"]`.
 > - On the report's **first** tab use `load_type: "full_report"`. A page-scoped summary of tab 1 cannot reference what the later tabs show, which is the entire point of an executive summary.
-> - Pass `auto_update: false` on a build-and-hand-over run: the summary is generated during the call and returned in the response, so you can confirm the length you actually got. With `auto_update: true` only the settings are saved and the widget stays empty until the next refresh.
+> - Pass `auto_update: false` on a build-and-hand-over run, then collect with the `summary_job_id`, so you can confirm the length you actually got. With `auto_update: true` only the settings are saved, nothing is queued, and the widget stays empty until the next refresh.
 > - **Size the host comment to the text**: `6×3` minimum for `long` single-type, `6×4`–`6×6` for `long` multi-type. A long summary in a `6×2` clips or scrolls, and a scrolled block truncates in PDF export — check with `export-report` before shipping.
 
-**`ai_text` is also accepted on `create`** (Jul 2026), taking the same fields, so an AI-narration comment is one call instead of a create followed by `update_ai_text`. When `auto_update` is `false` the summary is generated during the create and returned as `ai_text_content` in the response; with `auto_update: true` only the settings are saved and no such key comes back. This is also how you create a comment with no hand-written body — `ai_text` satisfies the body-text requirement, since the AI supplies the content. Passing `ai_text` on any other widget type is rejected.
+**`ai_text` is also accepted on `create`** (Jul 2026), taking the same fields, so an AI-narration comment is one call instead of a create followed by `update_ai_text`. When `auto_update` is `false` the create queues the summary and returns `ai_text_status: pending` with an `ai_text_summary_job_id`; pass that as `summary_job_id` to `update_ai_text` with the new widget's id to collect it. With `auto_update: true` only the settings are saved and neither key comes back. This is also how you create a comment with no hand-written body — `ai_text` satisfies the body-text requirement, since the AI supplies the content. Passing `ai_text` on any other widget type is rejected.
 
 ## Duplicate
 
@@ -1319,7 +1338,7 @@ For a single value that must carry its own colour, put it in a Comment widget in
 - **`tab_id` missing on create** — required. Find via `list-report-tabs action=list`.
 - **A sort that stores fine and orders nothing** — `sort` is the sort **direction**, `"asc"` / `"desc"` / `null`, on the entry in `rows[].options.metrics[]` or `rows[].options.dimensions[]`. It is not a position or an index. `sort: 0` used to be accepted and skipped outright by the backend (which matches on truthiness), so the write returned success and the widget came back in the source's own order; it is rejected now. See "Sorting a widget".
 - **`sort` on a single-value widget** — inert wherever you put it: a `101` aggregates everything into one number and has no rows to order. The tool warns. Use a Table (`102`) with the dimension bound.
-- **AI text (`update_ai_text`) errors** — if generation fails with a timeout, the settings are saved; retry after ~30 seconds. A non-timeout error may indicate the AI feature is not available on the team's plan.
+- **AI text (`update_ai_text`) errors** — generation runs in the background, so a failure arrives on the collecting call as `status: failed` with the reason in `message`, not as an error on the first call. The settings are already saved either way. Queue a new summary by sending `ai_text` again. A failure that names the plan may mean the AI feature is not available to the team.
 - **An offline widget showing 200,000 impressions you never entered** — it was created without `rows[].data`, so it still holds the template's placeholder sample numbers. The create response warns about this. Send an `update` with the row's `data` to replace them.
 - **An offline widget whose icon flickers and never draws** — a cell holds two currency symbols, typically a range like `"$4.80 - $7.40"`. The backend cannot resolve which currency that is and hands the whole string back as the currency code; the frontend throws `RangeError: Invalid currency code` on every render attempt, and the retry loop is the flicker. Nothing rejects this on write, and a human typing it into the offline-data grid hits it too. Split the range into two entries or two table columns. See "Values".
 - **Offline values passed as row options** — `rows[].options.value` / `previous_value` bind nothing. Row `options` is a free-form blob, so these used to persist silently and the call still reported success; they now come back as an "unrecognized `options` keys" warning. Offline values belong in the row's `data` array.
