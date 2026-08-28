@@ -191,6 +191,13 @@ which is the difference between a tidy page and a page with a hole in it:
   legibility floor lifts the type. So a six-row table plus its header is `h: 0.22` on a slide or
   a dashboard and `h: 0.27` on A4. Give it more and you get an empty band under it; the
   validator will not complain, because nothing is broken — it just looks unfinished.
+
+  **Round that number up, by about a tenth.** It is the height the rows need and not the height
+  they should have: sized to it exactly, the last row's divider sits hard against the frame's
+  edge, and one longer label or one extra row clips again. A three-row table wants `h: 0.11`
+  rather than the `0.096` the arithmetic gives. The validator asks whether the content fits, so
+  a table sized to the formula passes and still looks cramped — that judgement is yours, not
+  the validator's.
 - **A `metric` grows to fill its frame**, which is what makes a hero number work. Metrics that
   form a **row** are sized together — they take the smallest size any of them wants — so you do
   not have to match the lengths of `"$1.24M"` and `"$41.20"` by hand. A row is decided from the
@@ -664,7 +671,10 @@ Surface a finished design as an artifact card in the chat rather than writing a 
 - **A dashboard page compressed to fit.** Raise `page_height`. It grows; that is the point of the
   format.
 - **A table frame far taller than its rows.** A table does not stretch. Size the frame to the rows
-  — see *How tall is everything else*.
+  plus about a tenth — see *How tall is everything else*.
+- **A table frame sized to its rows exactly.** The other half of the same mistake, and the one a
+  validator cannot see: the bottom row is drawn, so nothing is clipped and nothing is reported,
+  but it is jammed against the frame's edge and the next edit clips it.
 - **A caption or kicker in a frame sized from the main table on A4.** The legibility floor is above
   what those two roles scale to there, so they draw about a fifth larger than the table says and a
   one-line caption becomes a clipped two-line one. Use the exception table.
