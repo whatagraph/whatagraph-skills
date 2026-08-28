@@ -161,13 +161,28 @@ Neither action works on a linked report — its widgets are managed by the linke
 ```
 manage-report-tabs action=set_layout report_id=<id>
    layout="printing_landscape_6x6"       # or "printing_portrait_4x8"
+   layout_whitelabel="first_and_last"    # none | first_and_last | all
    border_radius_size="medium"           # none | small | medium | large
    show_page_numbers=true
 ```
 
-Sets the report's grid orientation. Only works while the report has **no widgets** yet — changing it later would misplace existing widgets, so it's rejected.
+`layout` sets the grid orientation. Changing it only works while the report has **no widgets** yet — changing it later would misplace existing widgets, so it's rejected.
 
-**Prefer setting orientation at create instead.** For a brand-new report, pass `layout` directly to `manage-reports action=create` (it defaults to landscape) — a single call with no ordering foot-gun. Reach for `set_layout` here only to change the orientation of an already-created report that is *still empty*, or to also adjust `border_radius_size` / `show_page_numbers`.
+The other three are display settings. They change nothing about the grid, so you can set them at any time, on a report with widgets too. Omit `layout` when that is all you are changing, and the report keeps the grid it already has.
+
+**Prefer setting orientation at create instead.** For a brand-new report, pass `layout` directly to `manage-reports action=create` (it defaults to landscape) — a single call with no ordering foot-gun. Reach for `set_layout` here to change the orientation of an already-created report that is *still empty*, or to change any of the three display settings at any point.
+
+### The header and footer toggle (`layout_whitelabel`)
+
+This is the report-level switch that shows or hides the theme header and footer. In the web app it is the "Show header and footer" toggle in the report editor.
+
+- `first_and_last` — draw them on the first and last page. This is the default for a new report.
+- `all` — draw them on every page.
+- `none` — hide them.
+
+A team whose plan does not include whitelabelling cannot hide them, and the tool rejects `none` for that team with an error saying so. Do not offer a workaround such as an Image widget plus a Comment banner at the top of the canvas: that is not the same thing as a header, and it does not repeat on later pages.
+
+When a user asks why the header or footer is missing from a report, read `layout_whitelabel` back from `list-reports` before answering, and set it here rather than telling the user to change it by hand.
 
 ## Deleting / restoring a tab
 
