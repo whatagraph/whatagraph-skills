@@ -16,6 +16,10 @@ optional_tools:
     purpose: Generate or create the brand the design is drawn in.
   - tool_name: delete-canvases
     purpose: Remove a design, or one page of one.
+  - tool_name: manage-widgets
+    purpose: Create and edit a widget the design owns, for the widget types no block draws.
+  - tool_name: list-widgets
+    purpose: Read the widgets a design owns, or find a report's widget to bind a block to.
 ---
 
 # Designs
@@ -341,7 +345,8 @@ data, you decided what the story was, and the page holds exactly the figures you
   block, the page, or the document.
 - A bound `table` or `bar_list` is **cut to what its frame holds**, so give it room for the rows
   you expect rather than assuming everything comes back.
-- `kind: "widget"` with a `widget_id` renders an existing report widget instead.
+- `kind: "widget"` with a `widget_id` draws a widget instead of a query — either one a report
+  already has, or one the design owns. See *Three ways to make a block live* below.
 
 **Dates cascade: document → page → block.** Set `date_range` once on the design and every bound
 block follows it; a page or a block overrides it with a period key of its own. `inherit` is the
@@ -358,6 +363,70 @@ A period is a **calendar key, and it is camelCase**: `last30Days`, `lastMonth`, 
 so read the message rather than guessing again.
 
 `data_mode=bound` is what makes a document live. Leave it `inlined` (the default) for a deck.
+
+### Three ways to make a block live
+
+A `binding` has two kinds, and the `widget` kind covers two different situations, so there are
+three answers and they are not interchangeable.
+
+**A `query` binding is the default.** One source, some metrics, resolved on every open. Nothing is
+created, nothing has to be cleaned up, and the block is the whole statement of what it shows.
+Reach for this first for a dashboard's numbers, charts, tables and bar lists.
+
+**A widget the design owns** is for what a block cannot draw. A block draws four shapes — a metric,
+a chart, a table, a bar list — and the reporting side has widget types that are none of them, plus
+per-widget behaviour a binding has no field for. Create one when the ask needs any of these:
+
+- a funnel, a goal, a geo map, a media widget, or a dynamic chart family (scatter, bubble,
+  heatmap, candlestick, combo, top-N)
+- conditional formatting or auto colors on a table's column
+- currency conversion on a money metric
+- values typed by hand rather than fetched, which is what the offline widget types are for
+- a source filter, or a date range pinned per widget with a comparison of its own
+- a widget the person can go on editing in the drawer afterwards, with the report's own editor
+
+**A report's widget** is for showing something a report already has, where the two should stay the
+same. Find the id with `list-widgets action=list report_id=…` and bind to it. Editing it edits the
+report's widget, because it is the report's widget.
+
+### Creating a widget the design owns
+
+Two calls, in this order, and both belong in the same turn.
+
+```
+manage-widgets action=create design_id=12 page_id=41 channel_id="9" widget_type_id="115"
+  rows=[{ "configs": [{ "source_id": 2, "options": { "metrics": [...] } }] }]
+→ { "widget": { "id": 8814, ... } }
+
+manage-canvases action=patch_blocks canvas_id=12 page_id=41
+  blocks=[{ "id": "funnel", "type": "widget", "frame": {"x":0.06,"y":0.18,"w":0.4,"h":0.3},
+            "binding": { "kind": "widget", "widget_id": 8814 } }]
+```
+
+The widget is invisible until the block exists — a widget is data and a block is what draws it. A
+widget with no block pointing at it is deleted on the design's next page save, which is also the
+cleanup if the second call fails: nothing is left behind, and nothing has to be swept.
+
+Removing the block removes the widget, so there is no widget delete to make. `delete-widgets`
+refuses a design and says so.
+
+Everything the design's own widget editor can change, `manage-widgets action=update` can change
+with `design_id`: sources, metrics, dimensions, filters, row labels, settings, conditional
+formats, currency. `list-widgets action=list design_id=12` reads them back by page, and reports the
+`blocks` drawing each one — an empty list there is a widget about to be reaped.
+
+Five things a design refuses, each because its own editor offers no equivalent:
+
+| Refused | Why, and what to do instead |
+|---|---|
+| `position_x`, `position_y`, `auto_place`, `target_tab_id` | A design has no widget grid. The block's `frame` places it. |
+| `action=apply_premade` | Premade widgets are a report library. Create the widget with `action=create`. |
+| `action=duplicate`, `batch_duplicate` | Copy the block with `patch_blocks`; the widget follows it. |
+| `action=update_ai_text` | AI text is a comment widget's setting. A design writes prose in `text` blocks. |
+| Comment, calendar, image, filter control, report shortcut types | The design draws these with its own blocks, or has no surface for them. |
+
+A widget block is also the one block the PowerPoint and Google Slides writers cannot draw as
+shapes — see the export table above. If a table or a chart will do, use `table` or `chart`.
 
 **Freeze** keeps a copy of today: `manage-canvases action=freeze canvas_id=12` resolves every
 bound block once and stores the result as a static twin. The design itself stays live and keeps
@@ -668,6 +737,10 @@ Surface a finished design as an artifact card in the chat rather than writing a 
   `patch_blocks`.
 - **A chart used for three numbers.** Use `bar_list` — axes and a legend around three bars is
   noise.
+- **A widget created and never bound to a block.** It draws nothing and is deleted on the next page
+  save. Create the widget and add its block in the same turn.
+- **A widget used where a `query` binding would do.** A metric, a chart, a table or a bar list
+  needs no widget. Create one only for what the list above names.
 - **A dashboard page compressed to fit.** Raise `page_height`. It grows; that is the point of the
   format.
 - **A table frame far taller than its rows.** A table does not stretch. Size the frame to the rows
