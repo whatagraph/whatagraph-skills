@@ -9,7 +9,7 @@ required_tools:
   - fetch-data
 optional_tools:
   - tool_name: list-sources
-    purpose: Find the sources to fetch the numbers from before authoring.
+    purpose: Find the sources to fetch the numbers from before authoring, and the ids attach_sources takes.
   - tool_name: list-spaces
     purpose: Pick the space (client) the design belongs in.
   - tool_name: manage-design-systems
@@ -373,6 +373,22 @@ three answers and they are not interchangeable.
 created, nothing has to be cleaned up, and the block is the whole statement of what it shows.
 Reach for this first for a dashboard's numbers, charts, tables and bar lists.
 
+One thing it does **not** do: a query binding names a source without **attaching** it to the
+design. `sources` on a binding is the global integration source id, so the numbers are live and
+correct while the design's channels panel stays empty. Attach the channel yourself when the design
+should show which sources it reads:
+
+```
+manage-canvases action=attach_sources canvas_id=12 source_ids=[2]
+```
+
+Ids are the global ones from `list-sources`, the same family the binding takes. Attaching one that
+is already attached changes nothing and says so, so a repeat is safe. `list-canvases action=show`
+reports the design's `channels`, each with the document-local `source_id` that `manage-widgets`
+takes. Attaching is also the **prerequisite for a widget the design owns** on any real channel:
+`manage-widgets action=create design_id=…` attaches whatever source its widget reads, so doing it
+first is a choice about what the panel shows rather than a step you can skip.
+
 **A widget the design owns** is for what a block cannot draw. A block draws four shapes — a metric,
 a chart, a table, a bar list — and the reporting side has widget types that are none of them, plus
 per-widget behaviour a binding has no field for. Create one when the ask needs any of these:
@@ -384,6 +400,14 @@ per-widget behaviour a binding has no field for. Create one when the ask needs a
 - values typed by hand rather than fetched, which is what the offline widget types are for
 - a source filter, or a date range pinned per widget with a comparison of its own
 - a widget the person can go on editing in the drawer afterwards, with the report's own editor
+
+**And create one whenever the person asked for one.** The list above is about what a block cannot
+draw, and that is not the only reason to make a widget. "Use a report table", "put the widget on
+it", or a widget type named out loud is a decision already taken, and a `table` block handed back
+instead is the wrong answer however well it draws. Take the ask literally: `manage-widgets
+action=create` with the type they named, `widget_type_id="table"` for the plain table. The one
+case you cannot honour is a refused type, and there you name which type it is and what the design
+will draw instead, rather than substituting a block silently.
 
 **A report's widget** is for showing something a report already has, where the two should stay the
 same. Find the id with `list-widgets action=list report_id=…` and bind to it. Editing it edits the
@@ -415,7 +439,7 @@ with `design_id`: sources, metrics, dimensions, filters, row labels, settings, c
 formats, currency. `list-widgets action=list design_id=12` reads them back by page, and reports the
 `blocks` drawing each one — an empty list there is a widget about to be reaped.
 
-Five things a design refuses, each because its own editor offers no equivalent:
+Six things a design refuses, most because its own editor offers no equivalent:
 
 | Refused | Why, and what to do instead |
 |---|---|
@@ -424,6 +448,7 @@ Five things a design refuses, each because its own editor offers no equivalent:
 | `action=duplicate`, `batch_duplicate` | Copy the block with `patch_blocks`; the widget follows it. |
 | `action=update_ai_text` | AI text is a comment widget's setting. A design writes prose in `text` blocks. |
 | Comment, calendar, image, filter control, report shortcut types | The design draws these with its own blocks, or has no surface for them. |
+| Multi-source table (37) | Deprecated in favour of blends and source groups, so nothing creates one any more, and a design will not draw an existing one either. Use `widget_type_id="table"`, or a `table` block. |
 
 A widget block is also the one block the PowerPoint and Google Slides writers cannot draw as
 shapes — see the export table above. If a table or a chart will do, use `table` or `chart`.
@@ -739,8 +764,13 @@ Surface a finished design as an artifact card in the chat rather than writing a 
   noise.
 - **A widget created and never bound to a block.** It draws nothing and is deleted on the next page
   save. Create the widget and add its block in the same turn.
+- **A dashboard of `query` bindings handed over with an empty channels panel.** The numbers are
+  right and the design looks like it reads nothing. Attach the sources with `attach_sources`.
 - **A widget used where a `query` binding would do.** A metric, a chart, a table or a bar list
-  needs no widget. Create one only for what the list above names.
+  needs no widget. Create one for what the list above names, or because the person asked for a
+  widget.
+- **A `table` block handed back to somebody who asked for a report table widget.** The block is
+  the right default and it is not what they asked for. An explicit ask outranks the default.
 - **A dashboard page compressed to fit.** Raise `page_height`. It grows; that is the point of the
   format.
 - **A table frame far taller than its rows.** A table does not stretch. Size the frame to the rows
