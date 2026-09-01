@@ -80,6 +80,47 @@ Notes:
 - All actions include widgets on **hidden tabs** by default. Use `tab_hidden=false` to exclude hidden tabs, or `tab_hidden=true` to show only hidden tabs. The `list` response includes a `tab_hidden` field on each tab. `csv_export` defaults to visible tabs only (`tab_hidden=false`) — pass `tab_hidden=true` to export a widget on a hidden tab.
 - `csv_export` requires the **Widget CSV Export** premium feature — throws an authorization error without it. When `data_status=warning`, the response includes `retry_after_seconds: 60`. Some widgets return `success: false` when the integration doesn't support export.
 
+## Showing a widget before committing it
+
+When someone asks **what a widget would look like** and has not named a report to build it in, do not
+create a report and do not pick one for them. Build an on-demand widget instead:
+
+```
+manage-widgets action=create preview=true
+   channel_id=<channel_id>             # no report_id, no tab_id
+   widget_type_id=<widget_type>
+   source_id=<global_source_id>        # from list-sources
+   name="<widget title>"
+   rows=[...]                          # bind metrics/dimensions exactly as usual
+render_widget widget_id=<id>           # draws it in the chat
+```
+
+The widget is real — live data, the team's theme, real chart rendering — it just belongs to no
+report, so nothing appears in the user's reports until they ask for it. Everything in this skill
+about types, bindings, titles, row icons and dimension counts applies unchanged; only `report_id`,
+`tab_id` and grid position drop out, because there is no grid.
+
+Then:
+
+- **Refine it** — `action=update preview=true widget_id=<id>` with the same option and row payloads
+  you would send for a report widget. Iterate as many times as the user wants.
+- **Keep it** — `action=promote_preview widget_id=<id> report_id=<id> tab_id=<id>`. The widget moves
+  onto that tab and stops expiring; its id does not change, so the preview card already in the chat
+  keeps working. The card also shows the user an "Add to report" button that asks you to do this.
+- **Do nothing** — previews expire on their own (30 days by default), so an abandoned one leaves no
+  dead widget and no stray report behind.
+
+**Build in the report directly whenever the user named one**, or asked for a report to be created.
+`preview=true` is for the "how would this look?" case, not a staging step for normal building.
+
+Two refusals to expect:
+
+- A `source_id` you cannot reach is refused as *not available to you*. A preview has no space to
+  inherit access from, so sources are checked against the acting user's own spaces.
+- `promote_preview` is refused when the bound source is not assigned to the destination report's
+  space. The refusal names the fix — apply it and retry, or promote into a report in a space the
+  source already covers.
+
 ## Create a widget from scratch
 
 ```
@@ -91,6 +132,9 @@ manage-widgets action=create
    source_id=<report_local_source_id>  # omit for sample-data widget
    name="<widget title>"               # always set on data widgets — see Titles
 ```
+
+> Building a widget only to *show* it? Use `preview=true` and skip `report_id`/`tab_id` — see
+> "Showing a widget before committing it" above.
 
 **Always pass `name` at create on data widgets** — one created without a name renders the platform's default label. Set each row's rendered metric label in `rows[].configs[].options.metrics[].name` at the same time (see "Titles — every widget and every metric row is labelled").
 
