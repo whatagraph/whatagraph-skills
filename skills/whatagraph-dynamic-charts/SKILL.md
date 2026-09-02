@@ -1,7 +1,7 @@
 ---
 name: whatagraph-dynamic-charts
 type: domain
-description: Build chart families that have no dedicated widget type — scatter, bubble, heatmap, candlestick, pie/donut/rose, polar bars, bars-plus-line combo, top-N ranking — with the Dynamic Chart widget and a `chart_spec`. Use when the chart asked for cannot be expressed by the standard widget types, or when writing, dry-running, or debugging a `chart_spec`.
+description: Build chart families that have no dedicated widget type — scatter, bubble, stacked bar/area, heatmap, calendar heatmap, candlestick, box plot, pie/donut/rose, funnel, radar, polar bars, top-N ranking — with the Dynamic Chart widget, either by naming a `chart_type` or by writing a `chart_spec`. Use when the chart asked for cannot be expressed by the standard widget types, or when writing, dry-running, or debugging a chart.
 required_tools:
   - list-sources
   - list-widgets
@@ -28,14 +28,36 @@ bindings change.
 - The same, plus a third metric as point size (budget, impressions) → bubble.
 - One metric across **two** categorical dimensions (day × hour, channel × device) → heatmap.
 - A ranked "top 10 campaigns by spend" bar → `sort` + `limit` on a bar series.
-- A volume metric as bars with a rate metric as a line over the same dimension → combo.
+- A volume metric as bars with a rate metric as a line over the same dimension → two series in one `chart_spec`. There is no `combo` family any more; each row picks its own series type.
 - Open/close/low/high per period → candlestick.
+- Minimum, lower quartile, median, upper quartile and maximum per category → box plot.
 - Share of a total across one dimension → `pie`, `donut`, or `rose` (slice radius also carries the value).
+- Stages of a conversion, largest first → funnel.
+- Several metrics compared shape-against-shape, three or more axes → radar.
+- One metric per day across weeks and months → calendar heatmap.
+- Metrics summed on top of each other, per row → stacked bar or stacked area.
 - A composition wrapped around a circle, for cyclical categories like hour or weekday → a stacked bar with `coordinate: "polar"`.
 
 Do **not** reach for this when a standard type already fits — a single trend line is a line
 chart (`107`), share-of-total is a pie (`108`). Use the ordinary types where they apply; see
 the `whatagraph-widgets` skill.
+
+## Name a `chart_type` first, and only reach for `chart_spec` when no family fits
+
+`manage-widgets` takes a `chart_type`: the family name, with the bindings read off the
+widget's own rows on every render. That is the normal way to set one up. The user can then
+edit the widget in the drawer, and adding a metric plots it.
+
+    chart_type: line | area | bar | stacked_bar | stacked_area | scatter | bubble
+              | candlestick | boxplot | heatmap | calendar_heatmap
+              | pie | donut | rose | funnel | radar | polar_stacked_bar
+
+`list-widgets` with `action=chart_presets` returns the current list with what each family
+needs bound, so read it rather than trusting this one.
+
+A `chart_spec` pins every column by id, so the chart stops following the bindings and the
+user can no longer change what it plots in the drawer. Use it only for a chart no family
+describes — two different series types on one grid, say, such as bars plus a line.
 
 ## The loop
 
@@ -121,6 +143,13 @@ Tick formatting, label rotation, colours, grid geometry and data labels are deli
 - **Candlestick channels are read positionally** (`open`, `close`, `low`, `high`). Binding
   them out of order draws wrong candles instead of failing — only use it when the four
   metrics genuinely mean those things.
+- **A box plot reads five metrics positionally** (minimum, lower quartile, median, upper
+  quartile, maximum) and computes nothing. Bound out of order it draws a box whose whiskers
+  and quartiles are wrong and reports nothing, so only use it when the row genuinely binds
+  those five summary statistics.
+- **A calendar heatmap needs a DATE dimension.** Anything else is refused, because the
+  calendar places each row on the day it names. It wants a long range of daily data; over a
+  week or two it is a row of squares and a bar chart reads better.
 - **Pass the spec as the top-level `chart_spec`**, never inside `options` — only the top-level
   parameter is validated and compiled.
 - **The pie family takes `itemName` + `value`, not x/y**, and has no axes. It cannot share a chart with a series that needs them — one chart per family. `donut` and `rose` are `pie` with a different shape, so pick the name that matches the chart you mean.
@@ -136,9 +165,12 @@ one that is absent, because you would build on it:
 | Asked for | Why not | Offer instead |
 |---|---|---|
 | Bump / rank-over-time chart | Needs a `rank` transform that does not exist yet | Top-N bar, or a line of the underlying metric |
-| Boxplot | Needs precomputed min/Q1/median/Q3/max | Scatter of the same rows |
-| Radar | Needs indicator axes | Polar bar, or a bar comparison |
+| Gauge | Needs a minimum, maximum and target the spec has no channel for | The dedicated Gauge widget type (`139`) |
 | Treemap, sunburst, sankey | Need hierarchical or link-shaped data, and aggregation the compiler does not do | Donut for composition, top-N bar for ranking |
+
+Box plot and radar used to be listed here. Both ship now: `chart_type: boxplot` takes five
+precomputed summary metrics, and `chart_type: radar` takes three or more metrics as its axes.
+Do not refuse them.
 
 Say plainly that the family is not available and offer the nearest shipping one — do not
 approximate it with a chart that looks similar but means something else.
