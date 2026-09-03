@@ -673,6 +673,8 @@ Known `options` shapes:
 
     Text with **no tags at all** is not rejected — it is kept as a single paragraph, and the response says so in `warnings`. If you wanted headings or separate paragraphs, add the markup.
 
+    **Showing the body to the user — never as HTML.** HTML is the wire format this tool requires, not a display format. When you ask the user to approve or review comment content before writing it, present the content as plain text or markdown in chat — chat renders markdown, so the user sees the text the way the widget will show it — and keep the HTML for the tool call only. Pasting the HTML source into chat as an "approval preview" has already failed with a real customer, who answered "I can't read code". After the widget is written, the authoritative check is a render: `preview-report tab_id=<tab_id>` returns an image of the page (see `whatagraph-export`).
+
     **Full vocabulary.** Everything outside this list is stripped on save and reported in `warnings`:
 
     | Category | Available |
