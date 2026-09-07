@@ -54,6 +54,8 @@ list-custom-dimensions action=usage universal_dimension_ids=[<id>]
 
 `show` returns compact summaries for tag dimensions: `tag_count` and `source_count` instead of the full tags array. Use `list_tags` to get paginated tag details with assigned source IDs. Both `list_tags` and `list` support cursor pagination via `cursor` and `per_page` parameters.
 
+Both listings hide child dimensions by default, the same way the customer's own list of custom dimensions does. A count from `list` is therefore a count of top-level dimensions. See "Parent and child dimensions" below for `parent_id` and `include_children`.
+
 ## Field IDs are per-channel — discover them, don't copy
 
 `field_external_id`, `channel_id`, and `report_type_external_id` are **channel-specific**. Before building any `fields` entry, fetch the real values with `list-sources action=list_dimensions_and_metrics` for your target channel/source and pass each id exactly as returned (universal / organized dimensions come back with a `universal_` prefix — keep it). The `campaign_name` / `report_type_external_id: "campaign"` pair in the examples below only shows the *shape*: it exists on some ad channels and is absent on others, so pasting it verbatim will fail validation on the wrong channel.
@@ -189,6 +191,43 @@ Preview the AI output before saving:
 manage-custom-dimensions action=preview_ai
    prompt="..."
    integration_source_id=<source_id>
+```
+
+## Parent and child dimensions
+
+`manage-custom-dimensions` accepts `parent_id` on `create`. It points at another custom dimension in the same team. A dimension that has a parent is a child.
+
+A parent is fixed when the dimension is created. `update` and `duplicate` reject `parent_id`, so a dimension cannot be moved under a different parent, and a child cannot be detached. To change where a dimension sits, create a new one with the `parent_id` you want and delete the old one.
+
+A child does not appear in the customer's list of custom dimensions. It appears on its parent's page instead. Everywhere else it is a normal dimension: it can be picked in widgets, used in filters, and edited on its own. A dimension can only have a dimension as a parent, and a metric only a metric.
+
+**Create a child in these three cases, and only these three.**
+
+1. You are copying an existing dimension so the copy reads a different source, channel or report type. The copy becomes a child of the dimension you copied from. This is the most common reason to create a child. Watch for "duplicate this dimension", "copy these dimensions", "the same dimensions for the new source", or a request to rebuild a report against another source.
+2. The user asks for it directly. Watch for wording such as "as a child of this dimension", "copy this dimension under it", or "use this one as a template".
+3. The request produces more than one dimension that belong together, whether they are variants of one dimension or one copy each of several originals. Each copy is filed under the dimension it came from, not left at the top level.
+
+In every other case create a normal top-level dimension.
+
+**`action=duplicate` cannot do case 1.** It rejects `parent_id` and produces a top-level copy, so duplicating and then updating the copy leaves the customer with two unrelated dimensions. Read the original with `action=show`, then `create` a new dimension carrying `parent_id` set to the original's id, and delete nothing.
+
+```
+manage-custom-dimensions action=create name="Channel grouping for retail" ... parent_id=<parent dimension id>
+```
+
+- There is no batch create. Pick or create the parent first, then issue one `create` per child, each carrying `parent_id`.
+- When copying, the parent is the dimension you copied from. Its id is already in hand from the list or show call you read the configuration out of.
+- Name a copy after what makes it different, usually the source: "Channel grouping (Whatagraph-Recruitment)", not "Channel grouping (copy)".
+- Editing a child is a normal `update`. It keeps its parent, and there is nothing extra to send.
+- Give each child a name that says why it exists. Nothing in the product enforces unique names, so a set of children called "Channel grouping (1)" through "Channel grouping (6)" is unusable for the customer.
+- Deleting a parent does not delete its children. They lose the parent and reappear in the customer's list.
+
+Reading a family back:
+
+```
+list-custom-dimensions action=list parent_id=<parent dimension id>   # that parent's direct children
+list-custom-dimensions action=list include_children=true             # every dimension, flat
+list-custom-dimensions action=show dimension_id=<parent dimension id> # returns parent_id and the direct children
 ```
 
 ## Updating
