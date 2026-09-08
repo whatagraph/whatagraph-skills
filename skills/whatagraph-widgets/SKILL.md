@@ -16,6 +16,8 @@ optional_tools:
     purpose: Resolve a source group's id when binding a group as the widget's source.
   - tool_name: manage-report-tabs
     purpose: Move widgets to another tab (move_widgets).
+  - tool_name: manage-custom-metrics
+    purpose: Build a reusable calculated metric (e.g. Blended CPA) to bind like any other metric, instead of a per-widget formula row.
   - tool_name: manage-filters
     purpose: Create or attach a filter on a widget config.
   - tool_name: list-filters
@@ -45,6 +47,22 @@ A **widget** is a visual data component on a tab. Widgets are typed (KPI card, l
 - Swapping the source on a set of widgets (migrating from sample to real data).
 - Changing common settings (currency, footer visibility) across many widgets at once.
 - Duplicating a widget or a set of widgets on a tab.
+
+## A `warnings` entry blocks the next step
+
+> ⚠️ **Read `warnings` on every `manage-widgets` response, and fix what it names before you move on.** A warning here is not advisory. It is the tool telling you that part of what you sent was stored somewhere nothing reads, so the widget on the report does not match the call you believe succeeded. The response still says `success: true`, because the widget row was written; the part you cared about was dropped.
+
+The failure this exists to stop: an agent built six widgets in one step, and one of them carried its metrics under a row option the tool does not read. The response warned in plain words that the key was stored and had no effect. The agent read the warning, moved on, and a widget rendering "Metrics not selected" shipped to a customer-facing report.
+
+So when `warnings` is non-empty:
+
+1. Read each entry. Every one names the field it dropped and the field it belongs in.
+2. Re-issue the call with the binding moved, or send an `update` that fixes the widget you just created.
+3. Only then build the next widget.
+
+Never treat a warning as a note to report back at the end of the run. By then the widget is on the report.
+
+The hard errors are a separate matter: the tool now refuses several of these mistakes outright rather than warning (see "A create with no binding is refused" and "Bindings written one level too high"). An error means nothing was written, so you can correct the shape and send the same call again.
 
 ## Listing
 
@@ -81,6 +99,35 @@ manage-widgets action=create
 **On a SingleValue (`101`), List (`103`) or Offline SingleValue (`125`), pass `rows[].options.icon` in the same call** — those three types draw a row icon, and a row created without one falls back to a single hardcoded eye, identical on every card. See "Row icons".
 
 **Always pass `rows` at create time on data widgets** — bind the metrics and dimensions in the same call. If `rows` is omitted, the widget falls back to the first metric in the source catalog — an arbitrary binding that rarely matches the widget's title, and on some sources no default applies at all, leaving the widget rendering **"Metrics not selected"** in the client-facing report. A create that returns `success` with no explicit binding is not a configured widget. Before binding, look the fields up with `list-sources action=list_dimensions_and_metrics` (never guess `external_id`s), keep every field in one config on the same `report_type`, and verify the result loads data (see "Fit for purpose").
+
+### A create with no binding is refused
+
+Since Aug 2026 a `create` on a data widget type is **rejected** when the call would leave the widget with no source and no metrics at all. The error says the report would render "Metrics not selected" and fall back to sample data, and it names the two fields that bind data: a top-level `source_id`, or `rows[].configs[].source_id` plus `rows[].configs[].options.metrics`. Nothing is written, so fix the shape and send the same call again.
+
+Only `rows[].configs[].options.metrics` counts as a binding. A `metrics` array at row level is a display label, so it does not satisfy the check: a call carrying `rows` with metrics at row level, no configs, and no `source_id` anywhere is refused as unbound even though the word `metrics` appears in the payload. Row-level metrics with no matching config metrics are rejected by a second guard as well — see "`rows` → `configs` shape".
+
+Three cases are deliberately outside the check:
+
+- **`rows` omitted entirely.** That asks for a blank widget and gets one, reported as `is_sample_data`. Nothing was dropped. This is still not a configured widget — see the paragraph above.
+- **A source bound with no metrics.** This is the documented default-metric flow. It stays a warning, and the warning is worth acting on: the default is an arbitrary catalog field.
+- **Utility and offline types.** Comment (`21`), Calendar (`22`), Image (`34`), Report shortcut (`141`), Filter control (`137`) and the offline types (`125`–`136`) render from their own content, so "no source, no metrics" is their normal state.
+
+The check runs on `create` only. An `update` that strips a binding is not refused, so read `warnings` on updates.
+
+A row sent with a `title` and **no `configs` array** now warns as well. The top-level `source_id` keeps the create legal, but the row gets a placeholder config with nothing bound, and the widget renders the source's default metric rather than the one the title claims. The warning names `rows[].configs[].options.metrics`, and it is one to act on: check the key spelling and re-send the row with its config.
+
+### Bindings written one level too high
+
+A row's `options` is a free-form blob. Writing a source or a set of metrics there stores the value and binds nothing, because only `rows[].configs[].options` binds data. Six keys are now a **hard validation error** at row level, on create and on update, because each one means the whole binding was written one level too high:
+
+`configs`, `source_id`, `source`, `sources`, `integration_id`, `channel_id`
+
+The error names the row index and points at `rows[].configs[].source_id` and `rows[].configs[].options.metrics`. Two related keys behave differently and are worth knowing apart:
+
+- **`filters`** is rejected by its own guard, with a message specific to filters. See "Filtering a widget".
+- **`operators`** is a real key the renderer reads. It makes the row a formula row, and its shape is checked rather than refused. See "Formula rows".
+
+Any other unrecognized row option key is still a warning, which you must act on under "A `warnings` entry blocks the next step". A widget already carrying a stray key from an earlier bad write stays editable, so the broken ones can be fixed.
 
 ### Dimension requirements by widget type
 
@@ -180,7 +227,7 @@ Common values exposed by `list-widgets`:
 | GeoMap (geographic map, BETA) | `140` |
 | Filter control (dimension dropdown) | `137` |
 | Report shortcut (drill-down link to another report) | `141` (channel_id `7`; no `source_id`) |
-| Dynamic chart (scatter, bubble, stacked bar/area, heatmap, calendar heatmap, candlestick, box plot, funnel, radar, polar bar, top-N) | `142` — name a `chart_type`, or write a `chart_spec` when no family fits; load the `whatagraph-dynamic-charts` skill |
+| Dynamic chart (scatter, bubble, heatmap, calendar heatmap, candlestick, box plot, radar, funnel, polar bar, stacked and 100% stacked, horizontal bars, bars-plus-line, top-N) | `142` — name a `chart_type`, or write a `chart_spec` when no family fits; load the `whatagraph-dynamic-charts` skill |
 
 Offline (manual-data) types hold numbers you supply instead of reading a source. All take `channel_id=7` and no `source_id`, and their values go in `rows[].data` — see "Offline (manual-data) widgets" below. String names are the live name with an `offline_` prefix (`"offline_single_value"`, `"offline_table"`, …).
 
@@ -393,6 +440,42 @@ rows=[
 ```
 > One row per source, each with a single config (its source) and the **same** metric, and **no** dimension — the sources become the columns. Set `axis: "left"` on every row; without it the editor's Left/Right axis sections render empty even though the data is bound.
 
+### Formula rows — one metric divided by another
+
+A row can render a calculation over the widget's own configs. `rows[].options.operators` makes it a formula row, and the value is a **flat list of tokens** the backend joins into an expression. There are two token types:
+
+| Token | Shape | Meaning |
+|---|---|---|
+| Config reference | `{"type": "config", "id": <widget_config_id>}` | The value of an existing config on **this** widget. |
+| Operator | `{"type": "operator", "operatorId": "divide"}` | One of `plus`, `minus`, `multiply`, `divide`, `bracket-left`, `bracket-right`. |
+
+A cost per acquisition — spend divided by conversions — is three tokens:
+
+```
+rows=[{"options": {"formula_title": "Blended CPA",
+                   "operators": [{"type": "config", "id": 55192462},
+                                 {"type": "operator", "operatorId": "divide"},
+                                 {"type": "config", "id": 55192463}]}}]
+```
+
+**A config token references a config that already exists. It does not carry a source or metrics of its own.** So a formula is always a two-call build:
+
+1. `action=create` the widget with its configs bound the ordinary way — one config per operand, each with its own `source_id` and `options.metrics`.
+2. `list-widgets action=show` to read the config ids back from `rows[].configs[].id`.
+3. `action=update` with the `operators` token list referencing those ids.
+
+A formula sent at `create` is **rejected** as soon as it names a config id, because no config exists yet for it to point at, and the error says to build the widget first. A formula referencing a config on a different widget is rejected too.
+
+Three further rules the tool enforces:
+
+- The operator sign is the **`operatorId` name**, not the symbol. `{"operatorId": "/"}` is refused; `divide` is correct.
+- Every token needs a `type` of `config` or `operator`. There is no token for a numeric constant, so a formula cannot multiply by 100 or divide by 1000 here.
+- Nesting a config **definition** inside a token — a `configs` array, or a `source_id` and `metrics` on the token itself — is refused. That shape describes a binding the renderer never looks at, so it used to produce a widget with no source and no metrics.
+
+**A formula row is captioned by `rows[].options.formula_title`**, falling back to `options.title`. This is one of the few places a row-level label is the rendered label, because there is no single config metric to name (see "Titles").
+
+**For a calculation you want on more than one widget, build it in `manage-custom-metrics` instead** and bind the result like any other metric. That is a real custom metric on the source, reusable across widgets and reports. Its formula is written as text over single-letter field identifiers, with `+ - * /`, parentheses, and numeric constants — `A/B` for a cost per acquisition, `A/B*100` for a rate. A formula row belongs to one widget and cannot hold a constant.
+
 ### Sorting a widget
 
 Sorting is a **row display option**, not a config one. Set `sort` on the entry in `rows[].options.metrics[]` or `rows[].options.dimensions[]` whose `identifier` matches the binding you want to order by. This is the same field the UI writes when a user clicks a table column header.
@@ -590,6 +673,8 @@ Known `options` shapes:
 
     Text with **no tags at all** is not rejected — it is kept as a single paragraph, and the response says so in `warnings`. If you wanted headings or separate paragraphs, add the markup.
 
+    **Showing the body to the user — never as HTML.** HTML is the wire format this tool requires, not a display format. When you ask the user to approve or review comment content before writing it, present the content as plain text or markdown in chat — chat renders markdown, so the user sees the text the way the widget will show it — and keep the HTML for the tool call only. Pasting the HTML source into chat as an "approval preview" has already failed with a real customer, who answered "I can't read code". After the widget is written, the authoritative check is a render: `preview-report tab_id=<tab_id>` returns an image of the page (see `whatagraph-export`).
+
     **Full vocabulary.** Everything outside this list is stripped on save and reported in `warnings`:
 
     | Category | Available |
@@ -647,7 +732,7 @@ Known `options` shapes:
 - **Gauge** (`widget_type_id=139`): dial-style single metric display. Same configuration as SingleValue (`101`) but different visual rendering — use when a circular dial is more appropriate than a plain number. Supports `start_value` and `end_value` in row options to set the gauge range.
 - **Heatmap** (`widget_type_id=138`): heat-coloured grid of one metric across two dimensions — one becomes the rows, the other the columns (e.g. `sessions` by `deviceCategory` × `browser`). Bind **exactly 2 dimensions and exactly 1 metric** in a single config; anything else is rejected. `breakdowns_enabled` stays off. This is **not** configured like a SingleValue (`101`), which takes no dimensions at all.
 - **GeoMap** (`widget_type_id=140`, BETA): geographic map. Set `options.geo_map_region` to control the displayed region (see Type-specific options table above). Bind a dimension with country/region data.
-- **Dynamic chart** (`widget_type_id=142`): the type for chart families with no dedicated widget type — scatter, bubble (a third metric as point size), stacked bar and stacked area, heatmap across two dimensions, calendar heatmap over a date, candlestick, box plot (five precomputed summary metrics), funnel, radar, polar bar, and ranked top-N. Bind rows as usual, then name a `chart_type`; write a `chart_spec` only for a chart no family describes, such as bars plus a line. Load the `whatagraph-dynamic-charts` skill first; it is refused at create with neither a type nor a spec.
+- **Dynamic chart** (`widget_type_id=142`): the type for chart families with no dedicated widget type — scatter, bubble (a third metric as point size), heatmap across two dimensions, calendar heatmap over a date, candlestick, box plot (five precomputed summary metrics), radar, funnel, polar bar, stacked and 100% stacked bars and areas, horizontal bars, and ranked top-N. It also adds reference lines, running totals, and splitting one metric into a series per dimension value. Bind rows as usual, then name a `chart_type`; write a `chart_spec` only for a chart no family describes, such as bars plus a line. Load the `whatagraph-dynamic-charts` skill first; it is refused at create with neither a type nor a spec.
 - **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads.
 - **Report shortcut** (`widget_type_id=141`): a drill-down card linking to another report in the same team. `channel_id=7`, no `source_id`, no metrics/dimensions. Set the link in `rows[].configs[].options`:
 
@@ -729,21 +814,40 @@ manage-widgets action=update_ai_text report_id=<id> widget_id=<id>
      "language": "English",
      "summary_length": "long",      # or "short" — a sentence count, not a style; see below
      "custom_prompt": "...",        # required when types includes "custom"
-     "auto_update": false           # false triggers immediate generation; true regenerates automatically
+     "auto_update": false           # false queues the summary now; true regenerates on every refresh
    }
 ```
 
-Only comment widgets (`widget_type_id=21`) are supported. Unless `auto_update` is `true`, the call also triggers an immediate summary generation.
+Only comment widgets (`widget_type_id=21`) are supported. Unless `auto_update` is `true`, the call also queues the summary.
+
+**The summary is not in that response.** Generation runs in the background, because reading every widget in a report takes longer than a tool call is given, so a large report used to return nothing at all. The call returns `status: pending` and a `summary_job_id`. Collect it with a second call:
+
+```
+manage-widgets action=update_ai_text report_id=<id> widget_id=<id> summary_job_id=<id>
+```
+
+`ai_text` is not needed on a collecting call. Read `status`:
+
+| `status` | What to do |
+|---|---|
+| `pending` | Still generating. Wait a few seconds and call again. Do not poll in a tight loop. |
+| `ready` | `content` carries the summary, already written to the widget. |
+| `failed` | `message` says why. Queue a new one with `ai_text`. |
+| `expired` | The job id is unknown or older than 24 hours. Queue a new one with `ai_text`. |
+
+Queueing twice for the same widget returns the **same** `summary_job_id` rather than starting a second pass, so a retry is safe.
+
+A sample-data refusal still comes back on the **first** call, not on a collect, so you learn immediately when every widget the summary would read serves sample data.
 
 > `summary_length` is a **sentence count per type**: `short` = 3 sentences, `long` = 8. `types` stack — each one generates its own block — so `["summary","wins","issues","recommendations"]` at `long` produces roughly 32 sentences, and `["summary"]` at `short` produces three.
 >
 > - **`short` is for a caption beside a single chart.** Never use it on a full-width page-level block — a three-sentence summary in a full-width comment is the floor of what the feature can produce, and it reads that way.
 > - Page-level default: `summary_length: "long"` with `types: ["summary","recommendations"]`; on an outcome or conclusion tab, `["summary","wins","issues","recommendations"]`.
 > - On the report's **first** tab use `load_type: "full_report"`. A page-scoped summary of tab 1 cannot reference what the later tabs show, which is the entire point of an executive summary.
-> - Pass `auto_update: false` on a build-and-hand-over run: the summary is generated during the call and returned in the response, so you can confirm the length you actually got. With `auto_update: true` only the settings are saved and the widget stays empty until the next refresh.
+> - Pass `auto_update: false` on a build-and-hand-over run, then collect with the `summary_job_id`, so you can confirm the length you actually got. With `auto_update: true` only the settings are saved, nothing is queued, and the widget stays empty until the next refresh.
 > - **Size the host comment to the text**: `6×3` minimum for `long` single-type, `6×4`–`6×6` for `long` multi-type. A long summary in a `6×2` clips or scrolls, and a scrolled block truncates in PDF export — check with `export-report` before shipping.
 
-**`ai_text` is also accepted on `create`** (Jul 2026), taking the same fields, so an AI-narration comment is one call instead of a create followed by `update_ai_text`. When `auto_update` is `false` the summary is generated during the create and returned as `ai_text_content` in the response; with `auto_update: true` only the settings are saved and no such key comes back. This is also how you create a comment with no hand-written body — `ai_text` satisfies the body-text requirement, since the AI supplies the content. Passing `ai_text` on any other widget type is rejected.
+**`ai_text` is also accepted on `create`** (Jul 2026), taking the same fields, so an AI-narration comment is one call instead of a create followed by `update_ai_text`. When `auto_update` is `false` the create queues the summary and returns `ai_text_status: pending` with an `ai_text_summary_job_id`; pass that as `summary_job_id` to `update_ai_text` with the new widget's id to collect it. With `auto_update: true` only the settings are saved and neither key comes back. This is also how you create a comment with no hand-written body — `ai_text` satisfies the body-text requirement, since the AI supplies the content. Passing `ai_text` on any other widget type is rejected.
 
 ## Duplicate
 
@@ -1017,7 +1121,7 @@ This holds for every type that renders a metric label:
 
 Three real exceptions, where the row-level field **is** the label:
 
-- **Multi-channel formula rows** — a row carrying `options.operators` is captioned by `rows[].options.formula_title`, falling back to `options.title`. There is no config metric to name.
+- **Multi-channel formula rows** — a row carrying `options.operators` is captioned by `rows[].options.formula_title`, falling back to `options.title`. There is no config metric to name, because the row renders a calculation over its configs rather than one of them. See "Formula rows".
 - **Offline widgets (`125`–`136`)** — the label is the `name` on each entry of the row's `data` array. Config bindings are rejected on these types.
 - **Pre-new-architecture types (below `101`)** — the old renderer really does read `rows[].options.title` first. Only relevant on legacy widgets; create everything new at `101`+.
 
@@ -1291,7 +1395,9 @@ For a single value that must carry its own colour, put it in a Comment widget in
 
 ## Common pitfalls
 
-- **A widget rendering "Metrics not selected"** — it was created without `rows` (or with a config whose `options.metrics` is empty), so nothing is bound. The create still returns `success`, which is why this reaches shipped reports. Always bind at create, and always verify with `export-report` / `csv_export` — see "Always pass `rows` at create time".
+- **A widget rendering "Metrics not selected"** — it was created without `rows` (or with a config whose `options.metrics` is empty), so nothing is bound. A create carrying no binding at all is now refused (see "A create with no binding is refused"), but an omitted `rows` still returns `success` with a sample-data widget, which is how this reaches shipped reports. Always bind at create, and always verify with `export-report` / `csv_export` — see "Always pass `rows` at create time".
+- **A binding written at row level instead of on the config** — `rows[].options.source_id`, `options.configs`, `options.channel_id` and their aliases bind nothing, because only `rows[].configs[].options` binds data. Six such keys are refused outright now; before that they were stored, the call returned `success`, and the widget rendered "Metrics not selected" against a null source. Move the source to `rows[].configs[].source_id` and the metrics to `rows[].configs[].options.metrics` — see "Bindings written one level too high".
+- **A calculated metric that stored a formula and rendered nothing** — the calculation was described by nesting whole config definitions inside `rows[].options.operators`, each with its own `source_id` and `metrics`. Nothing reads a config there. A formula row is a flat token list referencing config ids that already exist on the widget, so it needs a `create` then an `update`; that shape is enforced now. For a calculation you want on more than one widget, use `manage-custom-metrics` — see "Formula rows".
 - **A tab with one or two widgets floating in an empty grid** — the tab list in the instructions was misread as a widget list. A named tab ("Google Ads", "Weather Report for New York") is a full themed page, not a slot for one widget per named metric — compose it per "Composing a full tab", whoever named the tab.
 - **Date dimension ambiguity** — a source may expose more than one date-typed dimension (e.g. `universal_dimension_1137` "Date" and `universal_dimension_150` "Date OLD"). Prefer the plainly-named current one and verify with `csv_export`. This is integration-dependent.
 - **Every KPI card carrying the same eye icon** — `rows[].options.icon` was never set, so each row fell back to the hardcoded default `Visible--Streamline-Sharp.svg`. Metric catalogs carry no icons of their own, so this happens on every integration and on every card. Pull the library once with `list-widgets action=list_icons` and bind an icon per row at create — see "Row icons".
@@ -1319,7 +1425,7 @@ For a single value that must carry its own colour, put it in a Comment widget in
 - **`tab_id` missing on create** — required. Find via `list-report-tabs action=list`.
 - **A sort that stores fine and orders nothing** — `sort` is the sort **direction**, `"asc"` / `"desc"` / `null`, on the entry in `rows[].options.metrics[]` or `rows[].options.dimensions[]`. It is not a position or an index. `sort: 0` used to be accepted and skipped outright by the backend (which matches on truthiness), so the write returned success and the widget came back in the source's own order; it is rejected now. See "Sorting a widget".
 - **`sort` on a single-value widget** — inert wherever you put it: a `101` aggregates everything into one number and has no rows to order. The tool warns. Use a Table (`102`) with the dimension bound.
-- **AI text (`update_ai_text`) errors** — if generation fails with a timeout, the settings are saved; retry after ~30 seconds. A non-timeout error may indicate the AI feature is not available on the team's plan.
+- **AI text (`update_ai_text`) errors** — generation runs in the background, so a failure arrives on the collecting call as `status: failed` with the reason in `message`, not as an error on the first call. The settings are already saved either way. Queue a new summary by sending `ai_text` again. A failure that names the plan may mean the AI feature is not available to the team.
 - **An offline widget showing 200,000 impressions you never entered** — it was created without `rows[].data`, so it still holds the template's placeholder sample numbers. The create response warns about this. Send an `update` with the row's `data` to replace them.
 - **An offline widget whose icon flickers and never draws** — a cell holds two currency symbols, typically a range like `"$4.80 - $7.40"`. The backend cannot resolve which currency that is and hands the whole string back as the currency code; the frontend throws `RangeError: Invalid currency code` on every render attempt, and the retry loop is the flicker. Nothing rejects this on write, and a human typing it into the offline-data grid hits it too. Split the range into two entries or two table columns. See "Values".
 - **Offline values passed as row options** — `rows[].options.value` / `previous_value` bind nothing. Row `options` is a free-form blob, so these used to persist silently and the call still reported success; they now come back as an "unrecognized `options` keys" warning. Offline values belong in the row's `data` array.
