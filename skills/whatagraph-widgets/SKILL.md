@@ -138,7 +138,7 @@ Both ends of each range are enforced at create and update (Aug 2026): too few di
 | Widget type | Dimension requirement |
 |---|---|
 | Time-series charts (104–107, 118–119) | **1 dimension required** — must be the integration's date dimension (e.g. `date`, `segments.date`, `ga:date`). Binding a non-date dimension while `breakdowns_enabled` is off is **rejected at create/update** (left unchecked it renders an empty/aggregated chart, and hard-errors on some sources such as Google Sheets). To split a bar/column chart by a category instead, set `breakdowns_enabled=true` (see Breakdown vs non-breakdown below) — then column/bar/stacked accept a categorical dimension (up to 2). |
-| Table (102) | **At least 1 dimension required** — any dimension. |
+| Table (102) | **At least 1 dimension required** — any dimension. Binding the channel's creative dimension also draws the ad creative image in each row (see "Ad creative thumbnails in a table"). |
 | Heatmap (138) | **Exactly 2 dimensions required**. |
 | GeoMap (140) | **1 geographic dimension required**. |
 | Media (110, 111) | **At least 1 dimension required** — typically `creative_thumbnail_url` or similar. |
@@ -151,6 +151,20 @@ Both ends of each range are enforced at create and update (Aug 2026): too few di
 Use `list-sources action=list_dimensions_and_metrics` to find the correct dimension external_ids for a source. The date dimension external_id varies by integration — always look it up rather than guessing.
 
 > **A single value (101) always aggregates the whole dataset into one total** — it has no dimension and cannot rank or isolate a single entity. It will **not** show the "best" or "worst" campaign: a `sort` passed on its row or metric options is ignored (the tool returns a warning saying so). To surface a top/bottom performer, use a **Table (102)** with the entity dimension bound and the metric sorted desc/asc, or a saved filter (`whatagraph-filters`) pinning the specific entity.
+
+### Ad creative thumbnails in a table
+
+A **Table (`102`)** shows the ad creative image in each row when its bound dimensions include the channel's creative URL dimension, the same dimension a Media widget binds (for example `creative_thumbnail_url` on Meta / Facebook Ads). Nothing else has to be switched on. The backend attaches creative images to a table's rows as soon as the table selects such a dimension, and the table draws them (live Sep 2026). "Put the ad creatives in the table" is a real answer now, not a reason to reach for a Media widget instead.
+
+- **Find the dimension** with `list-sources action=list_dimensions_and_metrics` and bind it in `rows[].configs[].options.dimensions` like any other dimension. There is no separate thumbnail flag to set. The image comes from the dimension the integration types `creative_url`, which is the one whose name reads like a thumbnail or image URL.
+- **The channel's creative *link* dimension is a separate, optional thing.** A dimension typed `creative_link` holds the ad's preview page, and binding it adds an "Open ad preview" link to the full-size preview. It draws no image on its own. Leave it out when the report has `display_dimensions_as_columns` on, because there it becomes a column of raw URLs.
+- **It changes what one row means.** A table's rows come from the dimensions it binds, and a creative URL is per ad, so adding it to a campaign-level table splits each campaign into one row per creative. Bind it on a table you want at ad or creative level, and expect the row count to grow. A table only shows the rows that fit its height (see "Tables truncate silently").
+- **Size the thumbnails** with the `thumbnail_size` option: `small` (the default, 32px), `medium` (48px) or `large` (64px). The rows grow taller to fit the size chosen.
+- **Where the image sits** depends on `display_dimensions_as_columns`. With it off, the dimensions collapse into one column and the thumbnail sits to the left of that row's labels. The column is then named after the first dimension that is not the creative, because naming it after the creative would label it with a field the reader never sees. With it on, the creative gets a column of its own, and that column cannot be sorted, because sorting a column of image URLs orders the rows by a string nobody sees.
+- **The image is never cropped.** The size setting fixes the height, and a landscape creative grows wider up to the width of its column instead of being cut down to a square. Clicking a thumbnail opens the creative at full size, the same preview the Media widgets have.
+- **Some channels cannot do this.** X (Twitter), X Ads, StackAdapt and Semrush define no creative dimension at all. They carry their images in a deprecated row-level field that only Media widgets read, so their tables show no thumbnail. Google Search text ads have no image either, and `ad_image_url` fills only for Display / PMax / image ads. Check the source's dimension list before promising a user thumbnails.
+
+**Table or Media widget?** A Media widget (`110` / `111`) is still the right pick when the creatives are the point and one or two metrics per tile is enough, because it gives each creative a large tile. Choose a table with the creative dimension when several metrics per creative matter and the user wants to read them across columns, or wants the creatives ranked by spend, CTR or conversions.
 
 ### Surfacing a top / bottom N
 
@@ -601,6 +615,7 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 | `display_dimensions_as_columns` | boolean | Table only |
 | `wrap_text` | boolean | Table only. **Breaks by character, not by word** — see the pitfall below |
 | `show_search_bar` | boolean | Table, List (shows a row search box) |
+| `thumbnail_size` | `small` \| `medium` \| `large` | Table only, and only does anything when the table binds a creative dimension. Sets how large the ad creative thumbnails are drawn. Defaults to `small` |
 | `active_theme_color_id` | integer | Any widget — overrides the report's colour palette for this one widget. Pass the `id` of a palette from `list-themes action=list_colors`, verbatim. It is a **palette id**, not an index into a palette's colours — you select a whole palette, not one colour |
 
 #### Value formatting
@@ -733,7 +748,7 @@ Known `options` shapes:
 - **Heatmap** (`widget_type_id=138`): heat-coloured grid of one metric across two dimensions — one becomes the rows, the other the columns (e.g. `sessions` by `deviceCategory` × `browser`). Bind **exactly 2 dimensions and exactly 1 metric** in a single config; anything else is rejected. `breakdowns_enabled` stays off. This is **not** configured like a SingleValue (`101`), which takes no dimensions at all.
 - **GeoMap** (`widget_type_id=140`, BETA): geographic map. Set `options.geo_map_region` to control the displayed region (see Type-specific options table above). Bind a dimension with country/region data.
 - **Dynamic chart** (`widget_type_id=142`): the type for chart families with no dedicated widget type — scatter, bubble (a third metric as point size), heatmap across two dimensions, calendar heatmap over a date, candlestick, box plot (five precomputed summary metrics), radar, funnel, polar bar, stacked and 100% stacked bars and areas, horizontal bars, and ranked top-N. It also adds reference lines, running totals, and splitting one metric into a series per dimension value. Bind rows as usual, then name a `chart_type`; write a `chart_spec` only for a chart no family describes, such as bars plus a line. Load the `whatagraph-dynamic-charts` skill first; it is refused at create with neither a type nor a spec.
-- **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads.
+- **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads. A **Table (`102`)** binding that same dimension shows the creative in each row too (see "Ad creative thumbnails in a table").
 - **Report shortcut** (`widget_type_id=141`): a drill-down card linking to another report in the same team. `channel_id=7`, no `source_id`, no metrics/dimensions. Set the link in `rows[].configs[].options`:
 
   ```
@@ -1054,7 +1069,7 @@ When you're deciding what to show — case 3 above, or filling gaps in a loose r
 - **A detailed, multi-metric breakdown by a dimension (rankings, "top X")** → Table — the workhorse when a dimension has many values and several metrics matter.
 - **Sequential steps / a conversion path** → Funnel.
 - **A geographic dimension** → GeoMap.
-- **Ad / creative performance with thumbnails** → Media.
+- **Ad / creative performance with thumbnails** → Media when the creatives are the point, or a Table with the channel's creative dimension bound when several metrics per creative matter (see "Ad creative thumbnails in a table").
 - **Narration or context** → a Comment (AI-text comment for an auto summary) — only when it adds value.
 - **A cover, hero banner, or visual divider** → an Image widget (`34`), full-width `6×2` — a generated or brand visual that opens the report's first tab or marks a major transition. Import the image via `manage-assets` first (see the image-import rule); use sparingly — one hero on the first tab, not a banner on every page.
 
@@ -1064,7 +1079,7 @@ When you're deciding what to show — case 3 above, or filling gaps in a loose r
 - **Many categories (dozens+)** → a pie/donut becomes an illegible confetti of slices and a bar chart runs off the axis. Use a **table** sorted by the primary metric, or a bar/column chart **limited to the top N** (see "Surfacing a top / bottom N" below). Never bind a high-cardinality dimension to a pie or donut.
 - **Continuous over time** → line / area with the date dimension, regardless of how many dates.
 
-Canonical mappings that follow from this: **gender split → pie/donut, never a table**; device category → donut; channel grouping mix → donut; age brackets → column chart; campaign / landing-page / search-term detail → table sorted desc by the primary metric; staged conversion path → funnel; country/region → GeoMap; ad creatives → Media with the thumbnail dimension.
+Canonical mappings that follow from this: **gender split → pie/donut, never a table**; device category → donut; channel grouping mix → donut; age brackets → column chart; campaign / landing-page / search-term detail → table sorted desc by the primary metric; staged conversion path → funnel; country/region → GeoMap; ad creatives → Media with the thumbnail dimension, or a table with that same dimension when the ask is metric-heavy or ranked.
 
 When unsure of a dimension's cardinality, check it before choosing the widget — a breakdown that looks fine on sample data can overflow on the real account.
 
@@ -1129,7 +1144,7 @@ Three real exceptions, where the row-level field **is** the label:
 
 A tab that holds more than one group of content (a KPI block, then a trend section, then a breakdown / detail section) should **introduce each group with a section header**: a full-width Comment widget (`21`, `channel_id=7`) carrying a short heading — the report-page equivalent of an `<h2>` in a document.
 
-- **Shape:** full row (`width: 6`), `height: 1` for a bare heading (a heading plus a one-line subtitle needs `height: 2` — see Comment sizing above). Place it as the first row of the section it introduces.
+- **Shape:** full row (`width: 6`), `height: 1` for a bare heading. **A heading plus a subtitle — even one line of it — needs `height: 2`:** the box is fixed and clips overflow (see "Sizing comment / text widgets" under Sizing). Place it as the first row of the section it introduces.
 - **Text:** an HTML heading in `rows[].options.comment_widget_text.text` — e.g. `<h2>Campaign performance</h2>` — naming the section's theme, not repeating the widget titles below it. Keep it to a few words; optionally add one `<p>` of context beneath the heading. Colour, size and alignment go inline — see the Comment widget notes under `### options`.
 - **When to use one:** whenever a tab has two or more distinct sections — which a full, self-directed tab always does by default, since two sections is the floor (see "Composing a full tab"). The tab's *first* header also serves as the page title when the tab name alone isn't enough.
 - **When not to:** a tab that is genuinely one section (a single full-page table the user asked for, a lean one-pager) doesn't need a header row per widget — headers earn their row only when they separate something. Never stack two headers with no content between them.
@@ -1194,10 +1209,29 @@ Pick each widget's size from what its content needs to be legible, then fit it i
 - **Pie / Donut** — roughly square; a full-row pie wastes space.
 - **List / Funnel** — narrow-to-medium; sit well beside a chart.
 - **Media / creative preview** — one tile per creative, grouped across a row.
-- **Comment** — full-row as a section header/divider, or taller for an AI text block. **Size the height to the text it holds:** `height: 1` fits only a single short heading line; a sentence or two needs `height: 2`; a full paragraph `height: 3`; a multi-paragraph AI summary `4+`. Under-sizing clips or overflows the text in the rendered report, so when in doubt give it more height — and prefer splitting a long block across widgets (or trimming the copy) over cramming it into a short box. **Budget the copy against the box before writing it:** on the 6-wide grid, one grid row of height holds roughly two lines of 14–15px body text (≈ 160–200 characters), and a large narrative headline (28–32px) consumes most of a row by itself — so a `6×2` opener fits a kicker line, a headline, and about two short sentences, no more. The API gives no overflow signal — the write succeeds whether the text fits or not — so count the text first, and when it exceeds the budget, grow the widget or cut words; never ship prose that outruns its box.
+- **Comment** — full-row as a section header/divider, or taller for an AI text block. **Size the height to the rendered text — the box clips what doesn't fit.** See "Sizing comment / text widgets" just below.
 - **GeoMap** — medium.
 
 **Hard constraints (always):** `width` 1..6, `height` ≥ 1, `position_x + width ≤ 6`, and no two widgets overlap.
+
+#### Sizing comment / text widgets (`21`) — a fixed box that clips
+
+A comment renders in a **fixed pixel box** derived from its integer `height` (~100–120px per grid unit, of which only ~80–90px is usable at `height: 1` after the theme's card padding). The box **never grows with its content** — there is no auto-height, and anything taller is cut off mid-line by the card's `overflow: hidden`, with no scrollbar and no API signal: the write returns `success` whether the text fits or not. So size `height` for the *rendered* content, not the character count:
+
+- **A heading plus ANY subtext needs `height: 2` minimum.** An `<h1>`–`<h3>` line with its margin costs ~40px on its own, so a heading and even one wrapped body line (~115–125px stacked, plus padding) already overflow a height-1 box. `height: 1` holds exactly one line — a bare heading *or* one short body line, never both. (This is the clip that shipped: a `6×1` header carrying `<h2>` + a two-line subtitle lost the second line under the card's bottom border — Sep 2026.)
+- **Budget one grid unit per ~2 rendered lines, and count the heading as its own line** (a large narrative headline at 28–32px consumes most of a unit by itself). Heading + 1–2 body lines ⇒ `height: 2`; heading + 3–4 body lines ⇒ `height: 3`; a `6×2` narrative opener fits a kicker line, a headline, and about two short sentences — no more.
+- **Count wrapped lines, not sentences.** One grid unit holds roughly two lines of 14–15px body text (≈ 160–200 characters at `width: 6`), so a subtitle of ~12+ words wraps to two lines at full width — and wraps sooner in a narrower comment. Size for the wrap, not for the sentence count.
+- **When unsure, add 1 to `height`.** A slightly tall text card looks fine; a clipped one looks broken. Prefer splitting a long block across widgets (or trimming the copy) over cramming it into a short box — never ship prose that outruns its box.
+
+| Content in a comment (at `width: 6`) | Minimum `height` |
+|---|---|
+| One short line — a bare heading *or* one body line | 1 |
+| Heading + 1–2 lines of subtext | **2** |
+| Heading + 3–4 lines of subtext | 3 |
+| Full paragraph / longer intro block | 3 |
+| Multi-paragraph or AI-summary block | 4+, then verify |
+
+**Always verify:** after creating or editing a comment, render the result (`preview-report`, or `export-report`) and confirm no line is cut off — a truncated widget still returns `success`, so the JSON round-trip proves nothing about fit.
 
 ### Titles: when they show, and how long they can be
 
@@ -1419,6 +1453,7 @@ For a single value that must carry its own colour, put it in a Comment widget in
 - **A metric rename that returns `success` and changes nothing on screen** — the new caption was written to `rows[].options.title` or `rows[].options.metrics[].label`. Neither is an input; the rendered caption is `rows[].configs[].options.metrics[].name`. The row title version looks correct until the data arrives, then snaps back; the `label` version is invisible immediately, because nothing reads it. A warning now flags this on write. Set the config metric `name` instead — see "Renaming a metric caption".
 - **Widget `name` vs row-level `title`** — `name` sets the widget-level `options.title`, the heading above the chart/table. `rows[].options.title` is a row display option, not the metric caption; don't reach for it to rename a metric.
 - **Titling a type that has no title** — `name` / `options.title` on a Comment (`21`), Calendar (`22`), Filter control (`137`), or Report shortcut (`141`) is rejected, on create, update, and `batch_change_settings`. These types render no title, so the value used to be stored and never shown — which read back as success and led to reporting headers that did not exist. A Comment's heading belongs in its body text.
+- **A comment whose last line is cut off by the card's bottom border** — the widget was under-sized, typically a heading + subtitle at `height: 1`. Comments render in a fixed pixel box and clip overflow; the write returns `success` either way, so nothing flags it. A heading plus any subtext needs `height: 2` minimum — see "Sizing comment / text widgets" under Sizing, and verify fit with `preview-report` / `export-report`.
 - **A comment widget that renders as an empty box** — the body text never arrived. Either it was never supplied (now rejected at create), or an update rebuilt the row without it: a row passed without `rows[].id` is recreated from scratch and drops the existing text. Pass the row's `id`, or re-send `comment_widget_text`. Both failure modes are refused now rather than returning success.
 - **A comment/image edit that "worked" but changed nothing** — row-level `comment_widget_text`, the legacy `text`/`comment` aliases, and image `image_url` / `image_data` were only applied on create; on update they were accepted and dropped. Fixed Jul 2026. If you hit this on an older deployment, write the config shape directly in `rows[].configs[].options` instead.
 - **Duplicate metric/dimension bindings** — binding the same `external_id` twice in one config is silently de-duplicated (keeps first occurrence). A warning is returned, but the widget ends up with one series, not two. To chart two series of the same metric, use separate rows.
