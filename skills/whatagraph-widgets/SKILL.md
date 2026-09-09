@@ -138,7 +138,7 @@ Both ends of each range are enforced at create and update (Aug 2026): too few di
 | Widget type | Dimension requirement |
 |---|---|
 | Time-series charts (104–107, 118–119) | **1 dimension required** — must be the integration's date dimension (e.g. `date`, `segments.date`, `ga:date`). Binding a non-date dimension while `breakdowns_enabled` is off is **rejected at create/update** (left unchecked it renders an empty/aggregated chart, and hard-errors on some sources such as Google Sheets). To split a bar/column chart by a category instead, set `breakdowns_enabled=true` (see Breakdown vs non-breakdown below) — then column/bar/stacked accept a categorical dimension (up to 2). |
-| Table (102) | **At least 1 dimension required** — any dimension. |
+| Table (102) | **At least 1 dimension required** — any dimension. Binding the channel's creative dimension also draws the ad creative image in each row (see "Ad creative thumbnails in a table"). |
 | Heatmap (138) | **Exactly 2 dimensions required**. |
 | GeoMap (140) | **1 geographic dimension required**. |
 | Media (110, 111) | **At least 1 dimension required** — typically `creative_thumbnail_url` or similar. |
@@ -151,6 +151,20 @@ Both ends of each range are enforced at create and update (Aug 2026): too few di
 Use `list-sources action=list_dimensions_and_metrics` to find the correct dimension external_ids for a source. The date dimension external_id varies by integration — always look it up rather than guessing.
 
 > **A single value (101) always aggregates the whole dataset into one total** — it has no dimension and cannot rank or isolate a single entity. It will **not** show the "best" or "worst" campaign: a `sort` passed on its row or metric options is ignored (the tool returns a warning saying so). To surface a top/bottom performer, use a **Table (102)** with the entity dimension bound and the metric sorted desc/asc, or a saved filter (`whatagraph-filters`) pinning the specific entity.
+
+### Ad creative thumbnails in a table
+
+A **Table (`102`)** shows the ad creative image in each row when its bound dimensions include the channel's creative URL dimension, the same dimension a Media widget binds (for example `creative_thumbnail_url` on Meta / Facebook Ads). Nothing else has to be switched on. The backend attaches creative images to a table's rows as soon as the table selects such a dimension, and the table draws them (live Sep 2026). "Put the ad creatives in the table" is a real answer now, not a reason to reach for a Media widget instead.
+
+- **Find the dimension** with `list-sources action=list_dimensions_and_metrics` and bind it in `rows[].configs[].options.dimensions` like any other dimension. There is no separate thumbnail flag to set. The image comes from the dimension the integration types `creative_url`, which is the one whose name reads like a thumbnail or image URL.
+- **The channel's creative *link* dimension is a separate, optional thing.** A dimension typed `creative_link` holds the ad's preview page, and binding it adds an "Open ad preview" link to the full-size preview. It draws no image on its own. Leave it out when the report has `display_dimensions_as_columns` on, because there it becomes a column of raw URLs.
+- **It changes what one row means.** A table's rows come from the dimensions it binds, and a creative URL is per ad, so adding it to a campaign-level table splits each campaign into one row per creative. Bind it on a table you want at ad or creative level, and expect the row count to grow. A table only shows the rows that fit its height (see "Tables truncate silently").
+- **Size the thumbnails** with the `thumbnail_size` option: `small` (the default, 32px), `medium` (48px) or `large` (64px). The rows grow taller to fit the size chosen.
+- **Where the image sits** depends on `display_dimensions_as_columns`. With it off, the dimensions collapse into one column and the thumbnail sits to the left of that row's labels. The column is then named after the first dimension that is not the creative, because naming it after the creative would label it with a field the reader never sees. With it on, the creative gets a column of its own, and that column cannot be sorted, because sorting a column of image URLs orders the rows by a string nobody sees.
+- **The image is never cropped.** The size setting fixes the height, and a landscape creative grows wider up to the width of its column instead of being cut down to a square. Clicking a thumbnail opens the creative at full size, the same preview the Media widgets have.
+- **Some channels cannot do this.** X (Twitter), X Ads, StackAdapt and Semrush define no creative dimension at all. They carry their images in a deprecated row-level field that only Media widgets read, so their tables show no thumbnail. Google Search text ads have no image either, and `ad_image_url` fills only for Display / PMax / image ads. Check the source's dimension list before promising a user thumbnails.
+
+**Table or Media widget?** A Media widget (`110` / `111`) is still the right pick when the creatives are the point and one or two metrics per tile is enough, because it gives each creative a large tile. Choose a table with the creative dimension when several metrics per creative matter and the user wants to read them across columns, or wants the creatives ranked by spend, CTR or conversions.
 
 ### Surfacing a top / bottom N
 
@@ -601,6 +615,7 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 | `display_dimensions_as_columns` | boolean | Table only |
 | `wrap_text` | boolean | Table only. **Breaks by character, not by word** — see the pitfall below |
 | `show_search_bar` | boolean | Table, List (shows a row search box) |
+| `thumbnail_size` | `small` \| `medium` \| `large` | Table only, and only does anything when the table binds a creative dimension. Sets how large the ad creative thumbnails are drawn. Defaults to `small` |
 | `active_theme_color_id` | integer | Any widget — overrides the report's colour palette for this one widget. Pass the `id` of a palette from `list-themes action=list_colors`, verbatim. It is a **palette id**, not an index into a palette's colours — you select a whole palette, not one colour |
 
 #### Value formatting
@@ -733,7 +748,7 @@ Known `options` shapes:
 - **Heatmap** (`widget_type_id=138`): heat-coloured grid of one metric across two dimensions — one becomes the rows, the other the columns (e.g. `sessions` by `deviceCategory` × `browser`). Bind **exactly 2 dimensions and exactly 1 metric** in a single config; anything else is rejected. `breakdowns_enabled` stays off. This is **not** configured like a SingleValue (`101`), which takes no dimensions at all.
 - **GeoMap** (`widget_type_id=140`, BETA): geographic map. Set `options.geo_map_region` to control the displayed region (see Type-specific options table above). Bind a dimension with country/region data.
 - **Dynamic chart** (`widget_type_id=142`): the type for chart families with no dedicated widget type — scatter, bubble (a third metric as point size), heatmap across two dimensions, candlestick, box plot, radar, funnel, stacked and 100% stacked bars and areas, horizontal bars, bars-plus-line combo, and ranked top-N. It also adds reference lines, running totals, and splitting one metric into a series per dimension value. Bind rows as usual, then describe the chart with a `chart_spec`. Load the `whatagraph-dynamic-charts` skill before writing one; it is refused at create without a spec.
-- **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads.
+- **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads. A **Table (`102`)** binding that same dimension shows the creative in each row too (see "Ad creative thumbnails in a table").
 - **Report shortcut** (`widget_type_id=141`): a drill-down card linking to another report in the same team. `channel_id=7`, no `source_id`, no metrics/dimensions. Set the link in `rows[].configs[].options`:
 
   ```
@@ -1054,7 +1069,7 @@ When you're deciding what to show — case 3 above, or filling gaps in a loose r
 - **A detailed, multi-metric breakdown by a dimension (rankings, "top X")** → Table — the workhorse when a dimension has many values and several metrics matter.
 - **Sequential steps / a conversion path** → Funnel.
 - **A geographic dimension** → GeoMap.
-- **Ad / creative performance with thumbnails** → Media.
+- **Ad / creative performance with thumbnails** → Media when the creatives are the point, or a Table with the channel's creative dimension bound when several metrics per creative matter (see "Ad creative thumbnails in a table").
 - **Narration or context** → a Comment (AI-text comment for an auto summary) — only when it adds value.
 - **A cover, hero banner, or visual divider** → an Image widget (`34`), full-width `6×2` — a generated or brand visual that opens the report's first tab or marks a major transition. Import the image via `manage-assets` first (see the image-import rule); use sparingly — one hero on the first tab, not a banner on every page.
 
@@ -1064,7 +1079,7 @@ When you're deciding what to show — case 3 above, or filling gaps in a loose r
 - **Many categories (dozens+)** → a pie/donut becomes an illegible confetti of slices and a bar chart runs off the axis. Use a **table** sorted by the primary metric, or a bar/column chart **limited to the top N** (see "Surfacing a top / bottom N" below). Never bind a high-cardinality dimension to a pie or donut.
 - **Continuous over time** → line / area with the date dimension, regardless of how many dates.
 
-Canonical mappings that follow from this: **gender split → pie/donut, never a table**; device category → donut; channel grouping mix → donut; age brackets → column chart; campaign / landing-page / search-term detail → table sorted desc by the primary metric; staged conversion path → funnel; country/region → GeoMap; ad creatives → Media with the thumbnail dimension.
+Canonical mappings that follow from this: **gender split → pie/donut, never a table**; device category → donut; channel grouping mix → donut; age brackets → column chart; campaign / landing-page / search-term detail → table sorted desc by the primary metric; staged conversion path → funnel; country/region → GeoMap; ad creatives → Media with the thumbnail dimension, or a table with that same dimension when the ask is metric-heavy or ranked.
 
 When unsure of a dimension's cardinality, check it before choosing the widget — a breakdown that looks fine on sample data can overflow on the real account.
 
