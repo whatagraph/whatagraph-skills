@@ -17,9 +17,22 @@ wants a family that is not on that list, you do not need a new widget type: crea
 Chart** (`widget_type_id: 142`, name `dynamic_chart`) and describe the chart with a
 `chart_spec`.
 
-Funnel is the one family that exists in both places. Use the native funnel widget for a plain
-funnel; use a `funnel` series here only when the chart also needs something a dynamic chart
-adds, such as a sort-and-limit transform over the stages.
+Funnel and heatmap are the two families that exist in both places, and each has a widget type
+of its own as well as a series type here. The native widget wins for the plain chart. Use the
+series here only when the chart also needs something a dynamic chart adds, such as a
+sort-and-limit transform over the stages, a reference line, or a running total.
+
+| Asked for | Use |
+|---|---|
+| A plain funnel | Native Funnel widget (`115`) |
+| A funnel that also needs a transform or a reference line | Dynamic chart, `funnel` series |
+| A plain heatmap of one metric across two categorical dimensions | Native Heatmap widget (`138`) |
+| A heatmap that also needs a transform or a reference line | Dynamic chart, `heatmap` series |
+| One square per day across weeks and months (a calendar heatmap) | Dynamic chart, `calendar_heatmap` series. There is no widget type for this |
+
+A "calendar heatmap" is not the native Heatmap widget under another name. The native widget
+plots two categorical dimensions against each other, so it cannot lay days out in a calendar.
+When the user says calendar, they mean `calendar_heatmap`.
 
 A spec describes the chart in terms of the widget's **bindings** — which bound column drives
 which visual channel — never in terms of values. The backend re-compiles it against freshly
@@ -31,6 +44,8 @@ bindings change.
 - Two metrics against each other (spend vs conversions, CPC vs volume) → scatter.
 - The same, plus a third metric as point size (budget, impressions) → bubble.
 - One metric across **two** categorical dimensions (day × hour, channel × device) → heatmap.
+- One metric per **day** over a long range, as one coloured square per day laid out in weeks
+  and months → `calendar_heatmap`. Binds one date dimension and one metric.
 - A ranked "top 10 campaigns by spend" bar → `sort` + `limit` on a bar series.
 - A volume metric as bars with a rate metric as a line over the same dimension → two series in one `chart_spec`. There is no `combo` family any more; each row picks its own series type.
 - Open/close/low/high per period → candlestick.
@@ -129,7 +144,7 @@ rather than silently dropping them, and it needs an existing widget, so it works
 | `size` | What turns a scatter into a bubble chart: a third metric becomes point size. |
 | `transform` | Applied in order before plotting. `sort`, `limit`, `cumulative`. `[{"op":"sort","by":"metric:spend","dir":"desc"},{"op":"limit","n":10}]` is how you build top-N — do not try to pre-filter the data. `{"op":"cumulative"}` turns the series into a running total, and carries the total across a gap in the data rather than dropping to zero. It needs no arguments: it adds up whichever channel the series measures. |
 | `axes.x` / `axes.y` | Intent only: `category`, `value`, `time`, `log`. On a polar chart, x is the angle and y the radius. **There is no axis title** — reports never render one, so name the series instead (`series[].name`), which is what the legend and tooltip show. |
-| `coordinate` | `cartesian` (default x/y grid) or `polar` for radial charts. Works with `bar`, `line`, `area`, `scatter`, `effectScatter` — not `heatmap`, `candlestick`, or `boxplot`. The pie family, `funnel` and `radar` bring their own system and you never name it: setting `coordinate` for them is pointless, and they cannot share a chart with anything drawn in a different one. |
+| `coordinate` | `cartesian` (default x/y grid) or `polar` for radial charts. Works with `bar`, `line`, `area`, `scatter`, `effectScatter` — not `heatmap`, `candlestick`, or `boxplot`. The pie family, `funnel`, `radar` and `calendar_heatmap` bring their own system and you never name it: setting `coordinate` for them is pointless, and they cannot share a chart with anything drawn in a different one. |
 | `legend`, `tooltip` | `tooltip` is `item`, `axis`, or `none`. |
 | `orient` | `vertical` (default) or `horizontal`, applied to the whole chart rather than to one series. A spec still binds the base axis to `x` and the measurement to `y`; the compiler swaps the axis roles. Binding a dimension to `y` stays an error either way. |
 | `stack` | Series-level. Two series naming the same stack are drawn on top of each other, so the stack height is their total. |
@@ -171,8 +186,16 @@ Tick formatting, label rotation, colours, grid geometry and data labels are deli
   shapes — twenty overlapping shapes show nothing.
 - **A funnel draws its stages in the order the row returns them.** It does not re-sort them
   by size. When the row is not already in funnel order, add a `sort` transform.
+- **A calendar heatmap needs a date dimension**, bound to `x`, with the metric on `value`.
+  The calendar places each row on the day that row names, so a column holding anything else
+  is rejected rather than drawn. When the row binds a date alongside other dimensions, the
+  date is the one the family uses, whichever order they are bound in.
+- **A calendar heatmap spans the days the rows cover**, not the report's date range, so a
+  chart drawn over a shorter window is not mostly empty squares. It wants a long range with
+  daily data. Over a week or two it is a single row of squares and a bar chart reads better.
+  It takes one widget row, and extra rows are reported as ignored.
 - **Not every type can be split.** The pie family, `funnel`, `radar`, `heatmap`,
-  `candlestick` and `boxplot` cannot be, because their groups would be drawn on top of each
+  `calendar_heatmap`, `candlestick` and `boxplot` cannot be, because their groups would be drawn on top of each
   other or their channels already describe one period rather than a group within it. A
   `split_by` on one of those does not fail the call: the series is drawn whole and a warning
   says so, so read the warnings rather than assuming it applied.
@@ -183,17 +206,16 @@ Tick formatting, label rotation, colours, grid geometry and data labels are deli
   total to take a share of, so the values are drawn as they are and a warning says so. The
   normalized columns are then reported as percentages, so they lose the currency they were
   declared with.
-- **Horizontal is ignored by heatmap and candlestick.** Both fall back to vertical with a
-  warning: a heatmap spends both axes on categories, and ECharts does not rotate a candle.
-- **A calendar heatmap needs a DATE dimension.** Anything else is refused, because the
-  calendar places each row on the day it names. It wants a long range of daily data; over a
-  week or two it is a row of squares and a bar chart reads better.
+- **Horizontal is ignored by heatmap, calendar heatmap and candlestick.** All three fall back
+  to vertical with a warning: a heatmap spends both axes on categories, a calendar has no
+  axes to turn, and ECharts does not rotate a candle.
 - **Pass the spec as the top-level `chart_spec`**, never inside `options` — only the top-level
   parameter is validated and compiled.
 - **The pie family takes `itemName` + `value`, not x/y**, and has no axes. It cannot share a chart with a series that needs them — one chart per family. `donut` and `rose` are `pie` with a different shape, so pick the name that matches the chart you mean. `funnel` takes the same bindings and the same rule. `radar` also positions itself, in a system of its own, so it cannot share a chart either.
 - **Always sort and limit a pie or a scatter over a high-cardinality dimension.** A donut with 30 slices, or a scatter with 200 points, is noise — and it hides the very change you were looking for.
 - **Sizing.** A dynamic chart defaults to a full-width 6×3 tile. Categorical x-axes need that
-  width or labels truncate; scatter and heatmap read well closer to square.
+  width or labels truncate; scatter and heatmap read well closer to square. A calendar
+  heatmap needs the full width, because its squares run left to right across the months.
 
 ## Not available yet
 
