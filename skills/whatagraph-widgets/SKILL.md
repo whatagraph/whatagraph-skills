@@ -1144,7 +1144,7 @@ Three real exceptions, where the row-level field **is** the label:
 
 A tab that holds more than one group of content (a KPI block, then a trend section, then a breakdown / detail section) should **introduce each group with a section header**: a full-width Comment widget (`21`, `channel_id=7`) carrying a short heading — the report-page equivalent of an `<h2>` in a document.
 
-- **Shape:** full row (`width: 6`), `height: 1` for a bare heading (a heading plus a one-line subtitle needs `height: 2` — see Comment sizing above). Place it as the first row of the section it introduces.
+- **Shape:** full row (`width: 6`), `height: 1` for a bare heading. **A heading plus a subtitle — even one line of it — needs `height: 2`:** the box is fixed and clips overflow (see "Sizing comment / text widgets" under Sizing). Place it as the first row of the section it introduces.
 - **Text:** an HTML heading in `rows[].options.comment_widget_text.text` — e.g. `<h2>Campaign performance</h2>` — naming the section's theme, not repeating the widget titles below it. Keep it to a few words; optionally add one `<p>` of context beneath the heading. Colour, size and alignment go inline — see the Comment widget notes under `### options`.
 - **When to use one:** whenever a tab has two or more distinct sections — which a full, self-directed tab always does by default, since two sections is the floor (see "Composing a full tab"). The tab's *first* header also serves as the page title when the tab name alone isn't enough.
 - **When not to:** a tab that is genuinely one section (a single full-page table the user asked for, a lean one-pager) doesn't need a header row per widget — headers earn their row only when they separate something. Never stack two headers with no content between them.
@@ -1209,10 +1209,29 @@ Pick each widget's size from what its content needs to be legible, then fit it i
 - **Pie / Donut** — roughly square; a full-row pie wastes space.
 - **List / Funnel** — narrow-to-medium; sit well beside a chart.
 - **Media / creative preview** — one tile per creative, grouped across a row.
-- **Comment** — full-row as a section header/divider, or taller for an AI text block. **Size the height to the text it holds:** `height: 1` fits only a single short heading line; a sentence or two needs `height: 2`; a full paragraph `height: 3`; a multi-paragraph AI summary `4+`. Under-sizing clips or overflows the text in the rendered report, so when in doubt give it more height — and prefer splitting a long block across widgets (or trimming the copy) over cramming it into a short box. **Budget the copy against the box before writing it:** on the 6-wide grid, one grid row of height holds roughly two lines of 14–15px body text (≈ 160–200 characters), and a large narrative headline (28–32px) consumes most of a row by itself — so a `6×2` opener fits a kicker line, a headline, and about two short sentences, no more. The API gives no overflow signal — the write succeeds whether the text fits or not — so count the text first, and when it exceeds the budget, grow the widget or cut words; never ship prose that outruns its box.
+- **Comment** — full-row as a section header/divider, or taller for an AI text block. **Size the height to the rendered text — the box clips what doesn't fit.** See "Sizing comment / text widgets" just below.
 - **GeoMap** — medium.
 
 **Hard constraints (always):** `width` 1..6, `height` ≥ 1, `position_x + width ≤ 6`, and no two widgets overlap.
+
+#### Sizing comment / text widgets (`21`) — a fixed box that clips
+
+A comment renders in a **fixed pixel box** derived from its integer `height` (~100–120px per grid unit, of which only ~80–90px is usable at `height: 1` after the theme's card padding). The box **never grows with its content** — there is no auto-height, and anything taller is cut off mid-line by the card's `overflow: hidden`, with no scrollbar and no API signal: the write returns `success` whether the text fits or not. So size `height` for the *rendered* content, not the character count:
+
+- **A heading plus ANY subtext needs `height: 2` minimum.** An `<h1>`–`<h3>` line with its margin costs ~40px on its own, so a heading and even one wrapped body line (~115–125px stacked, plus padding) already overflow a height-1 box. `height: 1` holds exactly one line — a bare heading *or* one short body line, never both. (This is the clip that shipped: a `6×1` header carrying `<h2>` + a two-line subtitle lost the second line under the card's bottom border — Sep 2026.)
+- **Budget one grid unit per ~2 rendered lines, and count the heading as its own line** (a large narrative headline at 28–32px consumes most of a unit by itself). Heading + 1–2 body lines ⇒ `height: 2`; heading + 3–4 body lines ⇒ `height: 3`; a `6×2` narrative opener fits a kicker line, a headline, and about two short sentences — no more.
+- **Count wrapped lines, not sentences.** One grid unit holds roughly two lines of 14–15px body text (≈ 160–200 characters at `width: 6`), so a subtitle of ~12+ words wraps to two lines at full width — and wraps sooner in a narrower comment. Size for the wrap, not for the sentence count.
+- **When unsure, add 1 to `height`.** A slightly tall text card looks fine; a clipped one looks broken. Prefer splitting a long block across widgets (or trimming the copy) over cramming it into a short box — never ship prose that outruns its box.
+
+| Content in a comment (at `width: 6`) | Minimum `height` |
+|---|---|
+| One short line — a bare heading *or* one body line | 1 |
+| Heading + 1–2 lines of subtext | **2** |
+| Heading + 3–4 lines of subtext | 3 |
+| Full paragraph / longer intro block | 3 |
+| Multi-paragraph or AI-summary block | 4+, then verify |
+
+**Always verify:** after creating or editing a comment, render the result (`preview-report`, or `export-report`) and confirm no line is cut off — a truncated widget still returns `success`, so the JSON round-trip proves nothing about fit.
 
 ### Titles: when they show, and how long they can be
 
@@ -1434,6 +1453,7 @@ For a single value that must carry its own colour, put it in a Comment widget in
 - **A metric rename that returns `success` and changes nothing on screen** — the new caption was written to `rows[].options.title` or `rows[].options.metrics[].label`. Neither is an input; the rendered caption is `rows[].configs[].options.metrics[].name`. The row title version looks correct until the data arrives, then snaps back; the `label` version is invisible immediately, because nothing reads it. A warning now flags this on write. Set the config metric `name` instead — see "Renaming a metric caption".
 - **Widget `name` vs row-level `title`** — `name` sets the widget-level `options.title`, the heading above the chart/table. `rows[].options.title` is a row display option, not the metric caption; don't reach for it to rename a metric.
 - **Titling a type that has no title** — `name` / `options.title` on a Comment (`21`), Calendar (`22`), Filter control (`137`), or Report shortcut (`141`) is rejected, on create, update, and `batch_change_settings`. These types render no title, so the value used to be stored and never shown — which read back as success and led to reporting headers that did not exist. A Comment's heading belongs in its body text.
+- **A comment whose last line is cut off by the card's bottom border** — the widget was under-sized, typically a heading + subtitle at `height: 1`. Comments render in a fixed pixel box and clip overflow; the write returns `success` either way, so nothing flags it. A heading plus any subtext needs `height: 2` minimum — see "Sizing comment / text widgets" under Sizing, and verify fit with `preview-report` / `export-report`.
 - **A comment widget that renders as an empty box** — the body text never arrived. Either it was never supplied (now rejected at create), or an update rebuilt the row without it: a row passed without `rows[].id` is recreated from scratch and drops the existing text. Pass the row's `id`, or re-send `comment_widget_text`. Both failure modes are refused now rather than returning success.
 - **A comment/image edit that "worked" but changed nothing** — row-level `comment_widget_text`, the legacy `text`/`comment` aliases, and image `image_url` / `image_data` were only applied on create; on update they were accepted and dropped. Fixed Jul 2026. If you hit this on an older deployment, write the config shape directly in `rows[].configs[].options` instead.
 - **Duplicate metric/dimension bindings** — binding the same `external_id` twice in one config is silently de-duplicated (keeps first occurrence). A warning is returned, but the widget ends up with one series, not two. To chart two series of the same metric, use separate rows.
