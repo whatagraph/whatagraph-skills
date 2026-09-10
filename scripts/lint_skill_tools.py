@@ -69,6 +69,7 @@ CANONICAL_TOOLS = {
     "list-external-connectors",
     "fetch-data",
     "list-filters", "manage-filters", "delete-filters",
+    "list-dynamic-integrations", "manage-dynamic-integrations", "delete-dynamic-integrations",
     "manage-goals", "view-goals", "delete-goals",
     "list-integrations", "manage-integrations", "remove-integrations",
     "load-skill",
