@@ -238,11 +238,75 @@ band — put the credit in a `caption` block at the end.
 ## Backgrounds and emphasis
 
 Set `background` on the page: `default`, `dark`, or `accent` (the brand colour). Ink flips
-automatically — **never restate a colour**. There is no way to put a hex on a block, and that is
-deliberate: it is what makes re-branding a forty-page document touch zero blocks.
+automatically — **never restate a colour**. A page that names its ground and otherwise says
+nothing about colour is what makes re-branding a forty-page document touch zero blocks.
 
 Any block may set `"emphasis": true`, which paints it in the brand accent. **At most one per
 page.** It is how you say "this is the number that matters". Two say nothing.
+
+## Styling one block
+
+A block may carry a `style` object overriding what the brand decided for it. **Leave it out
+unless you were asked for it.** A design where nothing is styled re-brands completely and a
+design where everything is styled re-brands not at all, and the person asking for one blue box
+is not asking for the second thing.
+
+```json
+{
+  "id": "b4", "type": "shape",
+  "frame": { "x": 0.06, "y": 0.2, "w": 0.2, "h": 0.1 },
+  "shape": { "kind": "rounded_rectangle", "content": "Blocked" },
+  "style": { "background": "negative/12", "border_color": "negative", "border_width": 2 }
+}
+```
+
+### Colours are strings that name something
+
+Each of `background`, `border_color` and `ink` is one string, and four things it can be:
+
+| Write | Means |
+|---|---|
+| `accent`, `primary`, `secondary`, `muted`, `border`, `card`, `background`, `positive`, `negative` | A role in the brand. Resolves per ground, so it reads on a dark page too |
+| `brand.1` … `brand.6` | A slot in the brand's palette — the same colours a chart's series take |
+| `transparent` | No paint at all |
+| `#1A2B3C` | A literal |
+
+Add `/NN` to any of them for opacity in percent. `accent/12` is a tinted band, `accent` is a
+solid one, and the tint is almost always what a ground wants — a full-strength accent behind
+text is what makes a page look like a warning.
+
+**Reach for a role or a slot first.** A literal is the only one of the four that a re-brand does
+not move, so a design full of literals is a design somebody has to restyle by hand later. Use one
+when the colour is the point — a company's own red in a comparison, a traffic light — and not
+because you happen to know a nice blue.
+
+### The rest of the fields
+
+- `border_width` — design pixels. `0` draws no edge, which is how you take a shape's outline off.
+- `border_style` — `solid`, `dashed` or `dotted`.
+- `radius` — corner rounding in design pixels.
+- `shadow` — `none`, `soft` or `strong`.
+- `opacity` — 0 to 1, over the whole block, its text included.
+
+### What each type does with it
+
+Every type reads the same object, and a few ignore parts of it that make no sense for them.
+
+- A **connector** is a line, so it takes `ink` (and `border_color`, which means the same thing
+  here) and `opacity`. It has no ground and no corner.
+- A **divider** is its own ground, so `background` is its colour. It has no edge and no depth.
+- An **image** has no text, so `ink` does nothing.
+- A **shape**'s `background` replaces `tint` and `fill` outright rather than mixing with them.
+  Set one or the other, never both.
+- A **card**'s `background` replaces the ground it draws, and its children still resolve their
+  ink against the card's `tone` — so a dark `tone` with a pale `background` gives you pale text
+  on a pale ground. Pick one.
+
+### Where this does not reach yet
+
+**PowerPoint and Google Slides ignore `style` and draw the brand's own answer.** A block you
+styled exports as an unstyled one — plainer, never broken. PDF and PNG are rendered by the
+browser and are correct. Say so if somebody styles a deck they are about to export to .pptx.
 
 ## Layouts
 
@@ -732,6 +796,8 @@ not only one from the named grid; it is deepened until white type reads on it.
 - **Changing a format.** Every frame was composed against one page shape. Author again in the new
   format.
 - **Uploading an image.** `image` blocks take a public `https` URL that already exists.
+- **Styling a block in an Office export.** A block's own `style` reaches the browser, the PDF and
+  the PNG. The PowerPoint and Google Slides writers draw the brand instead.
 
 Surface a finished design as an artifact card in the chat rather than writing a link to it.
 
