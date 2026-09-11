@@ -28,6 +28,8 @@ optional_tools:
     purpose: Render the built layout to PDF for a person to check.
   - tool_name: manage-assets
     purpose: Import and publish a remote image before binding it to a widget.
+  - tool_name: view-creatives
+    purpose: Look at the actual ad-creative images a media widget pulls, to QA creatives after building.
   - tool_name: preview-report
     purpose: Look at the built layout to verify every table's last row is present.
 ---
@@ -165,6 +167,8 @@ A **Table (`102`)** shows the ad creative image in each row when its bound dimen
 - **Some channels cannot do this.** X (Twitter), X Ads, StackAdapt and Semrush define no creative dimension at all. They carry their images in a deprecated row-level field that only Media widgets read, so their tables show no thumbnail. Google Search text ads have no image either, and `ad_image_url` fills only for Display / PMax / image ads. Check the source's dimension list before promising a user thumbnails.
 
 **Table or Media widget?** A Media widget (`110` / `111`) is still the right pick when the creatives are the point and one or two metrics per tile is enough, because it gives each creative a large tile. Choose a table with the creative dimension when several metrics per creative matter and the user wants to read them across columns, or wants the creatives ranked by spend, CTR or conversions.
+
+**Seeing the creatives yourself.** After building a Media widget, `view-creatives report_id=<id> widget_ids=[<widget_id>]` returns the actual ad images so you can confirm they loaded and look right — and it is the tool for any creative analysis or QA the user asks for, instead of guessing from creative URLs (mechanics in `whatagraph-export`).
 
 ### Surfacing a top / bottom N
 

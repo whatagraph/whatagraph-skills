@@ -19,6 +19,7 @@ required_tools:
   - list-widgets
   - view-sharing
   - export-report
+  - view-creatives
 ---
 
 # Analyzing Reports
@@ -98,6 +99,16 @@ list-widgets action: csv_export, report_id: <report_id>, widget_id: <id>
 `csv_export` returns data **inline** as `csv_rows: string[][]` — first row is headers (human-readable names like "Gross impressions"), subsequent rows are data values. To see raw field IDs, use `list-widgets action=show` instead.
 
 For a full-report export — all widgets at once — use `export-report`. This is **architecturally different**: it generates a temporary `.xlsx` file server-side and returns a **download URL** (expires in 1 hour), one sheet per widget. It does NOT return inline data. Use shell tools (`head`, `cut`, `wc -l`) to inspect the downloaded file. The export may fail with a storage error if the file generation hasn't completed — retry after a short delay if this happens.
+
+### Step 5b — Look at the ad creatives (media widgets)
+
+If the report has media widgets (widget types `110`/`111` in the step-3 listing) and the review touches creative content — visual QA, branding consistency, "which ads look best" — look at the actual ad images rather than reasoning from creative URLs or ad names:
+
+```
+view-creatives report_id: <report_id>
+```
+
+Returns up to 10 creative images per call, each numbered and mapped to its widget and ad name in a leading text block; pass `offset` to page through more, or narrow with `tab_id` / `widget_ids`. Pair what you see with the widget's numbers from `csv_export`. When presenting findings, embed each creative as a markdown image (`![ad name](url)` from the mapping) — the user cannot see the images you received.
 
 ### Step 6 — Check report sources
 
@@ -210,6 +221,7 @@ A well-structured marketing report typically follows this pattern:
 ## Tips
 
 - Use `list-widgets` with `action: csv_export` to verify that widget data matches expectations.
+- Use `view-creatives` whenever the audit involves ad visuals — never judge creatives from their URLs or ad copy.
 - When users ask "is my report set up correctly?", walk through the full audit workflow above.
 - Cross-reference report sources with `list-sources` to check for disconnected or erroring sources.
 - Snapshot analysis helps users understand how their reports have evolved over time.

@@ -62,6 +62,7 @@ CANONICAL_TOOLS = {
     "list-automations", "manage-automations", "delete-automations",
     "list-blends", "manage-blends", "delete-blends",
     "list-conversations", "manage-conversations", "delete-conversations",
+    "view-creatives",
     "list-custom-dimensions", "manage-custom-dimensions", "delete-custom-dimensions",
     "list-custom-metrics", "manage-custom-metrics", "delete-custom-metrics",
     "list-destinations", "manage-destinations", "delete-destinations",

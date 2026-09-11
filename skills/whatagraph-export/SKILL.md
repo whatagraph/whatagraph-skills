@@ -2,7 +2,7 @@
 name: whatagraph-export
 type: domain
 group: report_building
-description: Get something out of a report — a rendered PDF, an Excel (.xlsx) download, inline widget data, or page images you can look at yourself. Use when a user wants a PDF or a spreadsheet, when you need the raw rows, or when you must see how a report renders before you call it finished.
+description: Get something out of a report — a rendered PDF, an Excel (.xlsx) download, inline widget data, page images you can look at yourself, or the actual ad-creative images from its media widgets. Use when a user wants a PDF or a spreadsheet, when you need the raw rows, when you must see how a report renders before you call it finished, or when the task is about how the ads themselves look (creative analysis, creative QA).
 required_tools:
   - list-sources
   - list-widgets
@@ -10,15 +10,18 @@ required_tools:
 optional_tools:
   - tool_name: preview-report
     purpose: See the rendered report as images, to check your own work.
+  - tool_name: view-creatives
+    purpose: See the actual ad-creative images from a report's media widgets, for creative analysis and creative QA.
 ---
 
 # Exporting Report Data
 
-Four paths exist — pick based on what you need:
+Five paths exist — pick based on what you need:
 
 | Path | Returns | Best for |
 |------|---------|----------|
 | `preview-report` | Page images in the response | Seeing the report yourself, to check your own work |
+| `view-creatives` | Ad-creative images in the response | Looking at the actual ad visuals (creative analysis, creative QA) |
 | `export-report format=pdf` | PDF download URL (temporary, 1-hour expiry) | The report as a document, for a person to open |
 | `export-report` (default `format=xlsx`) | `.xlsx` download URL (temporary, 1-hour expiry) | Giving users a downloadable Excel file |
 | `list-widgets action=csv_export` | Inline `csv_rows: string[][]` (JSON) | AI/LLM processing, per-widget data extraction |
@@ -33,6 +36,8 @@ Four paths exist — pick based on what you need:
 
 - "Does this report look right?" → `preview-report`
 - "Check the Meta tab you just built." → `preview-report tab_id=<tab_id>`
+- "Analyze my Google and Meta ad visuals." → `view-creatives`
+- "Which of these creatives looks off-brand / too text-heavy?" → `view-creatives`
 - "Give me a PDF of this report." → `export-report format=pdf`
 - "Just the Meta tab as a PDF." → `export-report format=pdf tab_id=<tab_id>`
 - "Give me every widget's data from this report as a spreadsheet." → `export-report`
@@ -73,6 +78,44 @@ table whose last row is missing, a title that is clipped, an image that failed t
 not pretend otherwise and do not send a `download_url` as if it were a picture. Render
 with `export-report format=pdf`, give the user the link, and tell them exactly what to
 look at.
+
+## See the ad creatives (images you can analyze)
+
+```
+view-creatives report_id=<id>
+view-creatives report_id=<id> tab_id=<tab_id>
+view-creatives report_id=<id> widget_ids=[<id1>, <id2>]
+view-creatives report_id=<id> offset=10
+```
+
+Returns the actual ad-creative images (Facebook/Meta, Google, LinkedIn, TikTok, …)
+from the report's **media widgets**, as images in the response you can look at
+directly. Use it whenever the task is about how the ads themselves look — creative
+analysis, creative QA, visual review of layout, contrast, typography, branding —
+instead of guessing from creative URLs or ad copy, which is all the other tools
+return.
+
+- **Media widgets only.** Creatives come from Media widgets (`110`/`111`). Use
+  `list-widgets action=list` to find them; a report with no media widget has nothing
+  to view — build one first (see `whatagraph-widgets` → "Media / creative preview")
+  or say what is missing.
+- **Up to 10 images per call.** A text block comes first, numbering each image and
+  mapping it to its widget and ad name. If the report holds more creatives, the
+  response says how many were left out — page with `offset`, or narrow with `tab_id`
+  / `widget_ids`.
+- **Fallback dates.** `from` / `till` (both together) apply only to media widgets
+  without their own configured date range, same as the xlsx path.
+- **Pair with numbers.** `view-creatives` shows you the visuals; get the performance
+  metrics from `list-widgets action=csv_export` on the same widgets or `fetch-data`
+  at ad level, and analyze the two together.
+- **Show the user what you saw.** The user cannot see the images you received. When
+  presenting your analysis, embed each creative from the text block's mapping as a
+  markdown image (`![ad name](url)`) next to what you say about it.
+
+**`preview-report` vs `view-creatives`:** `preview-report` renders whole pages —
+right for layout, spacing, and "does the report look finished". Creatives on a
+rendered page are thumbnails too small to judge. To analyze the ad images themselves,
+use `view-creatives`.
 
 ## PDF export
 
@@ -195,6 +238,7 @@ Response:
 - **Expecting inline CSV from `export-report`** — it returns a download URL, not inline data. Use `csv_export` for inline data.
 - **Download URL expiry** — the temporary URL expires in 1 hour. Generate a fresh one if needed.
 - **PDF with Meta/Google creative images** — platform creative URLs rotate, so a long-lived PDF may end up with broken thumbnails.
+- **Analyzing creatives from URLs or ad copy** — creative URL columns in exports are strings you cannot see, and they rotate. To actually look at the ads, call `view-creatives` (see above), which returns the images directly.
 - **Huge exports** — very large reports can take 30-90 seconds on first call. Use `tab_id` or `widget_ids` to narrow scope.
 - **Image / comment / calendar / filter widgets** — skipped entirely in export. Passing their IDs in `widget_ids` yields nothing (no error).
 - **Fallback dates without both `from` and `till`** — both must be provided together.
