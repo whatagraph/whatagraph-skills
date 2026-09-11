@@ -58,6 +58,7 @@ Both work same-channel and cross-channel — channel count is not what separates
 | Scheduled email delivery | `whatagraph-automations` |
 | PDF/CSV export of a whole report | `whatagraph-export` |
 | Seeing how a report renders, checking your own work | `whatagraph-export` |
+| Looking at the actual ad-creative images from a report's media widgets (creative analysis, creative QA) | `whatagraph-export` (`view-creatives`) |
 | Pushing data to BigQuery / data warehouse | `whatagraph-destinations` |
 | Inviting teammates, roles, subscription | `whatagraph-team-and-members` |
 | Connecting a new integration account to the team | `whatagraph-integrations-admin` |
@@ -76,6 +77,7 @@ These read-only workflow skills sit on top of the domain skills above — reach 
 | Orient in an unfamiliar account — what's connected, what's available | `exploring-account-data` |
 | Summarize / digest an existing report (often from a live-report URL) | `generating-report-digests` |
 | Turn data into an executive narrative or insights write-up | `generating-marketing-insights` |
+| Analyze ad visuals — "how do my Google / Meta ads look?", creative winners and losers | `generating-marketing-insights` (Creative Analysis Framework), via `view-creatives` — mechanics in `whatagraph-export` |
 | Audit or critique an existing report's structure and widgets | `analyzing-reports` |
 | Compare/analyze across channels using blends & source groups | `cross-channel-analytics` |
 | Health-check the whole account (connections, sharing, goals, usage) | `auditing-account-health` |

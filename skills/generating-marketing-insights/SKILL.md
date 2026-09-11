@@ -14,6 +14,10 @@ required_tools:
   - list-sources
   - view-goals
   - fetch-data
+  - view-creatives
+optional_tools:
+  - tool_name: list-widgets
+    purpose: Find the media widgets that carry ad creatives before calling view-creatives, and pull their numbers via csv_export.
 ---
 
 # Generating Marketing Insights
@@ -123,6 +127,24 @@ For cross-channel comparison:
 3. **Trend by channel** — Is each channel improving or declining?
 4. **Budget allocation** — Is spend proportional to performance?
 5. **Opportunity identification** — Which channels could benefit from more/less investment?
+
+### Creative Analysis Framework
+
+For insights about the ads themselves ("analyze my Google and Meta ad visuals", "which creatives work best", "is our advertising on-brand"), **look at the actual images** — never analyze creatives from creative URLs, thumbnails in a rendered page, or ad copy alone:
+
+1. **Find a report with media widgets.** Creatives are served from a report's media widgets (types `110`/`111`):
+   ```
+   list-widgets action: list, report_id: <id>
+   ```
+   If no report carries a media widget for the channel, say so and offer to add one (see `whatagraph-widgets` → "Media / creative preview") rather than pretending to have seen the ads.
+2. **View the creatives:**
+   ```
+   view-creatives report_id: <id>
+   ```
+   Returns up to 10 creative images per call, each numbered and mapped to its widget and ad name in a leading text block. Page with `offset`; narrow with `tab_id` / `widget_ids`.
+3. **Pair visuals with performance.** Pull the same widgets' metrics (`list-widgets action: csv_export`) or ad-level numbers via `fetch-data` with the channel's creative dimension, and analyze image and numbers together.
+4. **Judge what you actually see** — visual hierarchy, contrast, text density, branding consistency, format fit — and correlate: what do the high-CTR / low-CPA creatives share visually that the losers lack?
+5. **Show the reader each creative you discuss** by embedding its URL from the mapping as a markdown image (`![ad name](url)`) next to the insight — the user cannot see the images you received.
 
 ### Goal Progress Framework
 
