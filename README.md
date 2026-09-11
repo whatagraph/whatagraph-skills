@@ -40,7 +40,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-dynamic-charts` | Build chart families with no dedicated widget type — scatter, bubble, heatmap, calendar heatmap, candlestick, box plot, radar, funnel, polar bar, stacked and 100% stacked, horizontal bars, bars-plus-line, top-N. |
 | `whatagraph-offline-reports` | Build a whole report from numbers you already have, with no connected source. |
 | `whatagraph-blends` | Combine data from different channels into one virtual source. |
-| `whatagraph-source-groups` | Roll up multiple accounts of the same channel into one aggregated source. |
+| `whatagraph-source-groups` | Roll up multiple accounts — same-channel or cross-channel — into one aggregated source. |
 | `whatagraph-custom-metrics` | Create calculated or unified metrics across sources. |
 | `whatagraph-custom-dimensions` | Create derived dimensions — tag-based, condition-based, or AI-classified groupings. |
 | `whatagraph-filters` | Create reusable saved filter configurations for a channel. |
