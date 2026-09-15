@@ -1,7 +1,7 @@
 ---
 name: whatagraph-dynamic-charts
 type: domain
-description: Build chart families that have no dedicated widget type — scatter, bubble, heatmap, calendar heatmap, candlestick, box plot, radar, funnel, pie/donut/rose, polar bars, stacked and 100% stacked bars and areas, horizontal bars, bars-plus-line combo, top-N ranking — with the Dynamic Chart widget and a `chart_spec`. Also covers reference lines, running totals, and splitting one metric into a series per dimension value. Use when the chart asked for cannot be expressed by the standard widget types, or when writing, dry-running, or debugging a `chart_spec`.
+description: Build chart families that have no dedicated widget type — scatter, bubble, calendar heatmap, candlestick, box plot, radar, rose, polar bars, stacked and 100% stacked bars and areas, horizontal bars, bars-plus-line combos, top-N ranking — with the Dynamic Chart widget, either by naming a `chart_type` or by writing a `chart_spec`. Also covers reference lines, running totals, and splitting one metric into a series per dimension value. Use when the chart asked for cannot be expressed by the standard widget types, or when writing, dry-running, or debugging a chart.
 required_tools:
   - list-sources
   - list-widgets
@@ -17,18 +17,18 @@ wants a family that is not on that list, you do not need a new widget type: crea
 Chart** (`widget_type_id: 142`, name `dynamic_chart`) and describe the chart with a
 `chart_spec`.
 
-Funnel and heatmap are the two families that exist in both places, and each has a widget type
-of its own as well as a series type here. The native widget wins for the plain chart. Use the
-series here only when the chart also needs something a dynamic chart adds, such as a
-sort-and-limit transform over the stages, a reference line, or a running total.
+A dynamic chart does not draw a pie, a donut, a funnel or a grid heatmap. Each of those has a
+widget type of its own that draws it properly, and a dynamic chart would only draw a worse
+version of the same thing, so naming one of them is refused rather than approximated. This
+applies to `chart_type` and to a `chart_spec` series type alike.
 
 | Asked for | Use |
 |---|---|
-| A plain funnel | Native Funnel widget (`115`) |
-| A funnel that also needs a transform or a reference line | Dynamic chart, `funnel` series |
-| A plain heatmap of one metric across two categorical dimensions | Native Heatmap widget (`138`) |
-| A heatmap that also needs a transform or a reference line | Dynamic chart, `heatmap` series |
-| One square per day across weeks and months (a calendar heatmap) | Dynamic chart, `calendar_heatmap` series. There is no widget type for this |
+| Share of a total across one dimension | Native Pie (`108`) or Donut (`109`) widget |
+| How many survive each stage of an ordered sequence | Native Funnel widget (`115`) |
+| One metric across two categorical dimensions (day × hour, channel × device) | Native Heatmap widget (`138`) |
+| Share of a total where slice length should carry the value as well | Dynamic chart, `rose` family |
+| One square per day across weeks and months (a calendar heatmap) | Dynamic chart, `calendar_heatmap` family. There is no widget type for this |
 
 A "calendar heatmap" is not the native Heatmap widget under another name. The native widget
 plots two categorical dimensions against each other, so it cannot lay days out in a calendar.
@@ -43,19 +43,19 @@ bindings change.
 
 - Two metrics against each other (spend vs conversions, CPC vs volume) → scatter.
 - The same, plus a third metric as point size (budget, impressions) → bubble.
-- One metric across **two** categorical dimensions (day × hour, channel × device) → heatmap.
 - One metric per **day** over a long range, as one coloured square per day laid out in weeks
   and months → `calendar_heatmap`. Binds one date dimension and one metric.
 - A ranked "top 10 campaigns by spend" bar → `sort` + `limit` on a bar series.
-- A volume metric as bars with a rate metric as a line over the same dimension → combo.
+- A volume metric as bars with a rate metric as a line over the same dimension → two series in one `chart_spec`. There is no `combo` family any more; each row picks its own series type.
 - Open/close/low/high per period → candlestick.
-- Share of a total across one dimension → `pie`, `donut`, or `rose` (slice radius also carries the value).
-- A composition wrapped around a circle, for cyclical categories like hour or weekday → a stacked bar with `coordinate: "polar"`.
-- How many survive each stage of an ordered sequence → `funnel`.
 - The spread behind each category rather than one average, where the five summary numbers are already metrics → `boxplot`.
+- Share of a total where the slice length should carry the value as well → `rose`. A plain
+  share-of-total is the native Pie (`108`) or Donut (`109`) widget, not this.
 - A handful of things compared across the same three or more measures → `radar`.
-- Parts adding up to a total over one dimension → bar or area series sharing a `stack`.
+- One metric per day across weeks and months → calendar heatmap.
+- Parts adding up to a total over one dimension → `stacked_bar` / `stacked_area`, or bar and area series sharing a `stack`.
 - Those parts as shares of each total rather than as their own sizes → the same, plus `stack_mode: "percent"`.
+- A composition wrapped around a circle, for cyclical categories like hour or weekday → a stacked bar with `coordinate: "polar"`.
 - Long category names, or more categories than fit across the tile → `orient: "horizontal"`.
 - One metric as one series per value of a second dimension → `split_by`.
 - A target, a benchmark, or the average of what is plotted, drawn as a rule across the chart → `reference_lines`.
@@ -64,6 +64,48 @@ bindings change.
 Do **not** reach for this when a standard type already fits — a single trend line is a line
 chart (`107`), share-of-total is a pie (`108`). Use the ordinary types where they apply; see
 the `whatagraph-widgets` skill.
+
+## Name a `chart_type` first, and only reach for `chart_spec` when no family fits
+
+`manage-widgets` takes a `chart_type`: the family name, with the bindings read off the
+widget's own rows on every render. That is the normal way to set one up. The user can then
+edit the widget in the drawer, and adding a metric plots it.
+
+    chart_type: line | area | bar | stacked_bar | stacked_area | scatter | bubble
+              | candlestick | boxplot | calendar_heatmap
+              | rose | radar | polar_stacked_bar
+
+`list-widgets` with `action=chart_presets` returns the current list with what each family
+needs bound, so read it rather than trusting this one.
+
+A `chart_spec` pins every column by id, so the chart stops following the bindings and the
+user can no longer change what it plots in the drawer. Use it only for a chart no family
+describes — two different series types on one grid, say, such as bars plus a line.
+
+### A family chart reads its per-series settings off the rows
+
+A chart named by `chart_type` takes four settings from each widget row's own `options`, which
+is where the drawer writes them. A `chart_spec` states the same things on the series instead.
+
+| Row option | Values | What it does |
+|---|---|---|
+| `type` | `line`, `area`, `column`, `scatter`, `bubble` | The mark this row draws, so one chart can mix bars with a line. Left unset, the row draws whatever the family draws. |
+| `axis` | `left` (default), `right` | Which value axis measures this row. A second axis is only drawn when both sides are in use, so moving a row to the right does nothing until another row stays on the left. |
+| `cumulative` | boolean | Turns this row into a running total along its axis. |
+| `fill` | `solid` (default), `hatched` | Draws the row in its own colour with diagonal stripes of the widget background showing through, which tells two series apart without spending a second colour from the report theme. Bars only: a decal applies to a bar's fill and not to a line or an area, so it is inert elsewhere rather than an error. |
+
+### Line, area and bar bind one metric per row
+
+These three families bind **one metric per row**, the same way the Column (`104`), Area
+(`105`), Bar (`106`) and Line (`107`) widget types do. To plot three metrics, create three
+rows with one metric each, not one row with three metrics. That is what gives each metric its
+own series type and its own axis, since those settings live on the row.
+
+A chart that already holds several metrics on one row is reshaped into one row per metric when
+someone opens it for editing, so do not rely on the row layout you wrote surviving. Every other
+family reads a row's metrics together — a bubble sizes its points by the second metric, a
+candlestick needs four, a stacked bar stacks a row's metrics into one column — so for those,
+several metrics on one row is correct.
 
 ## The loop
 
@@ -126,12 +168,12 @@ rather than silently dropping them, and it needs an existing widget, so it works
 | `size` | What turns a scatter into a bubble chart: a third metric becomes point size. |
 | `transform` | Applied in order before plotting. `sort`, `limit`, `cumulative`. `[{"op":"sort","by":"metric:spend","dir":"desc"},{"op":"limit","n":10}]` is how you build top-N — do not try to pre-filter the data. `{"op":"cumulative"}` turns the series into a running total, and carries the total across a gap in the data rather than dropping to zero. It needs no arguments: it adds up whichever channel the series measures. |
 | `axes.x` / `axes.y` | Intent only: `category`, `value`, `time`, `log`. On a polar chart, x is the angle and y the radius. **There is no axis title** — reports never render one, so name the series instead (`series[].name`), which is what the legend and tooltip show. |
-| `coordinate` | `cartesian` (default x/y grid) or `polar` for radial charts. Works with `bar`, `line`, `area`, `scatter`, `effectScatter` — not `heatmap`, `candlestick`, or `boxplot`. The pie family, `funnel`, `radar` and `calendar_heatmap` bring their own system and you never name it: setting `coordinate` for them is pointless, and they cannot share a chart with anything drawn in a different one. |
+| `coordinate` | `cartesian` (default x/y grid) or `polar` for radial charts. Works with `bar`, `line`, `area`, `scatter`, `effectScatter` — not `candlestick` or `boxplot`. `rose`, `radar` and `calendar_heatmap` bring their own system and you never name it: setting `coordinate` for them is pointless, and they cannot share a chart with anything drawn in a different one. |
 | `legend`, `tooltip` | `tooltip` is `item`, `axis`, or `none`. |
 | `orient` | `vertical` (default) or `horizontal`, applied to the whole chart rather than to one series. A spec still binds the base axis to `x` and the measurement to `y`; the compiler swaps the axis roles. Binding a dimension to `y` stays an error either way. |
 | `stack` | Series-level. Two series naming the same stack are drawn on top of each other, so the stack height is their total. |
 | `stack_mode` | `absolute` (default) or `percent`. `percent` rewrites the values as shares of each stack's own total, which is how you get a 100% stacked chart. |
-| `reference_lines` | Up to 4. Each is `{"value": 1000, "label": "Target"}`, or `{"op": "average", "label": "Average"}` to work the number out from what is plotted. `axis` picks `left` (default) or `right`. They need value axes, so on a polar, pie, funnel or radar chart they are skipped with a warning. They carry no colour, which follows the report theme. |
+| `reference_lines` | Up to 4. Each is `{"value": 1000, "label": "Target"}`, or `{"op": "average", "label": "Average"}` to work the number out from what is plotted. `axis` picks `left` (default) or `right`. They need value axes, so on a polar, rose or radar chart they are skipped with a warning. They carry no colour, which follows the report theme. |
 | `split_by` | Series-level, a dimension ref. One metric becomes one series per value of that dimension, which is otherwise not expressible because a series is fed by a single metric. |
 | `indicators` | Series-level, radar only: the list of metric refs to draw an axis for, e.g. `["metric:sessions", "metric:users", "metric:views"]`. Three is the minimum. Radar names its value columns here instead of in `encode`. |
 | `preset` | Optional label from the catalogue. The `series` carry the chart; the label carries nothing. |
@@ -166,8 +208,6 @@ Tick formatting, label rotation, colours, grid geometry and data labels are deli
   spoke, and every value of the dimension draws a shape across all of them. It takes one
   widget row, and extra rows are reported as ignored. Sort and limit to a handful of
   shapes — twenty overlapping shapes show nothing.
-- **A funnel draws its stages in the order the row returns them.** It does not re-sort them
-  by size. When the row is not already in funnel order, add a `sort` transform.
 - **A calendar heatmap needs a date dimension**, bound to `x`, with the metric on `value`.
   The calendar places each row on the day that row names, so a column holding anything else
   is rejected rather than drawn. When the row binds a date alongside other dimensions, the
@@ -176,8 +216,8 @@ Tick formatting, label rotation, colours, grid geometry and data labels are deli
   chart drawn over a shorter window is not mostly empty squares. It wants a long range with
   daily data. Over a week or two it is a single row of squares and a bar chart reads better.
   It takes one widget row, and extra rows are reported as ignored.
-- **Not every type can be split.** The pie family, `funnel`, `radar`, `heatmap`,
-  `calendar_heatmap`, `candlestick` and `boxplot` cannot be, because their groups would be drawn on top of each
+- **Not every type can be split.** `rose`, `radar`, `calendar_heatmap`, `candlestick` and
+  `boxplot` cannot be, because their groups would be drawn on top of each
   other or their channels already describe one period rather than a group within it. A
   `split_by` on one of those does not fail the call: the series is drawn whole and a warning
   says so, so read the warnings rather than assuming it applied.
@@ -188,16 +228,15 @@ Tick formatting, label rotation, colours, grid geometry and data labels are deli
   total to take a share of, so the values are drawn as they are and a warning says so. The
   normalized columns are then reported as percentages, so they lose the currency they were
   declared with.
-- **Horizontal is ignored by heatmap, calendar heatmap and candlestick.** All three fall back
-  to vertical with a warning: a heatmap spends both axes on categories, a calendar has no
-  axes to turn, and ECharts does not rotate a candle.
+- **Horizontal is ignored by calendar heatmap and candlestick.** Both fall back to vertical
+  with a warning: a calendar has no axes to turn, and ECharts does not rotate a candle.
 - **Pass the spec as the top-level `chart_spec`**, never inside `options` — only the top-level
   parameter is validated and compiled.
-- **The pie family takes `itemName` + `value`, not x/y**, and has no axes. It cannot share a chart with a series that needs them — one chart per family. `donut` and `rose` are `pie` with a different shape, so pick the name that matches the chart you mean. `funnel` takes the same bindings and the same rule. `radar` also positions itself, in a system of its own, so it cannot share a chart either.
-- **Always sort and limit a pie or a scatter over a high-cardinality dimension.** A donut with 30 slices, or a scatter with 200 points, is noise — and it hides the very change you were looking for.
+- **`rose` takes `itemName` + `value`, not x/y**, and has no axes. It cannot share a chart with a series that needs them — one chart per family. `radar` also positions itself, in a system of its own, so it cannot share a chart either.
+- **Always sort and limit a rose or a scatter over a high-cardinality dimension.** A rose with 30 slices, or a scatter with 200 points, is noise — and it hides the very change you were looking for.
 - **Sizing.** A dynamic chart defaults to a full-width 6×3 tile. Categorical x-axes need that
-  width or labels truncate; scatter and heatmap read well closer to square. A calendar
-  heatmap needs the full width, because its squares run left to right across the months.
+  width or labels truncate; scatter reads well closer to square. A calendar heatmap needs the
+  full width, because its squares run left to right across the months.
 
 ## Not available yet
 
@@ -207,8 +246,17 @@ one that is absent, because you would build on it:
 | Asked for | Why not | Offer instead |
 |---|---|---|
 | Bump / rank-over-time chart | Needs a `rank` transform that does not exist yet | Top-N bar, or a line of the underlying metric |
-| Treemap, sunburst, sankey | Need hierarchical or link-shaped data, and aggregation the compiler does not do | Donut for composition, top-N bar for ranking |
+| Gauge | Needs a minimum, maximum and target the spec has no channel for | The dedicated Gauge widget type (`139`) |
+| Treemap, sunburst, sankey | Need hierarchical or link-shaped data, and aggregation the compiler does not do | The native Donut widget (`109`) for composition, top-N bar for ranking |
 | A box plot from raw rows | Nothing computes the quartiles. `boxplot` plots five metrics that already hold them | Scatter of the same rows, until the five summary metrics exist |
+
+Box plot and radar used to be listed here. Both ship now: `chart_type: boxplot` takes five
+precomputed summary metrics, and `chart_type: radar` takes three or more metrics as its axes.
+Do not refuse them.
+
+`pie`, `donut`, `funnel` and `heatmap` used to be families here and are not any more. They are
+not gone from the product: each is its own widget type, listed in the table near the top. Create
+that widget instead. A dynamic chart naming one of them is refused, so do not retry it.
 
 Say plainly that the family is not available and offer the nearest shipping one — do not
 approximate it with a chart that looks similar but means something else.

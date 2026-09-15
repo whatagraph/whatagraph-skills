@@ -245,7 +245,7 @@ Common values exposed by `list-widgets`:
 | GeoMap (geographic map, BETA) | `140` |
 | Filter control (dimension dropdown) | `137` |
 | Report shortcut (drill-down link to another report) | `141` (channel_id `7`; no `source_id`) |
-| Dynamic chart (scatter, bubble, heatmap, calendar heatmap, candlestick, box plot, radar, funnel, stacked and 100% stacked, horizontal bars, combo, top-N) | `142` — needs a `chart_spec`; load the `whatagraph-dynamic-charts` skill |
+| Dynamic chart (scatter, bubble, heatmap, calendar heatmap, candlestick, box plot, radar, funnel, polar bar, stacked and 100% stacked, horizontal bars, bars-plus-line, top-N) | `142` — name a `chart_type`, or write a `chart_spec` when no family fits; load the `whatagraph-dynamic-charts` skill |
 
 Offline (manual-data) types hold numbers you supply instead of reading a source. All take `channel_id=7` and no `source_id`, and their values go in `rows[].data` — see "Offline (manual-data) widgets" below. String names are the live name with an `offline_` prefix (`"offline_single_value"`, `"offline_table"`, …).
 
@@ -428,13 +428,14 @@ To find the current shape on an existing widget, call `list-widgets action=show 
 
 ### Row-level `options` (chart widgets)
 
-For multi-row chart widgets (Column, Line, Area, Bar), rows support additional options that control per-row rendering:
+For multi-row chart widgets (Column, Line, Area, Bar), rows support additional options that control per-row rendering. A Dynamic Chart (`142`) set to a `chart_type` family reads the same four (`type`, `axis`, `cumulative`, `fill`) off its rows — see the `whatagraph-dynamic-charts` skill:
 
 | Row option | Type | Notes |
 |---|---|---|
 | `type` | string | Chart series type for this row: `column`, `line`, `area`, `spline`, `splineArea`. Use to create mixed/combo charts (e.g. one row as column, another as line). |
 | `axis` | `left` \| `right` | Which Y-axis this row binds to. **Set it on every row of a combined chart (column/line/area)** — use `left` unless you specifically want a dual-axis split. A row left without `axis` still binds its metric, but the widget editor groups rows onto the Left/Right axis by exact match, so an axis-less row shows on neither and the Edit panel looks empty. |
 | `cumulative` | boolean | Show cumulative values for this row. |
+| `fill` | `solid` \| `hatched` | Draws the row in its own colour with diagonal stripes of the widget background showing through, which tells two series apart without spending a second colour from the report theme. **Bars only** — a decal applies to a bar's fill and not to a line or an area, so on any other series type it is stored and draws nothing. |
 | `trend_line` | string | Trend line type. |
 | `trend_line_period` | integer | Trend line period. |
 | `icon` | string | Row icon (for List and SingleValue widgets). Must be a filename from the icon library — see [Row icons](#row-icons). |
@@ -612,6 +613,8 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 | `show_totals` | boolean | Table (summary row) |
 | `show_summary_column` | boolean | Table (only when column dimensions exist) |
 | `show_chart_labels` | boolean | All chart types, Goal, Heatmap |
+| `chart_series_labels` | `pills` \| `series_ends` \| `off` | Where a chart names its series. `pills` is a row of chips above the plot. `series_ends` writes each name at the end of its own line and is offered only where every series is a line or an area drawn left to right. `off` hides them |
+| `chart_smooth_lines` | boolean | Curves the segment between two readings instead of drawing it straight. Line and area series only, including a Dynamic Chart drawing those |
 | `show_funnel_line_conversions` | boolean | Funnel (individual conversion rate) |
 | `show_funnel_overall_conversions` | boolean | Funnel (total conversion rate) |
 | `content_scrollable` | boolean | Table, Media (vertical scroll) |
@@ -665,6 +668,8 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 | `geo_map_region` | string | GeoMap (`140`). Values: `world`, `north-america`, `south-america`, `europe`, `asia`, `africa`, `oceania`, `emea`, `apac`, `latam`, `mena`, `noram`, `eu-eea`, `nordics`, `baltics`, `dach`, `benelux`, `iberia`, `uk-ireland`, `anz` |
 | `goal_date_range` | object | Goal (`123`). `{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD", "visible_time_line": true}` |
 | `pie_top_n` | integer | Pie (`108`), Donut (`109`). `5`, `10`, or `20` — keep the top N slices and sum the remainder into a single "Other". Omit or set `null` to show every slice |
+| `show_metrics_list` | boolean | Pie (`108`), Donut (`109`), Funnel (`115`). `false` hands the whole tile to the chart, which then names its own parts. Default `true` |
+| `funnel_style` | `stepped` \| `classic` | Funnel (`115`). `stepped` draws one bar per stage with the drop between stages shaded in, and needs no metrics list. `classic` draws the stacked bands older reports were built with. A funnel created through the tool is given `stepped` |
 | `background_size` | string | Image (`34`). `auto_fit`, `scale_to_fit`, `scale_to_fill` |
 | `alignment` | string | Image (`34`). `left`, `center`, `right` |
 | `description` | string | SingleValue (`101`) — the only type that renders it. Omitting it clears the template's "Edit description" placeholder rather than printing it |
@@ -751,7 +756,7 @@ Known `options` shapes:
 - **Gauge** (`widget_type_id=139`): dial-style single metric display. Same configuration as SingleValue (`101`) but different visual rendering — use when a circular dial is more appropriate than a plain number. Supports `start_value` and `end_value` in row options to set the gauge range.
 - **Heatmap** (`widget_type_id=138`): heat-coloured grid of one metric across two dimensions — one becomes the rows, the other the columns (e.g. `sessions` by `deviceCategory` × `browser`). Bind **exactly 2 dimensions and exactly 1 metric** in a single config; anything else is rejected. `breakdowns_enabled` stays off. This is **not** configured like a SingleValue (`101`), which takes no dimensions at all. Both dimensions are categorical, so this type cannot lay days out in a calendar: a **calendar heatmap** is the `calendar_heatmap` family on a Dynamic chart (`142`), not this widget.
 - **GeoMap** (`widget_type_id=140`, BETA): geographic map. Set `options.geo_map_region` to control the displayed region (see Type-specific options table above). Bind a dimension with country/region data.
-- **Dynamic chart** (`widget_type_id=142`): the type for chart families with no dedicated widget type — scatter, bubble (a third metric as point size), heatmap across two dimensions, calendar heatmap (one coloured square per day across weeks and months), candlestick, box plot, radar, funnel, stacked and 100% stacked bars and areas, horizontal bars, bars-plus-line combo, and ranked top-N. It also adds reference lines, running totals, and splitting one metric into a series per dimension value. Bind rows as usual, then describe the chart with a `chart_spec`. Load the `whatagraph-dynamic-charts` skill before writing one; it is refused at create without a spec.
+- **Dynamic chart** (`widget_type_id=142`): the type for chart families with no dedicated widget type — scatter, bubble (a third metric as point size), heatmap across two dimensions, calendar heatmap (one coloured square per day across weeks and months), candlestick, box plot (five precomputed summary metrics), radar, funnel, polar bar, stacked and 100% stacked bars and areas, horizontal bars, and ranked top-N. It also adds reference lines, running totals, and splitting one metric into a series per dimension value. Bind rows as usual, then name a `chart_type`; write a `chart_spec` only for a chart no family describes, such as bars plus a line. Load the `whatagraph-dynamic-charts` skill first; it is refused at create with neither a type nor a spec.
 
   **When the user names a chart that is not one of the type names listed above, load `whatagraph-dynamic-charts` before you pick a widget type.** Several chart families exist only here, and some share a word with a native type while meaning a different chart: a "calendar heatmap" is not the Heatmap widget (`138`). Read the skill rather than matching on the nearest familiar word, and do not conclude the skill is unavailable without calling `load-skill` for it. If that call genuinely fails, say so instead of substituting a different chart.
 - **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads. A **Table (`102`)** binding that same dimension shows the creative in each row too (see "Ad creative thumbnails in a table").
