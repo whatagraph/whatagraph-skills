@@ -428,13 +428,14 @@ To find the current shape on an existing widget, call `list-widgets action=show 
 
 ### Row-level `options` (chart widgets)
 
-For multi-row chart widgets (Column, Line, Area, Bar), rows support additional options that control per-row rendering:
+For multi-row chart widgets (Column, Line, Area, Bar), rows support additional options that control per-row rendering. A Dynamic Chart (`142`) set to a `chart_type` family reads the same four (`type`, `axis`, `cumulative`, `fill`) off its rows — see the `whatagraph-dynamic-charts` skill:
 
 | Row option | Type | Notes |
 |---|---|---|
 | `type` | string | Chart series type for this row: `column`, `line`, `area`, `spline`, `splineArea`. Use to create mixed/combo charts (e.g. one row as column, another as line). |
 | `axis` | `left` \| `right` | Which Y-axis this row binds to. **Set it on every row of a combined chart (column/line/area)** — use `left` unless you specifically want a dual-axis split. A row left without `axis` still binds its metric, but the widget editor groups rows onto the Left/Right axis by exact match, so an axis-less row shows on neither and the Edit panel looks empty. |
 | `cumulative` | boolean | Show cumulative values for this row. |
+| `fill` | `solid` \| `hatched` | Draws the row in its own colour with diagonal stripes of the widget background showing through, which tells two series apart without spending a second colour from the report theme. **Bars only** — a decal applies to a bar's fill and not to a line or an area, so on any other series type it is stored and draws nothing. |
 | `trend_line` | string | Trend line type. |
 | `trend_line_period` | integer | Trend line period. |
 | `icon` | string | Row icon (for List and SingleValue widgets). Must be a filename from the icon library — see [Row icons](#row-icons). |
@@ -612,6 +613,8 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 | `show_totals` | boolean | Table (summary row) |
 | `show_summary_column` | boolean | Table (only when column dimensions exist) |
 | `show_chart_labels` | boolean | All chart types, Goal, Heatmap |
+| `chart_series_labels` | `pills` \| `series_ends` \| `off` | Where a chart names its series. `pills` is a row of chips above the plot. `series_ends` writes each name at the end of its own line and is offered only where every series is a line or an area drawn left to right. `off` hides them |
+| `chart_smooth_lines` | boolean | Curves the segment between two readings instead of drawing it straight. Line and area series only, including a Dynamic Chart drawing those |
 | `show_funnel_line_conversions` | boolean | Funnel (individual conversion rate) |
 | `show_funnel_overall_conversions` | boolean | Funnel (total conversion rate) |
 | `content_scrollable` | boolean | Table, Media (vertical scroll) |
@@ -665,6 +668,8 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 | `geo_map_region` | string | GeoMap (`140`). Values: `world`, `north-america`, `south-america`, `europe`, `asia`, `africa`, `oceania`, `emea`, `apac`, `latam`, `mena`, `noram`, `eu-eea`, `nordics`, `baltics`, `dach`, `benelux`, `iberia`, `uk-ireland`, `anz` |
 | `goal_date_range` | object | Goal (`123`). `{"start_date": "YYYY-MM-DD", "end_date": "YYYY-MM-DD", "visible_time_line": true}` |
 | `pie_top_n` | integer | Pie (`108`), Donut (`109`). `5`, `10`, or `20` — keep the top N slices and sum the remainder into a single "Other". Omit or set `null` to show every slice |
+| `show_metrics_list` | boolean | Pie (`108`), Donut (`109`), Funnel (`115`). `false` hands the whole tile to the chart, which then names its own parts. Default `true` |
+| `funnel_style` | `stepped` \| `classic` | Funnel (`115`). `stepped` draws one bar per stage with the drop between stages shaded in, and needs no metrics list. `classic` draws the stacked bands older reports were built with. A funnel created through the tool is given `stepped` |
 | `background_size` | string | Image (`34`). `auto_fit`, `scale_to_fit`, `scale_to_fill` |
 | `alignment` | string | Image (`34`). `left`, `center`, `right` |
 | `description` | string | SingleValue (`101`) — the only type that renders it. Omitting it clears the template's "Edit description" placeholder rather than printing it |
