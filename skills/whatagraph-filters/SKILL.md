@@ -34,7 +34,17 @@ To make a widget **ignore** its source-level filter, set `source_filter_off=true
 
 ### Filter versions (v1 / v2)
 
-On create, the version is auto-set per channel based on `supportsV2Filters()` — the agent cannot choose. v2 filters are pushed to the provider API; v1 filters are applied locally after fetch. The version is visible in `list-filters action=show` as `version`.
+On create, the version is auto-set per channel based on `supportsV2Filters()` — the agent cannot choose. v2 filters are pushed to the provider API; v1 filters are applied locally after fetch. The version is visible in `list-filters action=show` as `version`, and every write action returns it too.
+
+**The version decides how row groups combine, so read it before building a multi-condition filter.**
+
+| | v2 | v1 |
+|---|---|---|
+| Between row groups | AND | **OR** |
+| Inside one row group | OR | AND or OR, per condition |
+| Dimensions and metrics in one row group | not allowed | allowed |
+
+On a v1 channel an AND therefore has to live **inside** a row group, because separate row groups would union. `manage-filters action=add` handles this for you: on a v1 filter both `group="AND"` and `group="OR"` append to an existing row group rather than opening a new one. v1 channels include Facebook Ads, Instagram, LinkedIn Ads, HubSpot, Google Sheets, Salesforce, Pinterest Organic and BigQuery.
 
 ## Use this when
 
@@ -176,7 +186,7 @@ Valid `metric_operator`:
 - `less_metric`, `less_or_equal_metric`
 - `empty_metric`, `not_empty_metric`
 
-Dimensions and metrics cannot be mixed in the same row group.
+On a v2 filter, dimensions and metrics cannot be mixed in the same row group. On a v1 filter they can, and mixing them in one row group is the only way to AND a dimension against a metric there.
 
 ## Adding a condition to an existing filter
 
@@ -186,17 +196,22 @@ manage-filters action=add
    dimension="universal_dimension_<id>"
    dimension_operator="contain_dimension"
    value="competitor"
-   group="OR"            # OR appends to the last row group; AND creates a new row group
-   row_index=0           # target a specific row group for OR appends
+   group="OR"            # see the table below — the meaning depends on the filter version
+   row_index=0           # which row group to append to (0-based), defaults to the last
 ```
 
-Row group logic:
-- `group="AND"` creates a new row group.
-- `group="OR"` adds to the row group at `row_index` (0-based).
-- Different row groups are combined with AND; conditions inside a row group are combined with OR.
-- Some channels restrict group operators — e.g. Google Search Console allows only AND across groups (no OR within a group). If OR is rejected, fall back to AND row groups.
+Row group logic on a **v2** filter:
+- `group="AND"` creates a new row group. Row groups are combined with AND.
+- `group="OR"` appends to the row group at `row_index`. Conditions inside a row group are combined with OR.
 
-When re-reading a filter after adding an OR condition, the OR operator is stored on the first condition of the row group.
+Row group logic on a **v1** filter:
+- Row groups are combined with OR, so a new row group would union, not intersect. Both `group="AND"` and `group="OR"` therefore append to the row group at `row_index` and set that operator on the condition they follow.
+- This is what makes AND work on a v1 channel. You do not need to do anything special — just send `group="AND"` as usual.
+- A v1 row group may hold dimensions and metrics together.
+
+Some channels restrict group operators — e.g. Google Search Console allows only AND across groups (no OR within a group). If OR is rejected, fall back to AND.
+
+When re-reading a filter afterwards, the joining operator is stored on the condition it follows, not on the one it was added with. So in a two-condition row group, the operator sits on the first condition and the last condition's operator is `null`.
 
 ## Updating
 
@@ -281,8 +296,8 @@ Pass `values[].id` as the value in `filter_parameters` on `manage-filters create
     "options": {
       "filter": [
         [
-          { "group_id": "g1", "order_id": "o1", "operator": null, "dimension": "universal_dimension_1", "metric": null, "filter_operator": "contain_dimension", "value": "brand" },
-          { "group_id": "g1", "order_id": "o2", "operator": "OR", "dimension": "universal_dimension_1", "metric": null, "filter_operator": "contain_dimension", "value": "competitor" }
+          { "group_id": "g1", "order_id": "o1", "operator": "OR", "dimension": "universal_dimension_1", "metric": null, "filter_operator": "contain_dimension", "value": "brand" },
+          { "group_id": "g1", "order_id": "o2", "operator": null, "dimension": "universal_dimension_1", "metric": null, "filter_operator": "contain_dimension", "value": "competitor" }
         ],
         [
           { "group_id": "g2", "order_id": "o3", "operator": null, "dimension": null, "metric": "metrics.cost_micros", "filter_operator": "greater_metric", "value": "100" }
@@ -294,7 +309,18 @@ Pass `values[].id` as the value in `filter_parameters` on `manage-filters create
 }
 ```
 
-`options.filter` is an array of row groups (AND). Each row group is an array of conditions (OR within). The `operator` field on the first condition of a row group is `null`; subsequent conditions in the same group have `"OR"`. `default_inputs` holds UI-populated pre-selected values for filter dropdowns — always `[]` for MCP-created filters; safe to ignore.
+`options.filter` is an array of row groups, and each row group is an array of conditions. How the two levels combine depends on `version`: on v2 the row groups are ANDed and the conditions inside one are ORed, on v1 the row groups are ORed and each condition carries its own `"AND"` or `"OR"`. The `operator` field holds the operator joining a condition to the **next** one in the same row group, so the last condition of a row group is always `null` (in the v2 example above, `o1` carries the `"OR"` and `o2` is the end of its group). A v1 filter expressing "contains Jeep AND does not contain Dealerproject" is therefore one row group of two conditions, the first carrying `"operator": "AND"`:
+
+```json
+"filter": [
+  [
+    { "operator": "AND", "dimension": "universal_dimension_1", "metric": null, "filter_operator": "contain_dimension", "value": "Jeep" },
+    { "operator": null, "dimension": "universal_dimension_1", "metric": null, "filter_operator": "not_contain_dimension", "value": "Dealerproject" }
+  ]
+]
+```
+
+`default_inputs` holds UI-populated pre-selected values for filter dropdowns — always `[]` for MCP-created filters; safe to ignore.
 
 ### `manage-filters action=create` / `add` / `update` / `attach`
 
@@ -324,7 +350,8 @@ All four actions return the same shape:
 ## Common pitfalls
 
 - **`contains` vs `contain_dimension`** — MCP operators have the `_dimension` or `_metric` suffix. `contains` alone is rejected.
-- **Mixing metric + dimension in same row group** — not allowed. Create separate row groups (`group="AND"`).
+- **Mixing metric + dimension in same row group** — not allowed on a v2 filter. Create separate row groups (`group="AND"`). On a v1 filter it is allowed, and it is the only way to AND a dimension against a metric there.
+- **Assuming a second row group means AND** — only on v2. On a v1 filter row groups are ORed. Check `version` before reasoning about a multi-row-group filter you did not build.
 - **`value` for `empty_*` / `not_empty_*`** — not needed. Omit `value`.
 - **Regex escaping** — JSON-escape backslashes (`"\\b"`).
 - **Filter created on the wrong `channel_id`** — filters are per-channel; make sure to match the source's channel.
