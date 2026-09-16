@@ -16,6 +16,8 @@ optional_tools:
     purpose: Resolve a source group's id when binding a group as the widget's source.
   - tool_name: manage-report-tabs
     purpose: Move widgets to another tab (move_widgets).
+  - tool_name: manage-custom-metrics
+    purpose: Build a reusable calculated metric (e.g. Blended CPA) to bind like any other metric, instead of a per-widget formula row.
   - tool_name: manage-filters
     purpose: Create or attach a filter on a widget config.
   - tool_name: list-filters
@@ -26,6 +28,8 @@ optional_tools:
     purpose: Render the built layout to PDF for a person to check.
   - tool_name: manage-assets
     purpose: Import and publish a remote image before binding it to a widget.
+  - tool_name: view-creatives
+    purpose: Look at the actual ad-creative images a media widget pulls, to QA creatives after building.
   - tool_name: preview-report
     purpose: Look at the built layout to verify every table's last row is present.
 ---
@@ -45,6 +49,22 @@ A **widget** is a visual data component on a tab. Widgets are typed (KPI card, l
 - Swapping the source on a set of widgets (migrating from sample to real data).
 - Changing common settings (currency, footer visibility) across many widgets at once.
 - Duplicating a widget or a set of widgets on a tab.
+
+## A `warnings` entry blocks the next step
+
+> ⚠️ **Read `warnings` on every `manage-widgets` response, and fix what it names before you move on.** A warning here is not advisory. It is the tool telling you that part of what you sent was stored somewhere nothing reads, so the widget on the report does not match the call you believe succeeded. The response still says `success: true`, because the widget row was written; the part you cared about was dropped.
+
+The failure this exists to stop: an agent built six widgets in one step, and one of them carried its metrics under a row option the tool does not read. The response warned in plain words that the key was stored and had no effect. The agent read the warning, moved on, and a widget rendering "Metrics not selected" shipped to a customer-facing report.
+
+So when `warnings` is non-empty:
+
+1. Read each entry. Every one names the field it dropped and the field it belongs in.
+2. Re-issue the call with the binding moved, or send an `update` that fixes the widget you just created.
+3. Only then build the next widget.
+
+Never treat a warning as a note to report back at the end of the run. By then the widget is on the report.
+
+The hard errors are a separate matter: the tool now refuses several of these mistakes outright rather than warning (see "A create with no binding is refused" and "Bindings written one level too high"). An error means nothing was written, so you can correct the shape and send the same call again.
 
 ## Listing
 
@@ -82,6 +102,35 @@ manage-widgets action=create
 
 **Always pass `rows` at create time on data widgets** — bind the metrics and dimensions in the same call. If `rows` is omitted, the widget falls back to the first metric in the source catalog — an arbitrary binding that rarely matches the widget's title, and on some sources no default applies at all, leaving the widget rendering **"Metrics not selected"** in the client-facing report. A create that returns `success` with no explicit binding is not a configured widget. Before binding, look the fields up with `list-sources action=list_dimensions_and_metrics` (never guess `external_id`s), keep every field in one config on the same `report_type`, and verify the result loads data (see "Fit for purpose").
 
+### A create with no binding is refused
+
+Since Aug 2026 a `create` on a data widget type is **rejected** when the call would leave the widget with no source and no metrics at all. The error says the report would render "Metrics not selected" and fall back to sample data, and it names the two fields that bind data: a top-level `source_id`, or `rows[].configs[].source_id` plus `rows[].configs[].options.metrics`. Nothing is written, so fix the shape and send the same call again.
+
+Only `rows[].configs[].options.metrics` counts as a binding. A `metrics` array at row level is a display label, so it does not satisfy the check: a call carrying `rows` with metrics at row level, no configs, and no `source_id` anywhere is refused as unbound even though the word `metrics` appears in the payload. Row-level metrics with no matching config metrics are rejected by a second guard as well — see "`rows` → `configs` shape".
+
+Three cases are deliberately outside the check:
+
+- **`rows` omitted entirely.** That asks for a blank widget and gets one, reported as `is_sample_data`. Nothing was dropped. This is still not a configured widget — see the paragraph above.
+- **A source bound with no metrics.** This is the documented default-metric flow. It stays a warning, and the warning is worth acting on: the default is an arbitrary catalog field.
+- **Utility and offline types.** Comment (`21`), Calendar (`22`), Image (`34`), Report shortcut (`141`), Filter control (`137`) and the offline types (`125`–`136`) render from their own content, so "no source, no metrics" is their normal state.
+
+The check runs on `create` only. An `update` that strips a binding is not refused, so read `warnings` on updates.
+
+A row sent with a `title` and **no `configs` array** now warns as well. The top-level `source_id` keeps the create legal, but the row gets a placeholder config with nothing bound, and the widget renders the source's default metric rather than the one the title claims. The warning names `rows[].configs[].options.metrics`, and it is one to act on: check the key spelling and re-send the row with its config.
+
+### Bindings written one level too high
+
+A row's `options` is a free-form blob. Writing a source or a set of metrics there stores the value and binds nothing, because only `rows[].configs[].options` binds data. Six keys are now a **hard validation error** at row level, on create and on update, because each one means the whole binding was written one level too high:
+
+`configs`, `source_id`, `source`, `sources`, `integration_id`, `channel_id`
+
+The error names the row index and points at `rows[].configs[].source_id` and `rows[].configs[].options.metrics`. Two related keys behave differently and are worth knowing apart:
+
+- **`filters`** is rejected by its own guard, with a message specific to filters. See "Filtering a widget".
+- **`operators`** is a real key the renderer reads. It makes the row a formula row, and its shape is checked rather than refused. See "Formula rows".
+
+Any other unrecognized row option key is still a warning, which you must act on under "A `warnings` entry blocks the next step". A widget already carrying a stray key from an earlier bad write stays editable, so the broken ones can be fixed.
+
 ### Dimension requirements by widget type
 
 The tool validates that the correct dimensions are provided based on the widget type. **Dimensions must be in `rows[].configs[].options.dimensions`** (data binding), not in row-level options (which are display labels only).
@@ -91,8 +140,8 @@ Both ends of each range are enforced at create and update (Aug 2026): too few di
 | Widget type | Dimension requirement |
 |---|---|
 | Time-series charts (104–107, 118–119) | **1 dimension required** — must be the integration's date dimension (e.g. `date`, `segments.date`, `ga:date`). Binding a non-date dimension while `breakdowns_enabled` is off is **rejected at create/update** (left unchecked it renders an empty/aggregated chart, and hard-errors on some sources such as Google Sheets). To split a bar/column chart by a category instead, set `breakdowns_enabled=true` (see Breakdown vs non-breakdown below) — then column/bar/stacked accept a categorical dimension (up to 2). |
-| Table (102) | **At least 1 dimension required** — any dimension. |
-| Heatmap (138) | **Exactly 2 dimensions required**. |
+| Table (102) | **At least 1 dimension required** — any dimension. Binding the channel's creative dimension also draws the ad creative image in each row (see "Ad creative thumbnails in a table"). |
+| Heatmap (138) | **Exactly 2 dimensions required**, both categorical. A calendar heatmap is a different chart and is not this type — see Dynamic chart (142). |
 | GeoMap (140) | **1 geographic dimension required**. |
 | Media (110, 111) | **At least 1 dimension required** — typically `creative_thumbnail_url` or similar. |
 | Pie/Donut (108, 109) | **No dimension** unless `breakdowns_enabled=true` (then exactly 1). |
@@ -104,6 +153,22 @@ Both ends of each range are enforced at create and update (Aug 2026): too few di
 Use `list-sources action=list_dimensions_and_metrics` to find the correct dimension external_ids for a source. The date dimension external_id varies by integration — always look it up rather than guessing.
 
 > **A single value (101) always aggregates the whole dataset into one total** — it has no dimension and cannot rank or isolate a single entity. It will **not** show the "best" or "worst" campaign: a `sort` passed on its row or metric options is ignored (the tool returns a warning saying so). To surface a top/bottom performer, use a **Table (102)** with the entity dimension bound and the metric sorted desc/asc, or a saved filter (`whatagraph-filters`) pinning the specific entity.
+
+### Ad creative thumbnails in a table
+
+A **Table (`102`)** shows the ad creative image in each row when its bound dimensions include the channel's creative URL dimension, the same dimension a Media widget binds (for example `creative_thumbnail_url` on Meta / Facebook Ads). Nothing else has to be switched on. The backend attaches creative images to a table's rows as soon as the table selects such a dimension, and the table draws them (live Sep 2026). "Put the ad creatives in the table" is a real answer now, not a reason to reach for a Media widget instead.
+
+- **Find the dimension** with `list-sources action=list_dimensions_and_metrics` and bind it in `rows[].configs[].options.dimensions` like any other dimension. There is no separate thumbnail flag to set. The image comes from the dimension the integration types `creative_url`, which is the one whose name reads like a thumbnail or image URL.
+- **The channel's creative *link* dimension is a separate, optional thing.** A dimension typed `creative_link` holds the ad's preview page, and binding it adds an "Open ad preview" link to the full-size preview. It draws no image on its own. Leave it out when the report has `display_dimensions_as_columns` on, because there it becomes a column of raw URLs.
+- **It changes what one row means.** A table's rows come from the dimensions it binds, and a creative URL is per ad, so adding it to a campaign-level table splits each campaign into one row per creative. Bind it on a table you want at ad or creative level, and expect the row count to grow. A table only shows the rows that fit its height (see "Tables truncate silently").
+- **Size the thumbnails** with the `thumbnail_size` option: `small` (the default, 32px), `medium` (48px) or `large` (64px). The rows grow taller to fit the size chosen.
+- **Where the image sits** depends on `display_dimensions_as_columns`. With it off, the dimensions collapse into one column and the thumbnail sits to the left of that row's labels. The column is then named after the first dimension that is not the creative, because naming it after the creative would label it with a field the reader never sees. With it on, the creative gets a column of its own, and that column cannot be sorted, because sorting a column of image URLs orders the rows by a string nobody sees.
+- **The image is never cropped.** The size setting fixes the height, and a landscape creative grows wider up to the width of its column instead of being cut down to a square. Clicking a thumbnail opens the creative at full size, the same preview the Media widgets have.
+- **Some channels cannot do this.** X (Twitter), X Ads, StackAdapt and Semrush define no creative dimension at all. They carry their images in a deprecated row-level field that only Media widgets read, so their tables show no thumbnail. Google Search text ads have no image either, and `ad_image_url` fills only for Display / PMax / image ads. Check the source's dimension list before promising a user thumbnails.
+
+**Table or Media widget?** A Media widget (`110` / `111`) is still the right pick when the creatives are the point and one or two metrics per tile is enough, because it gives each creative a large tile. Choose a table with the creative dimension when several metrics per creative matter and the user wants to read them across columns, or wants the creatives ranked by spend, CTR or conversions.
+
+**Seeing the creatives yourself.** After building a Media widget, `view-creatives report_id=<id> widget_ids=[<widget_id>]` returns the actual ad images so you can confirm they loaded and look right — and it is the tool for any creative analysis or QA the user asks for, instead of guessing from creative URLs (mechanics in `whatagraph-export`).
 
 ### Surfacing a top / bottom N
 
@@ -180,7 +245,7 @@ Common values exposed by `list-widgets`:
 | GeoMap (geographic map, BETA) | `140` |
 | Filter control (dimension dropdown) | `137` |
 | Report shortcut (drill-down link to another report) | `141` (channel_id `7`; no `source_id`) |
-| Dynamic chart (scatter, bubble, heatmap, candlestick, combo, top-N) | `142` — needs a `chart_spec`; load the `whatagraph-dynamic-charts` skill |
+| Dynamic chart (scatter, bubble, heatmap, calendar heatmap, candlestick, box plot, radar, funnel, stacked and 100% stacked, horizontal bars, combo, top-N) | `142` — needs a `chart_spec`; load the `whatagraph-dynamic-charts` skill |
 
 Offline (manual-data) types hold numbers you supply instead of reading a source. All take `channel_id=7` and no `source_id`, and their values go in `rows[].data` — see "Offline (manual-data) widgets" below. String names are the live name with an `offline_` prefix (`"offline_single_value"`, `"offline_table"`, …).
 
@@ -393,6 +458,42 @@ rows=[
 ```
 > One row per source, each with a single config (its source) and the **same** metric, and **no** dimension — the sources become the columns. Set `axis: "left"` on every row; without it the editor's Left/Right axis sections render empty even though the data is bound.
 
+### Formula rows — one metric divided by another
+
+A row can render a calculation over the widget's own configs. `rows[].options.operators` makes it a formula row, and the value is a **flat list of tokens** the backend joins into an expression. There are two token types:
+
+| Token | Shape | Meaning |
+|---|---|---|
+| Config reference | `{"type": "config", "id": <widget_config_id>}` | The value of an existing config on **this** widget. |
+| Operator | `{"type": "operator", "operatorId": "divide"}` | One of `plus`, `minus`, `multiply`, `divide`, `bracket-left`, `bracket-right`. |
+
+A cost per acquisition — spend divided by conversions — is three tokens:
+
+```
+rows=[{"options": {"formula_title": "Blended CPA",
+                   "operators": [{"type": "config", "id": 55192462},
+                                 {"type": "operator", "operatorId": "divide"},
+                                 {"type": "config", "id": 55192463}]}}]
+```
+
+**A config token references a config that already exists. It does not carry a source or metrics of its own.** So a formula is always a two-call build:
+
+1. `action=create` the widget with its configs bound the ordinary way — one config per operand, each with its own `source_id` and `options.metrics`.
+2. `list-widgets action=show` to read the config ids back from `rows[].configs[].id`.
+3. `action=update` with the `operators` token list referencing those ids.
+
+A formula sent at `create` is **rejected** as soon as it names a config id, because no config exists yet for it to point at, and the error says to build the widget first. A formula referencing a config on a different widget is rejected too.
+
+Three further rules the tool enforces:
+
+- The operator sign is the **`operatorId` name**, not the symbol. `{"operatorId": "/"}` is refused; `divide` is correct.
+- Every token needs a `type` of `config` or `operator`. There is no token for a numeric constant, so a formula cannot multiply by 100 or divide by 1000 here.
+- Nesting a config **definition** inside a token — a `configs` array, or a `source_id` and `metrics` on the token itself — is refused. That shape describes a binding the renderer never looks at, so it used to produce a widget with no source and no metrics.
+
+**A formula row is captioned by `rows[].options.formula_title`**, falling back to `options.title`. This is one of the few places a row-level label is the rendered label, because there is no single config metric to name (see "Titles").
+
+**For a calculation you want on more than one widget, build it in `manage-custom-metrics` instead** and bind the result like any other metric. That is a real custom metric on the source, reusable across widgets and reports. Its formula is written as text over single-letter field identifiers, with `+ - * /`, parentheses, and numeric constants — `A/B` for a cost per acquisition, `A/B*100` for a rate. A formula row belongs to one widget and cannot hold a constant.
+
 ### Sorting a widget
 
 Sorting is a **row display option**, not a config one. Set `sort` on the entry in `rows[].options.metrics[]` or `rows[].options.dimensions[]` whose `identifier` matches the binding you want to order by. This is the same field the UI writes when a user clicks a table column header.
@@ -518,6 +619,7 @@ Per-widget settings passed inside `options` on create/update. Structure varies b
 | `display_dimensions_as_columns` | boolean | Table only |
 | `wrap_text` | boolean | Table only. **Breaks by character, not by word** — see the pitfall below |
 | `show_search_bar` | boolean | Table, List (shows a row search box) |
+| `thumbnail_size` | `small` \| `medium` \| `large` | Table only, and only does anything when the table binds a creative dimension. Sets how large the ad creative thumbnails are drawn. Defaults to `small` |
 | `active_theme_color_id` | integer | Any widget — overrides the report's colour palette for this one widget. Pass the `id` of a palette from `list-themes action=list_colors`, verbatim. It is a **palette id**, not an index into a palette's colours — you select a whole palette, not one colour |
 
 #### Value formatting
@@ -590,6 +692,8 @@ Known `options` shapes:
 
     Text with **no tags at all** is not rejected — it is kept as a single paragraph, and the response says so in `warnings`. If you wanted headings or separate paragraphs, add the markup.
 
+    **Showing the body to the user — never as HTML.** HTML is the wire format this tool requires, not a display format. When you ask the user to approve or review comment content before writing it, present the content as plain text or markdown in chat — chat renders markdown, so the user sees the text the way the widget will show it — and keep the HTML for the tool call only. Pasting the HTML source into chat as an "approval preview" has already failed with a real customer, who answered "I can't read code". After the widget is written, the authoritative check is a render: `preview-report tab_id=<tab_id>` returns an image of the page (see `whatagraph-export`).
+
     **Full vocabulary.** Everything outside this list is stripped on save and reported in `warnings`:
 
     | Category | Available |
@@ -645,10 +749,12 @@ Known `options` shapes:
 - **Goal widget** (`widget_type_id=123`): set `options.goal_date_range` with `start_date`, `end_date`, and `visible_time_line` (boolean — controls the "Time passed" indicator line). Each row represents a goal line and requires `options.title` (goal name), `options.start_value` (baseline, typically 0), and `options.end_value` (target number). Note that `options.title` only labels the line while it has no data — once the goal loads, the rendered label is the config metric's `name` (see "Renaming a metric caption"), so set both to the same text. `end_value` must be greater than `start_value`. The metric in `configs[].options.metrics` tracks progress toward the target.
 - **Filter control** (`widget_type_id=137`): bind a **dimension** (not a metric) via rows — the widget renders as a dropdown filter that other widgets on the tab respond to. No date range is needed. Does not load data itself.
 - **Gauge** (`widget_type_id=139`): dial-style single metric display. Same configuration as SingleValue (`101`) but different visual rendering — use when a circular dial is more appropriate than a plain number. Supports `start_value` and `end_value` in row options to set the gauge range.
-- **Heatmap** (`widget_type_id=138`): heat-coloured grid of one metric across two dimensions — one becomes the rows, the other the columns (e.g. `sessions` by `deviceCategory` × `browser`). Bind **exactly 2 dimensions and exactly 1 metric** in a single config; anything else is rejected. `breakdowns_enabled` stays off. This is **not** configured like a SingleValue (`101`), which takes no dimensions at all.
+- **Heatmap** (`widget_type_id=138`): heat-coloured grid of one metric across two dimensions — one becomes the rows, the other the columns (e.g. `sessions` by `deviceCategory` × `browser`). Bind **exactly 2 dimensions and exactly 1 metric** in a single config; anything else is rejected. `breakdowns_enabled` stays off. This is **not** configured like a SingleValue (`101`), which takes no dimensions at all. Both dimensions are categorical, so this type cannot lay days out in a calendar: a **calendar heatmap** is the `calendar_heatmap` family on a Dynamic chart (`142`), not this widget.
 - **GeoMap** (`widget_type_id=140`, BETA): geographic map. Set `options.geo_map_region` to control the displayed region (see Type-specific options table above). Bind a dimension with country/region data.
-- **Dynamic chart** (`widget_type_id=142`): the type for chart families with no dedicated widget type — scatter, bubble (a third metric as point size), heatmap across two dimensions, candlestick, bars-plus-line combo, and ranked top-N. Bind rows as usual, then describe the chart with a `chart_spec`. Load the `whatagraph-dynamic-charts` skill before writing one; it is refused at create without a spec.
-- **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads.
+- **Dynamic chart** (`widget_type_id=142`): the type for chart families with no dedicated widget type — scatter, bubble (a third metric as point size), heatmap across two dimensions, calendar heatmap (one coloured square per day across weeks and months), candlestick, box plot, radar, funnel, stacked and 100% stacked bars and areas, horizontal bars, bars-plus-line combo, and ranked top-N. It also adds reference lines, running totals, and splitting one metric into a series per dimension value. Bind rows as usual, then describe the chart with a `chart_spec`. Load the `whatagraph-dynamic-charts` skill before writing one; it is refused at create without a spec.
+
+  **When the user names a chart that is not one of the type names listed above, load `whatagraph-dynamic-charts` before you pick a widget type.** Several chart families exist only here, and some share a word with a native type while meaning a different chart: a "calendar heatmap" is not the Heatmap widget (`138`). Read the skill rather than matching on the nearest familiar word, and do not conclude the skill is unavailable without calling `load-skill` for it. If that call genuinely fails, say so instead of substituting a different chart.
+- **Media / creative preview** (`widget_type_id=110`/`111`): bind the image dimension to the channel's **thumbnail** field — Meta/Facebook uses `creative_thumbnail_url` (not `ad_name`, which is text). Google Search ads are text-only (no thumbnail); `ad_image_url` populates only for Display/PMax/image ads. A **Table (`102`)** binding that same dimension shows the creative in each row too (see "Ad creative thumbnails in a table").
 - **Report shortcut** (`widget_type_id=141`): a drill-down card linking to another report in the same team. `channel_id=7`, no `source_id`, no metrics/dimensions. Set the link in `rows[].configs[].options`:
 
   ```
@@ -729,21 +835,40 @@ manage-widgets action=update_ai_text report_id=<id> widget_id=<id>
      "language": "English",
      "summary_length": "long",      # or "short" — a sentence count, not a style; see below
      "custom_prompt": "...",        # required when types includes "custom"
-     "auto_update": false           # false triggers immediate generation; true regenerates automatically
+     "auto_update": false           # false queues the summary now; true regenerates on every refresh
    }
 ```
 
-Only comment widgets (`widget_type_id=21`) are supported. Unless `auto_update` is `true`, the call also triggers an immediate summary generation.
+Only comment widgets (`widget_type_id=21`) are supported. Unless `auto_update` is `true`, the call also queues the summary.
+
+**The summary is not in that response.** Generation runs in the background, because reading every widget in a report takes longer than a tool call is given, so a large report used to return nothing at all. The call returns `status: pending` and a `summary_job_id`. Collect it with a second call:
+
+```
+manage-widgets action=update_ai_text report_id=<id> widget_id=<id> summary_job_id=<id>
+```
+
+`ai_text` is not needed on a collecting call. Read `status`:
+
+| `status` | What to do |
+|---|---|
+| `pending` | Still generating. Wait a few seconds and call again. Do not poll in a tight loop. |
+| `ready` | `content` carries the summary, already written to the widget. |
+| `failed` | `message` says why. Queue a new one with `ai_text`. |
+| `expired` | The job id is unknown or older than 24 hours. Queue a new one with `ai_text`. |
+
+Queueing twice for the same widget returns the **same** `summary_job_id` rather than starting a second pass, so a retry is safe.
+
+A sample-data refusal still comes back on the **first** call, not on a collect, so you learn immediately when every widget the summary would read serves sample data.
 
 > `summary_length` is a **sentence count per type**: `short` = 3 sentences, `long` = 8. `types` stack — each one generates its own block — so `["summary","wins","issues","recommendations"]` at `long` produces roughly 32 sentences, and `["summary"]` at `short` produces three.
 >
 > - **`short` is for a caption beside a single chart.** Never use it on a full-width page-level block — a three-sentence summary in a full-width comment is the floor of what the feature can produce, and it reads that way.
 > - Page-level default: `summary_length: "long"` with `types: ["summary","recommendations"]`; on an outcome or conclusion tab, `["summary","wins","issues","recommendations"]`.
 > - On the report's **first** tab use `load_type: "full_report"`. A page-scoped summary of tab 1 cannot reference what the later tabs show, which is the entire point of an executive summary.
-> - Pass `auto_update: false` on a build-and-hand-over run: the summary is generated during the call and returned in the response, so you can confirm the length you actually got. With `auto_update: true` only the settings are saved and the widget stays empty until the next refresh.
+> - Pass `auto_update: false` on a build-and-hand-over run, then collect with the `summary_job_id`, so you can confirm the length you actually got. With `auto_update: true` only the settings are saved, nothing is queued, and the widget stays empty until the next refresh.
 > - **Size the host comment to the text**: `6×3` minimum for `long` single-type, `6×4`–`6×6` for `long` multi-type. A long summary in a `6×2` clips or scrolls, and a scrolled block truncates in PDF export — check with `export-report` before shipping.
 
-**`ai_text` is also accepted on `create`** (Jul 2026), taking the same fields, so an AI-narration comment is one call instead of a create followed by `update_ai_text`. When `auto_update` is `false` the summary is generated during the create and returned as `ai_text_content` in the response; with `auto_update: true` only the settings are saved and no such key comes back. This is also how you create a comment with no hand-written body — `ai_text` satisfies the body-text requirement, since the AI supplies the content. Passing `ai_text` on any other widget type is rejected.
+**`ai_text` is also accepted on `create`** (Jul 2026), taking the same fields, so an AI-narration comment is one call instead of a create followed by `update_ai_text`. When `auto_update` is `false` the create queues the summary and returns `ai_text_status: pending` with an `ai_text_summary_job_id`; pass that as `summary_job_id` to `update_ai_text` with the new widget's id to collect it. With `auto_update: true` only the settings are saved and neither key comes back. This is also how you create a comment with no hand-written body — `ai_text` satisfies the body-text requirement, since the AI supplies the content. Passing `ai_text` on any other widget type is rejected.
 
 ## Duplicate
 
@@ -950,7 +1075,7 @@ When you're deciding what to show — case 3 above, or filling gaps in a loose r
 - **A detailed, multi-metric breakdown by a dimension (rankings, "top X")** → Table — the workhorse when a dimension has many values and several metrics matter.
 - **Sequential steps / a conversion path** → Funnel.
 - **A geographic dimension** → GeoMap.
-- **Ad / creative performance with thumbnails** → Media.
+- **Ad / creative performance with thumbnails** → Media when the creatives are the point, or a Table with the channel's creative dimension bound when several metrics per creative matter (see "Ad creative thumbnails in a table").
 - **Narration or context** → a Comment (AI-text comment for an auto summary) — only when it adds value.
 - **A cover, hero banner, or visual divider** → an Image widget (`34`), full-width `6×2` — a generated or brand visual that opens the report's first tab or marks a major transition. Import the image via `manage-assets` first (see the image-import rule); use sparingly — one hero on the first tab, not a banner on every page.
 
@@ -960,7 +1085,7 @@ When you're deciding what to show — case 3 above, or filling gaps in a loose r
 - **Many categories (dozens+)** → a pie/donut becomes an illegible confetti of slices and a bar chart runs off the axis. Use a **table** sorted by the primary metric, or a bar/column chart **limited to the top N** (see "Surfacing a top / bottom N" below). Never bind a high-cardinality dimension to a pie or donut.
 - **Continuous over time** → line / area with the date dimension, regardless of how many dates.
 
-Canonical mappings that follow from this: **gender split → pie/donut, never a table**; device category → donut; channel grouping mix → donut; age brackets → column chart; campaign / landing-page / search-term detail → table sorted desc by the primary metric; staged conversion path → funnel; country/region → GeoMap; ad creatives → Media with the thumbnail dimension.
+Canonical mappings that follow from this: **gender split → pie/donut, never a table**; device category → donut; channel grouping mix → donut; age brackets → column chart; campaign / landing-page / search-term detail → table sorted desc by the primary metric; staged conversion path → funnel; country/region → GeoMap; ad creatives → Media with the thumbnail dimension, or a table with that same dimension when the ask is metric-heavy or ranked.
 
 When unsure of a dimension's cardinality, check it before choosing the widget — a breakdown that looks fine on sample data can overflow on the real account.
 
@@ -1017,7 +1142,7 @@ This holds for every type that renders a metric label:
 
 Three real exceptions, where the row-level field **is** the label:
 
-- **Multi-channel formula rows** — a row carrying `options.operators` is captioned by `rows[].options.formula_title`, falling back to `options.title`. There is no config metric to name.
+- **Multi-channel formula rows** — a row carrying `options.operators` is captioned by `rows[].options.formula_title`, falling back to `options.title`. There is no config metric to name, because the row renders a calculation over its configs rather than one of them. See "Formula rows".
 - **Offline widgets (`125`–`136`)** — the label is the `name` on each entry of the row's `data` array. Config bindings are rejected on these types.
 - **Pre-new-architecture types (below `101`)** — the old renderer really does read `rows[].options.title` first. Only relevant on legacy widgets; create everything new at `101`+.
 
@@ -1025,7 +1150,7 @@ Three real exceptions, where the row-level field **is** the label:
 
 A tab that holds more than one group of content (a KPI block, then a trend section, then a breakdown / detail section) should **introduce each group with a section header**: a full-width Comment widget (`21`, `channel_id=7`) carrying a short heading — the report-page equivalent of an `<h2>` in a document.
 
-- **Shape:** full row (`width: 6`), `height: 1` for a bare heading (a heading plus a one-line subtitle needs `height: 2` — see Comment sizing above). Place it as the first row of the section it introduces.
+- **Shape:** full row (`width: 6`), `height: 1` for a bare heading. **A heading plus a subtitle — even one line of it — needs `height: 2`:** the box is fixed and clips overflow (see "Sizing comment / text widgets" under Sizing). Place it as the first row of the section it introduces.
 - **Text:** an HTML heading in `rows[].options.comment_widget_text.text` — e.g. `<h2>Campaign performance</h2>` — naming the section's theme, not repeating the widget titles below it. Keep it to a few words; optionally add one `<p>` of context beneath the heading. Colour, size and alignment go inline — see the Comment widget notes under `### options`.
 - **When to use one:** whenever a tab has two or more distinct sections — which a full, self-directed tab always does by default, since two sections is the floor (see "Composing a full tab"). The tab's *first* header also serves as the page title when the tab name alone isn't enough.
 - **When not to:** a tab that is genuinely one section (a single full-page table the user asked for, a lean one-pager) doesn't need a header row per widget — headers earn their row only when they separate something. Never stack two headers with no content between them.
@@ -1090,10 +1215,29 @@ Pick each widget's size from what its content needs to be legible, then fit it i
 - **Pie / Donut** — roughly square; a full-row pie wastes space.
 - **List / Funnel** — narrow-to-medium; sit well beside a chart.
 - **Media / creative preview** — one tile per creative, grouped across a row.
-- **Comment** — full-row as a section header/divider, or taller for an AI text block. **Size the height to the text it holds:** `height: 1` fits only a single short heading line; a sentence or two needs `height: 2`; a full paragraph `height: 3`; a multi-paragraph AI summary `4+`. Under-sizing clips or overflows the text in the rendered report, so when in doubt give it more height — and prefer splitting a long block across widgets (or trimming the copy) over cramming it into a short box. **Budget the copy against the box before writing it:** on the 6-wide grid, one grid row of height holds roughly two lines of 14–15px body text (≈ 160–200 characters), and a large narrative headline (28–32px) consumes most of a row by itself — so a `6×2` opener fits a kicker line, a headline, and about two short sentences, no more. The API gives no overflow signal — the write succeeds whether the text fits or not — so count the text first, and when it exceeds the budget, grow the widget or cut words; never ship prose that outruns its box.
+- **Comment** — full-row as a section header/divider, or taller for an AI text block. **Size the height to the rendered text — the box clips what doesn't fit.** See "Sizing comment / text widgets" just below.
 - **GeoMap** — medium.
 
 **Hard constraints (always):** `width` 1..6, `height` ≥ 1, `position_x + width ≤ 6`, and no two widgets overlap.
+
+#### Sizing comment / text widgets (`21`) — a fixed box that clips
+
+A comment renders in a **fixed pixel box** derived from its integer `height` (~100–120px per grid unit, of which only ~80–90px is usable at `height: 1` after the theme's card padding). The box **never grows with its content** — there is no auto-height, and anything taller is cut off mid-line by the card's `overflow: hidden`, with no scrollbar and no API signal: the write returns `success` whether the text fits or not. So size `height` for the *rendered* content, not the character count:
+
+- **A heading plus ANY subtext needs `height: 2` minimum.** An `<h1>`–`<h3>` line with its margin costs ~40px on its own, so a heading and even one wrapped body line (~115–125px stacked, plus padding) already overflow a height-1 box. `height: 1` holds exactly one line — a bare heading *or* one short body line, never both. (This is the clip that shipped: a `6×1` header carrying `<h2>` + a two-line subtitle lost the second line under the card's bottom border — Sep 2026.)
+- **Budget one grid unit per ~2 rendered lines, and count the heading as its own line** (a large narrative headline at 28–32px consumes most of a unit by itself). Heading + 1–2 body lines ⇒ `height: 2`; heading + 3–4 body lines ⇒ `height: 3`; a `6×2` narrative opener fits a kicker line, a headline, and about two short sentences — no more.
+- **Count wrapped lines, not sentences.** One grid unit holds roughly two lines of 14–15px body text (≈ 160–200 characters at `width: 6`), so a subtitle of ~12+ words wraps to two lines at full width — and wraps sooner in a narrower comment. Size for the wrap, not for the sentence count.
+- **When unsure, add 1 to `height`.** A slightly tall text card looks fine; a clipped one looks broken. Prefer splitting a long block across widgets (or trimming the copy) over cramming it into a short box — never ship prose that outruns its box.
+
+| Content in a comment (at `width: 6`) | Minimum `height` |
+|---|---|
+| One short line — a bare heading *or* one body line | 1 |
+| Heading + 1–2 lines of subtext | **2** |
+| Heading + 3–4 lines of subtext | 3 |
+| Full paragraph / longer intro block | 3 |
+| Multi-paragraph or AI-summary block | 4+, then verify |
+
+**Always verify:** after creating or editing a comment, render the result (`preview-report`, or `export-report`) and confirm no line is cut off — a truncated widget still returns `success`, so the JSON round-trip proves nothing about fit.
 
 ### Titles: when they show, and how long they can be
 
@@ -1291,7 +1435,9 @@ For a single value that must carry its own colour, put it in a Comment widget in
 
 ## Common pitfalls
 
-- **A widget rendering "Metrics not selected"** — it was created without `rows` (or with a config whose `options.metrics` is empty), so nothing is bound. The create still returns `success`, which is why this reaches shipped reports. Always bind at create, and always verify with `export-report` / `csv_export` — see "Always pass `rows` at create time".
+- **A widget rendering "Metrics not selected"** — it was created without `rows` (or with a config whose `options.metrics` is empty), so nothing is bound. A create carrying no binding at all is now refused (see "A create with no binding is refused"), but an omitted `rows` still returns `success` with a sample-data widget, which is how this reaches shipped reports. Always bind at create, and always verify with `export-report` / `csv_export` — see "Always pass `rows` at create time".
+- **A binding written at row level instead of on the config** — `rows[].options.source_id`, `options.configs`, `options.channel_id` and their aliases bind nothing, because only `rows[].configs[].options` binds data. Six such keys are refused outright now; before that they were stored, the call returned `success`, and the widget rendered "Metrics not selected" against a null source. Move the source to `rows[].configs[].source_id` and the metrics to `rows[].configs[].options.metrics` — see "Bindings written one level too high".
+- **A calculated metric that stored a formula and rendered nothing** — the calculation was described by nesting whole config definitions inside `rows[].options.operators`, each with its own `source_id` and `metrics`. Nothing reads a config there. A formula row is a flat token list referencing config ids that already exist on the widget, so it needs a `create` then an `update`; that shape is enforced now. For a calculation you want on more than one widget, use `manage-custom-metrics` — see "Formula rows".
 - **A tab with one or two widgets floating in an empty grid** — the tab list in the instructions was misread as a widget list. A named tab ("Google Ads", "Weather Report for New York") is a full themed page, not a slot for one widget per named metric — compose it per "Composing a full tab", whoever named the tab.
 - **Date dimension ambiguity** — a source may expose more than one date-typed dimension (e.g. `universal_dimension_1137` "Date" and `universal_dimension_150` "Date OLD"). Prefer the plainly-named current one and verify with `csv_export`. This is integration-dependent.
 - **Every KPI card carrying the same eye icon** — `rows[].options.icon` was never set, so each row fell back to the hardcoded default `Visible--Streamline-Sharp.svg`. Metric catalogs carry no icons of their own, so this happens on every integration and on every card. Pull the library once with `list-widgets action=list_icons` and bind an icon per row at create — see "Row icons".
@@ -1313,13 +1459,14 @@ For a single value that must carry its own colour, put it in a Comment widget in
 - **A metric rename that returns `success` and changes nothing on screen** — the new caption was written to `rows[].options.title` or `rows[].options.metrics[].label`. Neither is an input; the rendered caption is `rows[].configs[].options.metrics[].name`. The row title version looks correct until the data arrives, then snaps back; the `label` version is invisible immediately, because nothing reads it. A warning now flags this on write. Set the config metric `name` instead — see "Renaming a metric caption".
 - **Widget `name` vs row-level `title`** — `name` sets the widget-level `options.title`, the heading above the chart/table. `rows[].options.title` is a row display option, not the metric caption; don't reach for it to rename a metric.
 - **Titling a type that has no title** — `name` / `options.title` on a Comment (`21`), Calendar (`22`), Filter control (`137`), or Report shortcut (`141`) is rejected, on create, update, and `batch_change_settings`. These types render no title, so the value used to be stored and never shown — which read back as success and led to reporting headers that did not exist. A Comment's heading belongs in its body text.
+- **A comment whose last line is cut off by the card's bottom border** — the widget was under-sized, typically a heading + subtitle at `height: 1`. Comments render in a fixed pixel box and clip overflow; the write returns `success` either way, so nothing flags it. A heading plus any subtext needs `height: 2` minimum — see "Sizing comment / text widgets" under Sizing, and verify fit with `preview-report` / `export-report`.
 - **A comment widget that renders as an empty box** — the body text never arrived. Either it was never supplied (now rejected at create), or an update rebuilt the row without it: a row passed without `rows[].id` is recreated from scratch and drops the existing text. Pass the row's `id`, or re-send `comment_widget_text`. Both failure modes are refused now rather than returning success.
 - **A comment/image edit that "worked" but changed nothing** — row-level `comment_widget_text`, the legacy `text`/`comment` aliases, and image `image_url` / `image_data` were only applied on create; on update they were accepted and dropped. Fixed Jul 2026. If you hit this on an older deployment, write the config shape directly in `rows[].configs[].options` instead.
 - **Duplicate metric/dimension bindings** — binding the same `external_id` twice in one config is silently de-duplicated (keeps first occurrence). A warning is returned, but the widget ends up with one series, not two. To chart two series of the same metric, use separate rows.
 - **`tab_id` missing on create** — required. Find via `list-report-tabs action=list`.
 - **A sort that stores fine and orders nothing** — `sort` is the sort **direction**, `"asc"` / `"desc"` / `null`, on the entry in `rows[].options.metrics[]` or `rows[].options.dimensions[]`. It is not a position or an index. `sort: 0` used to be accepted and skipped outright by the backend (which matches on truthiness), so the write returned success and the widget came back in the source's own order; it is rejected now. See "Sorting a widget".
 - **`sort` on a single-value widget** — inert wherever you put it: a `101` aggregates everything into one number and has no rows to order. The tool warns. Use a Table (`102`) with the dimension bound.
-- **AI text (`update_ai_text`) errors** — if generation fails with a timeout, the settings are saved; retry after ~30 seconds. A non-timeout error may indicate the AI feature is not available on the team's plan.
+- **AI text (`update_ai_text`) errors** — generation runs in the background, so a failure arrives on the collecting call as `status: failed` with the reason in `message`, not as an error on the first call. The settings are already saved either way. Queue a new summary by sending `ai_text` again. A failure that names the plan may mean the AI feature is not available to the team.
 - **An offline widget showing 200,000 impressions you never entered** — it was created without `rows[].data`, so it still holds the template's placeholder sample numbers. The create response warns about this. Send an `update` with the row's `data` to replace them.
 - **An offline widget whose icon flickers and never draws** — a cell holds two currency symbols, typically a range like `"$4.80 - $7.40"`. The backend cannot resolve which currency that is and hands the whole string back as the currency code; the frontend throws `RangeError: Invalid currency code` on every render attempt, and the retry loop is the flicker. Nothing rejects this on write, and a human typing it into the offline-data grid hits it too. Split the range into two entries or two table columns. See "Values".
 - **Offline values passed as row options** — `rows[].options.value` / `previous_value` bind nothing. Row `options` is a free-form blob, so these used to persist silently and the call still reported success; they now come back as an "unrecognized `options` keys" warning. Offline values belong in the row's `data` array.

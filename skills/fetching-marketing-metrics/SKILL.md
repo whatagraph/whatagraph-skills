@@ -186,6 +186,7 @@ When `compare_type` is set, both primary and comparison data paginate together u
 
 ## Tips
 
+- Creative-URL dimensions (e.g. `creative_thumbnail_url`) return URL strings — you cannot judge an ad's visual from them. When the ask is about how the ads *look* (creative analysis, visual QA), use the `view-creatives` tool on a report with media widgets instead — load `whatagraph-export` for the mechanics and `generating-marketing-insights` for the analysis framework.
 - Start with fewer metrics and dimensions, then expand. Large requests may be slower.
 - Always include a `date` dimension when users want to see trends over time.
 - If a metric returns unexpected results, check if the report type is correct — different report types expose different metrics.

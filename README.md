@@ -26,7 +26,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `generating-marketing-insights` | Turn data into executive summaries, trend analysis, narratives, and recommendations. |
 | `generating-report-digests` | Produce a digest or summary of an existing report from a report URL or ID. |
 | `troubleshooting-data-issues` | Diagnose data discrepancies, source connection problems, blend/source-group/filter issues, and missing data. |
-| `whatagraph-export` | Export a report as a PDF or Excel/CSV, or preview its pages as images to check how it renders. |
+| `whatagraph-export` | Export a report as a PDF or Excel/CSV, preview its pages as images to check how it renders, or view the actual ad-creative images from its media widgets for creative analysis. |
 | `whatagraph-destinations` | Inspect configured outbound data transfers (BigQuery, Looker Studio, storage) and their job history. |
 
 ### Configure, manage & delete (beta)
@@ -37,10 +37,10 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-reports` | Create, duplicate, and update reports. |
 | `whatagraph-report-tabs` | Create, duplicate, rename, and reorder report tabs. |
 | `whatagraph-widgets` | Build and lay out widgets on the grid. |
-| `whatagraph-dynamic-charts` | Build chart families with no dedicated widget type — scatter, bubble, heatmap, candlestick, combo, top-N. |
+| `whatagraph-dynamic-charts` | Build chart families with no dedicated widget type — scatter, bubble, heatmap, candlestick, box plot, radar, funnel, stacked and 100% stacked, horizontal bars, combo, top-N. |
 | `whatagraph-offline-reports` | Build a whole report from numbers you already have, with no connected source. |
 | `whatagraph-blends` | Combine data from different channels into one virtual source. |
-| `whatagraph-source-groups` | Roll up multiple accounts of the same channel into one aggregated source. |
+| `whatagraph-source-groups` | Roll up multiple accounts — same-channel or cross-channel — into one aggregated source. |
 | `whatagraph-custom-metrics` | Create calculated or unified metrics across sources. |
 | `whatagraph-custom-dimensions` | Create derived dimensions — tag-based, condition-based, or AI-classified groupings. |
 | `whatagraph-filters` | Create reusable saved filter configurations for a channel. |
@@ -53,6 +53,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-automations` | Schedule automated report delivery by email. |
 | `whatagraph-snapshots` | Save and restore the structural state of a report. |
 | `whatagraph-integrations-admin` | Connect sources from already-authenticated accounts and assign them to spaces. |
+| `whatagraph-dynamic-integrations` | Build a data source Whatagraph does not support yet, from the API's own documentation, with no code deploy. |
 | `whatagraph-team-and-members` | View team settings and subscription; invite and update team members. |
 | `whatagraph-customer-patterns` | Common multi-tool flows and decision trees across skills. |
 | `whatagraph-deleting` | Safe deletion, removal, and revocation across Whatagraph entities. |
