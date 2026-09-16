@@ -33,10 +33,15 @@ One source can hold data for many clients or entities at once. Add a dimension s
 
 ## The three calls
 
+Every `manage-custom-api` call needs an `intent`, a short plain sentence saying what you are
+trying to achieve. It is required on write tools across this server, and a call without one
+is rejected before anything happens.
+
 ### 1. Create the source
 
 ```
 manage-custom-api action=create_source name="Vollan exports" space_ids=[12]
+  intent="Create a Custom API source for the user's spreadsheet numbers"
 ```
 
 `space_ids` is optional. The response carries the `source_id` every later call needs.
@@ -47,6 +52,7 @@ If the user already has a Custom API source, find it with `list-sources` instead
 
 ```
 manage-custom-api action=define_schema source_id=4471
+  intent="Define the metrics and dimensions the pushed rows will use"
   metrics=[{"external_id":"signups","name":"Signups","type":"int","accumulator":"sum","negative_ratio":false}]
   dimensions=[{"external_id":"channel","name":"Channel","type":"string"}]
 ```
@@ -63,10 +69,12 @@ Define the schema before sending rows. A widget built on a dimension that is mis
 ### 3. Send the rows
 
 ```
-manage-custom-api action=push_data source_id=4471 rows=[
-  {"date":"2026-01-01","channel":"Google","signups":42},
-  {"date":"2026-01-01","channel":"Meta","signups":17}
-]
+manage-custom-api action=push_data source_id=4471
+  intent="Store three days of signup numbers"
+  rows=[
+    {"date":"2026-01-01","channel":"Google","signups":42},
+    {"date":"2026-01-01","channel":"Meta","signups":17}
+  ]
 ```
 
 Each key is either `date` or one of your `external_id` values. `date` is required on every row and must be `YYYY-MM-DD`. Send one row per day per combination of dimension values.
@@ -91,6 +99,7 @@ Read the metrics and dimensions before defining any, so you update what is there
 
 ```
 manage-custom-api action=delete_data source_id=4471 from=2026-01-01 till=2026-01-31
+  intent="Remove January after the user confirmed the range"
 ```
 
 This removes every stored row in that range. It cannot be undone, so confirm the range with the user first.
