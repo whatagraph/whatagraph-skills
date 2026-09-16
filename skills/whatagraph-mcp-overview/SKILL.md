@@ -34,7 +34,7 @@ Data flows into widgets from:
 - **Source group** — many sources (dozens to hundreds) **summed** into one virtual source; exposes the total *and* each channel's / source's own contribution. Stored by ETL, so it warms up first.
 - **Blend** — a handful of sources **joined** on a shared dimension (date, campaign name), each keeping its own columns. Computed live.
 - **Values entered by hand** — an offline (manual-data) widget for figures no integration can supply (offline spend, retainer fees, client targets). See `whatagraph-widgets`.
-- **Numbers the user pushes in** — the Custom API, a source the user fills themselves over HTTP, for a system Whatagraph has no connector for. Ongoing and daily, where an offline widget is a fixed set of values typed once. See `whatagraph-custom-api`.
+- **Numbers the user pushes in** — the Custom API, a source the user fills themselves, for a system Whatagraph has no connector for. Ongoing and daily, where an offline widget is a fixed set of values typed once. See `whatagraph-custom-api`.
 
 Both work same-channel and cross-channel — channel count is not what separates them. **Sum → source group, join → blend**; many → group, live → blend.
 
