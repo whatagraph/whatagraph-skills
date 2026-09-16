@@ -360,6 +360,9 @@ shrinking it.
 - **`card`** — a surface holding other blocks. Give it `blocks`. **Child frames are fractions of
   the card on both axes**, not of the page, and **every child needs a real frame** — one filling
   its card is `{"x": 0, "y": 0, "w": 1, "h": 1}`. Cards cannot nest.
+  **`"grouped": true`** turns the card into a **group**: one thing the reader clicks, moves and
+  deletes, whose parts are reached by stepping into it. That is how a composed answer is written
+  — see *Groups* below.
   **`tone`** (`default`/`dark`/`accent`) makes the card a surface in its own right rather than a
   tint, so ink inside it inverts just as it does on a dark page. Put the text **inside** the
   toned card: a text block merely positioned over one still resolves its ink against the page and
@@ -383,6 +386,155 @@ shrinking it.
   `widget_id`; the widget keeps its own configuration and picks up the design's brand. Chrome is
   off by default because the page already has its own text blocks. Give it at least 232 × 110
   design pixels — below that a widget refuses to render.
+
+## Groups
+
+A **group** is a `card` with `"grouped": true`. It is how you answer a question with one thing
+rather than five.
+
+It is the same block type and the same fields as any other card. What the flag changes is how a
+person handles it: one click selects the whole group, moving or deleting it moves or deletes
+everything inside it, and the parts are reached by double-clicking into it. So a group is the
+right shape whenever the blocks you are about to write only mean anything together.
+
+**Reach for a group when somebody asks a question rather than for a page.** *"Show me where paid
+budget is being wasted"* wants a few metrics, a table and a sentence saying what they mean, and
+those blocks are one answer. Written as a group, the person can move that answer, copy it to
+another page or throw it away in one gesture.
+
+**Leave `grouped` off** for a band of colour, for a surface somebody will drop blocks onto later,
+and for a single number with a caption under it. A plain card is already right for those, and the
+flag only puts a step between the person and the contents.
+
+Two limits worth knowing before you compose one:
+
+- **A group counts as one block against the layout's budget**, however many children it holds. A
+  `content` slide holds 8 blocks and a group of five costs one of them. That is a reason to
+  compose a dense page out of groups, not a licence to put a whole page inside one — a group
+  holding more than about six children is a page.
+- **Groups do not nest**, because cards do not. A group's children are blocks, never groups.
+
+A child keeps its own `id`, so `patch_blocks` reaches it by that id without resending the card.
+
+### Sizing a group's children
+
+**A child's frame is a fraction of the card's interior on both axes**, so `x`, `y`, `w` and `h`
+all run 0 to 1 and one filling the card is `{"x": 0, "y": 0, "w": 1, "h": 1}`. This is the one
+place in a design where `y` is not in the page's width units, and forgetting it is what puts
+every child in the top eighth of the card.
+
+The interior is the card's box less its padding, which is **0.012 of the page's width on each
+side**. So in the page's own width units the interior is `card.w − 0.024` wide and
+`card.h − 0.024` tall, and every number in this skill converts like this:
+
+```
+child w = (the width you need, in page width units) ÷ (card.w − 0.024)
+child h = (the height you need, in page width units) ÷ (card.h − 0.024)
+```
+
+Worked: a `subheading` needs 0.028 of the page's width for one line. In a card `0.46 × 0.34` the
+interior is 0.316 tall, so one line is `h: 0.028 ÷ 0.316 ≈ 0.09` — and give it `0.11`, for the
+same reason a table wants its rows' height plus a tenth.
+
+Three numbers get used at once inside a group, so they are collected here:
+
+- **A table row, the header included, is 0.032 of the page's width** — 0.039 on `a4_portrait`.
+- **A ranked `bar_list` row wants about 0.04 of the page's width** each, so six bars want 0.24.
+  An authored list asking for more bars than its frame holds is refused, with the height to give
+  it; a bound one is cut to what fits and says nothing.
+- **Metrics form a row when their frames overlap vertically by more than half of the shorter
+  one**, and a row is sized together. Inside a group that means a band of metrics wants one `y`
+  and one `h`. Two bands at different `y` are two rows and are sized separately, so give them
+  equal frames if they are meant to read as a pair.
+
+On `a4_landscape` multiply the widths by 1.41 and divide the heights by 1.41, exactly as in the
+type table above.
+
+**Children must not overlap**, the same rule page blocks are held to, and the write is refused
+naming the card and both children. Leave about 0.04, in card units, between one child and the
+next.
+
+**A chart inside a group is a supporting trend.** A chart that has to carry the page belongs on
+the page at `full_chart` size, not inside a card a third of the page wide.
+
+### What a group does not make agree
+
+Every child fetches its own numbers. A bound `table` is cut to the rows its frame holds, a bound
+`bar_list` to the bars its frame holds, and a `metric` shows the period's total rather than
+anything about rows — so a table in a group and a metric beside it can report different figures
+for one query, because each block type slices that query its own way.
+
+Compose around it rather than against it. Bind a group's metrics to the figures you want the
+group to state, and let its table and bar list rank rather than total. Do not write a sentence
+claiming the table adds up to the metric above it.
+
+### Four group recipes
+
+The four shapes that keep coming up, with the arithmetic done. Card frames are in the page's
+width units and suit a slide or a dashboard; child frames are in card units. On `a4_portrait`
+give the card more height, because the page is taller and its type is larger.
+
+Change the children to suit the question. A page built from four identical recipes is a template.
+
+**1. Performance summary** — how something is doing, at a glance. A row of metrics over a trend.
+
+```json
+{ "id": "paid-summary", "type": "card",
+  "frame": {"x": 0.06, "y": 0.16, "w": 0.46, "h": 0.34},
+  "card": { "grouped": true, "rounded": true, "blocks": [
+    { "id": "ps-heading", "type": "text", "frame": {"x": 0, "y": 0, "w": 1, "h": 0.11},
+      "text": {"role": "subheading", "content": "Paid search, last 30 days"} },
+    { "id": "ps-spend",  "type": "metric", "frame": {"x": 0,    "y": 0.15, "w": 0.30, "h": 0.22} },
+    { "id": "ps-conv",   "type": "metric", "frame": {"x": 0.35, "y": 0.15, "w": 0.30, "h": 0.22} },
+    { "id": "ps-cpa",    "type": "metric", "frame": {"x": 0.70, "y": 0.15, "w": 0.30, "h": 0.22} },
+    { "id": "ps-trend",  "type": "chart",  "frame": {"x": 0,    "y": 0.43, "w": 1,    "h": 0.45} },
+    { "id": "ps-note",   "type": "text",   "frame": {"x": 0,    "y": 0.90, "w": 1,    "h": 0.10},
+      "text": {"role": "caption", "content": "Cost per acquisition fell for the third month running."} }
+  ] } }
+```
+
+The three metrics share a `y` and an `h`, so they are one row and take one size.
+
+**2. Breakdown** — what the total is made of. A table ranked beside the same figures as bars.
+
+| Child | Frame, in card units |
+|---|---|
+| heading, `subheading` | `{"x": 0, "y": 0, "w": 1, "h": 0.10}` |
+| `table` | `{"x": 0, "y": 0.14, "w": 0.56, "h": 0.72}` |
+| `bar_list`, `horizontal` | `{"x": 0.6, "y": 0.14, "w": 0.4, "h": 0.72}` |
+| caption | `{"x": 0, "y": 0.90, "w": 1, "h": 0.10}` |
+
+Card frame `{"x": 0.06, "y": 0.14, "w": 0.6, "h": 0.4}`. The table's frame is 0.271 of the page
+tall, which is a header and six rows with the tenth of slack a table wants; the bar list's is the
+same, which is six bars. Bind both
+to the same query and the same dimension, and let the table carry the detail while the bars carry
+the ranking.
+
+**3. Comparison** — this period against the one before it, or one channel against another.
+
+| Child | Frame, in card units |
+|---|---|
+| heading, `subheading` | `{"x": 0, "y": 0, "w": 1, "h": 0.10}` |
+| first row, two `metric`s | `{"x": 0, "y": 0.13, "w": 0.48, "h": 0.16}` and `{"x": 0.52, "y": 0.13, "w": 0.48, "h": 0.16}` |
+| second row, two `metric`s | `{"x": 0, "y": 0.32, "w": 0.48, "h": 0.16}` and `{"x": 0.52, "y": 0.32, "w": 0.48, "h": 0.16}` |
+| `chart`, `bar`, two series | `{"x": 0, "y": 0.54, "w": 1, "h": 0.46}` |
+
+Card frame `{"x": 0.06, "y": 0.14, "w": 0.5, "h": 0.4}`. The two metric rows do not overlap
+vertically, so each is sized on its own members — the equal frames are what keep the two bands
+looking like a pair. Name what each row is in the metric labels, not in a fifth text block.
+
+**4. Funnel** — the stages, and what came out of the end.
+
+| Child | Frame, in card units |
+|---|---|
+| heading, `subheading` | `{"x": 0, "y": 0, "w": 1, "h": 0.10}` |
+| `bar_list`, `horizontal` | `{"x": 0, "y": 0.13, "w": 1, "h": 0.55}` |
+| three `metric`s | `{"x": 0, "y": 0.74, "w": 0.31, "h": 0.26}`, `{"x": 0.345, …}`, `{"x": 0.69, …}` |
+
+Card frame `{"x": 0.06, "y": 0.14, "w": 0.44, "h": 0.42}`. The bar list's frame is 0.218 of the
+page tall, which holds five stages, and its `ratio` values are what make it read as a funnel —
+give the first stage `1.0` and each later one its share of it. The metrics below are the
+conversions the stages produced, in one row so they take one size.
 
 ## Inline or bound
 
