@@ -457,16 +457,64 @@ next.
 **A chart inside a group is a supporting trend.** A chart that has to carry the page belongs on
 the page at `full_chart` size, not inside a card a third of the page wide.
 
-### What a group does not make agree
+### One query for the whole group
 
-Every child fetches its own numbers. A bound `table` is cut to the rows its frame holds, a bound
-`bar_list` to the bars its frame holds, and a `metric` shows the period's total rather than
-anything about rows — so a table in a group and a metric beside it can report different figures
-for one query, because each block type slices that query its own way.
+**Put the `binding` on the card, not on each child.** The query then runs once, and every
+`metric`, `chart`, `table` and `bar_list` inside the card is drawn from that one row set. Two
+things follow, and both are the reason to do it:
 
-Compose around it rather than against it. Bind a group's metrics to the figures you want the
-group to state, and let its table and bar list rank rather than total. Do not write a sentence
-claiming the table adds up to the metric above it.
+- **The figures agree with each other.** A metric above a table is a figure about that table's
+  own query, and the sentence underneath can say so.
+- **The group costs one call instead of one per child.** A card with three metrics and a table
+  used to make four; it makes one.
+
+Bind the card exactly as you would bind a block — `sources`, `metrics`, `dimensions`,
+`report_type`, `date_range`. Name every metric and dimension the group needs between them; a
+child picks out the part it draws.
+
+**Leave the children's own `binding` and payload off.** A child of a bound card needs neither, and
+a child that carries a `binding` is opting out — it keeps its own query and its own request, which
+is what you write when one block inside the group has to come from another source.
+
+**Say which part each child draws with `projection.columns`**, naming metrics and dimensions by
+the same `external_id` the card's binding uses:
+
+- A **metric** needs one metric in `columns`, or it draws the first one the card fetched. Add
+  `agg` to say how it collapses the rows — `sum` is the default and is the period's total, which
+  is the same figure the report's single-value widget draws.
+- A **chart** and a **bar_list** take a dimension and the metrics to plot. Omit `columns` and they
+  take everything the card fetched, which is right when the card fetched exactly what they draw.
+- A **table** omits `columns` to show every column, or names them to show fewer, in its own order.
+
+```json
+{ "id": "channels", "type": "card",
+  "frame": {"x": 0.06, "y": 0.16, "w": 0.88, "h": 0.5},
+  "binding": { "kind": "query", "sources": [12],
+    "metrics": ["sessions", "conversions"], "dimensions": ["sessionDefaultChannelGrouping"] },
+  "card": { "grouped": true, "rounded": true, "blocks": [
+    { "id": "ch-sessions", "type": "metric", "frame": {"x": 0, "y": 0, "w": 0.3, "h": 0.2},
+      "projection": {"columns": ["sessions"]} },
+    { "id": "ch-conv", "type": "metric", "frame": {"x": 0.35, "y": 0, "w": 0.3, "h": 0.2},
+      "projection": {"columns": ["conversions"]} },
+    { "id": "ch-table", "type": "table", "frame": {"x": 0, "y": 0.26, "w": 1, "h": 0.74} }
+  ] } }
+```
+
+**What still differs between children, and it is display rather than arithmetic.** A table shows
+the rows its frame holds and a ranked bar list the bars its frame holds, so two children of one
+group can show a different number of rows of the same row set. Nothing adds up what a table
+happens to be showing, so this changes what is drawn and not what anything reports.
+
+**One figure is worth knowing about.** A metric's `sum` is the total the data source reports for
+the period, which is not always the sum of the rows beneath it: a ratio does not add up, and a
+source that de-duplicates people over a range reports fewer than the daily figures total. That is
+the right figure for a metric and it is why the sentence under a group should describe the ranking
+rather than claim the column adds to the number above it.
+
+**When each child really does need its own query** — different sources, different date ranges,
+genuinely different questions — leave the card unbound and bind the children. That still works,
+and the two ways can sit on one card. Expect the figures not to agree, and do not write a sentence
+saying they do.
 
 ### Four group recipes
 
@@ -475,6 +523,10 @@ width units and suit a slide or a dashboard; child frames are in card units. On 
 give the card more height, because the page is taller and its type is larger.
 
 Change the children to suit the question. A page built from four identical recipes is a template.
+
+The frames are all any of them shows. **Put the query on the card**, as *One query for the whole
+group* above describes, and give each metric a `projection`; the recipes leave the binding out
+only so the layout is readable.
 
 **1. Performance summary** — how something is doing, at a glance. A row of metrics over a trend.
 
@@ -506,9 +558,8 @@ The three metrics share a `y` and an `h`, so they are one row and take one size.
 
 Card frame `{"x": 0.06, "y": 0.14, "w": 0.6, "h": 0.4}`. The table's frame is 0.271 of the page
 tall, which is a header and six rows with the tenth of slack a table wants; the bar list's is the
-same, which is six bars. Bind both
-to the same query and the same dimension, and let the table carry the detail while the bars carry
-the ranking.
+same, which is six bars. Put the query on the card so both are drawn from one row set, and let
+the table carry the detail while the bars carry the ranking.
 
 **3. Comparison** — this period against the one before it, or one channel against another.
 
@@ -563,6 +614,9 @@ data, you decided what the story was, and the page holds exactly the figures you
   you expect rather than assuming everything comes back.
 - `kind: "widget"` with a `widget_id` draws a widget instead of a query — either one a report
   already has, or one the design owns. See *Three ways to make a block live* below.
+- A **card** takes a `query` binding too, and that binds every data block inside it to one row
+  set. It is the right answer whenever a card's children are all about the same question. See
+  *One query for the whole group*.
 
 **Dates cascade: document → page → block.** Set `date_range` once on the design and every bound
 block follows it; a page or a block overrides it with a period key of its own. `inherit` is the
