@@ -27,7 +27,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `generating-report-digests` | Produce a digest or summary of an existing report from a report URL or ID. |
 | `troubleshooting-data-issues` | Diagnose data discrepancies, source connection problems, blend/source-group/filter issues, and missing data. |
 | `whatagraph-export` | Export a report as a PDF or Excel/CSV, preview its pages as images to check how it renders, or view the actual ad-creative images from its media widgets for creative analysis. |
-| `whatagraph-destinations` | Inspect configured outbound data transfers (BigQuery, Looker Studio, storage) and their job history. |
+| `whatagraph-destinations` | Create outbound data transfers (BigQuery, Looker Studio, storage), inspect the configured ones and their job history, and control them. |
 
 ### Configure, manage & delete (beta)
 
