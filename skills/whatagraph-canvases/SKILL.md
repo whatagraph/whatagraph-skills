@@ -382,6 +382,9 @@ shrinking it.
   formatted string shown. `horizontal` is a ranked comparison; `vertical` is a short progression.
   Max 6. **Prefer this over a chart for six or fewer figures** — it reads as part of the page
   instead of as a chart dropped onto it.
+- **`control`** — a slider, a row of chips or a switch that narrows what its group shows. It goes
+  **only inside a card carrying a `query` binding**, and it filters the rows that card fetched
+  without refetching anything and without changing the document. See *A control* under *Groups*.
 - **`widget`** — an existing Whatagraph widget, drawn on the page. Its `binding` names the
   `widget_id`; the widget keeps its own configuration and picks up the design's brand. Chrome is
   off by default because the page already has its own text blocks. Give it at least 232 × 110
@@ -515,6 +518,49 @@ rather than claim the column adds to the number above it.
 genuinely different questions — leave the card unbound and bind the children. That still works,
 and the two ways can sit on one card. Expect the figures not to agree, and do not write a sentence
 saying they do.
+
+### A control: letting the reader narrow the group
+
+A **control** is a slider, a row of chips or a switch that sits inside a bound card and narrows
+the rows that card fetched. Every metric, chart, table and bar list in the card redraws from what
+is left. It changes nothing in the document, costs no fetch, and works for somebody reading a
+share link.
+
+It may only go **inside a card carrying a `query` binding**, and its `field` must be one of the
+metrics or dimensions that binding names. Anywhere else there is no row set to narrow and the
+write is rejected.
+
+Three kinds:
+
+- `range` — a slider over a metric. Needs `min` and `max` in the metric's own units, and compares
+  with `gte` ("at least", the default) or `lte` ("at most").
+- `choice` — one value of a dimension. **Leave `options` off** and the values the query returned
+  are offered, which is almost always what you want; nobody knows in advance which channels a
+  month of traffic will contain. `eq` picks one, `in` picks several.
+- `toggle` — a switch. On, it keeps the rows that have anything at all in `field`: a non-zero
+  figure in a metric column, a value in a dimension column.
+
+`value` is what the control is set to when the page opens, and the only thing about it that is
+stored. A PDF, a PowerPoint file and a Google Slides deck are all drawn at that value. Omit it and
+the control starts filtering nothing, which is the right default for a page a person will read
+before they touch anything.
+
+```json
+{ "id": "min-sessions", "type": "control",
+  "frame": {"x": 0.03, "y": 0.24, "w": 0.42, "h": 0.1},
+  "control": { "kind": "range", "label": "Sessions at least",
+    "field": "sessions", "min": 0, "max": 20000, "step": 500 } }
+```
+
+**One control per card is plenty**, and give it a frame of its own — a strip above the table it
+narrows reads best. A choice over a dimension with many values draws many chips, so either give it
+room across the card or name the handful of `options` worth offering.
+
+**A ratio cannot be narrowed into a total.** When a control drops a row, a metric whose column is
+a rate draws nothing rather than a figure, because adding two percentages together means nothing
+and there is no way to recompute the rate from one column. Put the counts in a group that has a
+control on it and leave the rate to the table, or set `agg` to `avg` and say in the sentence that
+it is an average of the rows on screen.
 
 ### Four group recipes
 
