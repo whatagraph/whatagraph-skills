@@ -47,6 +47,21 @@ Pagination: `page` (integer, default 1) and `per_page` (integer, default 16, max
 
 `issue` values: `job`, `account`, `source`.
 
+### `storage_source_id` — from a transfer to a reportable source
+
+A transfer to Whatagraph Storage (`destination_id=4`) creates a data source holding the stored data. Every row from `action=list` and `action=show` carries its id:
+
+```
+list-destinations action=list destination_id=4
+# → [{"id": 309, "name": "...", "destination": "Whatagraph Storage", "storage_source_id": 448501, ...}]
+```
+
+The field is `null` for every other destination.
+
+That id is an ordinary source id. Pass it to `manage-widgets` to build a widget on the stored data, or to `list-sources action=list_report_types` to see the tables the user mapped. Nothing has to be connected first: the source is created with the transfer.
+
+Going the other way, `list-sources action=list` does not return storage sources unless you name the channel, so use `channels=["whatagraph-storage"]` there. See `whatagraph-sources-and-data`.
+
 ## Available destination types
 
 ```
@@ -96,6 +111,8 @@ manage-destinations action=create
 ```
 
 `frequency` is `daily` to keep syncing, or `noupdate` for a one-off load.
+
+After creating a `destination_id=4` transfer, read its `storage_source_id` with `action=show`. That is the source to report on, and it exists as soon as the transfer does.
 
 ### Per-table keys in `configs`
 
