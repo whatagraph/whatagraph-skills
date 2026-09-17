@@ -562,6 +562,61 @@ and there is no way to recompute the rate from one column. Put the counts in a g
 control on it and leave the rate to the table, or set `agg` to `avg` and say in the sentence that
 it is an average of the rows on screen.
 
+### Suggested actions: the changes worth making to a group
+
+`actions` on a card is a short list of one-tap changes offered while somebody has the group
+selected. Each one is a label, the `block_id` it changes, the `path` of the field it sets, and
+the values the chips cycle through.
+
+**It is not a control.** A control narrows what the group *shows* and changes nothing in the
+document. An action **edits the document**: it is stored, it can be undone, and only somebody who
+can edit the design sees it. Use a control for "only the channels above 10,000 sessions", and an
+action for "draw that as a line instead".
+
+```json
+"card": { "grouped": true, "rounded": true,
+  "actions": [
+    { "label": "Chart type", "block_id": "ps-trend", "path": "chart.chart_type",
+      "options": ["bar", "line", "area"] },
+    { "label": "Surface", "block_id": "paid-summary", "path": "card.tone",
+      "options": [null, "dark"] }
+  ],
+  "blocks": [ ... ] }
+```
+
+**Pick two or three, and pick them for this group.** The argument the page is making is what
+decides them: a trend that could be read as a ranking wants the chart type, a funnel wants the
+bar list's orientation, a card meant to stand out on a busy page wants its surface. A row for
+every setting the blocks have is not a suggestion, and the Style panel already lists those.
+
+**Leave `actions` off** and the editor offers a set worked out from what the children are, which
+is right for an ordinary group. Write the field only when you know something about this group
+that the children do not say.
+
+The fields an action may set, and nothing else:
+
+| `path` | On | Values |
+|---|---|---|
+| `chart.chart_type` | `chart` | `bar`, `line`, `area`, `pie`, `donut`, `scatter`, `radar` |
+| `chart.fill` | `chart` | `solid`, `hatched` |
+| `chart.show_data_labels` | `chart` | true, false |
+| `chart.show_grid_lines` | `chart` | true, false |
+| `chart.show_legend` | `chart` | true, false |
+| `chart.line_curve` | `chart` | `sharp`, `smooth` |
+| `bar_list.orientation` | `bar_list` | `horizontal`, `vertical` |
+| `text.role` | `text` | `kicker`, `heading`, `subheading`, `body`, `caption`, `quote` |
+| `text.align` | `text` | `left`, `center`, `right` |
+| `card.tone` | the card | `default`, `dark`, `accent`, or null for no surface |
+| `card.rounded` | the card | true, false |
+| `emphasis` | any drawn block | true, false — draws its ink in the brand accent |
+
+A `path` outside that list is rejected, and so is one the named block's type does not have. Every
+action needs between two and six options: one chip has nothing to switch to.
+
+**Nothing here refetches.** These are all changes to how a block is drawn, which is why they are
+instant and undoable. What a block's figures are comes from the card's `binding` and each child's
+`projection`, and neither is something an action can set.
+
 ### Four group recipes
 
 The four shapes that keep coming up, with the arithmetic done. Card frames are in the page's
