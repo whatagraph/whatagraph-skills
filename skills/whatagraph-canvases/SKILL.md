@@ -711,7 +711,11 @@ page to write to. Pass `space_id` there, because the draft has to be kept somewh
 
 The `card` is exactly the block you would have written onto a page — `"type": "card"`,
 `"grouped": true`, its parts in `card.blocks`, one `binding` on the card and a `projection` on each
-child. Its `frame` is optional: only `h` is read, as how tall the group is against its width, and
+child. Writing the card's own fields on their own — `{"frame": …, "binding": …, "grouped": true,
+"blocks": [...]}`, with no `id` and no `type` — means the same thing and is accepted. **Every entry
+in `blocks` still needs its own `id`, `type` and `frame`,** whichever way round you write the card.
+
+The card's `frame` is optional: only `h` is read, as how tall the group is against its width, and
 where it sits is decided by the page it is eventually placed on.
 
 Three things to get right:
