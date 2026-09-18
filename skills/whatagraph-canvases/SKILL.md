@@ -45,6 +45,8 @@ whether the output is a composed page. If the user wants the familiar report gri
 - "Turn last month's performance into a report I can send as a PDF."
 - "Make a one-page summary of the quarter."
 - "Fix page 4 — the headline is wrong."
+- "Show me where paid budget is being wasted." — one composed answer rather than a page, offered
+  in the conversation for the person to place. See *Offering a group instead of writing one*.
 
 ## Choose the format first
 
@@ -687,6 +689,46 @@ Card frame `{"x": 0.06, "y": 0.14, "w": 0.44, "h": 0.42}`. The bar list's frame 
 page tall, which holds five stages, and its `ratio` values are what make it read as a funnel —
 give the first stage `1.0` and each later one its share of it. The metrics below are the
 conversions the stages produced, in one row so they take one size.
+
+### Offering a group instead of writing one
+
+```
+propose_group title="Paid search, last month" card={…} canvas_id=<id>
+```
+
+Composes the group and shows it to the person in the conversation, drawn with real data and with
+its controls working, **without changing any document**. They press a button to put it on a page.
+
+**Which one to use is decided by what they asked for, not by how big the change is.**
+
+| They said | You do |
+|---|---|
+| "add a channel table to this page", "put three KPIs at the top", "make the chart a bar chart" | `manage-canvases` — write it |
+| "show me where paid budget is being wasted", "what would a device breakdown look like", "can you make me a summary of last month" | `propose_group` — offer it |
+
+When no design is open, `propose_group` is the only one of the two that makes sense: there is no
+page to write to. Pass `space_id` there, because the draft has to be kept somewhere.
+
+The `card` is exactly the block you would have written onto a page — `"type": "card"`,
+`"grouped": true`, its parts in `card.blocks`, one `binding` on the card and a `projection` on each
+child. Its `frame` is optional: only `h` is read, as how tall the group is against its width, and
+where it sits is decided by the page it is eventually placed on.
+
+Three things to get right:
+
+- **Pass `canvas_id` whenever a design is open.** The group is drawn at that design's size and in
+  its brand, which is what makes the picture in the conversation the same picture they will get on
+  the page. Without it the draft falls back to a 16:9 slide in the space's default brand, and the
+  card in the chat says so.
+- **Do not also write it onto a page.** The person places it. Writing it as well puts the group in
+  their document twice, and the second copy is the one they did not ask for.
+- **Say in one sentence what the group shows.** The card is already in front of them, so describe
+  the answer, not the blocks: *"Paid search spend is up 18% while conversions are flat — the table
+  breaks it down by campaign."* not *"I have created a card with three metric blocks and a table."*
+
+To change a proposal after they ask for something different, edit page 1 of the draft design the
+call returned with `manage-canvases action=patch_blocks`, and the card in the conversation redraws.
+Propose a new one only when they want a different answer rather than a change to this one.
 
 ## Inline or bound
 
