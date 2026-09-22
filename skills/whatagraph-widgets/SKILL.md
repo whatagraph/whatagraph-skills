@@ -530,6 +530,30 @@ Read the current state back from `list-widgets action=show` — the three fields
 
 There is **no** row-level `sort`. `rows[].options.sort` is a pre-new-architecture key that nothing on a `101`+ widget reads; setting it stores a value, orders nothing, and returns a warning saying so.
 
+### Table column widths
+
+Column width is a row display option, in the same place as `sort` and never on the config
+binding, which stores no width. Set `width` in pixels (greater than 0) on the entry in
+`rows[].options.metrics[]` or `rows[].options.dimensions[]` whose `external_id` or
+`identifier` matches the binding. `null` returns that column to automatic sizing.
+
+```
+rows=[{"id": <row_id>,
+       "options": {"metrics": [{"identifier": 0, "external_id": "sessions", "width": 220}],
+                   "dimensions": [{"identifier": 1, "external_id": "campaign_name", "width": 400}]},
+       "configs": [...]}]
+```
+
+Widths you do not mention are kept, and columns without a width share the space that is left.
+
+On an **offline table** (type 126) the columns are the header cells of `data[0]`, which bind
+nothing, so address them by position: pass `options.dimensions` entries whose `identifier` is
+the 0-based column index.
+
+```
+rows=[{"id": <row_id>, "options": {"dimensions": [{"identifier": 3, "width": 400}]}}]
+```
+
 ### Row icons
 
 > ⚠️ **Set the icon yourself on every 101 / 103 / 125 row you build. There is no useful default.** When `rows[].options.icon` is absent, the backend copies the icon from the bound metric's catalog definition — and almost no metric has one (GA4, Google Ads, Meta and the rest all store `NULL`), so it falls back to a single hardcoded file, `Visible--Streamline-Sharp.svg`, the eye. Every KPI card in the report then carries the same eye. The write returns `success` and the card renders, so nothing tells you afterwards. Reports built without this step have shipped with 15 identical eye icons.
