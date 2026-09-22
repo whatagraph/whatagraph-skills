@@ -1,7 +1,7 @@
 ---
 name: whatagraph-dynamic-charts
 type: domain
-description: Build chart families that have no dedicated widget type — scatter, bubble, heatmap, calendar heatmap, candlestick, box plot, radar, funnel, pie/donut/rose, polar bars, stacked and 100% stacked bars and areas, horizontal bars, bars-plus-line combo, top-N ranking — with the Dynamic Chart widget and a `chart_spec`. Also covers reference lines, running totals, and splitting one metric into a series per dimension value. Use when the chart asked for cannot be expressed by the standard widget types, or when writing, dry-running, or debugging a `chart_spec`.
+description: Build chart families that have no dedicated widget type — scatter, bubble, heatmap, calendar heatmap, candlestick, box plot, radar, funnel, pie/donut/rose, polar bars, stacked and 100% stacked bars and areas, horizontal bars, bars-plus-line combo, top-N ranking — with the Dynamic Chart widget, either by naming a `chart_type` family or by writing a `chart_spec`. Also covers reference lines, running totals, and splitting one metric into a series per dimension value. Use when the chart asked for cannot be expressed by the standard widget types, when choosing a chart family, or when writing, dry-running, or debugging a `chart_spec`.
 required_tools:
   - list-sources
   - list-widgets
@@ -10,7 +10,7 @@ required_tools:
 
 # Dynamic charts
 
-Tools covered: `list-widgets` (`chart_presets`), `manage-widgets` (`chart_spec`, `dry_run`).
+Tools covered: `list-widgets` (`chart_presets`), `manage-widgets` (`chart_type`, `chart_spec`, `dry_run`).
 
 Whatagraph has a widget type per chart family — column, line, pie, funnel, geomap. When a user
 wants a family that is not on that list, you do not need a new widget type: create a **Dynamic
@@ -64,6 +64,45 @@ bindings change.
 Do **not** reach for this when a standard type already fits — a single trend line is a line
 chart (`107`), share-of-total is a pie (`108`). Use the ordinary types where they apply; see
 the `whatagraph-widgets` skill.
+
+## Pick `chart_type` first
+
+`manage-widgets` takes two ways to set up a dynamic chart, and `chart_type` is the normal one.
+Pass a family name and bind metrics and dimensions on `rows` exactly as for any other widget.
+Which bound column drives which channel is worked out on every render from the bindings, so
+the user can still edit the widget in the drawer: adding a metric plots it, removing one drops
+its series.
+
+A `chart_spec` pins every column by id. The chart then stops following the widget's bindings
+and the user can no longer change what it plots in the drawer. Use a spec only for a chart no
+family below describes, or when you need a key a family does not expose.
+
+| `chart_type` | What the rows must bind |
+|---|---|
+| `line` | Per row: 1 dimension for the axis and 1+ metrics, one series each. Add rows for more series, and set each row's Series type to mix bars and lines. |
+| `area` | Per row: 1 dimension for the axis and 1+ metrics, one series each. Add rows for more series, and set each row's Series type to mix bars and lines. |
+| `bar` | Per row: 1 dimension for the axis and 1+ metrics, one series each. Add rows for more series, and set each row's Series type to mix bars and lines. |
+| `scatter` | 2 metrics (x, y). A dimension names the points. |
+| `bubble` | 3 metrics (x, y, point size). A dimension names the points. |
+| `stacked_bar` | Per row: 1 dimension for the axis and 1+ metrics, stacked on top of each other so the stack height is their total. Each row stacks separately, so add rows to compare totals rather than to grow one stack. |
+| `stacked_area` | Per row: 1 dimension for the axis and 1+ metrics, stacked on top of each other so the stack height is their total. Each row stacks separately, so add rows to compare totals rather than to grow one stack. |
+| `candlestick` | 1 dimension for the period and 4 metrics, in order: open, close, low, high. |
+| `boxplot` | 1 dimension for the category and 5 metrics, in order: minimum, lower quartile, median, upper quartile, maximum. The order is what ECharts reads, so binding them in a different order draws a different box. |
+| `heatmap` | 2 dimensions for the grid and 1 metric for the colour. |
+| `calendar_heatmap` | 1 date dimension and 1 metric for the colour. One cell per day, laid out in weeks and months. The calendar spans the days the rows actually cover, so a long date range with daily data is what this is for. |
+| `pie` | 1 dimension for the slices and 1 metric for their size. |
+| `donut` | 1 dimension for the slices and 1 metric for their size. |
+| `rose` | 1 dimension for the slices and 1 metric for their size. |
+| `funnel` | 1 dimension for the stages and 1 metric for their size. The stages are drawn in the order the row returns them, so sort the row by the metric when the stages are not already in funnel order. |
+| `radar` | 1 dimension naming each shape and 3+ metrics, one axis each. Every row of the breakdown draws a shape across the same axes, so sort and limit to a handful — a radar of twenty overlapping shapes shows nothing. |
+| `polar_stacked_bar` | Per row: 1 dimension for the angle and 1+ metrics, stacked along the radius. |
+
+A family chart reads `orient`, `stack_mode`, `split_by`, the cumulative transform and the
+target line from the widget's own settings rather than from a spec. Set them in
+`rows[].options` and `options`, not in `chart_spec`.
+
+`chart_type` works on `create` and `update`. Set `dry_run: true` on an update to see what it
+would plot before storing it, the same as for a spec.
 
 ## The loop
 
