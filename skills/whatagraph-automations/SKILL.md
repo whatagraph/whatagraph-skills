@@ -133,7 +133,7 @@ delete-automations action=delete report_id=<report_id> automation_id=<id>
 
 The report's `type` flips from `automated` back to on-demand, and it starts using its own date range again. Deliveries stop immediately.
 
-`manage-automations` cannot do this — it has only `create`, `update` and `review`. If a user asks to unautomate and `delete-automations` is not in your tool list, say so and give the route for switching it on: an agent relays the route its "Tools switched off for this agent" block gives, and any other client tells the user that a team owner has to grant it. An agent can also hand the task to a teammate that has the tool: call `list_available_agents` with `tool_name: delete-automations`. Do not tell them it is impossible.
+`manage-automations` cannot do this — it has only `create`, `update` and `review`. If a user asks to unautomate and `delete-automations` is not in your tool list, say so and tell them a team owner has to grant it; do not tell them it is impossible.
 
 Destructive, so confirm first, especially if recipients rely on the schedule. The recipient list and any pending deliveries go with the automation and are not recoverable — recreating the schedule afterwards means re-entering the recipients. The report itself, its widgets and its own saved date range are untouched. Full cascade and recovery detail is in the `whatagraph-deleting` skill.
 
