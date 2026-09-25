@@ -5,7 +5,7 @@ Rules enforced (per the agent-skill-permissions plan, section 1):
   1. Every tool the skill BODY invokes must appear in `required_tools`
      (CORE) or `optional_tools`.
   2. No unknown tool names in either list (validated against the canonical
-     Whatagraph MCP tool inventory below).
+     Whatagraph MCP tool inventory and the native agent tools below).
   3. No tool appears in both `required_tools` and `optional_tools`.
   4. No DESTRUCTIVE tool (`delete-*`, `remove-integrations`, `remove-members`)
      appears in `required_tools` — except the `whatagraph-deleting` skill, whose
@@ -94,6 +94,27 @@ CANONICAL_TOOLS = {
     "list-widgets", "manage-widgets", "delete-widgets",
 }
 
+# Native agent tools the backend builds into an agent's tool set directly, not through the
+# MCP server: the team computer and browser tools. Generated from the backend, NOT
+# hand-edited:
+#
+#   php artisan tinker --execute 'echo implode("\n", \
+#     App\Domain\Computer\Support\ComputerToolCatalog::toolNames());'
+#
+# Regenerate after any computer or browser tool is added, renamed, or removed in
+# whatagraph-api-v7.
+NATIVE_AGENT_TOOLS = {
+    "computer-exec", "computer-write-file", "computer-read-file", "computer-list-files",
+    "computer-job", "computer-export", "computer-chart", "computer-import-attachment",
+    "computer-fetch-data", "computer-http-request",
+    "browser-navigate", "browser-extract", "browser-act", "browser-screenshot",
+    "browser-request-takeover", "browser-allow-site", "browser-sign-in", "browser-sign-out",
+    "browser-owner-sign-in",
+}
+
+# Every tool name a skill may declare or invoke.
+KNOWN_TOOLS = CANONICAL_TOOLS | NATIVE_AGENT_TOOLS
+
 # Destructive tools must never be CORE (`required_tools`) of a domain skill:
 # every `delete-*` name plus the two `remove-*` tools. The grant flow never
 # auto-grants these, so a skill that requires one is unreachable.
@@ -115,6 +136,7 @@ VALID_GROUPS = {
     "monitoring_kpis",
     "distribution_lifecycle",
     "team_workspace_branding",
+    "computer",
     "deletion",
 }
 
@@ -172,7 +194,7 @@ def find_body_tools(body: str):
     found = set()
     for line in _call_context_lines(body):
         m = _CALL_RE.match(line)
-        if m and m.group(1) in CANONICAL_TOOLS:
+        if m and m.group(1) in KNOWN_TOOLS:
             found.add(m.group(1))
     return found
 
@@ -200,8 +222,8 @@ def main():
 
         # Rule 2: unknown names.
         for name in sorted(declared):
-            if name not in CANONICAL_TOOLS:
-                errors.append(f"{rel}: unknown tool '{name}' (not in the MCP tool inventory)")
+            if name not in KNOWN_TOOLS:
+                errors.append(f"{rel}: unknown tool '{name}' (not in the MCP tool inventory or the native agent tools)")
 
         # Rule 3: no tool in both lists.
         for name in sorted(req_set & opt_set):

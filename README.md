@@ -58,6 +58,19 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-customer-patterns` | Common multi-tool flows and decision trees across skills. |
 | `whatagraph-deleting` | Safe deletion, removal, and revocation across Whatagraph entities. |
 
+### Team computer and browser (IQ agents)
+
+These three skills are written for Whatagraph's own IQ agents, which load them from this
+repository when they work on the team computer and in the agent's browser. They describe tools
+that exist only inside the Whatagraph app (`computer-exec`, `browser-navigate` and the others), so
+they do nothing for a Claude client that uses the MCP server alone.
+
+| Skill | What it does |
+|---|---|
+| `team-computer` | Python analysis, files, charts and downloadable deliverables on the team computer. Long commands run as background jobs and the conversation wakes on completion. Data from an outside API is requested through the platform, with a secret from the person's vault. Every deck and workbook is checked before it is handed over. |
+| `team-browser` | Read and act on approved websites in the browser that belongs to the acting person: site and action approvals, pictures of pages for a deck, and sign-ins from the person's saved sign-in or the one they typed in the conversation, which the agent never sees in clear text. |
+| `board-pack` | Prepare a long pack (a board pack, a quarterly review, a competitor study with thirty or more slides) alone from one request: stages over several turns, state kept in files, research read from pages the browser opened, and the checks before delivery. |
+
 ## Skill frontmatter — declaring tools
 
 Each `SKILL.md` declares the MCP tools it uses in YAML frontmatter, split into
