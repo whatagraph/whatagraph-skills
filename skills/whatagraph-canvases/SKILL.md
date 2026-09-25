@@ -1142,6 +1142,10 @@ Two things worth knowing: the `mono` chart palette yields only two separable col
 construction — pick it only when two is what the charts need. And a brand colour may be any hex,
 not only one from the named grid; it is deepened until white type reads on it.
 
+Surface a brand you made as an artifact card in the chat rather than listing its hex values in
+prose. The card draws the brand — its name set in its own typeface, on its own page colour, with
+its chart palette beside it — and how it looks is the whole of what the person is judging.
+
 ## What this cannot do yet
 
 - **Exporting on somebody's behalf.** There is no export tool and there will not be one — the
