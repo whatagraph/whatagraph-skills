@@ -107,9 +107,8 @@ NATIVE_AGENT_TOOLS = {
     "computer-exec", "computer-write-file", "computer-read-file", "computer-list-files",
     "computer-job", "computer-export", "computer-chart", "computer-import-attachment",
     "computer-fetch-data", "computer-http-request",
-    "browser-navigate", "browser-extract", "browser-act", "browser-screenshot",
-    "browser-request-takeover", "browser-allow-site", "browser-sign-in", "browser-sign-out",
-    "browser-owner-sign-in",
+    "browser-navigate", "browser-extract", "browser-act", "browser-submit", "browser-screenshot",
+    "browser-ask-person",
 }
 
 # Every tool name a skill may declare or invoke.
