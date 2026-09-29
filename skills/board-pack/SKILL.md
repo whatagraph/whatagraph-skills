@@ -26,22 +26,18 @@ A pack of thirty or more slides with a model, a forecast, research and screensho
 hours of an analyst's work. You do it alone, from one request, without anybody present. It does
 not fit one turn, and it is not meant to: plan it as stages from the first minute.
 
-**Turns.** A turn that uses the computer or the browser ends after about ten minutes, and the
-platform tells you when the time is nearly over. Work in stages of about eight minutes. At the end
-of a stage, before any warning: (1) write to the scratchpad what is done, which files hold it and
-what comes next, (2) make sure a next turn will start, (3) end the turn with two or three plain
-sentences on what is done and what you do next. A next turn starts by itself when a background
-job of this conversation is still running or finished during this turn: its completion message
-opens the next turn. Otherwise create a wakeup with `manage-schedules` (`action: create`,
+**Turns.** A turn has no time limit, but it has a limit on the number of tool calls (the agent's
+step limit), and the conversation is compacted between turns. Work in stages and end a turn at the
+end of a stage, not in the middle of one: (1) write to the scratchpad what is done, which files
+hold it and what comes next, (2) make sure a next turn will start, (3) end the turn with two or
+three plain sentences on what is done and what you do next. A next turn starts by itself when a
+background job of this conversation is still running or finished during this turn: its completion
+message opens the next turn. Otherwise create a wakeup with `manage-schedules` (`action: create`,
 `wait_minutes: 1`, `mode: continue_this_conversation`, and a `prompt` that says where to resume
 and where the state is). Never create both, never poll, and never ask the person whether to
 continue: the request already said so. Ask nothing that a careful analyst would decide alone.
-When a tool result carries a SYSTEM NOTE about the time or the steps left in this turn, the stage
-ends there, whatever you were in the middle of: your next call is `write-scratchpad`, the one
-after it `manage-schedules`, and then you answer in two sentences. One more look at a slide or one
-more page costs the turn, and a turn that is cut off schedules nothing. Deliver the files only in
-a turn that has time left for it: checking, exporting both files and the final answer need about
-three minutes, so when less is left, continue in the next turn.
+Deliver the files in a turn that has calls left for it: checking, exporting both files and the
+final answer take about ten calls, so when fewer are left, continue in the next turn.
 
 **State lives in files, not in your memory.** The conversation is compacted between turns, so a
 number or a fact that is only in an earlier message is lost. Use one project folder, for example
@@ -49,7 +45,7 @@ number or a fact that is only in an earlier message is lost. Use one project fol
 (screenshots), `charts/`, `notes/facts.json` (research facts, each with `source_url` and
 `read_on`), `notes/progress.md`, `build_workbook.py` and `build_deck.py`. Every later stage reads
 what it needs from these files. The plan (`write_plan`) holds the stages, and the scratchpad holds
-the folder path and the next step. Time is the scarce thing in a turn, so update the plan once per
+the folder path and the next step. Calls are the scarce thing in a turn, so update the plan once per
 stage, not after every page or file, and do not read the plan back right after writing it. Put
 several independent commands into one script instead of one command per call.
 

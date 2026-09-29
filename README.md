@@ -68,7 +68,7 @@ they do nothing for a Claude client that uses the MCP server alone.
 | Skill | What it does |
 |---|---|
 | `team-computer` | Python analysis, files, charts and downloadable deliverables on the team computer. Long commands run as background jobs and the conversation wakes on completion. Data from an outside API is requested through the platform, with a secret from the person's vault. Every deck and workbook is checked before it is handed over. |
-| `team-browser` | Read and act on approved websites in the browser that belongs to the acting person: site and action approvals, pictures of pages for a deck, and sign-ins from the person's saved sign-in or the one they typed in the conversation, which the agent never sees in clear text. |
+| `team-browser` | Read and use websites in the browser that belongs to the acting person: free reading, clicking and typing, a submit step that the person approves, pictures of pages for a deck, and sign-ins that the person completes on the live page and that are kept for them. |
 | `board-pack` | Prepare a long pack (a board pack, a quarterly review, a competitor study with thirty or more slides) alone from one request: stages over several turns, state kept in files, research read from pages the browser opened, and the checks before delivery. |
 
 ## Skill frontmatter — declaring tools
