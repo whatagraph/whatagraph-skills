@@ -93,8 +93,16 @@ reach the content.
 
 ## Sign-ins, codes and checks
 
-When a page the person asked you to use needs a sign-in, a one-time code, a captcha or a consent,
-ask the person on that page with `browser-ask-person` at once. Do not first try the site's API with
+When a page the person asked you to use needs a sign-in, a one-time code or payment details, fill
+them in yourself when the person gave you the values. A message shows `[[hidden:name]]` where the
+person typed one, and your vault list names the values already stored. Type a value with
+`{{secret:name}}` in the text of a `browser-act` fill or type step: the platform puts the value in
+outside your context, and a value limited to certain sites can only be typed on those sites. Never
+guess a value, and never ask the person to type a stored value again. Pressing the button that
+sends the form is still a `browser-submit` step, which the person approves.
+
+Ask the person on the page with `browser-ask-person` when you have no value, for a captcha, for a
+second factor you cannot complete yourself, or for a consent. Do not first try the site's API with
 a key from the vault, another site or a search. A saved key belongs to the API its label names and
 is not a sign-in to a website.
 
