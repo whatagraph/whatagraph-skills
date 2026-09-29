@@ -2,7 +2,7 @@
 name: team-computer
 type: domain
 group: computer
-description: Use the team computer for Python analysis, files, charts and downloadable deliverables. Start long commands as background jobs, let the conversation wake on completion, then inspect the actual result before handing it over. This capability is available only to enabled teams and agents with the relevant tools.
+description: Use the team computer for Python analysis, files and finished deliverables. Covers charts, decks, workbooks and reports with the wgviz helpers, a customer's brand or the look of an attached file, a report turned into a deck, forecasts and marketing mix models, long work as background jobs, and looking at and checking every file before it is handed over.
 required_tools:
   - computer-exec
 optional_tools:
@@ -11,7 +11,7 @@ optional_tools:
   - tool_name: computer-write-file
     purpose: Save scripts or text inputs before execution.
   - tool_name: computer-read-file
-    purpose: Read large output, job logs or existing inputs.
+    purpose: Read large output, job logs, existing inputs or a rendered page.
   - tool_name: computer-list-files
     purpose: Discover existing inputs and completed files without guessing paths.
   - tool_name: computer-export
@@ -23,106 +23,42 @@ optional_tools:
   - tool_name: computer-fetch-data
     purpose: Write connected marketing data directly to a local file.
   - tool_name: computer-http-request
-    purpose: Request data from an approved outside API, with a secret from the person's vault when it needs one, and save the answer as a local file.
+    purpose: Request data from an outside API, with a secret from the person's vault when it needs one, and save the answer as a local file.
 ---
 
 # Team computer
 
-Use `computer-exec` for bounded analysis in the Linux computer. It has Python 3 and
-no general network access. Give a short, useful `agent_tool_status`; use the current
-tool schema for validated arguments. Read the returned exit code, stderr and timeout
-state before claiming an answer or a created file. A command being accepted is not
-evidence that it succeeded.
+The tool descriptions say how each computer tool works. This skill covers what they do not: inputs,
+long work, the answer to the person, and deliverables that look finished the first time.
 
 ## Files and inputs
 
-`/team` persists and is shared with the team. `/agents/<your id>` belongs to this
-agent; `/runs/<run>` is scratch for the authorized run. Use paths returned by tools,
-not another user's, agent's or run's guessed identifiers. Keep private or temporary
-inputs out of `/team` unless the user intends to share them.
+Keep private or temporary inputs out of `/team` unless the person intends to share them. An
+attachment of this conversation comes onto the computer with `computer-import-attachment`. For
+connected marketing data use `computer-fetch-data` with discovered source and field identifiers;
+do not rebuild a large dataset from chat snippets. Use only the tools granted to this agent.
 
-When needed, discover files with `computer-list-files`, read them with
-`computer-read-file`, or save a script with `computer-write-file`. An attachment
-already in this conversation can be imported with `computer-import-attachment`.
-For connected marketing data use `computer-fetch-data` with discovered source and
-field identifiers; do not reconstruct a large dataset from chat snippets. These
-are optional branches: use only the tools granted to this agent.
+## Long work
 
-## Data from an outside API
+A model fit (for example a Meridian mix model with more than one chain), a forecast over many
+series, or any script you expect to run longer than about half a minute is background work with
+`computer-job`, not an inline command: an inline command that hits its limit is charged and
+wasted, and its partial output is unusable. A quick single-chain check may stay inline; the fit
+you will report from runs as a job.
 
-Programs on the computer cannot reach the network. To get data from an outside API,
-call `computer-http-request`: the platform sends one HTTPS request and saves the
-answer as a file, which you then read or process with `computer-exec`. The host must
-be one the team allows: any public site, or only the sites on the team's list, as a
-team admin chose under Settings, Browser sites. A private or internal address is
-always refused. If a site is refused, say so plainly and name that setting. Do not try
-another address to get around it.
+Report a timeout or a failure plainly. Run the job again only after fixing its cause and checking
+whether partial output already exists. Reuse a valid completed result rather than charging for the
+same job again. If the job cannot be made to work and you change the method (fewer samples, a
+simpler model, resampling an existing fit instead of refitting), say so in the answer and label it
+truthfully in every deliverable. Never describe a substitute method as the one that was asked for,
+and state what the failed job was and why.
 
-When the API needs a key, the person keeps it in their vault and your context lists
-it by name. Write `{{secret:name}}` where the value belongs, in a header value
-(`"Authorization": "Bearer {{secret:api_key_x7k2}}"`), a query value or the body.
-You never see the value and it is removed from the answer. The first time a secret
-is sent to a site, the person is asked once; say in `agent_tool_status` what you are
-requesting so the question makes sense to them. Never ask the person to paste a key
-that is already in their vault, never put a secret in the address path, and never
-write a request that would send a secret to a site other than the one it is for.
-A redirect is returned, not followed: read `status` and the `location` header, and
-tell the person rather than resending the secret to the new address.
+Create a wake-up, a reminder or a recurring schedule only when the person asked for one. A finished
+job wakes this conversation by itself, so it needs none. When the person says when to check back
+("stop and check back in two hours"), create one wake-up at that time, and do not check or message
+them before it.
 
-A background job has no network either. When a job needs outside data, list the
-requests in the `requests` of `computer-job` (up to ten, same fields and the same
-`{{secret:name}}` rule). They are sent in order before the command starts, each
-answer is saved to its `save_to` path, and the command reads those files. If one
-request is refused or answered with a status of 400 or above, the command does not
-start and the wake says which request failed; its saved answer shows what the site
-said. For more than ten requests, or when the next address depends on the previous
-answer (paging), fetch with `computer-http-request` in the turn first and start the
-job on the saved files.
-
-## Commands and background work
-
-An inline `computer-exec` command has a maximum of 60 seconds. Select a bounded
-timeout appropriate for the work. Output beyond the inline cap is saved at the
-returned `output_file`; use `computer-read-file` when the output is needed.
-
-**Code goes into a file, not into the command.** A command runs through `/bin/sh`, and
-inside `python3 -c "..."` or an unquoted here-document the shell reads every `$` first:
-`"$44/mo"` reaches Python as `"4/mo"`, `"$0"` as `"/bin/sh"`, `"$5.42"` as `".42"`, and
-nothing fails. Save code that is longer than a line or holds a `$` with
-`computer-write-file` and run the file. A result with a `shell_note` means the values
-that command wrote are wrong: write them again from a file.
-
-Your run's folder is `/runs/$WG_RUN_ID`. Use the exact path a tool returned and never
-search `/runs/*`: other runs' folders are visible there, and the first match is another
-run's data.
-
-A model fit (for example a Meridian mix model with more than one chain), a
-forecast over many series, or any script you expect to run longer than about
-half a minute is background work, not an inline command: an inline command that
-hits its cap is charged and wasted, and its partial output is unusable. A quick
-single-chain check may stay inline; the fit you will report from runs as a job.
-
-If work can exceed 60 seconds and `computer-job` is available:
-
-1. Prepare a command that writes its result to a known authorized path. Use a
-   meaningful bounded timeout, up to the tool's maximum of 43,200 seconds.
-2. Start it with `computer-job`. Read the returned run ID, status and credits held.
-3. Tell the user what started and end the turn. Do not poll, loop, sleep through
-   the turn, submit duplicates, or invent a finished result.
-4. The completion event wakes this conversation. Inspect that event's actual
-   result and, if needed, its `/runs/<returned run>/job.log` with
-   `computer-read-file`. A later run can read only a job this conversation started
-   as the same acting person; do not substitute another person's run.
-5. Report a timeout or failure plainly. Re-run only after addressing its cause and
-   checking whether partial output already exists. Reuse a valid completed result
-   rather than charging for the same job again.
-6. If the job cannot be made to work and you change the method (fewer samples, a
-   simpler model, resampling an existing fit instead of refitting), say so in the
-   answer and label it truthfully in every deliverable. Never describe a substitute
-   method as the one that was asked for, and state what the failed job was and why.
-
-Step labels and plan items are read by the person too. Write "Writing the forecast script" and
-"Give you both files to download", never a path, a tool name, a variable name or an ID.
+## The answer
 
 Write to the person in their words. The answer names what was made, the two or three findings
 that matter, and what to decide next. Leave out job and run IDs, folder paths, script names,
@@ -136,18 +72,9 @@ comparable client" and keeps its name out of titles, sheets and file names. Say 
 that you did this, and name the other client there only. Use the names in the file when the person
 says the file is internal.
 
-Work that must start by itself. A schedule (`manage-schedules`) starts a run at a time, in the
-team's time zone. An event trigger starts a run when something happens in Whatagraph, for example
-when a space is created. Triggers exist: they are set up in the agent's settings, in the Logic
-section under Triggers, or by the Agent Builder. When the person asks for work "whenever X happens" and you cannot create the
-trigger yourself, say exactly that and tell them where to add it. Never say that the platform has
-no such event, and never build a schedule that polls for the event instead: it costs credits on
-every empty run and delivers late or twice.
-
-Starting a job reserves its worst-case credits. A pending job is not a finished
-deliverable. A job completion does not grant extra access: a later browser step that
-sends something still asks the person, and a sign-in still needs the person on the
-live page.
+Deliver the files the person asked for. Do not export a Markdown or text file (notes, a summary, a
+read-me or a log) that nobody asked for; say its content in the answer instead. A read-me sheet
+inside a workbook is part of the workbook and is fine.
 
 ## Product-style outputs
 
@@ -182,6 +109,12 @@ instead of placing text boxes and shapes by hand with python-pptx or matplotlib.
   `sources` (links that open) and `notes` (speaker notes); `wgviz.help("deck")` has each
   one's arguments. Text shrinks to fit; keep it short anyway.
   Never build slide layouts from raw shapes when a Deck method exists.
+- A Whatagraph report turned into a deck: read the report and its widgets with the Whatagraph
+  report tools, as the `generating-report-digests` skill shows, and give every widget its own
+  slide in the report's order, unless the person asks for another grouping. The slide's title
+  says what the widget shows, its chart is drawn again from the widget's data with the matching
+  chart helper, and a table widget becomes a `table` slide. Do not put several widgets on one
+  slide to save slides.
 - Workbooks: `wgviz.excel.write_table` per sheet; a chart in a workbook is a native
   Excel chart from openpyxl, never a pasted image, and the workbook carries the numbers
   behind every chart in the deck. A read-me or notes sheet is written with
@@ -199,8 +132,8 @@ instead of placing text boxes and shapes by hand with python-pptx or matplotlib.
 
 Style and brand. Every helper draws in one theme: by default the Whatagraph look (white and
 light grey surfaces, near-black text, the Whatagraph pink as a small accent, Inter). A customer
-who names brand colours, a typeface or a company name, attaches a logo, or asks for their
-report theme gets exactly that, for every chart, slide, page and sheet of the deliverable:
+who names brand colours, a typeface or a company name, attaches a logo or a file to follow, or asks
+for their report theme gets exactly that, for every chart, slide, page and sheet of the deliverable:
 
 - Brand colours in the request: `style.use(style.Theme.from_colors(["#0B3D2E", "#BEF264"], brand="Northstar Digital"))`
   before the first chart or `Deck(...)`; the first colour becomes the accent and the list the
@@ -209,8 +142,13 @@ report theme gets exactly that, for every chart, slide, page and sheet of the de
   `Report(..., theme=...)` accept the same theme.
 - "Our report theme" or "the colours of our reports": read the applied palette with the themes
   tool (`show_color`), then `style.Theme.from_report_theme(payload, brand="Client A")`.
-- A brand guide as a PDF or an image: read it, take the colours and typeface it states, and use
-  `from_colors`; never guess a brand colour from memory, and say which colours you used.
+- An attached file that shows the look to follow (an earlier deck, a report PDF, a brand guide or
+  an image): import it and look at every page (render a PDF or a deck with `wgviz.render.pages`
+  first; read an image as it is). Copy its colours, its typeface and its layout, not only the
+  colours: pass the colours and the typeface to `from_colors`, and follow where it places the
+  title, the chart and the text, its cover and its closing page, with the Deck slide types that
+  match. Never guess a brand colour from memory. Say in the answer which colours and typeface you
+  used and what of the layout the helpers could not follow.
 - One accent, at most three colours on a slide beside the chart palette, no gradients,
   shadows or clip art, and a chart placed on a slide that already has a title is drawn without
   its own title. Do not paint large areas in the accent.
@@ -224,15 +162,12 @@ than twelve slides use `deck.preview(dir)`: it renders the deck and tiles the pa
 sheet with their slide numbers, so forty slides are four pictures to read. Read every sheet, then
 open a single page only where a sheet shows something to check.
 
-Screenshots from the browser belong in these deliverables when the request is about
-what a page looks like. Take each one with `browser-screenshot` and `save_to` set to a path
-on the computer (for example `/team/<project>/shots/<vendor>-pricing.png`) and `clean: true`:
-the picture is written there in the same call, without the consent box, the chat launcher and
-the scrollbar, and you receive a small preview of it. `Deck.screenshot`, `Deck.gallery`,
-`Deck.image` and `Deck.two_up` place it; they cut a tall page from its top to the shape of
-its frame and size the file, so twenty screenshots do not make the deck too heavy to deliver.
-Pass the page's address as `url=` and the day as `captured=`, and write the observations from
-what is visible in the picture, not from memory of the brand. `wgviz.images.crop(path,
+Screenshots from the browser belong in these deliverables when the request is about what a page
+looks like. Take each one as the `team-browser` skill describes. `Deck.screenshot`,
+`Deck.gallery`, `Deck.image` and `Deck.two_up` place it; they cut a tall page from its top to the
+shape of its frame and size the file, so twenty screenshots do not make the deck too heavy to
+deliver. Pass the page's address as `url=` and the day as `captured=`, and write the observations
+from what is visible in the picture, not from memory of the brand. `wgviz.images.crop(path,
 top=0.2, height=0.5)` cuts the band worth showing when the top of the page is not it.
 
 Read the helpers' signatures once, in one command, instead of opening their source:
@@ -260,6 +195,8 @@ list, and you never type a bullet, a dash or a number at the start of an item; `
 | Forecast | `from wgviz import forecast`: complete_weeks for a weekly series from daily rows; run with date_col, value_col and horizon; read `warnings`; target_plan, chart and echarts_option |
 | Marketing mix model | `from wgviz import mmm`: fit with frame, channels and out_dir at `quality="standard"`, then validate (can it predict weeks it never saw), both in one background job; read `warnings`, `diagnostics`, the 90% intervals and the validation verdict; curves_chart for spend against return |
 
+## Forecasts
+
 A request to forecast or project a series (spend, conversions or revenue to month end,
 next month or next quarter) is a statistical forecast: fit the forecast helper on the
 daily or weekly history, and report the point forecast with its prediction interval and
@@ -275,28 +212,48 @@ says when the last period looks incomplete and when the forecast total is more t
 from the same number of recent periods. Fix the input or explain the change before you report it.
 A forecast of spend, clicks, conversions or revenue is never below zero; the helper cuts it there.
 
-A marketing mix model is fitted on the whole business outcome per week (all new revenue, all
-orders), never on what the ad platforms attribute to themselves, and `mmm.validate(...)` says
-whether it can be trusted (run it in the same background job as the fit). The `board-pack` skill
-has the details.
+With under three years of weekly history the forecast carries no season. Put beside it what the
+same weeks brought a year before and how the last 13 weeks compare with the year before, and say
+when the forecast is therefore likely cautious. Forecast spend is an assumption.
 
-A marketing mix model that a person will act on is fitted with `mmm.fit(...)` at its default
-`quality="standard"` (four chains), as a background job. To reuse a finished fit, call
-`mmm.load(out_dir)`, which repeats the fit's warnings; do not read `summary.json` yourself, and say
-in the answer and in the file that the fit is from an earlier run and when it ran. `quality="quick"` only proves that the
-script runs and is never the fit a deliverable reports. After the fit, read `result["warnings"]`
-and `result["diagnostics"]`, and put these in the deliverable in plain words: the sampler settings,
-the largest R-hat (in a methods note or an appendix, in plain words), and each channel's ROI with its 90% interval. When the intervals of two channels
-overlap widely, say that the data cannot rank them, and base the budget advice on what the
-intervals do support. A chart whose title names a range or an interval draws it:
+## Marketing mix models
+
+A marketing mix model is fitted on the whole business outcome per week (all new revenue, all
+orders), with one spend column and, when there is one, one impressions column per channel. The
+revenue or the conversions that the ad platforms attribute to themselves are not that outcome:
+they leave no baseline, and the platforms count the same sale more than once. Look for a source
+that holds the business result (sales, new business, orders, a CRM or a shop) before you settle
+for platform numbers, and show the platforms' own claim beside the model's as a finding.
+
+A mix model that a person will act on is fitted with `mmm.fit(...)` at its default
+`quality="standard"` (four chains), as a background job, and `mmm.validate(frame, channels,
+out_dir=...)` runs in the same job. `validate` refits with a fifth of the weeks held out at random
+and says how well the model predicts them: `verdict` is "holds", "weak" or "fails", `reading` is
+the sentence to say it with, and `expected_vs_actual.csv` is the chart. Do not hold out the last
+weeks as one block: a mix model explains the past and is not a forecast, so that test fails for a
+reason that says nothing about the channels. The baseline follows trend and season by itself
+(`knots="auto"`). `mmm.curves_chart(result, path=...)` draws what each channel returns as its
+spend grows, with a dot at today's spend: a curve that is flat at the dot is a channel where more
+money no longer pays.
+
+To reuse a finished fit, call `mmm.load(out_dir)`, which repeats the fit's warnings; do not read
+`summary.json` yourself, and say in the answer and in the file that the fit is from an earlier run
+and when it ran. `quality="quick"` only proves that the script runs and is never the fit a
+deliverable reports. After the fit, read `result["warnings"]` and `result["diagnostics"]`, and put
+these in the deliverable in plain words: the sampler settings, the largest R-hat (in a methods note
+or an appendix, in plain words), and each channel's ROI with its 90% interval. When the intervals
+of two channels overlap widely, say that the data cannot rank them, and base the budget advice on
+what the intervals do support. A chart whose title names a range or an interval draws it:
 `charts.bar(names, values, intervals=[(low, high), ...], value_format="{:.2f}x")` puts a whisker
 on every bar and both ends in its label. Do not draw the low end, the mean and the high end as
-three bars. A fit whose warnings say that the modelled media contribution is above the
-actual total is not usable, however it is explained: report no ROI, no contribution and no
-reallocation from it. Refit on the total business outcome when the data has one. When it has only
-the conversions the ad platforms attribute to the same channels, say plainly that this data cannot
+three bars. A fit whose warnings say that the modelled media contribution is above the actual
+total is not usable, however it is explained: report no ROI, no contribution and no reallocation
+from it. Refit on the total business outcome when the data has one. When it has only the
+conversions the ad platforms attribute to the same channels, say plainly that this data cannot
 separate the channels, and base the advice on observed efficiency. Do not call Meridian's classes
 directly when `mmm.fit` covers the request.
+
+## Numbers and checks before handing over
 
 Numbers a reader can trust. Compute every figure once, in the script that builds the deliverable,
 and keep the figures in one dictionary or frame. Every sentence, KPI card, caption, chart label and
@@ -316,18 +273,12 @@ saved file the way a careful colleague would: a sentence that contradicts the ta
 its slide, a remark cell that contradicts its own row, a negative forecast of spend or clicks, an
 unfilled value, Markdown characters shown as typed, a mostly empty slide, a screenshot shrunk to
 a narrow strip, the same picture on two slides, a file too heavy to deliver. It prints at most
-twelve findings and says in `total_problems` how many there are, so check again after fixing. It also repeats the
-warnings that `mmm.fit` and `forecast.run` raised in this run. `computer-export` runs this check
-itself and does not hand a file over while it has findings, so an export can answer
-`exported: false` with `findings`. Treat every finding: change the script, build the file again,
-check again. Only a finding that is rightly as it is (a scenario beside the base case, last year
-beside this year) may stay: make the slide say which one it is, then export with
-`reviewed_findings` and one sentence per finding, and tell the person about it in your answer.
-Nobody reads the file of a scheduled or triggered run before the customer does. You are the last
-reader, so never pass a finding you have not looked at. When the check or the export answers with
-`do_not_report`, an analysis of this run is not usable by its own check: its ROI, contribution and
-reallocation figures stay out of the file and out of your answer. Say in plain words that this
-analysis could not answer the question and why, and base the advice on what the data supports.
+twelve findings and says in `total_problems` how many there are, so check again after fixing. It
+also repeats the warnings that `mmm.fit` and `forecast.run` raised in this run. Treat every
+finding by changing the script, building the file again and checking again. A finding that is
+rightly as it is (a scenario beside the base case, last year beside this year) stays only when the
+slide says which one it is. Nobody reads the file of a scheduled or triggered run before the
+customer does. You are the last reader, so never pass a finding you have not looked at.
 
 Say how fresh the data is. After loading dated rows, call
 `verify.freshness(frame["date"], name="Google Ads")`. When it returns a sentence, the source
@@ -341,11 +292,6 @@ the same figure appears in the answer, a workbook and a deck, it must be the sam
 in all three; reconcile a modelled total with the actual total in the data and say how
 they relate before exporting. When you read the rendered pages, compare the numbers in each
 slide's text with the chart or table on the same slide, and fix the script when they differ.
-Use `computer-export`, if granted, with the existing absolute `path` and a useful
-`title` and `filename`. It creates a download card in this conversation, with an
-8 MB maximum. A raw computer path is not a user download link. Never say the file
-was delivered unless the export succeeded. This conversation export is separate
-from sending data to an external site or person, which needs its own authorization.
 
 When a figure comes from an earlier conversation or an earlier turn rather than from
 data fetched in this turn (for example competitor numbers another run read from a
@@ -356,5 +302,4 @@ web page), say so in the answer and in the deliverable, with the time it was rea
 Do not install a network tunnel, read another run's files, extract browser cookies,
 or route around a denied permission. If a required capability is absent, explain
 the missing capability in plain language and use an available smaller workflow
-only when it can satisfy the request. Never claim that enabling a computer tool
-automatically authorizes browser sites, personal sign-ins or external writes.
+only when it can satisfy the request.
