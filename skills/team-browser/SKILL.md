@@ -65,6 +65,14 @@ the conversation, because it is compacted between turns. Find pricing and produc
 links in the home page's snapshot (`follow_link` on a same-site link) instead of guessing
 addresses.
 
+A request for many companies ("at least 30 competitors", "every tool in this market") is a request
+to open each one. Open every company's own page before it gets a row, a price or a feature in a
+deliverable, keep going over several turns when the list is long, and say in the answer how many
+pages you opened. A company you could not open is left out or marked as not checked. A table filled
+from memory looks researched and is not: the file check at export names every company in a table
+that no page read in the conversation mentions. For a competitor study of many companies, load the
+`board-pack` skill first.
+
 A page titled "Just a moment", "Attention required" or "Verify you are human", or a page that holds
 only a challenge frame, is a site refusing automated browsers. Retry at most once and never try to
 pass the challenge yourself. When the task needs that site, ask the person with

@@ -106,9 +106,14 @@ instead of placing text boxes and shapes by hand with python-pptx or matplotlib.
   `statement` (one number set very large), `chart_grid` (two to four charts), `screenshot`
   (a web page in a browser window, or with `facts=` a competitor profile), `decisions`,
   `gallery` (two to six pages side by side), `matrix` (who offers what), `timeline`, `quote`,
-  `sources` (links that open) and `notes` (speaker notes); `wgviz.help("deck")` has each
-  one's arguments. Text shrinks to fit; keep it short anyway.
+  `sources` (links that open), `notes` (speaker notes) and `picture` (a slide that is mostly one
+  photo or page); `wgviz.help("deck")` has each one's arguments. Text is measured and shrinks to
+  fit; keep it short anyway.
   Never build slide layouts from raw shapes when a Deck method exists.
+- Choose the slides and their order from the story this customer needs, not from a fixed
+  outline: a pitch opens with the problem and the answer, a monthly report with the numbers, a
+  quarterly review with results, what drove them and the plan. A short deck needs no agenda,
+  section or sources slide.
 - A Whatagraph report turned into a deck: read the report and its widgets with the Whatagraph
   report tools, as the `generating-report-digests` skill shows, and give every widget its own
   slide in the report's order, unless the person asks for another grouping. The slide's title
@@ -140,6 +145,16 @@ for their report theme gets exactly that, for every chart, slide, page and sheet
   chart palette. Add `font="Georgia"` for a named typeface and `logo="/team/brand/logo.png"`
   for an attached logo (import the attachment first). `Deck(..., theme=...)` and
   `Report(..., theme=...)` accept the same theme.
+- The customer's own PowerPoint template (an attached .pptx or .potx): import it and pass it as
+  `Deck(..., template="/team/brand/template.pptx")`. Its master, background and body font are
+  under every slide.
+- No colours given, but the customer has a website: open its home page in the browser, save a
+  screenshot and the logo image, and read the colours with `wgviz.images.brand_colors(path)`.
+  Look at the logo and the page before you use them. A brand whose pages are dark gets
+  `Theme.from_colors([...], background="#0B1F33")`; the text and the surfaces follow it.
+- Photos of the customer's products, stores or campaigns (from their site or attached):
+  `Deck(..., cover=path)` puts one on the title slide and `deck.picture(path, title=..., text=...,
+  layout="right" | "left" | "full")` makes a slide of one.
 - "Our report theme" or "the colours of our reports": read the applied palette with the themes
   tool (`show_color`), then `style.Theme.from_report_theme(payload, brand="Client A")`.
 - An attached file that shows the look to follow (an earlier deck, a report PDF, a brand guide or
@@ -266,10 +281,16 @@ name. A table of six rows or fewer takes `takeaways=[...]` so the slide says wha
 `deck.save(...)` prints a line that starts with `CHECK THE NUMBERS` for every number in a slide's
 text that is close to, but not the same as, a number in the chart or table on that slide. Each
 line is a slide that contradicts itself: fix the script and save again until none is printed.
+It also prints `CHECK THE LAYOUT` for a text that does not fit its box even at the smallest size
+of its layout: its last lines are drawn over what is under it. Shorten the text or split the
+slide, and save again until none is printed. A preview sheet is too small to show an overlap;
+the file check below finds it.
 
 Check the finished file before you export it. Run
 `python3 -m wgviz.verify /team/<folder>/<file>.pptx --auto` (the same for an `.xlsx`). It reads the
-saved file the way a careful colleague would: a sentence that contradicts the table or chart on
+saved file the way a careful colleague would: text drawn over other text, over the footer line or
+below the slide (measured, and read from the rendered pages), a table of companies that names ones
+no page read in this conversation mentions, a sentence that contradicts the table or chart on
 its slide, a remark cell that contradicts its own row, a negative forecast of spend or clicks, an
 unfilled value, Markdown characters shown as typed, a mostly empty slide, a screenshot shrunk to
 a narrow strip, the same picture on two slides, a file too heavy to deliver. It prints at most
