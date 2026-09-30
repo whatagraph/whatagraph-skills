@@ -13,6 +13,9 @@ required_tools:
   - list-integrations
   - list-sources
   - fetch-data
+optional_tools:
+  - tool_name: list-source-groups
+    purpose: Find the source groups that cover a many-source question, so one fetch replaces a per-source loop.
 ---
 
 # Fetching Marketing Metrics
@@ -108,6 +111,36 @@ If the user's question doesn't imply a report type, default to the most granular
      dimensions: ["date"],
      from: "2026-03-01", till: "2026-03-31"
    ```
+
+## Many sources, one question → fetch the group, then the uncovered tail
+
+When one question covers many sources — "all our Google Ads accounts", every client, every brand, a daily digest or watchdog scan — do not loop `fetch-data` over the sources one by one. A source group already sums its member sources into one virtual source, and one fetch on it returns the data of every member. If `list-source-groups` is not available to you, fetch the in-scope sources within your call budget, say which ones you did not reach, and suggest enabling the tool or asking Rollup to build a group.
+
+1. **List the sources in scope and the groups** (in parallel):
+   ```
+   list-sources action=list channels=["google-ads"] fields=id,name,currency,status
+   list-source-groups action=list
+   ```
+   Follow `page.cursor` until `page.has_more` is false, for both `list-sources` and `list-source-groups`, before you work out covered and uncovered sources. A list filtered to a data channel, as above, does not include a group's own virtual source, so the first list is the real accounts.
+2. **Find the covering groups.** `list-source-groups action=show group_id=<id>` returns the group's `sources` (its members) and its `integration_source_id` (the virtual source you fetch). A group covers the members it lists and nothing else. When two groups share members, count each shared member's row from one group only, or you count it twice.
+3. **Fetch each covering group once**, broken down by Source name:
+   ```
+   fetch-data source_id=<group integration_source_id>
+     report_type="<the group's own report type>"
+     metrics=["universal_metric_<n>"]
+     dimensions=["universal_dimension_1131"]    # Source name; add the entity dimension the group exposes (campaign, ad group) for an entity-level scan
+     from="2026-08-01" till="2026-08-31"
+     compare_type="previous"
+   ```
+   Take the field ids and `report_type` from the group's own `list_dimensions_and_metrics` and `list_report_types`, never from a member's (see `whatagraph-sources-and-data`, "Fetching from a source group or blend"). A group is stored data, as fresh as its last sync. Two members with the same name come back as one row. When names repeat, keep the total from the group, and fetch those members on their own only when you need per-account detail, without adding them to the total again.
+4. **Always fetch the uncovered tail.** Every in-scope source that no group lists gets its own `fetch-data` call with its native fields. A member that `list-source-groups action=source_issues` reports with disabled ETL still returns its old rows in the group result, so count it from the group result only and never fetch it again on top. Say in the answer that its data can stop at the date its ETL was disabled, and suggest fixing the group.
+5. **Add up only like with like.** A group returns `universal_metric_*` ids and a direct fetch returns the channel-native id for the same metric (`metrics.cost_micros` on Google Ads). Match each pair to the same metric before you sum, and never sum across currencies.
+6. **State coverage in the answer:** how many in-scope sources the numbers cover, which group covered which, which you fetched directly, and which returned no data and why — e.g. "17 accounts: 12 through [Google Ads — All Brands], 4 fetched directly; Brand 17 returned data_not_ready". Never present a group's total as "all accounts" while in-scope sources sit outside it.
+7. **Drill down only where the scan points** — fetch a single source for an entity the scan flagged, or for a field the group does not expose.
+
+If your instructions cap `fetch-data` calls per turn, spend them on the groups first and the tail next. When the cap cannot cover every in-scope source, call the total partial, name the sources you did not reach, and continue in a follow-up.
+
+If no group covers the scope and the question will come back (a scheduled digest, a recurring portfolio check), offer to build one so the next run is one call — see `whatagraph-source-groups`. Offer it; do not create a group without the user.
 
 ## Common Marketing Metrics by Channel
 

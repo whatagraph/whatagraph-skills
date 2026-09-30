@@ -10,6 +10,8 @@ required_tools:
   - manage-integrations
   - manage-sources
 optional_tools:
+  - tool_name: list-source-groups
+    purpose: Reuse an existing group before fetching the same question from many sources one by one.
   - tool_name: list-widgets
     purpose: Read a widget's bound fields to tell a retired metric apart from a typo.
   - tool_name: manage-custom-dimensions
@@ -50,6 +52,8 @@ list-sources action=list sort_by="name-asc"                   # newest (default)
 ```
 
 Returns source `id`, `name`, channel, space assignments, currency, and access status.
+
+**One question over many sources** (all accounts of a channel, every client, a daily scan): check `list-source-groups` for a group that covers them before you fetch anything. One `fetch-data` on the group's virtual source, broken down by Source name (`universal_dimension_1131`), returns the data of every member. Two members with the same name come back as one row. When names repeat, keep the total from the group, and fetch those members on their own only when you need per-account detail, without adding them to the total again. A member that `list-source-groups action=source_issues` reports with disabled ETL still returns its old rows in the group result, so count it from the group result only and never fetch it again on top. Say in the answer that its data can stop at the date its ETL was disabled, and suggest fixing the group. Fetch only the sources outside every group one by one, and say which sources the answer covers. The full pattern is in `fetching-marketing-metrics`, "Many sources, one question".
 
 ### Four channels are left out of an unfiltered list
 
