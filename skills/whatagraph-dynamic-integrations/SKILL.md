@@ -46,12 +46,21 @@ level too deep.
 draft -> test-auth -> sample -> publish -> connect
 ```
 
+An `oauth2` definition replaces `test-auth` with a stop for the user, `set-oauth-client` and
+`authorize` (see [OAuth2](#oauth2)):
+
+```
+draft -> STOP: user registers the redirect URLs -> set-oauth-client -> authorize -> user approves -> sample -> publish -> connect
+```
+
 Each step is gated on the one before it. Every response carries a `next` field saying what to do,
 so follow that rather than guessing.
 
 | Action | What it does | Key inputs |
 |---|---|---|
 | `draft` | Validates and stores a new version of the definition. Every guard runs here, including building every component the engine would build. Omit `channel_id` to create a new integration; the response returns the id you use for everything after. Pass `channel_id` to append a version to an existing one. | `title`, `manifest_yaml`, `spec_yaml`, `schema`, `host_allowlist` |
+| `set-oauth-client` | `oauth2` only. Stores the client id and secret of the OAuth application the user registered with the provider. Never returns them. | `channel_id`, `client_id`, `client_secret` |
+| `authorize` | `oauth2` only, in place of `test-auth`. Returns `authorize_url`, a Whatagraph link the user opens to approve access. The callback stores the connected account. | `channel_id` |
 | `test-auth` | Runs the spec's `access_acquisition_flow` against the live API, on the newest draft. Failure stores nothing. Success stores the connected account for the steps that follow. | `channel_id`, `credentials` |
 | `sample` | Reads live records from one stream of the newest draft through the whole engine, using the stored account. Publishing is gated on this. | `channel_id`, `stream`, `source_external_id`, `source_options`, `limit`, `last_days` |
 | `publish` | Promotes the newest version to live, writes the report type, dimension and metric rows, and syncs the storage template. | `channel_id` |
@@ -288,6 +297,7 @@ Each of these is rejected at draft. The deprecated ones name their replacement i
 | `JwtFormField` | `TokenAuthenticator` with `JwtKeyPairTokenProvider` |
 | `IntegrationKeyStoreFlowStep`, `IntegrationKeyCredentialStoreFlowStep` | a `connection_specification.account` block |
 | `IntegrationSourceStoreFlowStep` | a `source_specification.source` block |
+| `ExternalAuthorizationFlowUrlBuilder` | an `AuthorizationFlowUrlBuilder` with a literal `url_base` (see [OAuth2](#oauth2)) |
 | any component that builds a database query or reads Whatagraph's own systems rather than calling the provider's API | an HTTP request to the provider |
 
 ### The spec may not use database validation rules
@@ -776,14 +786,9 @@ authenticator:
 
 Declare the token host in `host_allowlist` too.
 
-**There are no platform credentials and no hosted OAuth redirect.** A shipped connector reads its
-OAuth client id and secret from Whatagraph's own configuration, and the `Platform*` components
-(`PlatformCredentialField`, `PlatformCredentialHeaderPlacement`,
-`PlatformBasicCredentialsTokenProvider`) read that configuration. A dynamic integration has none,
-and the tools cannot set any, so those components fail at fetch time with "Platform credential ...
-is not configured". The `oauth2` flow type also needs a browser redirect that `test-auth` cannot
-perform. Use a credential the user already holds instead: an API key, a personal access token, a
-service account, or a client id and secret collected as properties.
+If the provider supports OAuth2 with a consent screen, build an `oauth2` flow as described in
+[OAuth2](#oauth2). Otherwise use a credential the user already holds: an API key, a personal access
+token, a service account, or a client id and secret collected as properties.
 
 A long-lived refresh token pasted into a property can be exchanged with an `ExternalTokenProvider`
 that sends it with `SuppliedCredentialField`. This works only for a provider that keeps the refresh
@@ -791,6 +796,167 @@ token the same. If the provider issues a new refresh token on every refresh, the
 working after the first refresh, so say so rather than shipping it. If an auth style can only be
 signed with a secret held on the server, say so rather than shipping a definition that fails
 authentication.
+
+### OAuth2
+
+An `oauth2` flow sends the user to the provider's consent screen and exchanges the code the
+provider returns. It authenticates against an OAuth application **the user registers with the
+provider themselves**. Whatagraph's own OAuth applications are never available to a dynamic
+integration, so never try to reuse a shipped connector's client id.
+
+**Run it in this order, and stop where it says stop.**
+
+1. **`draft`.** The response includes `oauth_redirect_urls`, two URLs: the connect callback
+   (ending `/add-integration/dynamic-<id>`) and the reconnect callback (ending `/verify-account`).
+   They depend only on the integration id, so they never change for this integration.
+2. **Stop and tell the user.** Do not call any other action yet. Show both `oauth_redirect_urls`
+   exactly as returned, and ask the user to:
+   - create an OAuth application with the provider, or open the one they have;
+   - add **both** URLs as allowed redirect URLs (the provider's setting is usually named "Valid
+     OAuth Redirect URIs", "Authorized redirect URIs" or "Callback URL");
+   - grant the scopes the definition asks for;
+   - tell you when it is saved, and give you the application's client id and client secret.
+
+   The provider refuses the consent for any redirect URL it was not told about, so skipping this
+   step only produces a failed connect later. Never invent or guess a client id.
+3. **`set-oauth-client`** with the `client_id` and `client_secret` the user gave. It stores them
+   encrypted and never returns them. Do not repeat the secret back in the chat.
+4. **`authorize`.** Give the user `authorize_url` as a link, and ask them to open it while signed
+   in to Whatagraph and approve access. From an IQ Chat they come back to this conversation
+   afterwards. Otherwise they see a page saying whether the account connected.
+5. **`sample`** once the user says they are back. If `sample` answers that there are no stored
+   credentials, the connect failed. Ask the user what the page or the notice said, and have them
+   open the same `authorize_url` again after fixing the cause. Do not re-run `set-oauth-client`:
+   the stored client is per integration, not per draft version, and re-drafting does not clear it.
+
+**Write the consent URLs and the code exchange with the engine's fields.** Draft refuses anything
+else in an `oauth2` flow:
+
+- `authorization_url` and `verification_url` are `AuthorizationFlowUrlBuilder` blocks with a
+  literal `url_base` on a declared host. Their `query_parameters` are `CompositeQueryParameters`,
+  whose `fields` set `client_id` with a `PlatformCredentialField` (`credential: oauth_client_id`),
+  `redirect_uri` with a `PlatformUrlField` (`url: connect` for `authorization_url`, `url: verify`
+  for `verification_url`), and include a `StateField` after `redirect_uri`.
+- The code exchange is a `TokenExchangeFlowStep`. It sends the client with `PlatformCredentialField`
+  (`oauth_client_id`, `oauth_client_secret`) or `PlatformBasicCredentialsTokenProvider`, and it sends
+  the **same** `redirect_uri` as the consent URL: a `PlatformUrlField` with `url: connect`, or an
+  `InterpolatedField` whose value is `"{{ redirect_uri }}"`. Never use `CallbackUrlField` there. It
+  builds a different URL, and the provider refuses the exchange.
+- `ExternalAuthorizationFlowUrlBuilder` is not available to a stored definition.
+
+A complete flow, for a provider that issues long-lived access tokens:
+
+```yaml
+connection_specification:
+  properties: {}
+  account:
+    external_id: "{{ id }}"
+    name: "{{ name }}"
+    credentials:
+      access_token: "{{ access_token }}"
+  authorization_flow:
+    type: oauth2
+    authorization_url:
+      type: AuthorizationFlowUrlBuilder
+      url_base: "https://www.example.com"
+      path: "oauth/authorize"
+      query_parameters:
+        type: CompositeQueryParameters
+        fields:
+          - { type: StaticField, field_path: [ response_type ], value: "code" }
+          - { type: PlatformCredentialField, field_path: [ client_id ], credential: oauth_client_id }
+          - { type: PlatformUrlField, field_path: [ redirect_uri ], url: connect }
+          - { type: StaticField, field_path: [ scope ], value: "read" }
+          - { type: StateField, field_path: [ state ] }
+    verification_url:
+      type: AuthorizationFlowUrlBuilder
+      url_base: "https://www.example.com"
+      path: "oauth/authorize"
+      query_parameters:
+        type: CompositeQueryParameters
+        fields:
+          - { type: StaticField, field_path: [ response_type ], value: "code" }
+          - { type: PlatformCredentialField, field_path: [ client_id ], credential: oauth_client_id }
+          - { type: PlatformUrlField, field_path: [ redirect_uri ], url: verify }
+          - { type: StaticField, field_path: [ scope ], value: "read" }
+          - { type: StateField, field_path: [ state ] }
+    access_acquisition_flow:
+      - type: TokenExchangeFlowStep
+        requester:
+          type: HttpRequester
+          http_method: "POST"
+          url_base: "https://api.example.com"
+          path: "oauth/token"
+          body_format: "form_params"
+          request_body:
+            type: CompositeRequestBody
+            fields:
+              - { type: StaticField, field_path: [ grant_type ], value: "authorization_code" }
+              - { type: PlatformCredentialField, field_path: [ client_id ], credential: oauth_client_id }
+              - { type: PlatformCredentialField, field_path: [ client_secret ], credential: oauth_client_secret }
+              - { type: PlatformUrlField, field_path: [ redirect_uri ], url: connect }
+              - { type: InterpolatedField, field_path: [ code ], value: "{{ code }}" }
+          middlewares:
+            - <<: *retry
+            - <<: *logger
+            - <<: *classifier
+      - type: RequestFlowStep          # reads the account the token belongs to
+        requester:
+          type: HttpRequester
+          http_method: "GET"
+          url_base: "https://api.example.com"
+          path: "me"
+          request_headers:
+            type: SimpleRequestHeaders
+            headers:
+              Authorization: "Bearer {{ access_token }}"
+          middlewares:
+            - <<: *retry
+            - <<: *logger
+            - <<: *classifier
+```
+
+The streams then authenticate with `SuppliedCredentialTokenProvider` (`credential: access_token`)
+and `HeaderTokenPlacement` (`scheme: bearer`). Declare every host the flow calls, the consent host
+included, in `host_allowlist`.
+
+For a provider whose access token expires, drop `access_token` from `account.credentials`. The
+`TokenExchangeFlowStep` stores the refresh token the provider returns on its own. The streams then
+mint an access token from it with an `ExternalTokenProvider`:
+
+```yaml
+authenticator:
+  type: TokenAuthenticator
+  token_placement:
+    type: HeaderTokenPlacement
+    scheme: bearer
+  token_provider:
+    type: ExternalTokenProvider
+    requester:
+      http_method: "POST"
+      body_format: "form_params"
+      url_base: "https://api.example.com"
+      path: "oauth/token"
+      request_body:
+        type: CompositeRequestBody
+        fields:
+          - { type: RefreshTokenField, field_path: [ refresh_token ] }
+          - { type: StaticField, field_path: [ grant_type ], value: "refresh_token" }
+          - { type: PlatformCredentialField, field_path: [ client_id ], credential: oauth_client_id }
+          - { type: PlatformCredentialField, field_path: [ client_secret ], credential: oauth_client_secret }
+      middlewares:
+        - <<: *retry
+        - <<: *logger
+        - <<: *classifier
+  token_storage:
+    type: AccountCredentialStore
+    refresh_token_field: refresh_token
+    expiration_policy:
+      type: ConstantExpirationPolicy
+      every: 3500
+```
+
+Set `every` a little under the provider's access token lifetime.
 
 ## Per-source inputs
 
@@ -986,7 +1152,8 @@ data. An id belonging to another team reads as absent rather than forbidden.
 | `test-auth` fails | The credential or the flow. Check the endpoint, the placement `scheme`, and whether the API wants a prefix. |
 | `test-auth` passes but `sample` says credentials are missing | The manifest names a `credential` that `account.credentials` does not declare, or declares under a different name. |
 | The connection fails with an empty `external_id` or name | The `account` block reads an input that `ValidationFlowStep` dropped because it had no rule, or a probe field that the `record_selector` did not extract. |
-| "Platform credential ... is not configured" | A `Platform*` component. A dynamic integration has no platform credentials; collect the value from the user. |
+| "Platform credential ... is not configured" | In an `oauth2` flow, `set-oauth-client` has not been called for this integration. Otherwise a `Platform*` component outside OAuth2: a dynamic integration has no other platform credentials, so collect the value from the user. |
+| `sample` says there are no stored credentials after `authorize` | The OAuth2 connect failed and stored nothing. Ask the user what the page or notice said, fix the cause (usually a redirect URL missing from the provider's application), and have them open the same `authorize_url` again. |
 | `sample` returns nothing | Usually the extractor's `field_path` does not match the response shape, or the date filter excludes everything. |
 | `sample` returns one record that is the whole envelope | `field_path: []` against an enveloped response. Name the key holding the list. |
 | A source named `N/A` or with external id `-` | The factory's `name` or `external_id` read a key the discovery record does not have. |
