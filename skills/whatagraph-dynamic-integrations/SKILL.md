@@ -829,6 +829,13 @@ integration, so never try to reuse a shipped connector's client id.
    open the same `authorize_url` again after fixing the cause. Do not re-run `set-oauth-client`:
    the stored client is per integration, not per draft version, and re-drafting does not clear it.
 
+**Consent runs the newest draft only until the first publish.** After that, every consent, the
+one `authorize` starts included, runs the live version, so customers never run an unpublished
+draft. A later draft that still works with the existing token samples and publishes as usual. A
+later draft that needs a new consent, such as one that adds a scope, cannot be proven before it is
+published, and it cannot be published until it samples. Tell the user so before re-drafting, and
+build the new scope set as a new integration instead.
+
 **Write the consent URLs and the code exchange with the engine's fields.** Draft refuses anything
 else in an `oauth2` flow:
 
