@@ -37,6 +37,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-reports` | Create, duplicate, and update reports. |
 | `whatagraph-report-tabs` | Create, duplicate, rename, and reorder report tabs. |
 | `whatagraph-widgets` | Build and lay out widgets on the grid. |
+| `whatagraph-canvases` | Build designs — a slide deck, a printable client report and a continuous dashboard as one document type in three formats. Covers the brands they are drawn in. |
 | `whatagraph-dynamic-charts` | Build chart families with no dedicated widget type — scatter, bubble, heatmap, calendar heatmap, candlestick, box plot, radar, funnel, polar bar, stacked and 100% stacked, horizontal bars, bars-plus-line, top-N. |
 | `whatagraph-offline-reports` | Build a whole report from numbers you already have, with no connected source. |
 | `whatagraph-blends` | Combine data from different channels into one virtual source. |

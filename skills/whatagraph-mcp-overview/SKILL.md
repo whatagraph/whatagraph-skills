@@ -46,6 +46,7 @@ Both work same-channel and cross-channel — channel count is not what separates
 | Sending their own data in, a system with no connector, "Custom API", an access token | `whatagraph-custom-api` |
 | Client folders, organizing reports under clients | `whatagraph-spaces` |
 | Creating/editing reports, tabs, widgets | `whatagraph-reports`, `whatagraph-report-tabs`, `whatagraph-widgets` |
+| A deck, a printable/designed report, a one-pager, a dashboard view — anything laid out rather than gridded | `whatagraph-canvases` |
 | Summing sources into one total, or combining many of them | `whatagraph-source-groups` |
 | Joining a handful of sources row-by-row, or combined numbers that must be live | `whatagraph-blends` |
 | Building a formula metric or a unified metric across channels | `whatagraph-custom-metrics` |

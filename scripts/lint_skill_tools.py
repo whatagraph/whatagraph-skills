@@ -61,11 +61,13 @@ CANONICAL_TOOLS = {
     "list-assets", "manage-assets",
     "list-automations", "manage-automations", "delete-automations",
     "list-blends", "manage-blends", "delete-blends",
+    "list-canvases", "manage-canvases", "delete-canvases",
     "list-conversations", "manage-conversations", "delete-conversations",
     "view-creatives",
     "list-custom-api-data", "manage-custom-api",
     "list-custom-dimensions", "manage-custom-dimensions", "delete-custom-dimensions",
     "list-custom-metrics", "manage-custom-metrics", "delete-custom-metrics",
+    "list-design-systems", "manage-design-systems",
     "list-destinations", "manage-destinations", "delete-destinations",
     "export-report",
     "list-external-connectors",
@@ -92,6 +94,12 @@ CANONICAL_TOOLS = {
     "list-templates", "manage-templates", "delete-templates",
     "list-themes", "manage-themes", "delete-themes",
     "list-widgets", "manage-widgets", "delete-widgets",
+    # The team computer and the agent's browser.
+    "computer-chart", "computer-exec", "computer-export", "computer-fetch-data",
+    "computer-http-request", "computer-import-attachment", "computer-job",
+    "computer-list-files", "computer-read-file", "computer-write-file",
+    "browser-act", "browser-allow-site", "browser-extract", "browser-navigate",
+    "browser-owner-sign-in", "browser-screenshot", "browser-sign-in", "browser-sign-out",
 }
 
 # Destructive tools must never be CORE (`required_tools`) of a domain skill:
@@ -115,6 +123,8 @@ VALID_GROUPS = {
     "monitoring_kpis",
     "distribution_lifecycle",
     "team_workspace_branding",
+    "computer",
+    "browser",
     "deletion",
 }
 
