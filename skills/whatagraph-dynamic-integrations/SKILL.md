@@ -863,8 +863,9 @@ build the new scope set as a new integration instead.
 **Write the consent URLs and the code exchange with the engine's fields.** Draft refuses anything
 else in an `oauth2` flow:
 
-- `authorization_url` and `verification_url` are `AuthorizationFlowUrlBuilder` blocks with a
-  literal `url_base` on a declared host. Their `query_parameters` are `CompositeQueryParameters`,
+- `authorization_url` and `verification_url` are `AuthorizationFlowUrlBuilder` blocks whose
+  `url_base` is a literal `https://` URL on a host in `host_allowlist`, with no user part,
+  backslash, whitespace or port other than 443. Their `query_parameters` are `CompositeQueryParameters`,
   whose `fields` set `client_id` with a `PlatformCredentialField` (`credential: oauth_client_id`),
   `redirect_uri` with a `PlatformUrlField` (`url: connect` for `authorization_url`, `url: verify`
   for `verification_url`), and include a `StateField` after `redirect_uri`.
@@ -872,7 +873,8 @@ else in an `oauth2` flow:
   (`oauth_client_id`, `oauth_client_secret`) or `PlatformBasicCredentialsTokenProvider`, and it sends
   the **same** `redirect_uri` as the consent URL: a `PlatformUrlField` with `url: connect`, or an
   `InterpolatedField` whose value is `"{{ redirect_uri }}"`. Never use `CallbackUrlField` there. It
-  builds a different URL, and the provider refuses the exchange.
+  builds a different URL, and the provider refuses the exchange. An exchange that sends no
+  `redirect_uri` at all is refused too.
 - `ExternalAuthorizationFlowUrlBuilder` is not available to a stored definition.
 
 A complete flow, for a provider that issues long-lived access tokens:
