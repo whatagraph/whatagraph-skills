@@ -819,11 +819,35 @@ integration, so never try to reuse a shipped connector's client id.
 
    The provider refuses the consent for any redirect URL it was not told about, so skipping this
    step only produces a failed connect later. Never invent or guess a client id.
+
+   List **every** `oauth_redirect_urls` entry, never only the first: the reconnect callback is
+   what a later re-authorization returns to, and leaving it out breaks that months later. Question
+   text renders as markdown, so ask it as numbered steps with each URL in a code span, which the
+   user copies exactly. Then ask for the client id and the client secret as separate questions:
+
+   ```markdown
+   Set up your <Provider> OAuth app:
+
+   1. Open your app in the <Provider> developer console, or create one.
+   2. Add both of these as <the provider's setting name>:
+      - `<oauth_redirect_urls[0]>`
+      - `<oauth_redirect_urls[1]>`
+   3. Grant the scopes <scopes>, and save.
+
+   Then paste the app's client ID below.
+   ```
 3. **`set-oauth-client`** with the `client_id` and `client_secret` the user gave. It stores them
    encrypted and never returns them. Do not repeat the secret back in the chat.
 4. **`authorize`.** Give the user `authorize_url` as a link, and ask them to open it while signed
    in to Whatagraph and approve access. From an IQ Chat they come back to this conversation
-   afterwards. Otherwise they see a page saying whether the account connected.
+   afterwards. Otherwise they see a page saying whether the account connected. Write it as a named
+   markdown link, not a bare URL, and do not repeat the redirect URLs here; they were step 2:
+
+   ```markdown
+   [Approve access in <Provider>](<authorize_url>)
+
+   Sign in, approve the requested access, and you will come back to this chat.
+   ```
 5. **`sample`** once the user says they are back. If `sample` answers that there are no stored
    credentials, the connect failed. Ask the user what the page or the notice said, and have them
    open the same `authorize_url` again after fixing the cause. Do not re-run `set-oauth-client`:
