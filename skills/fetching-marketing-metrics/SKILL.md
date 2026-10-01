@@ -114,7 +114,7 @@ If the user's question doesn't imply a report type, default to the most granular
 
 ## Many sources, one question → fetch the group, then the uncovered tail
 
-When one question covers many sources — "all our Google Ads accounts", every client, every brand, a daily digest or watchdog scan — do not loop `fetch-data` over the sources one by one. A source group already sums its member sources into one virtual source, and one fetch on it returns the data of every member. If `list-source-groups` is not available to you, fetch the in-scope sources within your call budget, say which ones you did not reach, and suggest enabling the tool or asking Rollup to build a group.
+When one question covers two or more sources of the same channel — named ones ("these three Google Ads accounts") or "all our Google Ads accounts", every client, every brand, a daily digest or watchdog scan — do not loop `fetch-data` over the sources one by one. A source group already sums its member sources into one virtual source, and one fetch on it returns the data of every member. When a group holds exactly the requested sources, fetch that group once. If `list-source-groups` is not available to you, fetch the in-scope sources within your call budget, say which ones you did not reach, and suggest enabling the tool or asking Rollup to build a group.
 
 1. **List the sources in scope and the groups** (in parallel):
    ```
