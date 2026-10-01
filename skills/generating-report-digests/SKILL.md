@@ -14,6 +14,7 @@ required_tools:
   - list-widgets
   - export-report
   - fetch-data
+  - view-creatives
 ---
 
 # Generating Report Digests
@@ -70,6 +71,14 @@ list-reports action: list, search: "{name fragment}"
    For comparison data, the CSV headers include `(prev)` suffix columns alongside current-period columns.
 
    **Note**: `export-report` exists but returns an `.xlsx` download URL (not inline data). It is useful for giving the user a downloadable file, but **not for LLM-driven digests** — use `csv_export` per widget instead.
+
+3b. **View the ad creatives when the report has media widgets** (widget types `110`/`111` in the step-2 listing) and the digest should cover creative content — "how do the ads look", "which creatives performed", or any visual commentary:
+
+   ```
+   view-creatives report_id: {id}
+   ```
+
+   This returns the actual ad-creative images (up to 10 per call — page with `offset`, narrow with `tab_id` / `widget_ids`), each mapped to its widget and ad name in a leading text block. Analyze the images you see, pair each with its metrics from `csv_export`, and embed each discussed creative in the digest as a markdown image (`![ad name](url)` from the mapping) — the reader cannot see what you received. Do not describe creatives from their URLs or ad names alone.
 
 4. **Build the digest from the csv_export results.** For each widget, include:
    - Widget title

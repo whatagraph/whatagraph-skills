@@ -14,6 +14,7 @@ optional_tools:
   - fetch-data
   - export-report
   - preview-report
+  - view-creatives
   - manage-spaces
   - manage-sources
   - manage-integrations
@@ -157,6 +158,17 @@ Only applicable if those reports are linked to a template.
 4. Create share link: `manage-sharing action=create report_id=<id> require_password=true password="<share_password>"`.
 5. Capture the URL from the response and hand it to the client.
 6. If recurring, attach an automation: `manage-automations action=create frequency=monthly receivers=["client@..."] time_zone="Europe/London"`.
+
+### 7. Analyze ad creatives / visuals ("how do my Google and Meta ads look?")
+
+The flow behind any creative-analysis ask — including a recurring agent that reviews ad visuals. The actual images come from `view-creatives`, never from creative URLs or ad copy.
+
+1. Find a report with media widgets for the channels in question: `list-widgets action=list report_id=<id>` — media widgets are types `110`/`111`. No media widget → build one per channel first (see `whatagraph-widgets` → "Media / creative preview") or tell the user what is missing.
+2. `view-creatives report_id=<id>` — the creative images, up to 10 per call, each mapped to its widget and ad name in the leading text block. Narrow with `tab_id` / `widget_ids`, page with `offset`.
+3. Pair visuals with numbers: `list-widgets action=csv_export widget_id=<id>` on the same widgets, or `fetch-data` at ad level with the channel's creative dimension.
+4. Analyze what you see (hierarchy, contrast, text density, branding, format fit) against performance, and embed each discussed creative as a markdown image (`![ad name](url)`) next to its insight — the reader cannot see the images you received.
+
+Full mechanics: `whatagraph-export` → "See the ad creatives"; analysis structure: `generating-marketing-insights` → "Creative Analysis Framework".
 
 ## Common pitfalls across flows
 

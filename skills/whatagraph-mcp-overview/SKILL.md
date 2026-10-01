@@ -34,6 +34,7 @@ Data flows into widgets from:
 - **Source group** — many sources (dozens to hundreds) **summed** into one virtual source; exposes the total *and* each channel's / source's own contribution. Stored by ETL, so it warms up first.
 - **Blend** — a handful of sources **joined** on a shared dimension (date, campaign name), each keeping its own columns. Computed live.
 - **Values entered by hand** — an offline (manual-data) widget for figures no integration can supply (offline spend, retainer fees, client targets). See `whatagraph-widgets`.
+- **Numbers the user pushes in** — the Custom API, a source the user fills themselves, for a system Whatagraph has no connector for. Ongoing and daily, where an offline widget is a fixed set of values typed once. See `whatagraph-custom-api`.
 
 Both work same-channel and cross-channel — channel count is not what separates them. **Sum → source group, join → blend**; many → group, live → blend.
 
@@ -42,6 +43,7 @@ Both work same-channel and cross-channel — channel count is not what separates
 | If the user is working on… | Reach for this skill |
 |---|---|
 | Finding what data is connected, what metrics/dimensions are available; pulling raw numbers | `whatagraph-sources-and-data`, `fetching-marketing-metrics` |
+| Sending their own data in, a system with no connector, "Custom API", an access token | `whatagraph-custom-api` |
 | Client folders, organizing reports under clients | `whatagraph-spaces` |
 | Creating/editing reports, tabs, widgets | `whatagraph-reports`, `whatagraph-report-tabs`, `whatagraph-widgets` |
 | A deck, a printable/designed report, a one-pager, a dashboard view — anything laid out rather than gridded | `whatagraph-canvases` |
@@ -59,6 +61,7 @@ Both work same-channel and cross-channel — channel count is not what separates
 | Scheduled email delivery | `whatagraph-automations` |
 | PDF/CSV export of a whole report | `whatagraph-export` |
 | Seeing how a report renders, checking your own work | `whatagraph-export` |
+| Looking at the actual ad-creative images from a report's media widgets (creative analysis, creative QA) | `whatagraph-export` (`view-creatives`) |
 | Pushing data to BigQuery / data warehouse | `whatagraph-destinations` |
 | Inviting teammates, roles, subscription | `whatagraph-team-and-members` |
 | Connecting a new integration account to the team | `whatagraph-integrations-admin` |
@@ -77,6 +80,7 @@ These read-only workflow skills sit on top of the domain skills above — reach 
 | Orient in an unfamiliar account — what's connected, what's available | `exploring-account-data` |
 | Summarize / digest an existing report (often from a live-report URL) | `generating-report-digests` |
 | Turn data into an executive narrative or insights write-up | `generating-marketing-insights` |
+| Analyze ad visuals — "how do my Google / Meta ads look?", creative winners and losers | `generating-marketing-insights` (Creative Analysis Framework), via `view-creatives` — mechanics in `whatagraph-export` |
 | Audit or critique an existing report's structure and widgets | `analyzing-reports` |
 | Compare/analyze across channels using blends & source groups | `cross-channel-analytics` |
 | Health-check the whole account (connections, sharing, goals, usage) | `auditing-account-health` |

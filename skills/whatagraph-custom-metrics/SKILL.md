@@ -64,6 +64,8 @@ list-custom-metrics action=usage universal_metric_ids=[<id>, <id>]
 
 `list` items carry a `transformation_level` field; `list_with_premades` items (platform-native metrics) do not.
 
+Both listings hide child metrics by default, the same way the customer's own list of custom metrics does. A count from `list` is therefore a count of top-level metrics. See "Parent and child metrics" below for `parent_id` and `include_children`.
+
 ### `show` — where a metric is valid (`resolves_on` / `usage_hint`)
 
 `list-custom-metrics action=show metric_id=<id>` returns, alongside the metric config, two resolution fields that answer "where does this metric actually work":
@@ -234,6 +236,43 @@ manage-custom-metrics action=create
    fields=[
      {"channel_id": <channel_id>, "field_external_id": "universal_metric_3", "report_type_external_id": "campaign"}
    ]
+```
+
+## Parent and child metrics
+
+`manage-custom-metrics` accepts `parent_id` on `create`. It points at another custom metric in the same team. A metric that has a parent is a child.
+
+A parent is fixed when the metric is created. `update` and `duplicate` reject `parent_id`, so a metric cannot be moved under a different parent, and a child cannot be detached. To change where a metric sits, create a new one with the `parent_id` you want and delete the old one.
+
+A child does not appear in the customer's list of custom metrics. It appears on its parent's page instead. Everywhere else it is a normal metric: it can be picked in widgets, used in formulas and filters, and edited on its own. A metric can only have a metric as a parent, and a dimension only a dimension.
+
+**Create a child in these three cases, and only these three.**
+
+1. You are copying an existing metric so the copy reads a different source, channel or report type. The copy becomes a child of the metric you copied from. This is the most common reason to create a child. Watch for "duplicate this metric", "copy these metrics", "the same metrics for the new source", or a request to rebuild a report against another source.
+2. The user asks for it directly. Watch for wording such as "as a child of this metric", "copy this metric under it", or "use this one as a template".
+3. The request produces more than one metric that belong together, whether they are variants of one metric or one copy each of several originals. Each copy is filed under the metric it came from, not left at the top level.
+
+In every other case create a normal top-level metric.
+
+**`action=duplicate` cannot do case 1.** It rejects `parent_id` and produces a top-level copy, so duplicating and then updating the copy leaves the customer with two unrelated metrics. Read the original with `action=show`, then `create` a new metric carrying `parent_id` set to the original's id, and delete nothing.
+
+```
+manage-custom-metrics action=create name="Revenue for retail clients" ... parent_id=<parent metric id>
+```
+
+- There is no batch create. Pick or create the parent first, then issue one `create` per child, each carrying `parent_id`.
+- When copying, the parent is the metric you copied from. Its id is already in hand from the list or show call you read the configuration out of.
+- Name a copy after what makes it different, usually the source: "Clickless Impressions (Whatagraph-Recruitment)", not "Clickless Impressions (copy)".
+- Editing a child is a normal `update`. It keeps its parent, and there is nothing extra to send.
+- Give each child a name that says why it exists. Nothing in the product enforces unique names, so a set of children called "Revenue (1)" through "Revenue (6)" is unusable for the customer.
+- Deleting a parent does not delete its children. They lose the parent and reappear in the customer's list.
+
+Reading a family back:
+
+```
+list-custom-metrics action=list parent_id=<parent metric id>   # that parent's direct children
+list-custom-metrics action=list include_children=true          # every metric, flat
+list-custom-metrics action=show metric_id=<parent metric id>   # returns parent_id and the direct children
 ```
 
 ## Updating

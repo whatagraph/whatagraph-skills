@@ -80,6 +80,8 @@ list-blends action=show blend_id=<id>  # full sub-sources, joins, widgets_count,
 
 Only `show` reports each sub-source's `filter`. `list` does not, so never conclude a blend is unfiltered from a `list` response.
 
+Both listings hide child blends by default, the same way the customer's own list of blends does. A count from `list` is therefore a count of top-level blends. See "Parent and child blends" below for `parent_blend_id` and `include_children`.
+
 ## Creating a blend
 
 ```
@@ -316,6 +318,44 @@ manage-blends action=duplicate blend_id=<id>
 
 Useful for blend variants ("Inner version of the full blend" to compare). Sub-source filters are copied too, so the duplicate is filtered the same way as the original.
 
+## Parent and child blends
+
+`manage-blends` accepts `parent_blend_id` on `create`. It points at another blend in the same team. A blend that has a parent is a child.
+
+A parent is fixed when the blend is created. `update` and `duplicate` reject `parent_blend_id`, so a blend cannot be moved under a different parent, and a child cannot be detached. To change where a blend sits, create a new one with the `parent_blend_id` you want and delete the old one.
+
+A child does not appear in the customer's list of blends. It appears on its parent instead. Everywhere else it is a normal blend: it has its own integration source id, it can be attached to reports, charted in widgets, filtered, and read with `fetch-data`.
+
+**Create a child in these three cases, and only these three.**
+
+1. You are copying an existing blend so the copy reads different sources, a different report type or a different join. The copy becomes a child of the blend you copied from. This is the most common reason to create a child. Watch for "duplicate this blend", "the same blend for the new client", or a request to rebuild a report against other sources.
+2. The user asks for it directly. Watch for wording such as "as a child of this blend", "copy this blend under it", or "use this one as a template".
+3. The request produces more than one blend that belong together, whether they are variants of one blend or one copy each of several originals. Each copy is filed under the blend it came from, not left at the top level.
+
+In every other case create a normal top-level blend.
+
+**`action=duplicate` cannot do case 1.** It rejects `parent_blend_id` and keeps whatever parent the original had, so duplicating a top-level blend and then updating the copy leaves the customer with two unrelated blends. Read the original with `action=show`, then `create` a new blend carrying `parent_blend_id` set to the original's id, and delete nothing.
+
+```
+manage-blends action=create name="Campaign blend (Retail)" ... parent_blend_id=<parent blend id>
+```
+
+- There is no batch create. Pick or create the parent first, then issue one `create` per child, each carrying `parent_blend_id`.
+- When copying, the parent is the blend you copied from. Its id is already in hand from the list or show call you read the configuration out of.
+- Name a copy after what makes it different, usually the source or the client: "Campaign blend (Retail)", not "Campaign blend (copy)".
+- Editing a child is a normal `update`. It keeps its parent, and there is nothing extra to send.
+- Give each child a name that says why it exists. Nothing in the product enforces unique names, so a set of children called "Campaign blend (1)" through "Campaign blend (6)" is unusable for the customer.
+- Deleting a parent does not delete its children. They lose the parent and reappear in the customer's list.
+- Nesting has no depth limit, and a page shows direct children only. A grandchild appears on its own parent, not on the top blend.
+
+Reading a family back:
+
+```
+list-blends action=list parent_blend_id=<parent blend id>   # that parent's direct children
+list-blends action=list include_children=true               # every blend, flat
+list-blends action=show blend_id=<parent blend id>          # returns parent_blend_id and the direct children
+```
+
 ## Unified dimensions and metrics across sub-sources
 
 A blend is only useful when the sub-sources expose equivalent dimensions and metrics that can be joined and aggregated. In practice that means:
@@ -439,6 +479,7 @@ Know these before you promise a user a result. If one blocks you, say so — do 
 - **See sub-source filters from `list-blends action=list`.** Only `action=show` returns them.
 - **Reach a blend sub-source with `source_id`.** `source_id` on `manage-filters` means a report-local source. Blend sub-sources need `blend_sub_source_id`.
 - **Use a filter from a different channel.** All three routes reject it.
+- **Move an existing blend under a different parent.** The parent is fixed at creation. Create a new blend with `parent_blend_id` and delete the old one.
 
 ## Common pitfalls
 

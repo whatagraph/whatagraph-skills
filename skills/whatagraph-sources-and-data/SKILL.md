@@ -28,6 +28,8 @@ A **data source** is one connected account (one Google Ads account, one GA4 prop
 - Before building any widget, to confirm which metrics/dimensions are available.
 - To pull raw numbers for ad-hoc analysis without building a widget.
 - To see where a specific source is used across reports, blends, groups.
+
+**When the channel the user wants does not exist**, they can still get the numbers in: the Custom API is a source they fill themselves, one row per day. Say so rather than telling them the data cannot be reported on. See `whatagraph-custom-api`.
 - To tag sources or override the display currency.
 
 ## Discovery sequence (do this first)
@@ -38,6 +40,7 @@ list-sources action=list                                      # paginated list
 list-sources action=list search="Acme"                        # filter by name substring
 list-sources action=list semantic_search="paid advertising"   # meaning-based search (finds Google Ads, Facebook Ads, etc.)
 list-sources action=list channels=[<integration_id>]          # one channel — resolve the id via list-integrations, never hardcode
+                                                              # also the only way to reach the four hidden channels below
 list-sources action=list space_ids=[<space_id>]               # sources in one space
 list-sources action=list status="issue"                       # broken sources only
 list-sources action=list only_untagged=true                   # sources without tags
@@ -47,6 +50,29 @@ list-sources action=list sort_by="name-asc"                   # newest (default)
 ```
 
 Returns source `id`, `name`, channel, space assignments, currency, and access status.
+
+### Four channels are left out of an unfiltered list
+
+`action=list` with no `channels` never returns sources on these channels:
+
+| Channel | `channel_id` | Where else to find it |
+| --- | --- | --- |
+| Blended sources | 142 | `list-blends` |
+| Source Groups | 154 | `list-source-groups` |
+| Looker Studio | 155 | — |
+| Whatagraph Storage | 182 | no tool of its own |
+
+Each of the first two has its own tool, which is why the plain list stays short. **Whatagraph Storage has no tool of its own, so naming the channel is the only way to find one of its sources.**
+
+```
+list-sources action=list channels=["whatagraph-storage"]      # or channels=[182]
+```
+
+Naming one of these channels returns only that channel; the other three stay hidden. The `id` you get back works everywhere a source `id` works, `manage-widgets` included, so this is how you build a widget on stored data.
+
+A Whatagraph Storage source is created by the transfer, not by the user, and it is attached to no space. A source in no space works in every space, so it never fails the space check on a report.
+
+When the user talks about "stored data", a "storage source", or a transfer they already mapped, reach for this rather than telling them to connect anything. `list-destinations` returns `storage_source_id` on each storage transfer, which is the same id from the other direction — see `whatagraph-destinations`.
 
 Deep-dive a single source:
 
