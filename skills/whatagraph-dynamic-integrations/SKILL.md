@@ -1053,7 +1053,22 @@ paginator:
 - `PageIncrement` stops when a page returns fewer records than `page_size`.
 - `LimitedPageIncrement` adds `total_count`, for an API that reports how many records exist.
 - `OffsetIncrement` steps by `page_size`; inject `offset` rather than `page`.
-- `CursorPagination` needs a `cursor_value` naming where the next token sits in the response body.
+- `CursorPagination` needs a `cursor_value`, which is a template rendered against the response
+  body. Variables are the body's top-level keys, with no `response.` or `body.` prefix. The last
+  page usually has no cursor key, so always give it a default; an empty cursor is what stops the
+  paginator. A plain path such as `paging.cursors.after` is not rendered and is sent to the API as
+  literal text. For a Graph-style `paging` object:
+
+  ```yaml
+  pagination_strategy:
+    type: CursorPagination
+    page_size: 100
+    cursor_value: "{{ paging.cursors.after | default('') }}"
+  page_token_option:
+    type: RequestOption
+    inject_into: "query_parameters"
+    field_path: [ "after" ]
+  ```
 - `LinkHeaderPagination` is for an API that returns the next page in a `Link` header rather than
   the body (`Link: <...?page=2>; rel="next"`), which `CursorPagination` cannot see. Set
   `extract_param` to the query parameter carried in that URL. It stops when the API omits
