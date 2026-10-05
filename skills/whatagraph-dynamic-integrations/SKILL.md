@@ -84,6 +84,12 @@ publish. That is the only cheap moment to catch a wrong field mapping.
 where it is, so only `publish` changes what the data path reads. A re-draft also clears the sample,
 so sample again before re-publishing.
 
+**The title is the exception: it applies at draft.** A re-draft renames the integration
+immediately, even when it is published, so the team sees the new name in the connect modal before
+anything is published. The first draft may append " (2)" when the team already has a connector with
+that name. Re-draft with the `title` the first draft returned, unless the user asked for a
+different name. Never re-draft a published integration just to test how something renders.
+
 Use `list-dynamic-integrations` at any point. Each entry shows `status`, `live_version`,
 `newest_version`, `has_unpublished_draft`, `newest_version_sampled` and `connected_source_count`.
 Passing `channel_id` adds the `host_allowlist` and every version with its `sampled_at` and
