@@ -320,10 +320,10 @@ rejected rather than silently dropped:
 Scope a field to certain report types with `options.report_types`, listing declared report type
 ids. A top-level `report_types` on a field is rejected.
 
-**Every report type needs at least one metric it can use**, or draft is refused with a message
-naming the report type. A metric without `options.report_types` counts for every report type; one
-with it counts only for the report types it lists. A widget on a report type with no metric has
-nothing to show. Dimensions are optional, because every stored row already carries a date.
+**Every report type needs at least one metric and one dimension it can use**, or draft is refused
+with a message naming the report type. A field without `options.report_types` counts for every
+report type; one with it counts only for the report types it lists. A widget on a report type with
+no metric has nothing to show, and one with no dimension can only show totals and a date trend.
 
 **A metric `formula` is rejected.** A dynamic integration does not compute formulas. Declare the
 parts as metrics of their own and combine them in a custom metric on the report.
