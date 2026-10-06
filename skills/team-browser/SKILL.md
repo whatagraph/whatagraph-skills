@@ -73,6 +73,10 @@ from memory looks researched and is not: the file check at export names every co
 that no page read in the conversation mentions. For a competitor study of many companies, load the
 `board-pack` skill first.
 
+A research question that names no source needs several independent sources. Read at least three
+sites that do not belong to the same company, and say in the answer which sites you used. Use one
+site only when the person names it.
+
 A page titled "Just a moment", "Attention required" or "Verify you are human", or a page that holds
 only a challenge frame, is a site refusing automated browsers. Retry at most once and never try to
 pass the challenge yourself. When the task needs that site, ask the person with

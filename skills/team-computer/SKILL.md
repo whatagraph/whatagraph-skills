@@ -38,6 +38,15 @@ attachment of this conversation comes onto the computer with `computer-import-at
 connected marketing data use `computer-fetch-data` with discovered source and field identifiers;
 do not rebuild a large dataset from chat snippets. Use only the tools granted to this agent.
 
+Start the work without exploring the computer. The tool descriptions name the folders, so do not
+print the environment, list `/runs` or read `.run.json` first. Save a file that a later turn or the
+person needs in `/team/<project>/`, or in `/agents/<your id>/` when it is private. A `/runs/<run>/`
+folder is scratch for one turn, and a later turn cannot write to it.
+
+Build a deliverable with one script that makes the file, run it, check the saved file, then export
+it. Do not write separate test scripts, and do not add charts, sheets or slides beyond what the
+person asked for.
+
 ## Long work
 
 A model fit (for example a Meridian mix model with more than one chain), a forecast over many
