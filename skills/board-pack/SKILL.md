@@ -18,30 +18,27 @@ optional_tools:
 
 # Board pack and other long packs
 
-Load `team-computer` and `team-browser` as well, each in its own step: a step's tool output is
-limited, and two skills loaded in the same step arrive cut off. This skill says how to run the
-whole job; those two say how each tool and helper works.
+Load `team-computer` and `team-browser` as well. This skill says how to run the whole job; those
+two say how each tool and helper works. `team-computer` holds the rules for the mix model, the
+forecast, numbers and the file check, and `team-browser` those for pictures of pages.
 
 A pack of thirty or more slides with a model, a forecast, research and screenshots is several
 hours of an analyst's work. You do it alone, from one request, without anybody present. It does
 not fit one turn, and it is not meant to: plan it as stages from the first minute.
 
-**Turns.** A turn that uses the computer or the browser ends after about ten minutes, and the
-platform tells you when the time is nearly over. Work in stages of about eight minutes. At the end
-of a stage, before any warning: (1) write to the scratchpad what is done, which files hold it and
-what comes next, (2) make sure a next turn will start, (3) end the turn with two or three plain
-sentences on what is done and what you do next. A next turn starts by itself when a background
-job of this conversation is still running or finished during this turn: its completion message
-opens the next turn. Otherwise create a wakeup with `manage-schedules` (`action: create`,
+**Turns.** A turn has no time limit, but it has a limit on the number of tool calls (the agent's
+step limit), and the conversation is compacted between turns. Work in stages and end a turn at the
+end of a stage, not in the middle of one: (1) write to the scratchpad what is done, which files
+hold it and what comes next, (2) make sure a next turn will start, (3) end the turn with two or
+three plain sentences on what is done and what you do next. A next turn starts by itself when a
+background job of this conversation is still running or finished during this turn: its completion
+message opens the next turn. Otherwise create a wakeup with `manage-schedules` (`action: create`,
 `wait_minutes: 1`, `mode: continue_this_conversation`, and a `prompt` that says where to resume
-and where the state is). Never create both, never poll, and never ask the person whether to
-continue: the request already said so. Ask nothing that a careful analyst would decide alone.
-When a tool result carries a SYSTEM NOTE about the time or the steps left in this turn, the stage
-ends there, whatever you were in the middle of: your next call is `write-scratchpad`, the one
-after it `manage-schedules`, and then you answer in two sentences. One more look at a slide or one
-more page costs the turn, and a turn that is cut off schedules nothing. Deliver the files only in
-a turn that has time left for it: checking, exporting both files and the final answer need about
-three minutes, so when less is left, continue in the next turn.
+and where the state is). Never create both, create no other wake-up or reminder, never poll, and
+never ask the person whether to continue: the request already said so. Ask nothing that a
+careful analyst would decide alone.
+Deliver the files in a turn that has calls left for it: checking, exporting both files and the
+final answer take about ten calls, so when fewer are left, continue in the next turn.
 
 **State lives in files, not in your memory.** The conversation is compacted between turns, so a
 number or a fact that is only in an earlier message is lost. Use one project folder, for example
@@ -49,25 +46,9 @@ number or a fact that is only in an earlier message is lost. Use one project fol
 (screenshots), `charts/`, `notes/facts.json` (research facts, each with `source_url` and
 `read_on`), `notes/progress.md`, `build_workbook.py` and `build_deck.py`. Every later stage reads
 what it needs from these files. The plan (`write_plan`) holds the stages, and the scratchpad holds
-the folder path and the next step. Time is the scarce thing in a turn, so update the plan once per
+the folder path and the next step. Calls are the scarce thing in a turn, so update the plan once per
 stage, not after every page or file, and do not read the plan back right after writing it. Put
 several independent commands into one script instead of one command per call.
-
-**The mix model.** A marketing mix model is fitted on the whole business outcome per week (all new revenue, all
-orders), with one spend column and, when there is one, one impressions column per channel. The
-revenue or the conversions that the ad platforms attribute to themselves are not that outcome:
-they leave no baseline, and the platforms count the same sale more than once. Look for a source
-that holds the business result (sales, new business, orders, a CRM or a shop) before you settle
-for platform numbers, and show the platforms' own claim beside the model's as a finding.
-Whether the model can be trusted is answered by `mmm.validate(frame, channels, out_dir=...)`: it
-refits with a fifth of the weeks held out at random and says how well the model predicts them
-(`verdict` is "holds", "weak" or "fails", `reading` is the sentence to say it with, and
-`expected_vs_actual.csv` is the chart). Do not hold out the last weeks as one block: a mix model
-explains the past and is not a forecast, so that test fails for a reason that says nothing about
-the channels. Run `fit` and `validate` in the same background job. The baseline follows trend and
-season by itself (`knots="auto"`). `mmm.curves_chart(result, path=...)` draws what each channel
-returns as its spend grows, with a dot at today's spend: a curve that is flat at the dot is a
-channel where more money no longer pays.
 
 **Stages that work.**
 
@@ -75,22 +56,19 @@ channel where more money no longer pays.
    the history to `data/` (daily rows, every channel, and the source that holds the business
    result). Take the whole history, not a round start date: ask for five years back in one fetch
    and see where the rows begin, because a mix model wants two years or more and a forecast wants
-   every season it can get. Say how fresh the data is. Write the mix model script (`mmm.fit`, `mmm.validate` and
-   `mmm.curves_chart` in one script) and start it as a background job. Do not wait for it:
-   continue with the research while it runs.
+   every season it can get. Write the mix model script (`mmm.fit`, `mmm.validate` and
+   `mmm.curves_chart` in one script, as `team-computer` describes) and start it as a background
+   job. Do not wait for it: continue with the research while it runs.
 2. Competitors in the browser. For each competitor open the home page, the pricing page and one
    product or feature page. On each page read the text you need with `browser-extract`, then take
-   the picture with `browser-screenshot` (`save_to`, `clean: true`; add `height: 1800` for a
-   pricing table that is below the first screen). After each competitor append its facts to
+   its picture as `team-browser` describes (height 1800 for a pricing table that is below the
+   first screen). After each competitor append its facts to
    `notes/facts.json`: who it is for, the headline it leads with, plans and entry price with what
    the price includes, how it charges (per client, per source, per user), what it says about AI,
-   proof it shows (customer logos, review scores), and anything that changed recently. Write the
-   notes from a script file that you save with `computer-write-file` and run, never through
-   `python3 -c "..."`: the shell removes every `$` amount from such a command ("$44/mo" is saved as
-   "4/mo", "$5.42" as ".42") and nothing fails. Copy each price as the page states it, with its
-   currency sign and its billing period. Four or five competitors fit one turn. A site that blocks the browser or shows a challenge page
-   ("Just a moment", "Verify you are human") is noted as not readable and skipped; never put a
-   challenge page in a deck.
+   proof it shows (customer logos, review scores), and anything that changed recently. Copy each
+   price as the page states it, with its currency sign and its billing period. Four or five
+   competitors fit one turn. A site that shows a challenge page is noted as not readable and
+   skipped.
 3. Industry, benchmarks and news, read from pages you open. This is a stage of its own, and it
    is research, not recall: what you remember about benchmarks, market sizes and announcements is
    out of date and often wrong, and an address written from memory is old or does not exist. Do
@@ -127,14 +105,12 @@ channel where more money no longer pays.
    incremental revenue divided by spend, never all revenue divided by spend, because revenue that
    would have come anyway is not a return on the budget; and one chart shows one measure, so a cost
    per click of 3 and a cost per trial of 700 go into two charts (`chart_grid`) or a table, never
-   onto one axis where the small one disappears. A chart placed on a slide that has a title is
-   drawn without a title of its own.
+   onto one axis where the small one disappears.
 5. Build, look, check, deliver. Write `build_workbook.py` and `build_deck.py` as files and run them
    (as a background job when they need more than a minute; the render of a long deck does). A fix
    is then an edit of one line, not a rewrite. `deck.preview(dir)`, read every sheet, fix, then
-   `python3 -m wgviz.verify` on both files until they are clean, then `computer-export` both.
-   Look at the contact sheets, not at forty single pages: open a single page only to check
-   something a sheet shows. A screenshot that shows a blank, unstyled or half-loaded page, a
+   `python3 -m wgviz.verify` on both files until they are clean, then `computer-export` both. A
+   screenshot that shows a blank, unstyled or half-loaded page, a
    challenge page or a pop-up is taken out, and the page is described in words. The sources slide
    and the sources sheet come from `wgviz.images.pages_read(project_folder)`, which lists every
    page that was opened and captured, so nothing is retyped and nothing unread is cited.
@@ -193,9 +169,9 @@ competitor's pages: a price that is on none of them was recalled, not read. Writ
 page states it (its own currency, its plan, its billing period) and keep a converted or computed
 amount in a separate field such as `comparable_monthly_eur`. (2) Every amount in the deck's text
 (money, and any number of a thousand or more) must be in `notes/figures.json`, in the model's or
-the forecast's result files, or in the chart or table of the same slide. So compute every amount
-you want to say in the analysis script, store it in `figures.json` and build the sentence from
-there; an amount you cannot compute from the data is not said.
+the forecast's result files, or in the chart or table of the same slide. So store every amount
+you compute in the analysis script in `figures.json`, and build each sentence from there as
+`team-computer` says for numbers; an amount you cannot compute from the data is not said.
 
 **What a slide says is what its picture shows.** Write a competitor's facts right after reading
 its pages, from the text you just extracted, never from what you know about the company: prices
@@ -240,9 +216,6 @@ address and the day it was captured. Add `notes()` on the slides a presenter wil
 - A holdout test shows that the model predicts revenue. It does not show that the split between
   baseline and channels is right. Write "estimates" with the range beside every channel return;
   never "proves", "verified" or "confirmed".
-- With under three years of weekly history the forecast carries no season. Put beside it what
-  the same weeks brought a year before and how the last 13 weeks compare with the year before,
-  and say when the forecast is therefore likely cautious. Forecast spend is an assumption.
 - An entry price is the price of a plan, not of an add-on or a pack. Before writing that we lack
   something, search the saved text of our own pages for it (`grep -il mcp shots/whatagraph-*.txt`).
 - In the workbook a count, a rate and a return never carry the euro format, and a click cost
@@ -256,5 +229,5 @@ next to the main tables.
 
 **The answer at the end** names the two files, the answer to the person's question in one
 sentence, the three to five findings that matter, what to decide, and what limits the pack has
-(which data is demonstration data, which sites could not be read). No paths, no tool names.
+(which data is demonstration data, which sites could not be read).
 

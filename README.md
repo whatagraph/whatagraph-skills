@@ -68,8 +68,8 @@ they do nothing for a Claude client that uses the MCP server alone.
 
 | Skill | What it does |
 |---|---|
-| `team-computer` | Python analysis, files, charts and downloadable deliverables on the team computer. Long commands run as background jobs and the conversation wakes on completion. Data from an outside API is requested through the platform, with a secret from the person's vault. Every deck and workbook is checked before it is handed over. |
-| `team-browser` | Read and act on approved websites in the browser that belongs to the acting person: site and action approvals, pictures of pages for a deck, and sign-ins from the person's saved sign-in or the one they typed in the conversation, which the agent never sees in clear text. |
+| `team-computer` | Python analysis, files and finished deliverables on the team computer: charts, decks, workbooks and reports in the Whatagraph look, a customer's brand or the look of an attached file, a report turned into a deck with one slide per widget, forecasts and marketing mix models. Long work runs as background jobs, and every deck and workbook is looked at and checked before it is handed over. |
+| `team-browser` | Read and use websites in the browser that belongs to the acting person: when to use the browser and when the Whatagraph tools read a report instead, pictures of pages for a deck, research across many sites, what never to click, and asking the person on the page when it needs a sign-in. |
 | `board-pack` | Prepare a long pack (a board pack, a quarterly review, a competitor study with thirty or more slides) alone from one request: stages over several turns, state kept in files, research read from pages the browser opened, and the checks before delivery. |
 
 ## Skill frontmatter — declaring tools
