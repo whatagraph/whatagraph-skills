@@ -118,10 +118,10 @@ Avoid the defaults that look like generic AI art unless the brand uses them: abs
 4. **Write the copy.** A headline of 7 words or fewer, one support line, up to three proof points, the offer, and a button of three words or fewer. Prices, claims, codes, dates and legal text come from the user or the data, word for word.
 5. **Write the spec and call `generate-image`.** Use the six parts above. Pass references with their roles.
 6. **Check the result.** You get every image back. First the hard gates; any failure means a fix:
-   - Every word matches the spec, and there is no other lettering.
+   - Every word matches the spec, separators and symbols included, and there is no other lettering.
    - The logo and the product match their references.
    - Colors are on brand, and text has strong contrast with what is behind it.
-   - Text and logo stay inside the safe zones, and nothing important is cut off.
+   - Text and logo stay inside the safe zones, and nothing important is cut off. In a 9:16 image, the last line of text sits above 65% of the height.
    - There are no stray marks, distorted hands or app chrome, and no claim the brief does not support.
 
    Then judge the design: one clear focal point, a single message a viewer gets in three seconds, the hierarchy headline then image then button, and an image that still reads at thumbnail size. Fix a problem with one call that passes the image as `edit_base` and names the single change ("keep everything the same, but ..."); editing beats re-rolling. Stop after three rounds and tell the user what is still wrong.
@@ -167,7 +167,7 @@ A real person can only come from a photo a person uploaded to the conversation o
 
 **Edit.** Pass the image as `edit_base` and describe only the change: "Replace the background with a plain white #FFFFFF background", "Make it a rainy evening; keep everything else". Edits keep the rest of the image closely, and you can chain several edits without drift. Ask for a plain white background for a cut-out; transparent backgrounds are not possible.
 
-**Resize to another placement.** Pass the finished ad as `edit_base` with the new `aspect_ratio`, and say how to extend the scene and where the copy goes:
+**Resize to another placement.** Pass the approved design as `edit_base` with the new `aspect_ratio`, and say how to extend the scene and where the copy goes. Do not re-render it from a `style` reference: a new render changes the artwork and tends to ignore the safe zones.
 
 ```
 Adapt this ad to a vertical 9:16 story. Extend the photo upward and downward naturally.
