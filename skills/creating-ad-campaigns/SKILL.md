@@ -93,7 +93,7 @@ Keep the brand system fixed across concepts so the campaign reads as one brand.
 
 ## 4. Produce the ads
 
-1. **Master first.** For each concept, render the master at 4:5 (or 1:1) with the full creative spec. Pass the logo and the product as references. Use `standard` quality.
+1. **Master first.** For each concept, render the master at 4:5 (or 1:1) with the full creative spec. Pass the logo and the product as references; without a product photo, make one packshot first and use it in every concept, so the product is the same in all of them. Use `standard` quality.
 2. **Check it** against the checklist in `generating-images`, and fix it with an `edit_base` call when needed.
 3. **Every placement.** Adapt each approved master with the resizing recipe: 9:16 for stories and reels (text out of the top 14%, the bottom 35% and the sides), 1:1 for the square feed, 16:9 for LinkedIn, wider banners on request. For Google display and Performance Max, make text-free versions of the image and deliver the copy as text assets.
 4. **Variants.** For a test, change one thing per variant (the headline, the image, or the offer) with an `edit_base` call, so a result can be read.
