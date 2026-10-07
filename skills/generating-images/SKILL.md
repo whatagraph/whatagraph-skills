@@ -30,6 +30,18 @@ Tool covered: `generate-image`.
 
 It does not have ideas of its own. Asked to "be creative", it draws the most obvious picture of the words in the prompt. **You are the art director: decide what the image should be, then describe it so precisely that nothing is left to guess.**
 
+## Default to photography
+
+These images go into client reports, pages and ads. Abstract 3D art and cartoon icons look like generic AI art there, and users reject them. Unless the user asks for an illustration, or the brand's own material is illustrated, make a photograph:
+
+- **Show a real scene from the client's world:** their product category, their customers, their place of business. Not an abstract pattern, a visual metaphor or a floating object.
+- **Direct it like a photo shoot.** Name the lens, the light and the materials ("shot on a 50mm lens, soft window light, linen, glass and stone textures"), and add "Not a 3D render, not an illustration."
+- **Make people ordinary and fictional:** "a woman in her thirties", "natural skin texture, unposed". Never a real person (see "Rules you must not break").
+- **Show the client's own product only from their photo,** passed as a `subject` reference. Without one, show the setting, the customer or the category, with plain unbranded packaging.
+- **Leave out the motifs that mark an image as AI art:** abstract waves or ribbons, glowing particles, holograms, floating dashboards, neon gradients, and clay or plastic 3D icons.
+
+Use an illustration when the user asks for one, when a variant must follow an illustrated ad, or for a diagram that explains an idea (see "Recipes").
+
 ## Use this when
 
 The user wants something visual made or changed. Some examples:
@@ -51,7 +63,7 @@ The user wants something visual made or changed. Some examples:
 ## Workflow
 
 1. **Collect the inputs.** Brand colors and fonts (`list-themes`, or ask), the logo and product photos (`list-assets`, `search-assets`), the image being changed. Ask for a logo rather than inventing one.
-2. **Decide the concept.** For anything open-ended, think of 2 to 4 ideas that differ in metaphor, style (photo, 3D, illustration, typographic) and mood, and avoid the most literal reading of the brief. Pick one with the user, or render each as its own call.
+2. **Decide the concept.** For anything open-ended, think of 2 to 4 concrete scenes that differ in subject, setting and mood. Prefer a specific scene ("a skincare shelf in morning light") to a generic one ("a beauty product"). Pick one with the user, or render each as its own call.
 3. **Write the prompt** with the template below.
 4. **Call `generate-image`.** Pass reference images with their roles.
 5. **Check the result.** You get each image back. Read every word in it against the prompt, check logos, products and faces, and check that nothing important is cut off. Fix a mistake with one more call that passes the image as `edit_base` and names exactly what to change. Stop after two fixes and tell the user what is still wrong.
@@ -62,7 +74,7 @@ The user wants something visual made or changed. Some examples:
 ```
 {Asset type} for {where it will be used}, {aspect ratio}, flat and full-bleed.
 Subject: {what it shows, what is happening, where}.
-Style: {photo with lens and light | 3D render | flat vector | watercolor | pixel art | ...}.
+Style: {photo: lens, light and materials, "Not a 3D render, not an illustration" (default) | the illustration style the user or the brand asked for}.
 Palette: {color #hex}, {#hex}, {#hex}.
 Composition: {where the subject sits}; {where text goes}, with margins.
 Text, exactly: '{line 1}', '{line 2}'. No other text, letters, logos or app interface.
@@ -135,7 +147,7 @@ Use the returned `url` for a report image widget (`manage-widgets`, `image_url`)
 
 **A series that must match** (report section banners, slide headers, a set of icons). Make the first one. For each of the others, pass the first as `edit_base`: "Same banner: same background, font, size and position. Only change the text to '...'."
 
-**A cover or hero image for a report or page.** Ask what the report is about and who reads it. Leave clean space where the title will sit ("keep the left third empty") and do not put the title in the image, so it stays editable.
+**A cover or hero image for a report or page.** Ask what the report is about and who reads it. Photograph a scene from the client's business, not an abstract pattern. Leave clean space where the title will sit ("keep the left third empty") and do not put the title in the image, so it stays editable.
 
 **An illustration that explains an idea** (a funnel, a customer journey, how attribution works). Pick one visual metaphor, keep labels to a few words each, and quote them. For a sequence, a 3 or 4 panel comic with short speech bubbles works well.
 
