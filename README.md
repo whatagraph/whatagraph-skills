@@ -49,7 +49,8 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-templates` | Convert a report into a reusable template and apply templates to new reports. |
 | `whatagraph-themes` | Apply and manage themes (logos, fonts, headers/footers) and color palettes. |
 | `whatagraph-assets` | Import, find, read and publish files — brand images for reports and themes, and searchable documents. |
-| `generating-images` | Create and edit images: illustrations, report banners and covers, slide visuals, ad variants and photo edits. Available inside Whatagraph IQ agents only, which have the image tool. |
+| `generating-images` | Create and edit any visual as a finished design: ads and their placement sets, social posts, flyers, covers, banners, infographics, photos, illustrations and edits. Available inside Whatagraph IQ agents only, which have the image tool. |
+| `creating-ad-campaigns` | Plan and produce an on-brand ad campaign grounded in the client's real ad results: brand kit, concepts with copy and a test hypothesis, every placement, and a board to present it. Available inside Whatagraph IQ agents only. |
 | `whatagraph-sharing` | Create and update public share links for reports. |
 | `whatagraph-automations` | Schedule automated report delivery by email. |
 | `whatagraph-snapshots` | Save and restore the structural state of a report. |
