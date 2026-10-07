@@ -96,7 +96,7 @@ Pass up to 6 in `reference_images`, each with an `asset_ulid` (or a Whatagraph-h
 | `person` | A person in a photo the user uploaded | Keep their appearance. |
 | `other` | Anything else | |
 
-To use an image from outside Whatagraph, import it first with `manage-assets` and pass its `asset_ulid`. Describe in the prompt what each reference is for ("put the product from the first image into the scene of the second").
+To use an image from outside Whatagraph, import it first with `manage-assets` (load `whatagraph-assets` first, see below) and pass its `asset_ulid`. Describe in the prompt what each reference is for ("put the product from the first image into the scene of the second").
 
 A real person can only come from a photo a person uploaded to the conversation or the library. The tool checks where each reference came from, so a photo you imported or generated does not count, whatever role you give it.
 
@@ -123,7 +123,7 @@ Every image costs AI credits. Make what the user asked for, and ask before makin
 
 ## Putting an image somewhere
 
-A generated image is private to the conversation until you publish it:
+A generated image is private to the conversation until you publish it. `manage-assets` runs only after the `whatagraph-assets` skill is loaded in the conversation, so load that skill before the first `manage-assets` call:
 
 ```
 manage-assets action=publish asset_id=<asset_ulid>      → {"url": "<public_url>"}
