@@ -84,6 +84,12 @@ publish. That is the only cheap moment to catch a wrong field mapping.
 where it is, so only `publish` changes what the data path reads. A re-draft also clears the sample,
 so sample again before re-publishing.
 
+**The title is the exception: it applies at draft.** A re-draft renames the integration
+immediately, even when it is published, so the team sees the new name in the connect modal before
+anything is published. The first draft may append " (2)" when the team already has a connector with
+that name. Re-draft with the `title` the first draft returned, unless the user asked for a
+different name. Never re-draft a published integration just to test how something renders.
+
 Use `list-dynamic-integrations` at any point. Each entry shows `status`, `live_version`,
 `newest_version`, `has_unpublished_draft`, `newest_version_sampled` and `connected_source_count`.
 Passing `channel_id` adds the `host_allowlist` and every version with its `sampled_at` and
@@ -319,6 +325,11 @@ rejected rather than silently dropped:
 
 Scope a field to certain report types with `options.report_types`, listing declared report type
 ids. A top-level `report_types` on a field is rejected.
+
+**Every report type needs at least one metric and one dimension it can use**, or draft is refused
+with a message naming the report type. A field without `options.report_types` counts for every
+report type; one with it counts only for the report types it lists. A widget on a report type with
+no metric has nothing to show, and one with no dimension can only show totals and a date trend.
 
 **A metric `formula` is rejected.** A dynamic integration does not compute formulas. Declare the
 parts as metrics of their own and combine them in a custom metric on the report.

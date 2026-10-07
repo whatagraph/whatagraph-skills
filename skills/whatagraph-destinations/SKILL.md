@@ -12,6 +12,8 @@ optional_tools:
     purpose: Permanently stop and delete a configured data transfer.
   - tool_name: manage-blends
     purpose: Store a blend's output instead of a single source's — blend storage is enabled on the blend, not through a transfer.
+  - tool_name: list-integrations
+    purpose: Find the connected Google account a BigQuery transfer writes with (`action=list_accounts channel_id="big-query"`).
 ---
 
 # Destinations & data transfers
@@ -81,6 +83,7 @@ Each entry in `configs` becomes one table and **consumes one source credit**.
 
 ```
 list-destinations action=list_destination_types              # which destinations, and what each needs
+list-integrations action=list_accounts channel_id="big-query" # BigQuery only: the Google account to write with
 list-sources      action=list                                # the source id the transfer will read
 list-sources      action=list_report_types    source_id=<id> # only when the source needs one
 list-sources      action=list_dimensions_and_metrics source_id=<id> [report_type=<id>]
@@ -114,6 +117,26 @@ manage-destinations action=create
 
 After creating a `destination_id=4` transfer, read its `storage_source_id` with `action=show`. That is the source to report on, and it exists as soon as the transfer does.
 
+A BigQuery create adds the Google account and the target project, and names each table with `output_name`:
+
+```
+manage-destinations action=create
+  destination_id=1
+  name="Facebook Ads to BigQuery"
+  frequency="daily"
+  integration_source_id=<source id>
+  integration_account_id=<account id from list_accounts>
+  credentials={"projectId": "<gcp project>", "dataset": "marketing", "location": "europe-west3"}
+  backfill_until="2026-01-01"
+  configs=[
+    {
+      "output_name": "campaigns",
+      "dimensions": ["<daily date dimension>", "campaign_name"],
+      "metrics": ["impressions", "clicks"]
+    }
+  ]
+```
+
 ### Per-table keys in `configs`
 
 | Key | Notes |
@@ -137,10 +160,20 @@ to the transfer.
 | Looker Studio (`3`) | no | no |
 | BigQuery (`1`) | **required** | **required**: `projectId`, `dataset`, `location` |
 
-Whatagraph Storage and Looker Studio derive everything from the team, so they work end to end from
-MCP. **BigQuery does not yet.** No tool lists the connected destination accounts or their BigQuery
-projects, so ask the user for `integration_account_id` and `credentials.projectId`, or ask them to
-create the BigQuery transfer in the Whatagraph app and manage it here afterwards.
+All three destinations can be created from MCP. Whatagraph Storage and Looker Studio derive everything
+from the team. BigQuery needs four more values:
+
+| Value | Where it comes from |
+|---|---|
+| `integration_account_id` | `list-integrations action=list_accounts channel_id="big-query"` lists the Google accounts the current user connected for BigQuery. Use the one the user names, and ask when there are several. When there are none, or the user wants a colleague's account, ask the user for the id. |
+| `credentials.projectId` | Ask the user. No tool lists BigQuery projects. |
+| `credentials.dataset` | Ask the user. It follows the same pattern as `output_name`. |
+| `credentials.location` | One of the regions `list_destination_types` returns for BigQuery. Ask the user, and offer the list. |
+
+When any of these is missing, ask for everything that is missing in one message, then continue the
+create with the answers. Do not send the user to the Whatagraph app to create a BigQuery transfer.
+A `validate_only=true` call that succeeds means the transfer can be built here, so go on to the real
+create.
 
 ### Rules the create enforces
 
@@ -235,13 +268,14 @@ Stops the outbound transfer permanently. Previously delivered rows in the destin
 ## What MCP can't do here
 
 - Reset a transfer's jobs — UI only.
-- Create a BigQuery transfer unaided — the account and project ids have to come from the user. See
-  "What each destination needs" above.
+- List BigQuery projects or datasets. The user supplies `projectId` and `dataset`, and the transfer
+  is then created here. See "What each destination needs" above.
 - Change a table's `time_window`, or add a table to an existing transfer.
 
 ## Common pitfalls
 
 - **Confusing destinations with data sources** — destinations push data out; data sources pull in. Different tool.
+- **Refusing a BigQuery create** — it is supported. Look up the account with `list-integrations action=list_accounts channel_id="big-query"` (not the source's channel), and ask the user for the values no tool lists.
 - **Putting two channels in one transfer** — a transfer reads one source, named once in `integration_source_id`. A second channel needs a second transfer.
 - **Inventing field ids** — `dimensions` and `metrics` take `external_id` strings copied verbatim from `list-sources` `action=list_dimensions_and_metrics`, never display names.
 - **Creating before validating** — each table costs a source credit and queues its backfill immediately. Use `validate_only=true` first.
