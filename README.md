@@ -50,8 +50,9 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-templates` | Convert a report into a reusable template and apply templates to new reports. |
 | `whatagraph-themes` | Apply and manage themes (logos, fonts, headers/footers) and color palettes. |
 | `whatagraph-assets` | Import, find, read and publish files — brand images for reports and themes, and searchable documents. |
-| `generating-images` | Create and edit any visual as a finished design: ads and their placement sets, social posts, flyers, covers, banners, infographics, photos, illustrations and edits. Available inside Whatagraph IQ agents only, which have the image tool. |
-| `creating-ad-campaigns` | Plan and produce an on-brand ad campaign grounded in the client's real ad results: brand kit, concepts with copy and a test hypothesis, every placement, and a board to present it. Available inside Whatagraph IQ agents only. |
+| `generating-images` | Create and edit any visual as a finished design: ads and their placement sets, social posts, flyers, covers, banners, infographics, photos, illustrations and edits. Lays out exact copy, logos, prices and charts over generated pictures when the agent has the design renderer. Available inside Whatagraph IQ agents only, which have the image tool. |
+| `designing-ad-creatives` | The layout library for static ads and social creatives: 28 proven ad archetypes with their layout, copy and build, and what separates the best real ads for performance, brand, local, B2B and social goals. Available inside Whatagraph IQ agents only. |
+| `creating-ad-campaigns` | Plan and produce an on-brand ad campaign grounded in the client's real ad results on every connected channel: brand kit, creative memory, concepts with copy and a test hypothesis, every placement, names that bring results back, a board, and refreshes. Available inside Whatagraph IQ agents only. |
 | `whatagraph-sharing` | Create and update public share links for reports. |
 | `whatagraph-automations` | Schedule automated report delivery by email. |
 | `whatagraph-snapshots` | Save and restore the structural state of a report. |

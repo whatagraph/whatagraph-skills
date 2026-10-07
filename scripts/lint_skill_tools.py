@@ -118,7 +118,7 @@ NATIVE_AGENT_TOOLS = {
     "browser-navigate", "browser-extract", "browser-act", "browser-submit", "browser-screenshot",
     "browser-ask-person",
     # Agent-only tools from AgentToolRegistry::nonGrantableToolNames() that a skill declares.
-    "create-document", "generate-image",
+    "create-document", "generate-image", "render-design",
 }
 
 # Every tool name a skill may declare or invoke.
