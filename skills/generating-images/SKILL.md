@@ -112,16 +112,16 @@ Avoid the defaults that look like generic AI art unless the brand uses them: abs
 
 ## Workflow
 
-1. **Collect the brand kit.** The logo and product photos (`list-assets`, `search-assets`, or ask), colors and fonts (`list-themes`, the brand's ads, or ask), and the tone. Pass the logo as a `logo` reference and the product as a `subject` reference instead of describing them: the model then reproduces them exactly. Without a logo, set the brand name as a wordmark and tell the user it is a placeholder.
+1. **Collect the brand kit.** The logo and product photos (`list-assets`, `search-assets`, or ask), colors and fonts (`list-themes`, the brand's ads, or ask), and the tone. Pass the logo as a `logo` reference and the product as a `subject` reference instead of describing them: the model then reproduces them exactly. Without a logo, set the brand name as a wordmark and tell the user it is a placeholder. Without a product photo, make one clean packshot first (the product alone on a plain background), and pass it as `subject` in every image of the set, so the product looks the same everywhere.
 2. **Pin down the brief.** The goal, the audience, the offer, the placements and anything that must appear. Ask one question only when the goal or the offer is missing and cannot be inferred.
 3. **Decide the concept.** For an open request, think of 2 or 3 ideas that differ in angle (benefit, problem, proof, offer, emotion) and in style. Render each as its own call, or pick one with the user.
 4. **Write the copy.** A headline of 7 words or fewer, one support line, up to three proof points, the offer, and a button of three words or fewer. Prices, claims, codes, dates and legal text come from the user or the data, word for word.
 5. **Write the spec and call `generate-image`.** Use the six parts above. Pass references with their roles.
 6. **Check the result.** You get every image back. First the hard gates; any failure means a fix:
-   - Every word matches the spec, and there is no other lettering.
+   - Every word matches the spec, separators and symbols included, and there is no other lettering.
    - The logo and the product match their references.
    - Colors are on brand, and text has strong contrast with what is behind it.
-   - Text and logo stay inside the safe zones, and nothing important is cut off.
+   - Text and logo stay inside the safe zones, and nothing important is cut off. In a 9:16 image, the last line of text sits above 65% of the height.
    - There are no stray marks, distorted hands or app chrome, and no claim the brief does not support.
 
    Then judge the design: one clear focal point, a single message a viewer gets in three seconds, the hierarchy headline then image then button, and an image that still reads at thumbnail size. Fix a problem with one call that passes the image as `edit_base` and names the single change ("keep everything the same, but ..."); editing beats re-rolling. Stop after three rounds and tell the user what is still wrong.
@@ -167,7 +167,7 @@ A real person can only come from a photo a person uploaded to the conversation o
 
 **Edit.** Pass the image as `edit_base` and describe only the change: "Replace the background with a plain white #FFFFFF background", "Make it a rainy evening; keep everything else". Edits keep the rest of the image closely, and you can chain several edits without drift. Ask for a plain white background for a cut-out; transparent backgrounds are not possible.
 
-**Resize to another placement.** Pass the finished ad as `edit_base` with the new `aspect_ratio`, and say how to extend the scene and where the copy goes:
+**Resize to another placement.** Pass the approved design as `edit_base` with the new `aspect_ratio`, and say how to extend the scene and where the copy goes. Do not re-render it from a `style` reference: a new render changes the artwork and tends to ignore the safe zones.
 
 ```
 Adapt this ad to a vertical 9:16 story. Extend the photo upward and downward naturally.
@@ -209,8 +209,8 @@ Use the returned `url` for a report image widget (`manage-widgets`, `image_url`)
 
 - No real, identifiable person unless a person uploaded their photo and may use it; pass it with role `person`. Never a celebrity, politician or other public figure, never a fake endorsement, and never a quote or review attributed to a real person.
 - No fabricated evidence: no fake screenshots of real platforms, fake reviews, forged documents, receipts or IDs, and no realistic pictures of events that did not happen.
-- No third-party logos unless they are the client's own and come from the client as a reference image.
-- No invented facts in the image: prices, discounts, codes, awards, ratings, results and legal text come from the user or the data, word for word.
+- No third-party logos unless they are the client's own and come from the client as a reference image. That includes platform and partner logos (Google, Meta, TikTok and the like), even when the client's older ads show them: draw neutral icons instead, unless the user confirms the client may use them.
+- No invented facts in the image: prices, discounts, codes, awards, ratings, results and legal text come from the user or the data, word for word. That includes the numbers on a product screen or dashboard mockup: use the client's real figures, or leave them out.
 - Say an image is AI-generated when someone could take it for a real photo. Every generated image also carries an embedded AI-provenance marker.
 
 If the tool refuses a request, tell the user why in plain words and offer an alternative that fits the rules.
