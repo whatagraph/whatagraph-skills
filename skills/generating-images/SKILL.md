@@ -182,7 +182,7 @@ Generated people break in predictable ways: two left or right hands, an arm from
 5. **Build it**: the spec and `generate-image`, or the picture and then `render-design`.
 6. **Check it** (below), and fix what fails.
 7. **Adapt it to every placement the user needs.** See "Editing, resizing and series".
-8. **Show it and offer the next step.** The user sees each image in the chat as its own card, so do not repeat it as a markdown image. To use an image elsewhere, publish it (see "Putting an image somewhere").
+8. **Show it and offer the next step.** The user sees each image in the chat as its own card, so do not repeat it as a markdown image. Give each file's real pixel size, from the tool result. If a size the user asked for could not be made, or a tool failed and you used another way, say so in one line; never list a file at a size it does not have. To use an image elsewhere, publish it (see "Putting an image somewhere").
 
 ## Check every image before you show it
 
@@ -260,6 +260,7 @@ middle, all text above the bottom 35% and away from the sides. Flat and full-ble
 
 - `size`: `1K` by default. Use `2K` for flyers, posters, covers, email headers, full-width banners and pictures under a composed design. Use `4K` only for print.
 - `aspect_ratio`: 1:1, 4:5, 5:4, 3:4, 4:3, 2:3, 3:2, 9:16, 16:9, 21:9, 4:1, 1:4, 8:1, 1:8.
+- `generate-image` picks its own pixel size for a ratio: a 16:9 image at 1K comes back at about 1376x768, not 1200x628, and a 4:5 image at about 928x1152, not 1080x1350. When a placement needs exact pixels, build it with `render-design`, which renders exactly the width and height you give.
 - `variations` (1 to 4) renders the same spec again, one image after another. For a hero image with people, two variations and the cleaner one is often faster than fixing one. To compare different ideas, call once per idea instead.
 
 Every generated image costs AI credits; a render does not. Make what the user asked for, and ask before making more than 12 images in one go.
