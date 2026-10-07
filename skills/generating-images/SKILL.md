@@ -110,7 +110,7 @@ Pass the image as `edit_base` and describe only the change: "Replace the backgro
 
 | `quality` | Speed | Use for |
 |---|---|---|
-| `standard` (default) | about 10 s | Everything the user will see or publish. |
+| `standard` (default) | about 15 to 20 s | Everything the user will see or publish. |
 | `draft` | about 3 s, 1K only | Many quick variants, one version per location, backgrounds, early exploration. |
 
 - `size`: `1K` by default. Use `2K` for full-width report banners and covers, which need about 2,500 px of width to look sharp. Use `4K` only for print or very large heroes.
