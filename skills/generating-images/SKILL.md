@@ -55,7 +55,7 @@ The user wants something visual made or changed. Some examples:
 3. **Write the prompt** with the template below.
 4. **Call `generate-image`.** Pass reference images with their roles.
 5. **Check the result.** You get each image back. Read every word in it against the prompt, check logos, products and faces, and check that nothing important is cut off. Fix a mistake with one more call that passes the image as `edit_base` and names exactly what to change. Stop after two fixes and tell the user what is still wrong.
-6. **Show it and offer the next step.** The user already sees the image in the chat, so do not repeat it as a markdown image. To use it elsewhere, publish it (see "Putting an image somewhere").
+6. **Show it and offer the next step.** The user already sees each image in the chat as its own card, so do not repeat it as a markdown image. To use it elsewhere, publish it (see "Putting an image somewhere").
 
 ## The prompt template
 
@@ -93,10 +93,12 @@ Pass up to 6 in `reference_images`, each with an `asset_ulid` (or a Whatagraph-h
 | `subject` | A product, object or character to keep | Keep its shape, colors, details and text. |
 | `logo` | The client's own logo | Reproduce it exactly; do not redraw it. |
 | `style` | An image whose look to follow | Follow the look; do not copy its logo, brand, text or products. |
-| `person` | A photo of a real person the user supplied | Keep their appearance. |
+| `person` | A person in a photo the user uploaded | Keep their appearance. |
 | `other` | Anything else | |
 
 To use an image from outside Whatagraph, import it first with `manage-assets` and pass its `asset_ulid`. Describe in the prompt what each reference is for ("put the product from the first image into the scene of the second").
+
+A real person can only come from a photo a person uploaded to the conversation or the library. The tool checks where each reference came from, so a photo you imported or generated does not count, whatever role you give it.
 
 ## Editing an image
 
@@ -115,9 +117,7 @@ Pass the image as `edit_base` and describe only the change: "Replace the backgro
 
 - `size`: `1K` by default. Use `2K` for full-width report banners and covers, which need about 2,500 px of width to look sharp. Use `4K` only for print or very large heroes.
 - `aspect_ratio`: 1:1, 4:5, 5:4, 3:4, 4:3, 2:3, 3:2, 9:16, 16:9, 21:9, 4:1, 1:4, 8:1, 1:8.
-- `variations` (1 to 4) renders the same prompt with different seeds. To compare different ideas, call once per idea instead.
-- `seed` repeats an earlier image exactly with the same prompt and settings.
-- `creativity`: `precise` for edits and strict layouts, `balanced` by default, `bold` for exploring.
+- `variations` (1 to 4) renders the same prompt again, one image after another, so each one adds its full time. To compare different ideas, call once per idea instead.
 
 Every image costs AI credits. Make what the user asked for, and ask before making more than 8 in one go.
 
@@ -154,7 +154,7 @@ Use the returned `url` for a report image widget (`manage-widgets`, `image_url`)
 
 ## Rules you must not break
 
-- No real, identifiable person unless the user supplied their photo and may use it; pass it with role `person`. Never a celebrity, politician or other public figure, never a fake endorsement, and never a quote or review attributed to a real person.
+- No real, identifiable person unless a person uploaded their photo and may use it; pass it with role `person`. Never a celebrity, politician or other public figure, never a fake endorsement, and never a quote or review attributed to a real person.
 - No fabricated evidence: no fake screenshots of real platforms, fake reviews, forged documents, receipts or IDs, and no realistic pictures of events that did not happen.
 - No third-party logos unless they are the client's own and come from the client as a reference image.
 - No invented facts in the image: prices, discounts, codes, awards, ratings and legal text come from the user, word for word.
