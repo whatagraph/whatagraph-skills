@@ -155,4 +155,6 @@ Design each banner size on purpose: one image, one short line, one button and a 
 
 ## Before you show the concepts
 
+Before rendering, write three headline options for each concept, each from a different idea move, and keep the one a stranger would remember tomorrow. Reject a headline that could sit on a competitor's ad ("Winter starts here", "Quality you can taste"). Give each concept a different layout, not the same picture-panel-button with new words, and never shrink the photo into a box on a flat background unless the archetype calls for a frame.
+
 For each concept, say in one line which archetype it uses and why it fits this goal and audience. Check it against the eight points at the top: one idea, the product proving the claim, one person addressed, a specific offer, proof, native feel, ownable, and designed for its size. Then run the checks in `generating-images`.
