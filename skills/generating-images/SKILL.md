@@ -129,6 +129,14 @@ h1{position:absolute;left:64px;right:64px;bottom:210px;margin:0;font:800 132px/.
 
 Layout rules that make a composed design look designed, not templated: one display face and one text face; a strict margin (5 to 6% of the width) on every side; the headline the largest thing after the hero; the offer or number set in the accent color; a soft gradient or a solid panel behind text instead of a drop shadow; at most four text elements; and nothing in a placement's unsafe zone. For a chart, draw bars and labels in inline SVG from the real numbers, with one accent color for the series the post is about.
 
+An ad is not a web page. HTML pulls layouts toward app components, and those read as a template at a glance. In testing, an agent's first composed ad was a rounded card with a drop shadow, status pills, a checkmark list and a small logo in a dark box. So:
+
+- No UI components: no pills or chips, no checkmark or bullet lists, no cards with rounded corners and shadows, no badges such as "Save €20" unless the brief asks for them.
+- Set type on the picture or on a full-bleed color field, as a print designer would. The headline is big (at least 9% of the width for a feed ad) and the price is the biggest number.
+- Make the logo readable: at least 15% of the width, on the picture or the color field, with no box behind it.
+- Take the idea and the headline from `designing-ad-creatives`. "Spring Bike Tune-Up" names the product; it is not a headline.
+- Every claim comes from the brief. When the user says the service "includes a free safety check", do not add what else the service includes.
+
 ## Choose the mode and the style on purpose
 
 First decide the mode, because it sets the layout:
