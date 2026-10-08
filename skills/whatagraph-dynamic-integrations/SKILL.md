@@ -40,6 +40,20 @@ You author three artifacts.
 from copying an idiom that only built-in connectors are allowed, or from putting a valid key one
 level too deep.
 
+## First check that the user is allowed to build one
+
+Only a team admin can build, change, connect, re-sync or delete a dynamic integration. Before
+anything else (before you ask what they want to connect, read any API documentation, or ask for
+a credential), call `list-dynamic-integrations` with no arguments and read `can_author`.
+
+- `can_author` is `true`: continue with [Work in this order](#work-in-this-order).
+- `can_author` is `false`: stop here. Tell the user plainly that only a team admin can set up
+  custom integrations, and suggest they ask an admin on their team either to give them the Admin
+  role or to set it up for them. Do not research the API, do not ask for credentials, and do not
+  draft anything.
+
+Listing is open to every member, so a non-admin can still see what the team has already built.
+
 ## Work in this order
 
 ```
@@ -92,6 +106,7 @@ different name. Never re-draft a published integration just to test how somethin
 
 Use `list-dynamic-integrations` at any point. Each entry shows `status`, `live_version`,
 `newest_version`, `has_unpublished_draft`, `newest_version_sampled` and `connected_source_count`.
+The response also carries `can_author`, which says whether this user may author at all.
 Passing `channel_id` adds the `host_allowlist` and every version with its `sampled_at` and
 `published_at`.
 
