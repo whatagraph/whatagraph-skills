@@ -102,7 +102,11 @@ CANONICAL_TOOLS = {
 AGENT_NATIVE_TOOLS = {
     "create-document",
     "generate-image",
+    "generate-music",
+    "generate-video",
+    "generate-voiceover",
     "render-design",
+    "render-video",
 }
 
 KNOWN_TOOLS = CANONICAL_TOOLS | AGENT_NATIVE_TOOLS
