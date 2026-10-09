@@ -40,6 +40,20 @@ You author three artifacts.
 from copying an idiom that only built-in connectors are allowed, or from putting a valid key one
 level too deep.
 
+## First check that the user is allowed to build one
+
+Only a team admin can build, change, connect, re-sync or delete a dynamic integration. Before
+anything else (before you ask what they want to connect, read any API documentation, or ask for
+a credential), call `list-dynamic-integrations` with no arguments and read `can_author`.
+
+- `can_author` is `true`: continue with [Work in this order](#work-in-this-order).
+- `can_author` is `false`: stop here. Tell the user plainly that only a team admin can set up
+  custom integrations, and suggest they ask an admin on their team either to give them the Admin
+  role or to set it up for them. Do not research the API, do not ask for credentials, and do not
+  draft anything.
+
+Listing is open to every member, so a non-admin can still see what the team has already built.
+
 ## Work in this order
 
 ```
@@ -52,6 +66,13 @@ An `oauth2` definition replaces `test-auth` with a stop for the user, `set-oauth
 ```
 draft -> STOP: user registers the redirect URLs -> set-oauth-client -> authorize -> user approves -> sample -> publish -> connect
 ```
+
+**Before the first `draft`, find the provider's rate limits.** Search its API documentation for
+"rate limit", "quota" and "concurrent" before you read anything else, and write down the number,
+the window, and what it counts against (a project, an account, a token). Every `test-auth`,
+`sample`, sync and widget refresh spends that same budget, and a customer's other tools usually
+share it too. If the documentation states no limit, ask the user whether they know of one, and say
+in your plan that none is declared. See [Rate limits](#rate-limits) for what to do with the number.
 
 Each step is gated on the one before it. Every response carries a `next` field saying what to do,
 so follow that rather than guessing.
@@ -92,6 +113,7 @@ different name. Never re-draft a published integration just to test how somethin
 
 Use `list-dynamic-integrations` at any point. Each entry shows `status`, `live_version`,
 `newest_version`, `has_unpublished_draft`, `newest_version_sampled` and `connected_source_count`.
+The response also carries `can_author`, which says whether this user may author at all.
 Passing `channel_id` adds the `host_allowlist` and every version with its `sampled_at` and
 `published_at`.
 
@@ -1145,6 +1167,54 @@ That is a net, not a substitute:
 - Anything non-transient that matches no filter surfaces the raw response body to the caller, which
   is your signal to add a filter for that status or shape.
 
+## Rate limits
+
+Retrying a 429 keeps a sync alive. It does not keep you under the provider's limit, and a
+connector that only retries will spend a whole hour's budget in its first minutes. Declare the
+documented limit on the requester instead, so the engine paces its own calls:
+
+```yaml
+definitions:
+  <<: &query_rate
+    type: RateLimiter
+    max_requests: 50            # 60 per hour documented; leave room for the customer's own use
+    time_window: 3600
+    wait_for_free_slot: 30
+    tags:
+      project: "{{ integration_source.external_id }}"
+  <<: &query_concurrency
+    type: ConcurrencyLimiter
+    max_slots: 5                # the documented concurrent-query limit
+    wait_for_slot_to_be_released: 30
+    tags:
+      project: "{{ integration_source.external_id }}"
+
+# on every requester that spends the same budget
+        middlewares:
+          - *retry
+          - *logger
+          - *classifier
+          - *query_rate
+          - *query_concurrency
+```
+
+- **Declare it on every requester that spends the same budget**, and give those requesters the same
+  `tags`. Requesters with the same tags share one count. Tag by what the provider counts against:
+  `{{ integration_source.external_id }}` for a per-project or per-account limit, a fixed string for
+  a limit on the whole credential. Endpoints with separate limits get separate tags.
+- **Set `max_requests` below the documented number.** About 80% leaves room for the customer's own
+  dashboards and other tools on the same project.
+- **Waits are capped at 60 seconds**, because a waiting fetch holds a shared worker. When the wait
+  runs out, the engine retries the fetch later, so a short wait is correct even for an hourly limit.
+- **Count the first sync before you `connect`.** After `connect`, storage backfills each report type
+  one month at a time over the whole backfill range, about 37 requests per report type, plus one
+  per page. Divide that by your `max_requests` and tell the user how long the first sync will take,
+  and that widgets show a rate-limit message until it finishes. Two report types against a 60-per-hour
+  limit is about 90 minutes. If that is too long, ship fewer report types first, or use one request
+  that returns several series at once.
+- **Your own calls count too.** On a tight limit, sample with `last_days: 7`, and do not re-sample a
+  stream whose definition did not change.
+
 ## Getting a definition right
 
 Read the API's **official documentation** for field meanings, not a sample response. A sample tells
@@ -1223,3 +1293,4 @@ data. An id belonging to another team reads as absent rather than forbidden.
 | Every row dated to the range start | No `NormalizeTimeValues` or `NormalizeEpochTimeValues` before the mapping. |
 | A fetch says the definition "has been updated and republished" | The engine upgraded an old live definition. Retry the request. |
 | Data still wrong after a fix | Republishing does not correct stored data. `resync` the range. |
+| Widgets say the rate limit has been reached right after `connect` | The first backfill is spending the provider's budget. Wait for it to finish rather than re-sampling, and check that the requesters declare the documented limit. See [Rate limits](#rate-limits). |
