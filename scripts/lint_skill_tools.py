@@ -94,6 +94,19 @@ CANONICAL_TOOLS = {
     "list-widgets", "manage-widgets", "delete-widgets",
 }
 
+# Tools that exist only inside Whatagraph IQ agents, not on the standalone MCP server.
+# A skill may declare them: the backend gates the skill on the agent's own tool set, so
+# an IQ agent that has the tool can load the skill, and an MCP client sees it listed with
+# the tool under `missing_required_tools`. Mirrors the backend's native tool registry
+# (AgentToolRegistry::nonGrantableToolNames()); add a name here when a skill needs one.
+AGENT_NATIVE_TOOLS = {
+    "create-document",
+    "generate-image",
+    "render-design",
+}
+
+KNOWN_TOOLS = CANONICAL_TOOLS | AGENT_NATIVE_TOOLS
+
 # Destructive tools must never be CORE (`required_tools`) of a domain skill:
 # every `delete-*` name plus the two `remove-*` tools. The grant flow never
 # auto-grants these, so a skill that requires one is unreachable.
@@ -172,7 +185,7 @@ def find_body_tools(body: str):
     found = set()
     for line in _call_context_lines(body):
         m = _CALL_RE.match(line)
-        if m and m.group(1) in CANONICAL_TOOLS:
+        if m and m.group(1) in KNOWN_TOOLS:
             found.add(m.group(1))
     return found
 
@@ -200,8 +213,8 @@ def main():
 
         # Rule 2: unknown names.
         for name in sorted(declared):
-            if name not in CANONICAL_TOOLS:
-                errors.append(f"{rel}: unknown tool '{name}' (not in the MCP tool inventory)")
+            if name not in KNOWN_TOOLS:
+                errors.append(f"{rel}: unknown tool '{name}' (not in the MCP tool inventory or AGENT_NATIVE_TOOLS)")
 
         # Rule 3: no tool in both lists.
         for name in sorted(req_set & opt_set):
