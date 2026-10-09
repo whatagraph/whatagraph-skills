@@ -31,7 +31,7 @@ optional_tools:
 Tools covered: `generate-video`, `generate-voiceover`, `generate-music`, `render-video`.
 
 - `generate-video` shoots one shot: a 10 second live-action clip at 1080 x 1920 with its own sound, such as a room, a sizzling pan or a splash. When you write the words, the person in it speaks them, with matching lip movement. It takes about a minute and costs about 155 credits at 1080p (100 at 720p).
-- `generate-voiceover` reads your script with a professional voice, in a few seconds, for about 1 credit.
+- `generate-voiceover` performs your script with a professional voice, including the laughs, sighs and pauses you write into it, in a few seconds, for under 1 credit.
 - `generate-music` makes a 30 second instrumental track for 4 credits.
 - `render-video` cuts the shots together, mixes their sound with the voice-over and the music, and lays your HTML on top: the text, captions, logo and end card, exactly as written. It costs no credits except a fraction of a credit to read back what is said.
 
@@ -103,12 +103,17 @@ render-video html="<captions and end card>" clips=[
 - **Cut by the spoken lines.** Start a speaking shot 0.3 to 0.5 seconds before its first word and end it 0.3 seconds after its last. Mark it `"speech": true`, so the music drops under it.
 - **Open on motion.** The first frame is already mid-action: a bite, a pour, a person turning. Never a still or a black frame.
 - **Room sound.** Keep 1 for speaking shots. Use 0.5 to 0.8 for other shots, so their sound sits under the music.
-- **Voice-over.** Write it for the ear, at about 2.5 words a second, in short sentences. Put the tone in `style` and add `pronunciations` for invented brand names, such as `{"word": "Dewlune", "say": "Dew-loon"}`. Place it over shots in which nobody speaks, and never on top of a spoken line.
+- **Voice-over.** Write it for the ear, at about 2.5 words a second, in short sentences, and write the performance into the script. The voice reads the script as a transcript, so anything that is not a word to say goes in a tag or in `style`:
+  - Vocal sounds and pauses in angle brackets, where they happen: `<laugh>`, `<chuckle>`, `<giggle>`, `<sigh>`, `<breath>`, `<gasp>`, `<whispers>`, `<short pause>`, `<long pause>`.
+  - CAPITALS on the one word to stress, and `...` or `--` for a natural hesitation.
+  - The overall delivery in `style`, in a few words, such as "warm and playful". Leave it empty when the script already carries the performance. Pick the voice for age and accent; `style` cannot change them.
+  - Example: `"Okay, confession... <short pause> I came in for ONE cardamom bun. <laugh> I left with four. <sigh> No regrets."`
+  - Add `pronunciations` for invented brand names, such as `{"word": "Dewlune", "say": "Dew-loon"}`. Place the voice-over over shots in which nobody speaks, and never on top of a spoken line.
 - **Music.** Make one track per ad and leave its volume at the default. render-video fades it in and out, lowers it under every voice and speaking shot, and sets the loudness Instagram plays at.
 
 ### Captions and the end card
 
-Most Reels are watched with the sound off, so caption every spoken line and voice-over phrase.
+Most Reels are watched with the sound off, so caption every spoken line and voice-over phrase. Leave the tags and the CAPITALS out of the captions: write the words as they read normally.
 
 - The time of a line in the ad = where its shot starts in the ad + (the line's `start` in `spoken_lines` − the shot's `start_seconds`). A voice-over phrase starts at its `start_seconds` + its segment's `start`.
 - The style that reads as native: white bold text, about 50 px, on a dark translucent box, centered at about y = 1010. Each caption pops in at its start and fades at its end.
