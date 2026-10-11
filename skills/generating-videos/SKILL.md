@@ -103,12 +103,16 @@ render-video html="<captions and end card>" clips=[
 - **Cut by the spoken lines.** Start a speaking shot 0.3 to 0.5 seconds before its first word and end it 0.3 seconds after its last. Mark it `"speech": true`, so the music drops under it.
 - **Open on motion.** The first frame is already mid-action: a bite, a pour, a person turning. Never a still or a black frame.
 - **Room sound.** Keep 1 for speaking shots. Use 0.5 to 0.8 for other shots, so their sound sits under the music.
-- **Voice-over.** Write it for the ear, at about 2.5 words a second, in short sentences, and write the performance into the script. The voice reads the script as a transcript, so anything that is not a word to say goes in a tag or in `style`:
+- **Voice-over.** Write it for the ear, in short sentences, in the language of the ad, and write the performance into the script. The voice reads the script as a transcript and speaks the language it is written in, so anything that is not a word to say goes in a tag or in `style`:
   - Vocal sounds and pauses in angle brackets, where they happen: `<laugh>`, `<chuckle>`, `<giggle>`, `<sigh>`, `<breath>`, `<gasp>`, `<whispers>`, `<short pause>`, `<long pause>`.
   - CAPITALS on the one word to stress, and `...` or `--` for a natural hesitation.
-  - The overall delivery in `style`, in a few words, such as "warm and playful". Leave it empty when the script already carries the performance. Pick the voice for age and accent; `style` cannot change them.
+  - Numbers, prices, percentages and dates as words, in the form the sentence needs: "iki penkiasdešimties procentų", not "iki 50 %". From digits the voice can pick the wrong grammatical case.
+  - The overall delivery in `style`, in a few words, such as "warm and playful". Never a language or an accent: the voice already speaks the script's language natively, and naming one makes it worse. Leave it empty when the script already carries the performance. Pick the voice for gender, age and tone.
   - Example: `"Okay, confession... <short pause> I came in for ONE cardamom bun. <laugh> I left with four. <sigh> No regrets."`
-  - Add `pronunciations` for invented brand names, such as `{"word": "Dewlune", "say": "Dew-loon"}`. Place the voice-over over shots in which nobody speaks, and never on top of a spoken line.
+  - Add `pronunciations` in IPA between slashes for invented brand names and for names from another language than the script, such as `{"word": "Kavos", "say": "/kɐˈvoːs/"}` for a Lithuanian brand in an English ad. Leave the words of the script's own language alone: the voice already says them well, and an English respelling makes a foreign name sound English.
+  - Check `duration_seconds`. When the voice-over is longer than the shots it covers, shorten the script and record it again. The same message takes a different length in each language.
+  - Each take differs a little. When the user says a take sounds wrong or accented, record it again.
+  - Place the voice-over over shots in which nobody speaks, and never on top of a spoken line.
 - **Music.** Make one track per ad and leave its volume at the default. render-video fades it in and out, lowers it under every voice and speaking shot, and sets the loudness Instagram plays at.
 
 ### Captions and the end card
@@ -119,6 +123,7 @@ Most Reels are watched with the sound off, so caption every spoken line and voic
 - The style that reads as native: white bold text, about 50 px, on a dark translucent box, centered at about y = 1010. Each caption pops in at its start and fades at its end.
 - The end card takes the last 3.5 to 4.5 seconds: brand name, the offer, the button and the legal line together. Put it where the shot is calm (often the sky or a wall), never over the product, a face or a label. Move captions that overlap it above it, at about y = 640.
 - Leave `html` and `body` without a background. Draw scrims as their own elements.
+- Text in Chinese, Japanese, Korean, Arabic, Hebrew, Thai or Hindi needs the Noto Sans font for that script from Google Fonts (Noto Sans SC, Noto Sans JP, Noto Sans KR, Noto Sans Arabic, Noto Sans Hebrew, Noto Sans Thai, Noto Sans Devanagari), named first in `font-family`. The renderer has fonts for Latin, Greek and Cyrillic letters only, so other letters show as empty boxes without it. Set `dir="rtl"` on Arabic and Hebrew text.
 
 ```
 <style>
@@ -173,7 +178,7 @@ Then tell the user what you made: the file name, size and length, the cost (the 
 
 ## Versions and sizes
 
-- One ad, several offers or languages: keep the clips, change the voice-over, captions and end card, and render each version with its own `title`. A new language needs new spoken shots, because the people speak in the clip.
+- One ad, several offers or languages: keep the clips, change the voice-over, captions and end card, and render each version with its own `title`. Write each language's script for that language instead of translating word for word, and check its length again. A new language needs new spoken shots, because the people speak in the clip.
 - Feed placements: render at 1080 x 1350 (4:5) and 1080 x 1080 (1:1). The shots are cropped to fill the frame; change only the CSS and keep text out of the outer 6%.
 
 ## Template motion: a photo with moving text
