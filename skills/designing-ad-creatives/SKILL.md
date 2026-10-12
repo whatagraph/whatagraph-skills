@@ -67,7 +67,8 @@ Write copy the way a person talks, not the way a brochure does:
 
 In a blind test, three judges compared AI-made ads built with this skill against the best real ads from the review. They scored them the same on average, and three AI-made ads ranked in the top five of 32. The judges still picked out every AI-made ad, by these tells. Avoid them:
 
-- **The same structure every time**: a photo, a dark panel at the bottom, a pill button. Vary the layout between concepts: type over the image, type as the image, a split, a poster, a sticker, a note.
+- **The same structure every time**: a photo, a dark panel at the bottom, a pill button. Vary the layout between concepts: type over the image, type as the image, a split, a poster, a sticker, a note. The directions table in `generating-images` gives one per concept.
+- **A software landing page instead of an ad**: a near-black background with a colored glow, a label in a pill, bordered cards, a row of three stats, small gray text and a button with an arrow. It is the most common tell for software and B2B brands. Show a person, a real object, a real screenshot or one big real number instead.
 - **Flawless pictures**: waxy faces, glossy food, spotless props and perfect symmetry. Ask for real-world imperfection: a scuff on the object, crumbs, uneven light, a lived-in background, food that looks eaten from, not styled for a catalog.
 - **Spec lines joined with middle dots** ("Waterproof · Recycled · 480 g") on every ad. Write one plain sentence, or set the points as separate elements.
 - **Generic details**: a made-up date or town where none is needed. Real ads carry the brand's real specifics: the phone number, the web address, the store count, a legal line. Use the client's.
@@ -147,7 +148,7 @@ Each entry gives: when to use it, the layout, the copy slots, how to build it (a
 
 **27. Recruitment.** When: hiring. Layout: a real employee photo (uploaded) or a lifestyle scene of the benefit; the role, the location and one concrete incentive set large; an apply button. Copy: the named role, the salary or bonus, the schedule. Best: the job shown as a life (a driver at the school gate at 3 pm, because the shifts end at 2). Avoid: stock handshakes and job-description text blocks.
 
-**28. Software and app proof.** When: SaaS and apps. Layout: the buyer's pain as the headline in their own words, then the product screen showing a result (a chart going the right way, a finished step) in the brand's colors. Copy: the role or platform called out in the first line, a low-commitment offer (a diagnostic, a demo). Build: composed, with the client's real screenshot as an image, or a clean UI drawn in HTML with the client's real figures. Avoid: a generic dashboard, a stock hand holding a phone, invented numbers on the screen.
+**28. Software and app proof.** When: SaaS and apps. Layout: the buyer's pain as the headline in their own words, then the product screen showing a result (a chart going the right way, a finished step) in the brand's colors. Copy: the role or platform called out in the first line, a low-commitment offer (a diagnostic, a demo). Build: composed, with the client's real screenshot as an image. Without a screenshot, do not draw an interface in HTML: show the outcome on a person or an object (the Friday evening off, the report already sent), or one real number on a flat brand color, and ask the client for screenshots. Avoid: a generic dashboard, a dark landing page section, a stock hand holding a phone, invented numbers on the screen.
 
 ## Display banners
 

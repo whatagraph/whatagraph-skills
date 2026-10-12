@@ -78,10 +78,10 @@ An example that produced a production-ready feed ad:
 
 ```
 Paid social feed ad, 4:5, for Northpeak, an outdoor jacket brand, aimed at hikers who keep going when the weather turns.
-Brand system: logo from image 1, in off-white; colors forest green #1F3A2E for the copy panel, signal orange #E8622C for the button, warm off-white #F4F1EA for text; headlines in a heavy condensed sans in capitals, body in a clean grotesk.
-Layout: full-bleed photo; logo top-left; the lower third fades into forest green behind the copy; headline large and left-aligned; the support line under it; a rounded orange button bottom-right.
+Brand system: logo from image 1, in off-white; colors warm off-white #F4F1EA for the headline, signal orange #E8622C for the price, forest green #1F3A2E for the small text; headlines in a heavy condensed sans in capitals, body in a clean grotesk.
+Layout: full-bleed photo; the headline huge and left-aligned in the empty grey sky across the top third, set straight on the photo with no panel; the support line under it; the logo small in the bottom-right corner; a short call to action in plain type bottom-left.
 Imagery: a woman in her thirties stands on a misty ridge as the first snow falls, facing three-quarters toward the camera and looking out at the view; her right hand rests on the strap of her backpack and her left arm hangs relaxed. She wears exactly the jacket from image 2. 35mm lens at f/2.8, flat overcast light from the left, snowflakes in the air, visible fabric texture and fine lines at her eyes, not retouched.
-Copy, exactly: headline 'Built for the first snow'; support 'Waterproof to 20,000 mm and only 480 g.'; button 'Shop the collection'. No other text.
+Copy, exactly: headline 'Built for the first snow'; support 'Waterproof to 20,000 mm and only 480 g.'; call to action 'Shop the collection'. No other text.
 Finish: (as above)
 ```
 
@@ -110,32 +110,54 @@ For an image without copy (the picture under a composed design, a hero photo, a 
 
 ```
 <html><head>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800&family=Inter:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@500;700&display=swap" rel="stylesheet">
 <style>
-body{margin:0;width:1080px;height:1350px;position:relative;overflow:hidden;font-family:Inter,sans-serif}
-.photo{position:absolute;inset:0;background:url({{image_1}}) center/cover}
-.panel{position:absolute;left:0;right:0;bottom:0;height:430px;background:linear-gradient(to bottom,rgba(31,58,46,0),#1F3A2E 34%)}
-.logo{position:absolute;top:60px;left:64px;width:220px}
-h1{position:absolute;left:64px;right:64px;bottom:210px;margin:0;font:800 132px/.9 'Barlow Condensed';text-transform:uppercase;color:#F4F1EA}
-.price{position:absolute;left:64px;bottom:84px;font:700 44px Inter;color:#F4F1EA}
-.btn{position:absolute;right:64px;bottom:72px;padding:26px 44px;border-radius:999px;background:#E8622C;color:#fff;font:700 36px Inter}
-.legal{position:absolute;left:64px;bottom:32px;font:500 20px Inter;color:rgba(244,241,234,.75)}
+body{margin:0;width:1080px;height:1350px;position:relative;overflow:hidden;font-family:Archivo,sans-serif;color:#F4F1EA}
+.photo{position:absolute;inset:0;background:url({{image_1}}) center 30%/cover}
+h1{position:absolute;left:64px;right:300px;top:70px;margin:0;font:400 150px/.88 Anton;text-transform:uppercase}
+.price{position:absolute;left:64px;bottom:150px;font:400 96px/1 Anton}
+.cta{position:absolute;left:64px;bottom:96px;font:700 34px Archivo}
+.logo{position:absolute;right:64px;bottom:84px;width:240px}
+.legal{position:absolute;left:64px;bottom:44px;font:500 22px Archivo;opacity:.8}
 </style></head><body>
-<div class="photo"></div><div class="panel"></div><img class="logo" src="{{image_2}}">
-<h1>Built for the<br>first snow</h1><div class="price">From €189</div><div class="btn">Shop now</div>
-<div class="legal">Free returns within 30 days.</div>
+<div class="photo"></div>
+<h1>Built for the first snow</h1>
+<div class="price">From €189</div><div class="cta">Shop the jacket</div>
+<img class="logo" src="{{image_2}}"><div class="legal">Free returns within 30 days.</div>
 </body></html>
 ```
 
-Layout rules that make a composed design look designed, not templated: one display face and one text face; a strict margin (5 to 6% of the width) on every side; the headline the largest thing after the hero; the offer or number set in the accent color; a soft gradient or a solid panel behind text instead of a drop shadow; at most four text elements; and nothing in a placement's unsafe zone. For a chart, draw bars and labels in inline SVG from the real numbers, with one accent color for the series the post is about.
+The photo was generated with an empty sky at the top and a calm ground at the bottom, so the type sits on the picture with no panel behind it.
 
-An ad is not a web page. HTML pulls layouts toward app components, and those read as a template at a glance. In testing, an agent's first composed ad was a rounded card with a drop shadow, status pills, a checkmark list and a small logo in a dark box. So:
+Layout rules that make a composed design look designed, not templated: one display face and one text face; a strict margin (5 to 6% of the width) on every side; the headline the largest thing after the hero; the offer or number set in the accent color; type placed in the picture's quietest area, or on a flat color field, instead of on a panel; at most four text elements; and nothing in a placement's unsafe zone. For a chart, draw bars and labels in inline SVG from the real numbers, with one accent color for the series the post is about.
 
-- No UI components: no pills or chips, no checkmark or bullet lists, no cards with rounded corners and shadows, no badges such as "Save €20" unless the brief asks for them.
-- Set type on the picture or on a full-bleed color field, as a print designer would. The headline is big (at least 9% of the width for a feed ad) and the price is the biggest number.
+An ad is not a web page. HTML pulls layouts toward app components, and those read as a template at a glance. In testing, an agent's first composed ad was a rounded card with a drop shadow, status pills, a checkmark list and a small logo in a dark box. A later set of five ads for a software brand was five copies of one landing page section: a near-black background with a colored glow, a small logo top left, a label in a pill top right, bordered cards, a row of three stats, small gray text and a pill button. None of them had a picture. So:
+
+- No UI components: no pills or chips, no labels in a box, no checkmark or bullet lists, no cards with borders, rounded corners or shadows, no rows of stats, no badges such as "Save €20" unless the brief asks for them. When the archetype has a button, make it one plain block in the accent color with the words in the display face, never a rounded pill with an arrow. Stories and Reels get no drawn button: the platform adds its own, so write the call to action as a short line of words.
+- No landing page look: no near-black background with a glowing gradient and a neon accent, unless the brand's own ads look like that.
+- Every ad has a picture or a strong graphic idea: a photo, a cut-out, an illustration, a real object, or type so large that it is the image. A dark background with some text on it is not an ad.
+- Set type on the picture or on a full-bleed color field, as a print designer would. The headline is big (at least 9% of the width for a feed ad) and the price is the biggest number. No text smaller than 26 px on a 1080 px canvas, except the legal line.
 - Make the logo readable: at least 15% of the width, on the picture or the color field, with no box behind it.
+- No symbols typed as text: arrows, checkmarks, stars and emoji are missing from the renderer's fonts and show as empty boxes. Draw them in inline SVG, or leave them out.
+- Before you show it, ask: would this pass as a section of a software landing page, or a screen in an app? If it would, start again with another direction from the table below.
 - Take the idea and the headline from `designing-ad-creatives`. "Spring Bike Tune-Up" names the product; it is not a headline.
 - Every claim comes from the brief. When the user says the service "includes a free safety check", do not add what else the service includes.
+
+### Pick a visual direction for each concept
+
+Each concept in a set gets a different direction, and its HTML is written from scratch. Reuse a concept's HTML only for its other sizes. When the brand has its own look (its ads, its website, its theme), the directions bend to it: its colors, its fonts, light or dark as the brand is.
+
+| Direction | Composition | Headline type (Google Fonts) | Fits |
+|---|---|---|---|
+| Photo poster | One full-bleed photo, generated with empty space for the words; the headline set straight on the photo; the logo in a corner | Anton, Archivo Black, Barlow Condensed 800, Big Shoulders Display | People, lifestyle, the product in use |
+| Type as the image | Two to five words filling 60 to 80% of the frame on a flat brand color; one small photo or cut-out tucked into the type | Archivo Black, Bricolage Grotesque 800, Unbounded, Anton | Offers, bold claims, a pun, a deadline |
+| Color-field split | Half photo, half flat brand color; the headline and the number on the color half | Bricolage Grotesque, Archivo, Familjen Grotesk | B2B, results, the old way and the new way |
+| Editorial page | A warm off-white page, a large serif headline, a photo with a thin rule and a one-line caption | Fraunces, Instrument Serif, DM Serif Display, Playfair Display | Premium brands, case studies, thought leadership |
+| One big number | One real number set at 40 to 60% of the width on a flat color, one line saying what it means, the source in small type | Big Shoulders Display, Oswald, Anton, or a serif for a calm brand | Proof and results |
+| The object carries it | A generated photo of a real object with the words on it: a sticky note, a receipt, a whiteboard, a calendar page, a cup sleeve | The words written by `generate-image`, checked letter by letter | Social, humor, a relatable pain |
+| Cut-out collage | Cut-out photos with hard shadows, tape or torn paper, a flat background, one handwritten note | One display face plus Caveat or Permanent Marker | Young brands, launches, events |
+
+Inter, Plus Jakarta Sans, DM Sans, Poppins, Montserrat, Roboto and Space Grotesk are interface fonts. Use them only for small text, or when they are the client's own font. A headline set in one of them reads as an app screen.
 
 ## Choose the mode and the style on purpose
 
