@@ -85,6 +85,10 @@ The footage looks real when the prompt describes real footage and real people. I
 2. Check it before you spend on video. The product must look like no real brand's (an "unbranded" car came out as a copy of a real model, badge included), and every printed word must be spelled exactly right. Fix it with one `generate-image` edit if not.
 3. Pass it as `start_image` for a shot that starts from exactly that picture. Pass it in `reference_images` (up to 3) for the same person or product in a new scene. When the client has a real product photo, use that instead, always.
 
+### Only the finished video goes in the chat
+
+Clips, voice-overs and music are parts of the ad, so the chat does not show them. The user sees the video that render-video makes. Each clip takes about a minute, so tell the user in one line what you are making before you start. Set `show_in_chat: true` only when the user asked for a single clip, a voice-over or a music track on its own.
+
 ### Check every clip
 
 Each clip comes back with six frames and `spoken_lines`, the words said with their start and end times. Check that the person and the product look the same as in the reference, that no logo or text appeared, and that the line was said once and as written. The model sometimes repeats a line or adds words; cut around them, and only remake the shot if the line is missing.
