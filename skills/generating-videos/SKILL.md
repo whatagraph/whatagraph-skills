@@ -55,7 +55,7 @@ Formats in the order they win on Meta (Motion's 2025 library): unboxing, offer, 
 | Car dealer | **Dealer offer** | The car on the road · people inside · the key handover · the car parked, with the offer and its legal line |
 | Software, app, online service | **Product demo** | A person hits the problem and says it, to camera or in a voice-over · the real product on screen doing the job · the result on screen, such as the number or the finished page · the person's reaction, with the logo, the offer and the button |
 
-A 15 second ad has four shots of 2.5 to 5 seconds. Make all four. One clip with an end card on it is not an ad, unless the user asked for a single clip. Stories show up to 15 seconds in one card.
+A 15 second ad has four shots of 2.5 to 5 seconds. Make all four. One clip with an end card on it is not an ad, unless the user asked for a single clip. Stories show up to 15 seconds in one card, so keep a Story ad at 15 seconds or less.
 
 Template motion (a photo with moving text, no generated footage) is a fallback. Use it only when the user asks for a quick price change, a sale or a countdown, or when your tool list has no `generate-video` (EU teams). See the last section. When the user asks for a Story, a Reel or a video ad and you have `generate-video`, make live-action shots with sound. A silent animation of text over a picture does not answer that request.
 
@@ -84,6 +84,8 @@ The footage looks real when the prompt describes real footage and real people. I
 
 ### Keep the same person or product in every shot
 
+When one person appears in two or more shots, the reference photo is required. A prompt that says "the same woman" without it gives a different person in each shot.
+
 1. Make one reference photo first with `generate-image`. It must look like a candid phone photo, such as "a real, candid photo taken on a recent iPhone, natural light", not a studio shot. A studio render looks like clay in video.
 2. Check it before you spend on video. The product must look like no real brand's (an "unbranded" car came out as a copy of a real model, badge included), and every printed word must be spelled exactly right. Fix it with one `generate-image` edit if not.
 3. Pass it as `start_image` for a shot that starts from exactly that picture. Pass it in `reference_images` (up to 3) for the same person or product in a new scene. When the client has a real product photo, use that instead, always.
@@ -94,7 +96,7 @@ A software ad is still a live-action ad. The people are generated footage; the p
 
 - Shots 1 and 4 come from `generate-video`: a person with the problem, saying it, and the same person once it is solved. Pass the same reference photo to both, so it is the same person.
 - Shots 2 and 3 show the real product. A generated clip invents an interface with misspelled words, so never ask for a screen in a clip. Find real screenshots in the team library (`search-assets` for "screenshot", "dashboard" or "report"), on the client's website (import them with `manage-assets action=import_url`), or from the user. Pass them in render-video's `images` and show each one in a phone or laptop frame drawn in CSS, on the brand color, covering the frame for that shot. Move them: a slow push in, a scroll, a ring around the number that matters. render-video needs a clip under every second for the sound, so under these shots play a calm part of a people clip at volume 0.5.
-- Without a real screenshot, never draw a made-up interface. Let the people shots tell the story, put the claim in large type on the brand color in shots 2 and 3, and ask the user for screenshots in your reply.
+- Without a real screenshot, never draw a made-up interface. Let the people shots tell the story, put one short claim of up to six words in large type on the brand color in shots 2 and 3, and ask the user for screenshots in your reply.
 - Add a voice-over over the shots in which nobody speaks, and music.
 
 ### Only the finished video goes in the chat
@@ -103,7 +105,7 @@ Clips, voice-overs and music are parts of the ad, so the chat does not show them
 
 ### Check every clip
 
-Each clip comes back with six frames and `spoken_lines`, the words said with their start and end times. Check that the person and the product look the same as in the reference, that no logo or text appeared, and that the line was said once and as written. The model sometimes repeats a line or adds words; cut around them, and only remake the shot if the line is missing.
+Each clip comes back with six frames and `spoken_lines`, the words said with their start and end times. Check that the person and the product look the same as in the reference, that no logo or text appeared, and that the line was said once and as written. If a shot shows a different person, remake it with the reference photo before you cut: two faces in one story read as two people. The model sometimes repeats a line or adds words; cut around them, and only remake the shot if the line is missing.
 
 ## Cut it together with render-video
 
@@ -138,6 +140,7 @@ Most Reels are watched with the sound off, so caption every spoken line and voic
 - The time of a line in the ad = where its shot starts in the ad + (the line's `start` in `spoken_lines` − the shot's `start_seconds`). A voice-over phrase starts at its `start_seconds` + its segment's `start`.
 - The style that reads as native: white bold text, about 50 px, on a dark translucent box, centered at about y = 1010. Each caption pops in at its start and fades at its end.
 - One box per caption. When a caption names who speaks, put the name inside the same box as bold text (`<b>Max:</b> Squat-proof.`). To color one word, wrap it in `<b class="hl">` and give `.hl` only a color. Style the box with a direct-child rule (`.cap>.box`), never a descendant rule such as `.cap span`, which also turns every name and highlighted word into a box of its own.
+- Keep each caption to two lines, about 12 words. Split a longer line into two captions.
 - One caption on screen at a time. Each caption ends before the next one starts, and the last one ends before the end card appears.
 - No emoji in captions, the end card or any text. The renderer has no emoji font, so an emoji shows as an empty gap.
 - The end card takes the last 3.5 to 4.5 seconds: brand name, the offer, the button and the legal line together. The logo is the client's real logo file passed in `images`, at least 15% of the frame width (160 px on 1080). Put it where the shot is calm (often the sky or a wall), never over the product, a face or a label. Move captions that overlap it above it, at about y = 640.
