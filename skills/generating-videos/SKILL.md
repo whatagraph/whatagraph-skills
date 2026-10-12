@@ -151,6 +151,7 @@ Most Reels are watched with the sound off, so caption every spoken line and voic
 - Text in Chinese, Japanese, Korean, Arabic, Hebrew, Thai or Hindi needs the Noto Sans font for that script from Google Fonts (Noto Sans SC, Noto Sans JP, Noto Sans KR, Noto Sans Arabic, Noto Sans Hebrew, Noto Sans Thai, Noto Sans Devanagari), named first in `font-family`. The renderer has fonts for Latin, Greek and Cyrillic letters only, so other letters show as empty boxes without it. Set `dir="rtl"` on Arabic and Hebrew text.
 
 ```
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@700&display=swap" rel="stylesheet">
 <style>
 html,body{margin:0;width:1080px;height:1920px;overflow:hidden;font-family:Inter,sans-serif;background:transparent}
 .cap{position:absolute;left:66px;right:66px;top:1010px;display:flex;justify-content:center;opacity:0;
@@ -158,10 +159,19 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;font-family:Inter,
 .cap>.box{max-width:100%;padding:12px 22px 14px;border-radius:16px;background:rgba(0,0,0,.58);color:#fff;font:800 50px/1.16 Inter;text-align:center}
 @keyframes capIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes capOut{from{opacity:1}to{opacity:0}}
+.end{position:absolute;inset:0;background:#B5462A;opacity:0;animation:endIn .3s ease-out 11s forwards}
+.end img{position:absolute;left:50%;top:560px;width:400px;transform:translateX(-50%)}
+.end .line{position:absolute;left:66px;right:66px;top:860px;margin:0;font:400 124px/.92 Anton;text-transform:uppercase;color:#FFF4E6;text-align:center}
+.end .cta{position:absolute;left:66px;right:66px;top:1130px;font:700 42px Archivo;color:#FFF4E6;text-align:center}
+@keyframes endIn{from{opacity:0}to{opacity:1}}
 </style>
 <!-- animation-delay: start, end - 0.15 -->
 <div class="cap" style="animation-delay:.72s,3.75s"><div class="box">Okay… this is the best carbonara in the city.</div></div>
+<!-- the end card, the last 4 seconds of a 15 second ad: one brand color, the logo, one line, the call to action -->
+<div class="end"><img src="{{image_1}}"><h1 class="line">Pasta night is Thursday</h1><div class="cta">Book a table</div></div>
 ```
+
+`{{image_1}}` is the logo passed in `images`. For the end card on the last shot instead, drop the `.end` background and add a scrim element under the words only, such as `linear-gradient(to top, rgba(0,0,0,.6), transparent)` over the lower half.
 
 render-video returns `spoken_lines` for the finished ad. Compare them with your script: every line present, in order, said once.
 
