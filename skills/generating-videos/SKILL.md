@@ -35,6 +35,8 @@ Tools covered: `generate-video`, `generate-voiceover`, `generate-music`, `render
 - `generate-music` makes a 30 second instrumental track for 4 credits.
 - `render-video` cuts the shots together, mixes their sound with the voice-over and the music, and lays your HTML on top: the text, captions, logo and end card, exactly as written. It costs no credits except a fraction of a credit to read back what is said.
 
+When the user asks for a video, the answer is a finished video made in this turn, not a storyboard or a still. This holds when the video is one part of a larger request, such as a report or a campaign board: make the video first, then put it in the document. Plan it, make it, check it and show it. Offer plans for more videos only after the first one is made.
+
 The video tools are not offered to every team; check your tool list. Teams whose AI processing must stay in the EU have `generate-image` and `render-video` but no footage, voice-over or music, so they get template motion (the last section) with a photo from `generate-image`.
 
 ## Pick the format
@@ -51,10 +53,11 @@ Formats in the order they win on Meta (Motion's 2025 library): unboxing, offer, 
 | Hotel, travel | **Travel montage** | A drone shot · a guest's reaction · the pool, the view or the room · breakfast, with the offer |
 | Real estate | **Property tour** | The door opening · the main room · the kitchen or bedroom · the view, with the price card |
 | Car dealer | **Dealer offer** | The car on the road · people inside · the key handover · the car parked, with the offer and its legal line |
+| Software, app, online service | **Product demo** | A person hits the problem and says it, to camera or in a voice-over · the real product on screen doing the job · the result on screen, such as the number or the finished page · the person's reaction, with the logo, the offer and the button |
 
-A 15 second ad has four shots of 2.5 to 5 seconds. Stories show up to 15 seconds in one card.
+A 15 second ad has four shots of 2.5 to 5 seconds. Make all four. One clip with an end card on it is not an ad, unless the user asked for a single clip. Stories show up to 15 seconds in one card, so keep a Story ad at 15 seconds or less.
 
-Template motion (a photo with moving text, no generated footage) is still right for a quick price change, a sale or a countdown, and for EU teams. See the last section.
+Template motion (a photo with moving text, no generated footage) is a fallback. Use it only when the user asks for a quick price change, a sale or a countdown, or when your tool list has no `generate-video` (EU teams). See the last section. When the user asks for a Story, a Reel or a video ad and you have `generate-video`, make live-action shots with sound. A silent animation of text over a picture does not answer that request.
 
 ## Plan before you spend
 
@@ -65,7 +68,7 @@ A clip costs about as much as 40 images. Write the plan first, then make every s
 3. The copy: the captions of every line, the end card's brand, offer, button and legal line.
 4. The cost: four shots at 1080p are about 620 credits, the voice and the music about 5.
 
-When the brief is thin (no offer, no brand line, no market), ask once before you generate anything.
+When the brief is thin (no offer, no brand line, no market) and there is no website, brand kit or earlier ad to take it from, ask once before you generate anything. Otherwise make the video in this turn. The plan is a step toward the video, never the answer to a request for one.
 
 ## Make it look real
 
@@ -81,9 +84,20 @@ The footage looks real when the prompt describes real footage and real people. I
 
 ### Keep the same person or product in every shot
 
+When one person appears in two or more shots, the reference photo is required. A prompt that says "the same woman" without it gives a different person in each shot.
+
 1. Make one reference photo first with `generate-image`. It must look like a candid phone photo, such as "a real, candid photo taken on a recent iPhone, natural light", not a studio shot. A studio render looks like clay in video.
 2. Check it before you spend on video. The product must look like no real brand's (an "unbranded" car came out as a copy of a real model, badge included), and every printed word must be spelled exactly right. Fix it with one `generate-image` edit if not.
 3. Pass it as `start_image` for a shot that starts from exactly that picture. Pass it in `reference_images` (up to 3) for the same person or product in a new scene. When the client has a real product photo, use that instead, always.
+
+### Software and apps: real people, real screens
+
+A software ad is still a live-action ad. The people are generated footage; the product is real screenshots.
+
+- Shots 1 and 4 come from `generate-video`: a person with the problem, saying it, and the same person once it is solved. Make both clips, and pass the same reference photo to both, so it is the same person. One clip followed by a long end card is not the ad.
+- Shots 2 and 3 show the real product. A generated clip invents an interface with misspelled words, so never ask for a screen in a clip. Find real screenshots in the team library (`search-assets` for "screenshot", "dashboard" or "report"), on the client's website (import them with `manage-assets action=import_url`), or from the user. Pass them in render-video's `images` and show each one in a phone or laptop frame drawn in CSS, on the brand color, covering the frame for that shot. Move them: a slow push in, a scroll, a ring around the number that matters. render-video needs a clip under every second for the sound, so under these shots play a calm part of a people clip at volume 0.5.
+- Without a real screenshot, never draw a made-up interface, in a clip or in the HTML: no dashboard, chart, report or app screen built in CSS, and no number the client did not give. Let the people shots tell the story, put one short claim of up to six words in large type on the brand color in shots 2 and 3, and ask the user for screenshots in your reply.
+- Add a voice-over over the shots in which nobody speaks, and music.
 
 ### Only the finished video goes in the chat
 
@@ -91,7 +105,7 @@ Clips, voice-overs and music are parts of the ad, so the chat does not show them
 
 ### Check every clip
 
-Each clip comes back with six frames and `spoken_lines`, the words said with their start and end times. Check that the person and the product look the same as in the reference, that no logo or text appeared, and that the line was said once and as written. The model sometimes repeats a line or adds words; cut around them, and only remake the shot if the line is missing.
+Each clip comes back with six frames and `spoken_lines`, the words said with their start and end times. Check that the person and the product look the same as in the reference, that no logo or text appeared, and that the line was said once and as written. If a shot shows a different person, remake it with the reference photo before you cut: two faces in one story read as two people. The model sometimes repeats a line or adds words; cut around them, and only remake the shot if the line is missing.
 
 ## Cut it together with render-video
 
@@ -125,7 +139,11 @@ Most Reels are watched with the sound off, so caption every spoken line and voic
 
 - The time of a line in the ad = where its shot starts in the ad + (the line's `start` in `spoken_lines` − the shot's `start_seconds`). A voice-over phrase starts at its `start_seconds` + its segment's `start`.
 - The style that reads as native: white bold text, about 50 px, on a dark translucent box, centered at about y = 1010. Each caption pops in at its start and fades at its end.
-- The end card takes the last 3.5 to 4.5 seconds: brand name, the offer, the button and the legal line together. Put it where the shot is calm (often the sky or a wall), never over the product, a face or a label. Move captions that overlap it above it, at about y = 640.
+- One box per caption. When a caption names who speaks, put the name inside the same box as bold text (`<b>Max:</b> Squat-proof.`). To color one word, wrap it in `<b class="hl">` and give `.hl` only a color. Style the box with a direct-child rule (`.cap>.box`), never a descendant rule such as `.cap span`, which also turns every name and highlighted word into a box of its own.
+- Keep each caption to two lines, about 12 words. Split a longer line into two captions.
+- One caption on screen at a time. Each caption ends before the next one starts, and the last one ends before the end card appears.
+- No emoji in captions, the end card or any text. The renderer has no emoji font, so an emoji shows as an empty gap.
+- The end card takes the last 3.5 to 4.5 seconds: brand name, the offer, the button and the legal line together. The logo is the client's real logo file passed in `images`, at least 15% of the frame width (160 px on 1080). Put it where the shot is calm (often the sky or a wall), never over the product, a face or a label. Move captions that overlap it above it, at about y = 640.
 - Leave `html` and `body` without a background. Draw scrims as their own elements.
 - Text in Chinese, Japanese, Korean, Arabic, Hebrew, Thai or Hindi needs the Noto Sans font for that script from Google Fonts (Noto Sans SC, Noto Sans JP, Noto Sans KR, Noto Sans Arabic, Noto Sans Hebrew, Noto Sans Thai, Noto Sans Devanagari), named first in `font-family`. The renderer has fonts for Latin, Greek and Cyrillic letters only, so other letters show as empty boxes without it. Set `dir="rtl"` on Arabic and Hebrew text.
 
@@ -134,12 +152,12 @@ Most Reels are watched with the sound off, so caption every spoken line and voic
 html,body{margin:0;width:1080px;height:1920px;overflow:hidden;font-family:Inter,sans-serif;background:transparent}
 .cap{position:absolute;left:66px;right:66px;top:1010px;display:flex;justify-content:center;opacity:0;
   animation:capIn .22s cubic-bezier(.2,.9,.3,1.2) both, capOut .15s ease-in forwards}
-.cap span{padding:12px 22px 14px;border-radius:16px;background:rgba(0,0,0,.58);color:#fff;font:800 50px/1.16 Inter;text-align:center}
+.cap>.box{max-width:100%;padding:12px 22px 14px;border-radius:16px;background:rgba(0,0,0,.58);color:#fff;font:800 50px/1.16 Inter;text-align:center}
 @keyframes capIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes capOut{from{opacity:1}to{opacity:0}}
 </style>
 <!-- animation-delay: start, end - 0.15 -->
-<div class="cap" style="animation-delay:.72s,3.75s"><span>Okay… this is the best carbonara in the city.</span></div>
+<div class="cap" style="animation-delay:.72s,3.75s"><div class="box">Okay… this is the best carbonara in the city.</div></div>
 ```
 
 render-video returns `spoken_lines` for the finished ad. Compare them with your script: every line present, in order, said once.
@@ -173,10 +191,12 @@ Keep all text, logos and buttons out of the top 14% (above y = 270), the bottom 
 ## Check every video before you show it
 
 1. The first frame is already moving and shows the subject.
-2. Every caption matches its spoken line in time and words, and every line is inside the safe zone and spelled exactly as given.
-3. The end card covers no product, face or label; the price and the button are on screen together; the legal line is complete.
-4. The person and the product look the same in every shot, and no logo or text appeared in any clip.
-5. `spoken_lines` of the finished ad match the script.
+2. It has sound: spoken lines or a voice-over, and music.
+3. Every caption matches its spoken line in time and words, and every line is inside the safe zone and spelled exactly as given. Each caption is one box, alone on screen, with no empty gap in it.
+4. The end card is the last 3.5 to 4.5 seconds, covers no product, face or label, shows the price and the button together, has the complete legal line, and has a logo at least 160 px wide.
+5. No interface, dashboard or chart appears that is not a real screenshot, and every number on screen comes from the client.
+6. The person and the product look the same in every shot, and no logo or text appeared in any clip.
+7. `spoken_lines` of the finished ad match the script.
 
 Then tell the user what you made: the file name, size and length, the cost (the sum of `credits_used`), and the AI label question when it applies.
 
@@ -212,7 +232,13 @@ A video is private to the conversation until you publish it. `manage-assets` run
 manage-assets action=publish asset_id=<asset_ulid>      → {"url": "<public_url>"}
 ```
 
-In an HTML document, play it with `<video src="<public_url>" controls playsinline preload="metadata"></video>`. A document plays only published Whatagraph videos; a video that is not published, or any other URL, stays blank. Autoplay works only with `muted`, so for ads with sound show the controls and a poster. To show a set of ads, put each in a 9:16 phone frame with its title, its format and what it cost.
+In an HTML document, play it with `<video src="<public_url>#t=0.1" controls playsinline preload="metadata"></video>`. The `#t=0.1` shows the video's own first frame before it plays. A document plays only published Whatagraph videos; a video that is not published, or any other URL, stays blank. Autoplay works only with `muted`, so for ads with sound show the controls. To show a set of ads, put each in a 9:16 phone frame with its title, its format and what it cost.
+
+When you put a new video in a document in place of a picture or an older video:
+
+- Do not use the old picture as the `poster`. It makes the page look unchanged. Leave `poster` out and keep `#t=0.1`.
+- Rewrite the text around it to describe the video you made: its shots, length, lines and captions. A storyboard that still describes a different plan tells the reader the video is wrong.
+- After the edit, check that every `<video>` in the document points to the published URL of the video you just made.
 
 ## What it cannot do
 
