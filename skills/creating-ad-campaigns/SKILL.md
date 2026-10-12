@@ -88,7 +88,7 @@ For each concept write:
 - **Name**, **archetype** and **idea** (one line from "Find the idea first" in `designing-ad-creatives`), with the three headline options you considered and why the chosen one wins.
 - **Builds on**: the winning pattern from step 2 with its number, or "white space" and why.
 - **Hypothesis**: the one thing it tests ("an offer-first ad beats the lifestyle ad for cold audiences").
-- **Style and mode**: the style from `generating-images`, and whether it is built all in one image or composed.
+- **Direction, style and mode**: the visual direction and the style from `generating-images`, and whether it is built all in one image or composed. No two concepts share a direction.
 - **Copy, written before any image**: the words in the image (a headline of 3 to 9 words, the proof, the offer, a button of three words or fewer) and the platform's text fields:
 
   | Platform | Fields |
@@ -101,7 +101,7 @@ For each concept write:
 
   When the client has written ads before, use their best-performing copy as the model for tone and length.
 
-Keep the brand system fixed across concepts, so the campaign reads as one brand.
+Keep the brand fixed across concepts: the colors, the logo, the product and the claims. Change the layout. Give each concept a different visual direction from "Pick a visual direction for each concept" in `generating-images`, and write its name next to the concept in your plan, for example "Concept 2, offer first: Type as the image". Three concepts in one layout with three photos are one ad tested three times, and Meta's delivery treats them that way.
 
 ## 4. Produce the ads
 
