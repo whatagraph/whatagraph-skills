@@ -1,13 +1,17 @@
 ---
 name: creating-ad-campaigns
 type: workflow
-description: Plan and produce a complete, on-brand ad campaign from the client's brand and their real ad results across every connected channel. Covers the brand kit (from the website when possible), what has worked in Meta, Google, TikTok, LinkedIn, Pinterest and Snapchat, 2 to 4 concepts built on proven ad archetypes with copy and a test hypothesis, finished ads in every placement, names that bring the results back, a board to present them, and refreshes of tired ads. Use when the user asks for ad concepts, new creatives, a campaign, variants to test, ads "like our best ones", or a refresh of tired ads. Load `designing-ad-creatives` for the layouts and `generating-images` for the image work.
+description: Plan and produce a complete, on-brand ad campaign from the client's brand and their real ad results across every connected channel. Covers the brand kit (from the website when possible), what has worked in Meta, Google, TikTok, LinkedIn, Pinterest and Snapchat, 2 to 4 concepts built on proven ad archetypes with copy and a test hypothesis, finished ads in every placement (Story and Reels videos included), names that bring the results back, a board to present them, and refreshes of tired ads. Use when the user asks for ad concepts, new creatives, a campaign, variants to test, ads "like our best ones", or a refresh of tired ads. Load `designing-ad-creatives` for the layouts, `generating-images` for the image work and `generating-videos` for any video.
 required_tools:
   - generate-image
   - view-creatives
 optional_tools:
   - tool_name: render-design
     purpose: Lay out exact copy, prices, logos and charts over generated pictures, and render every placement from one layout.
+  - tool_name: render-video
+    purpose: Make the finished Story, Reels and feed videos when the campaign asks for video.
+  - tool_name: generate-video
+    purpose: Shoot the live-action shots of a video ad.
   - tool_name: list-reports
     purpose: Find a report with media widgets that shows the client's ads.
   - tool_name: list-widgets
@@ -37,6 +41,15 @@ A strong answer to "make us some new ads" looks like this:
 Whatagraph can do what ad tools cannot: it sees the client's real ads next to their real results on every channel at once. Meta's tools learn only from Meta, and Google's only from Google. Use that. Every concept should say which proven pattern it builds on, or which untested idea it tries, and what it tests.
 
 Load `designing-ad-creatives` (the archetypes and what makes ads win) and `generating-images` (the spec, the composed designs, the checks) before the first image. This skill decides what to make and in what order.
+
+## A request for video gets a finished video
+
+When the request names a video, a Story or Reels video, a video ad or a motion version of an ad, make at least one finished video in the same turn. Load `generating-videos` before you plan. A storyboard, a shot list or a still image does not answer a request for video, even when it sits in a board or a report. The request is the go-ahead to spend credits on one video.
+
+- Make the strongest video concept as a finished video first. Put the other video concepts on the board as plans with their cost, and offer to make them.
+- When the request asks for several things, such as a report, images and videos, the turn still ends with at least one finished video.
+- Without `generate-video` in your tool list, make the video with `render-video` as template motion from real product images, and say in one line why it has no live-action footage. Without `render-video` either, say at the start that you cannot make video here, then do the rest.
+- Deliver plans or storyboards instead of a video only when the user asks for ideas, a plan or storyboards.
 
 ## 1. Build the brand kit
 
@@ -95,13 +108,14 @@ Keep the brand system fixed across concepts, so the campaign reads as one brand.
 3. **Check it** with the checks in `generating-images`: bodies, every word, logo and product, counts, safe zones, claims, then the design. Fix with an edit or with the layout.
 4. **Every placement.** Composed: render the same layout for 1080x1920 (story and reel, text out of the top 14%, the bottom 35% and the sides), 1080x1080, 1200x628 and any banner sizes. One-image: adapt the approved master with `edit_base` and the new ratio. For Google display and Performance Max, make text-free versions and deliver the copy as text assets.
 5. **Variants.** For a test, change one thing per variant (the headline, the image or the offer), so a result can be read.
-6. **Name every ad so its results come back**: `<client>_<campaign>_<concept>_<archetype>_<placement>_v<n>`, for example `northpeak_firstsnow_c2_offerfirst_9x16_v1`. The name appears in Whatagraph's ad-level data, so the next campaign can read which concept, archetype and placement won.
-7. **Credits.** Generated images cost credits; renders do not. Three concepts in four placements is about twelve images, fewer when composed. Ask before going beyond that, and use `draft` for exploration.
+6. **Videos.** For each video concept you make, follow `generating-videos`: plan the shots, make every shot, cut them with `render-video`, check the result and publish it.
+7. **Name every ad so its results come back**: `<client>_<campaign>_<concept>_<archetype>_<placement>_v<n>`, for example `northpeak_firstsnow_c2_offerfirst_9x16_v1`. The name appears in Whatagraph's ad-level data, so the next campaign can read which concept, archetype and placement won.
+8. **Credits.** Generated images cost credits; renders do not. Three concepts in four placements is about twelve images, fewer when composed. Ask before going beyond that, and use `draft` for exploration. A finished 15 second video with four live-action shots costs about 620 credits. Make one without asking when the user asked for video, and ask before making more.
 
 ## 5. Present the campaign
 
 1. Publish the finished ads with `manage-assets action=publish`.
-2. Build one board with `create-document`: an HTML page in the client's colors. Start with the brand kit and what has worked, with the numbers. For each concept show the name, archetype, idea, hypothesis and what it builds on; the ads in each placement (`<img>` with the published URLs); and the headline, primary text and button as copyable text. End with a test plan: which concept runs first, the budget split, the KPI that decides, and when to read the result.
+2. Build one board with `create-document`: an HTML page in the client's colors. Start with the brand kit and what has worked, with the numbers. For each concept show the name, archetype, idea, hypothesis and what it builds on; the ads in each placement (`<img>` with the published URLs, and each finished video as a `<video>` as `generating-videos` shows); and the headline, primary text and button as copyable text. End with a test plan: which concept runs first, the budget split, the KPI that decides, and when to read the result.
 3. In the chat, give the three-line summary: what has worked, the concepts, and the next step.
 
 Offer the next steps: translations, one version per location, more variants of the strongest concept, or a creative report that tracks the new ads by their names once they run.

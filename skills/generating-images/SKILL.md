@@ -104,7 +104,7 @@ For an image without copy (the picture under a composed design, a hero photo, a 
 ## Composed designs with render-design
 
 1. Generate the picture first with `generate-image`: the scene, the product and the people, with empty space where the copy will sit, and no text. Keep it, and pass it to `render-design` as an image.
-2. Write the layout as one HTML document with a `<style>` block. Size the body to the exact width and height you request. Put each image in with `{{image_1}}`, `{{image_2}}` and so on, in the order of `images`. Load fonts with a Google Fonts `<link>`. JavaScript does not run, and nothing else loads from the web, so every picture, logo and icon must be passed in `images` or drawn in CSS or inline SVG.
+2. Write the layout as one HTML document with a `<style>` block. Size the body to the exact width and height you request. Put each image in with `{{image_1}}`, `{{image_2}}` and so on, in the order of `images`. Load fonts with a Google Fonts `<link>`. For Chinese, Japanese, Korean, Arabic, Hebrew, Thai or Hindi text, load the Noto Sans font for that script (such as Noto Sans JP or Noto Sans Arabic) and name it first in `font-family`: the renderer has fonts for Latin, Greek and Cyrillic letters only. JavaScript does not run, and nothing else loads from the web, so every picture, logo and icon must be passed in `images` or drawn in CSS or inline SVG.
 3. Call `render-design` with `html`, `width`, `height`, `images` (each an `asset_ulid` or a Whatagraph-hosted `url`) and a `title`.
 4. For every other placement, change only the CSS for the new size and render again with the same images. Copy, logo and product stay identical.
 
@@ -299,4 +299,3 @@ If a tool refuses a request, tell the user why in plain words and offer an alter
 - Animation or video. Load `generating-videos` for Story and Reels ads and other short videos.
 - Layered files for a design tool. A composed design's HTML can be edited and rendered again; the output is a flat PNG.
 - Exact brand fonts or very small text in `generate-image`. Use `render-design`, or keep fine print large, check it, and fix it with an edit.
-- Generated images for teams whose AI processing must stay in the EU: `generate-image` is not offered to them. `render-design` calls no AI model.
