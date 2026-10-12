@@ -94,9 +94,9 @@ When one person appears in two or more shots, the reference photo is required. A
 
 A software ad is still a live-action ad. The people are generated footage; the product is real screenshots.
 
-- Shots 1 and 4 come from `generate-video`: a person with the problem, saying it, and the same person once it is solved. Pass the same reference photo to both, so it is the same person.
+- Shots 1 and 4 come from `generate-video`: a person with the problem, saying it, and the same person once it is solved. Make both clips, and pass the same reference photo to both, so it is the same person. One clip followed by a long end card is not the ad.
 - Shots 2 and 3 show the real product. A generated clip invents an interface with misspelled words, so never ask for a screen in a clip. Find real screenshots in the team library (`search-assets` for "screenshot", "dashboard" or "report"), on the client's website (import them with `manage-assets action=import_url`), or from the user. Pass them in render-video's `images` and show each one in a phone or laptop frame drawn in CSS, on the brand color, covering the frame for that shot. Move them: a slow push in, a scroll, a ring around the number that matters. render-video needs a clip under every second for the sound, so under these shots play a calm part of a people clip at volume 0.5.
-- Without a real screenshot, never draw a made-up interface. Let the people shots tell the story, put one short claim of up to six words in large type on the brand color in shots 2 and 3, and ask the user for screenshots in your reply.
+- Without a real screenshot, never draw a made-up interface, in a clip or in the HTML: no dashboard, chart, report or app screen built in CSS, and no number the client did not give. Let the people shots tell the story, put one short claim of up to six words in large type on the brand color in shots 2 and 3, and ask the user for screenshots in your reply.
 - Add a voice-over over the shots in which nobody speaks, and music.
 
 ### Only the finished video goes in the chat
@@ -193,9 +193,10 @@ Keep all text, logos and buttons out of the top 14% (above y = 270), the bottom 
 1. The first frame is already moving and shows the subject.
 2. It has sound: spoken lines or a voice-over, and music.
 3. Every caption matches its spoken line in time and words, and every line is inside the safe zone and spelled exactly as given. Each caption is one box, alone on screen, with no empty gap in it.
-4. The end card covers no product, face or label; the price and the button are on screen together; the legal line is complete; the logo is at least 160 px wide.
-5. The person and the product look the same in every shot, and no logo or text appeared in any clip.
-6. `spoken_lines` of the finished ad match the script.
+4. The end card is the last 3.5 to 4.5 seconds, covers no product, face or label, shows the price and the button together, has the complete legal line, and has a logo at least 160 px wide.
+5. No interface, dashboard or chart appears that is not a real screenshot, and every number on screen comes from the client.
+6. The person and the product look the same in every shot, and no logo or text appeared in any clip.
+7. `spoken_lines` of the finished ad match the script.
 
 Then tell the user what you made: the file name, size and length, the cost (the sum of `credits_used`), and the AI label question when it applies.
 
