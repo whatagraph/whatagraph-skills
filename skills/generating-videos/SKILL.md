@@ -35,7 +35,7 @@ Tools covered: `generate-video`, `generate-voiceover`, `generate-music`, `render
 - `generate-music` makes a 30 second instrumental track for 4 credits.
 - `render-video` cuts the shots together, mixes their sound with the voice-over and the music, and lays your HTML on top: the text, captions, logo and end card, exactly as written. It costs no credits except a fraction of a credit to read back what is said.
 
-When the user asks for a video, the answer is a finished video made in this turn, not a storyboard or a still. Plan it, make it, check it and show it. Offer plans for more videos only after the first one is made.
+When the user asks for a video, the answer is a finished video made in this turn, not a storyboard or a still. This holds when the video is one part of a larger request, such as a report or a campaign board: make the video first, then put it in the document. Plan it, make it, check it and show it. Offer plans for more videos only after the first one is made.
 
 The video tools are not offered to every team; check your tool list. Teams whose AI processing must stay in the EU have `generate-image` and `render-video` but no footage, voice-over or music, so they get template motion (the last section) with a photo from `generate-image`.
 

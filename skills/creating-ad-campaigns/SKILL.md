@@ -46,6 +46,8 @@ Load `designing-ad-creatives` (the archetypes and what makes ads win) and `gener
 
 When the request names a video, a Story or Reels video, a video ad or a motion version of an ad, make at least one finished video in the same turn. Load `generating-videos` before you plan. A storyboard, a shot list or a still image does not answer a request for video, even when it sits in a board or a report. The request is the go-ahead to spend credits on one video.
 
+Write the video into your plan as its own step, before the board: "Make the finished video for concept <n> (shots, voice-over, music, render_video)". The board comes after it and plays the video.
+
 - Make the strongest video concept as a finished video first. Put the other video concepts on the board as plans with their cost, and offer to make them.
 - When the request asks for several things, such as a report, images and videos, the turn still ends with at least one finished video.
 - Without `generate-video` in your tool list, make the video with `render-video` as template motion from real product images, and say in one line why it has no live-action footage. Without `render-video` either, say at the start that you cannot make video here, then do the rest.
