@@ -137,7 +137,7 @@ Most Reels are watched with the sound off, so caption every spoken line and voic
 
 - The time of a line in the ad = where its shot starts in the ad + (the line's `start` in `spoken_lines` − the shot's `start_seconds`). A voice-over phrase starts at its `start_seconds` + its segment's `start`.
 - The style that reads as native: white bold text, about 50 px, on a dark translucent box, centered at about y = 1010. Each caption pops in at its start and fades at its end.
-- One box per caption. When a caption names who speaks, put the name inside the same box as bold text (`<b>Max:</b> Squat-proof.`), never in a span or box of its own.
+- One box per caption. When a caption names who speaks, put the name inside the same box as bold text (`<b>Max:</b> Squat-proof.`). To color one word, wrap it in `<b class="hl">` and give `.hl` only a color. Style the box with a direct-child rule (`.cap>.box`), never a descendant rule such as `.cap span`, which also turns every name and highlighted word into a box of its own.
 - One caption on screen at a time. Each caption ends before the next one starts, and the last one ends before the end card appears.
 - No emoji in captions, the end card or any text. The renderer has no emoji font, so an emoji shows as an empty gap.
 - The end card takes the last 3.5 to 4.5 seconds: brand name, the offer, the button and the legal line together. The logo is the client's real logo file passed in `images`, at least 15% of the frame width (160 px on 1080). Put it where the shot is calm (often the sky or a wall), never over the product, a face or a label. Move captions that overlap it above it, at about y = 640.
