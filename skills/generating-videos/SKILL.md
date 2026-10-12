@@ -77,7 +77,8 @@ The footage looks real when the prompt describes real footage and real people. I
 - **Say what kind of footage it is.** "Real handheld phone footage filmed by a friend" for a creator or guest; "Real commercial footage, cinema camera, shallow depth of field" for a product film; "Smooth gimbal shot, real estate video" for a tour; "Drone footage" for a hotel.
 - **Cast ordinary people.** Write their age, hair, clothes and what they do: "a woman in her late twenties with big dark curly hair, gold hoops and a black top". Never "beautiful", "flawless skin", "influencer" or "model": those words produce the glossy AI look. Vary ages, body types and backgrounds across a set.
 - **Write the light and the place.** "Dim, warm tungsten and candle light, waiters passing behind her" makes a real trattoria; "a restaurant" makes a stock image.
-- **Write spoken words like this:** `she says: "Squat-proof. I checked. Twice."` Keep each line under 12 words. Add a reaction around it: a laugh, a glance at the product.
+- **Write spoken words like this:** `she says: "Squat-proof. I checked. Twice."` Keep each line under 12 words, in the language of the ad. Add a reaction around it: a laugh, a glance at the product.
+- **People speak only the words you write.** "Talking", "chatting" or "says something" with no line in quotes makes the model invent the words, often in English in an ad for another language. When nobody should speak, write "no one speaks". A caption shows the words that are said, never a translation of them.
 - **Write the sound**, and end the prompt with "No music, no subtitles, no text." The music comes from `generate-music`. A clip's music would clash with it.
 - **Never ask for text, logos, prices or brand names in a clip.** They come out misspelled. Put them in the HTML.
 - **No real people.** No celebrity, no public figure, no named person, and no lookalike of one.
@@ -118,7 +119,7 @@ render-video html="<captions and end card>" clips=[
 ] voiceovers=[{"asset_ulid": "<voice>", "start_seconds": 4.0}] music={"asset_ulid": "<music>"} title="Pasta night story"
 ```
 
-- **Cut by the spoken lines.** Start a speaking shot 0.3 to 0.5 seconds before its first word and end it 0.3 seconds after its last. Mark it `"speech": true`, so the music drops under it.
+- **Cut by the spoken lines.** Start a speaking shot 0.3 to 0.5 seconds before its first word and end it 0.3 seconds after its last. Mark it `"speech": true`, so the music drops under it. Read `spoken_lines` of every clip you use, including the ones you meant as silent shots: a part that starts or ends inside a line cuts the speaker off mid-word, and render-video refuses it. To use such a shot for its picture only, set its volume to 0.
 - **Open on motion.** The first frame is already mid-action: a bite, a pour, a person turning. Never a still or a black frame.
 - **Room sound.** Keep 1 for speaking shots. Use 0.5 to 0.8 for other shots, so their sound sits under the music.
 - **Voice-over.** Write it for the ear, in short sentences, in the language of the ad, and write the performance into the script. The voice reads the script as a transcript and speaks the language it is written in, so anything that is not a word to say goes in a tag or in `style`:
@@ -138,7 +139,8 @@ render-video html="<captions and end card>" clips=[
 Most Reels are watched with the sound off, so caption every spoken line and voice-over phrase. Leave the tags and the CAPITALS out of the captions: write the words as they read normally.
 
 - The time of a line in the ad = where its shot starts in the ad + (the line's `start` in `spoken_lines` − the shot's `start_seconds`). A voice-over phrase starts at its `start_seconds` + its segment's `start`.
-- The style that reads as native: white bold text, about 50 px, on a dark translucent box, centered at about y = 1010. Each caption pops in at its start and fades at its end.
+- The style that reads as native: white bold text, about 50 px, on a dark translucent box, with its bottom edge at about y = 1240, just above the bottom 35% where Instagram draws its own text. Each caption pops in at its start and fades at its end.
+- A caption never covers a face. Look at the frames of each shot before you place its captions: people in a wide shot often have their heads near the middle of the frame. When a face is where the caption would sit, move that shot's captions above the heads, at about y = 300, or below the face.
 - One box per caption. When a caption names who speaks, put the name inside the same box as bold text (`<b>Max:</b> Squat-proof.`). To color one word, wrap it in `<b class="hl">` and give `.hl` only a color. Style the box with a direct-child rule (`.cap>.box`), never a descendant rule such as `.cap span`, which also turns every name and highlighted word into a box of its own.
 - Keep each caption to two lines, about 12 words. Split a longer line into two captions.
 - One caption on screen at a time. Each caption ends before the next one starts, and the last one ends before the end card appears.
@@ -154,7 +156,7 @@ Most Reels are watched with the sound off, so caption every spoken line and voic
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@700&display=swap" rel="stylesheet">
 <style>
 html,body{margin:0;width:1080px;height:1920px;overflow:hidden;font-family:Inter,sans-serif;background:transparent}
-.cap{position:absolute;left:66px;right:66px;top:1010px;display:flex;justify-content:center;opacity:0;
+.cap{position:absolute;left:66px;right:66px;bottom:680px;display:flex;justify-content:center;opacity:0;
   animation:capIn .22s cubic-bezier(.2,.9,.3,1.2) both, capOut .15s ease-in forwards}
 .cap>.box{max-width:100%;padding:12px 22px 14px;border-radius:16px;background:rgba(0,0,0,.58);color:#fff;font:800 50px/1.16 Inter;text-align:center}
 @keyframes capIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
@@ -205,11 +207,12 @@ Keep all text and logos out of the top 14% (above y = 270), the bottom 35% (belo
 
 1. The first frame is already moving and shows the subject.
 2. It has sound: spoken lines or a voice-over, and music.
-3. Every caption matches its spoken line in time and words, and every line is inside the safe zone and spelled exactly as given. Each caption is one box, alone on screen, with no empty gap in it.
-4. The end card is the last 3.5 to 4.5 seconds, covers no product, face or label, shows the offer and the call to action together with nothing else but the legal line, and has a logo at least 160 px wide.
-5. No interface, dashboard or chart appears that is not a real screenshot, and every number on screen comes from the client.
-6. The person and the product look the same in every shot, and no logo or text appeared in any clip.
-7. `spoken_lines` of the finished ad match the script.
+3. Every caption matches its spoken line in time and words, and every line is inside the safe zone and spelled exactly as given. Each caption is one box, alone on screen, with no empty gap in it, and it covers no face.
+4. No speaker is cut off: every spoken line in the finished ad is complete, and in the language of the ad.
+5. The end card is the last 3.5 to 4.5 seconds, covers no product, face or label, shows the offer and the call to action together with nothing else but the legal line, and has a logo at least 160 px wide.
+6. No interface, dashboard or chart appears that is not a real screenshot, and every number on screen comes from the client.
+7. The person and the product look the same in every shot, and no logo or text appeared in any clip.
+8. `spoken_lines` of the finished ad match the script.
 
 Then tell the user what you made: the file name, size and length, the cost (the sum of `credits_used`), and the AI label question when it applies.
 
