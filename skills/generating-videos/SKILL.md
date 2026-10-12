@@ -57,7 +57,7 @@ Formats in the order they win on Meta (Motion's 2025 library): unboxing, offer, 
 
 A 15 second ad has four shots of 2.5 to 5 seconds. Make all four. One clip with an end card on it is not an ad, unless the user asked for a single clip. Stories show up to 15 seconds in one card.
 
-Template motion (a photo with moving text, no generated footage) is still right for a quick price change, a sale or a countdown, and for EU teams. See the last section.
+Template motion (a photo with moving text, no generated footage) is a fallback. Use it only when the user asks for a quick price change, a sale or a countdown, or when your tool list has no `generate-video` (EU teams). See the last section. When the user asks for a Story, a Reel or a video ad and you have `generate-video`, make live-action shots with sound. A silent animation of text over a picture does not answer that request.
 
 ## Plan before you spend
 
@@ -88,13 +88,14 @@ The footage looks real when the prompt describes real footage and real people. I
 2. Check it before you spend on video. The product must look like no real brand's (an "unbranded" car came out as a copy of a real model, badge included), and every printed word must be spelled exactly right. Fix it with one `generate-image` edit if not.
 3. Pass it as `start_image` for a shot that starts from exactly that picture. Pass it in `reference_images` (up to 3) for the same person or product in a new scene. When the client has a real product photo, use that instead, always.
 
-### Show the real product: software and apps
+### Software and apps: real people, real screens
 
-A generated clip cannot show a real app. It invents a screen that looks nothing like the product, often with misspelled words. For software, every shot of the product is a real screenshot.
+A software ad is still a live-action ad. The people are generated footage; the product is real screenshots.
 
-1. Get real screenshots of the product: images from the client's website (import them with `manage-assets action=import_url`), the team library, or the user. Never draw a made-up interface in the HTML, and never ask for a screen in a clip.
-2. Pass them in render-video's `images` and show them in the HTML during the product shots: in a phone or laptop frame drawn in CSS, on a background in the brand color, covering the frame from the shot's start to its end. Move them with CSS: a slow push in, a scroll down the page, a ring around the number that matters.
-3. Use generate-video only for the people: the person with the problem, and the reaction to the result. render-video needs a clip under every second for the sound, so under a screen shot use a calm part of one of the people clips at volume 0.5.
+- Shots 1 and 4 come from `generate-video`: a person with the problem, saying it, and the same person once it is solved. Pass the same reference photo to both, so it is the same person.
+- Shots 2 and 3 show the real product. A generated clip invents an interface with misspelled words, so never ask for a screen in a clip. Find real screenshots in the team library (`search-assets` for "screenshot", "dashboard" or "report"), on the client's website (import them with `manage-assets action=import_url`), or from the user. Pass them in render-video's `images` and show each one in a phone or laptop frame drawn in CSS, on the brand color, covering the frame for that shot. Move them: a slow push in, a scroll, a ring around the number that matters. render-video needs a clip under every second for the sound, so under these shots play a calm part of a people clip at volume 0.5.
+- Without a real screenshot, never draw a made-up interface. Let the people shots tell the story, put the claim in large type on the brand color in shots 2 and 3, and ask the user for screenshots in your reply.
+- Add a voice-over over the shots in which nobody speaks, and music.
 
 ### Only the finished video goes in the chat
 
@@ -184,10 +185,11 @@ Keep all text, logos and buttons out of the top 14% (above y = 270), the bottom 
 ## Check every video before you show it
 
 1. The first frame is already moving and shows the subject.
-2. Every caption matches its spoken line in time and words, and every line is inside the safe zone and spelled exactly as given.
-3. The end card covers no product, face or label; the price and the button are on screen together; the legal line is complete.
-4. The person and the product look the same in every shot, and no logo or text appeared in any clip.
-5. `spoken_lines` of the finished ad match the script.
+2. It has sound: spoken lines or a voice-over, and music.
+3. Every caption matches its spoken line in time and words, and every line is inside the safe zone and spelled exactly as given.
+4. The end card covers no product, face or label; the price and the button are on screen together; the legal line is complete; the logo is at least 160 px wide.
+5. The person and the product look the same in every shot, and no logo or text appeared in any clip.
+6. `spoken_lines` of the finished ad match the script.
 
 Then tell the user what you made: the file name, size and length, the cost (the sum of `credits_used`), and the AI label question when it applies.
 
