@@ -108,15 +108,19 @@ Three things not to do when you hit the lock:
 
 Creation is a **strict, ordered pipeline** that mirrors how the app builds a group: resolve fields → **verify with a real fetch** → build one ETL config per channel → create the group from those configs. Do **not** skip a step, and do **not** advance until the current step fully succeeds. A group built on fields a channel can't actually return will look fine and then come back empty.
 
-A **channel** = the integration a source belongs to. Steps 1–3 run once **per channel**, each time using one representative source for that channel.
+A **channel** = the integration a source belongs to. Steps 1–3 run once **per channel**, each time using one representative source for that channel. The step 2 verify fetch also runs on every other candidate source, as one fetch each.
 
 ### Step 0 — Pick sources, group them by channel
 
-Choose the `integration_source_ids` (`list-sources action=list`). Group them by channel: a same-channel group has one channel, a cross-channel group has several. Note one representative source per channel.
+Choose the `integration_source_ids` (`list-sources action=list`; follow `page.cursor` until `page.has_more` is false before you settle the candidate set). Take each candidate's name, currency and status from that list; do not call `list-sources action=show` per source. Group them by channel: a same-channel group has one channel, a cross-channel group has several. Note one representative source per channel.
+
+Record every candidate's source id and name. A source listed with `status: ok` can still fail every fetch, so every candidate is verified, either through the group check below or in step 2, and the sources that pass are the INCLUDED set.
+
+Before you verify, run `list-source-groups action=list` (follow `page.cursor` until `page.has_more` is false) and `show` the likely matches. Check every group of the same channel or channels whose members are all candidates, each one once: `list-source-groups action=source_issues group_id=<id>`, and one `fetch-data` for yesterday on its `integration_source_id` with one `universal_metric_*` from the group's own `list_dimensions_and_metrics`. When that fetch returns `success: true`, the members that `source_issues` does not list are verified. Step 2 checks only the candidates that no passing group verified: the members of a group that failed are checked there, unless another passing group already covers them.
 
 ### Step 1 — Resolve report type and fields (universal-first), per channel
 
-For each channel's representative source, resolve:
+Only the channel's representative gets field discovery. When the step 0 group check verified the representative, do this step and its step 2 fetch only if you end up creating a group. For each channel's representative source, resolve:
 
 - the **report type** (channel-native) — `list-sources action=list_report_types source_id=<src>`
 - the **fields** — `list-sources action=list_dimensions_and_metrics source_id=<src> is_universal=true`
@@ -125,7 +129,7 @@ For each channel's representative source, resolve:
 
 ### Step 2 — Verify the selection actually fetches (per channel) — MANDATORY
 
-Before creating anything, prove each channel's source returns data with the resolved fields, for **yesterday**:
+Before creating anything, prove that every candidate the step 0 group check did not verify returns data, for **yesterday**. Use the channel's full resolved selection on the representative (below). Check each other candidate with exactly one `fetch-data` that uses one metric already resolved on the representative (or the group's universal metric from step 0), with no field discovery; that one fetch is the whole check:
 
 ```
 fetch-data source_id=<representative source for the channel>
@@ -136,8 +140,13 @@ fetch-data source_id=<representative source for the channel>
 ```
 
 - **Pass = `success: true`.** Zero rows is still a pass — the account may just have no activity yesterday.
-- **Anything else is a failure.** A `data_not_ready` result means the source is still processing — **wait and re-run the same fetch**; never treat it as success and never proceed on it. `upstream_error` / `validation` are also failures — fix the inputs or retry.
-- Repeat for every channel. **Continue only when every channel's verify fetch passes.**
+- **Anything else is a failure.** A `data_not_ready` result means the source is still processing — **wait and re-run the same fetch, at most twice**; never treat it as success and never proceed on it. `upstream_error` / `validation` are also failures — fix the inputs or retry.
+- A candidate that still does not pass is **excluded**: leave it out of `integration_source_ids`, and tell the user which one and why. If the representative is excluded, pick another candidate of that channel as the representative and verify again.
+- Repeat for every channel and every candidate. If no candidate of a channel passes, leave that channel out, and tell the user which sources and why. **Continue only when every channel has a representative that passes.** The candidates that passed are the INCLUDED set.
+
+### Before step 3 — Reuse an exact match
+
+Use the groups you listed in step 0, and `show` the likely matches. Compare each group's member source ids, as a set, with the INCLUDED set — not with the candidate set, and not by name. If a group holds exactly the INCLUDED set at the report level you need (check it with `list-sources action=list_report_types` on the group's `integration_source_id`), reuse it (first run `list-source-groups action=source_issues group_id=<id>`; if it lists a member, offer `manage-source-groups action=resolve_issues` or tell the user): **skip steps 3 and 4** and use that group's `integration_source_id`. If a group holds only part of the set, or more than the set, leave it unchanged and build a new group with a distinct name. Never create a group with the same name as an existing one.
 
 ### Step 3 — Create one team-internal ETL config per channel
 
@@ -170,7 +179,7 @@ manage-source-groups action=create
    description="..."        # optional
    currency="USD"          # optional
    configs=[{ "name": "<group name>", "etl_config_ids": [<all channel etl_config_ids>] }]
-   integration_source_ids=[<all selected sources>]
+   integration_source_ids=[<all INCLUDED sources>]
 ```
 
 - Pass **one** config. Its `etl_config_ids` must contain **exactly one ETL config per channel** present in `integration_source_ids` — that's why step 3 runs once per channel. Miss a channel and creation is rejected.
@@ -302,7 +311,7 @@ Notes:
 
 The plain `universal_metric_*` / `universal_dimension_*` form returns the group **aggregate** (one rolled-up total). The group also exposes the contribution of each channel and each sub-source — the main reason to use a group over a blend. Two ways:
 
-- **Break the aggregate into rows** — add `universal_dimension_1130` (Channel name) or `universal_dimension_1131` (Source name) to a normal group fetch; you get one row per channel / per sub-source instead of one total.
+- **Break the aggregate into rows** — add `universal_dimension_1130` (Channel name) or `universal_dimension_1131` (Source name) to a normal group fetch; you get one row per channel / per source name instead of one total. Sub-sources with the same name merge into one row: for per-account detail, use the `..._integration_source_<sourceId>` form below or fetch those sources directly, and never add that detail to the group total again.
 - **Pick a single channel's or source's metric** — every universal metric also exists as `..._integration_<integrationId>` (one channel's sub-total) and `..._integration_source_<sourceId>` (one sub-source's contribution).
 
 ```
@@ -332,7 +341,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 
 ## Common pitfalls
 
-- **Skipping the verify fetch (step 2)** — never create configs or a group on fields you haven't proven fetch. `data_not_ready` is **not** success: wait and re-run the same fetch until it returns `success: true` (zero rows is fine), then proceed.
+- **Skipping the verify fetch (step 2)** — never create configs or a group on fields you haven't proven fetch. `data_not_ready` is **not** success: wait and re-run the same fetch, at most twice, until it returns `success: true` (zero rows is fine), then proceed. A candidate that still does not pass is excluded.
 - **Putting Channel name / Source name in `create_config`** — `universal_dimension_1130` / `universal_dimension_1131` are injected automatically on the group. Don't include them in a config's `dimensions`; they're read/drill-only fields.
 - **Missing a channel's ETL config** — the single create config's `etl_config_ids` must cover **every** channel in `integration_source_ids` (one config per channel from `create_config`). Miss one and `create` is rejected.
 - **Resolving fields once for all channels** — a universal field applies to a channel only if it maps to that channel, and native fields are channel-specific. Each channel's `list_dimensions_and_metrics` is the source of truth — resolve per channel from it (step 1). Pass a field a channel doesn't expose and config-create fails with an opaque server error, not a clear "field X doesn't apply" message.
@@ -345,7 +354,7 @@ Destructive — covered in the `whatagraph-deleting` skill (load it for paramete
 - **Empty group right after creation** — ETL needs a few minutes to populate; the create response includes a `warmup_hint` and `retry_after_seconds`. Wait before fetching from the group.
 - **Group not appearing in widget picker immediately** — refresh the report; new groups can take a few seconds to appear.
 - **Very large groups (hundreds of sub-sources)** — query performance can slow down. Keep one report-type level per group and split into focused groups rather than one sprawling group.
-- **Adding source groups can affect plan usage** — creating or expanding a group consumes source credits; check the team's plan limits before bulk-creating.
+- **Source credits apply only on legacy plans** — trial teams and current plans have no source-credit limit on groups, so do not hold back from offering one. On a legacy plan with too few credits, `create`, `update` and `duplicate` fail with the credits available and needed; tell the user that, and do not retry.
 - **`source_ids` vs `integration_source_ids`** — `create` expects `integration_source_ids`; `create_config` expects a single `integration_source_id`.
 - **Widget creation against a fresh group failing** — re-run `list-source-groups action=show` to verify `integration_source_id` exists and data has arrived before attaching widgets.
 - **Per-source metrics missing on a huge group** — the `universal_metric_<id>_integration_source_<subId>` family is generated only for multi-source groups and is **not** available on very large (consolidated) groups, where it's dropped to avoid query blow-up. Break out by `universal_dimension_1131` (Source name) instead.
