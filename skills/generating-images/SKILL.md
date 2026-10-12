@@ -299,4 +299,3 @@ If a tool refuses a request, tell the user why in plain words and offer an alter
 - Animation or video. Load `generating-videos` for Story and Reels ads and other short videos.
 - Layered files for a design tool. A composed design's HTML can be edited and rendered again; the output is a flat PNG.
 - Exact brand fonts or very small text in `generate-image`. Use `render-design`, or keep fine print large, check it, and fix it with an edit.
-- Generated images for teams whose AI processing must stay in the EU: `generate-image` is not offered to them. `render-design` calls no AI model.

@@ -35,7 +35,7 @@ Tools covered: `generate-video`, `generate-voiceover`, `generate-music`, `render
 - `generate-music` makes a 30 second instrumental track for 4 credits.
 - `render-video` cuts the shots together, mixes their sound with the voice-over and the music, and lays your HTML on top: the text, captions, logo and end card, exactly as written. It costs no credits except a fraction of a credit to read back what is said.
 
-The video tools are not offered to every team; check your tool list. Teams whose AI processing must stay in the EU have only `render-video`, so they get template motion (the last section).
+The video tools are not offered to every team; check your tool list. Teams whose AI processing must stay in the EU have `generate-image` and `render-video` but no footage, voice-over or music, so they get template motion (the last section) with a photo from `generate-image`.
 
 ## Pick the format
 
@@ -219,4 +219,4 @@ In an HTML document, play it with `<video src="<public_url>" controls playsinlin
 - Film the client's real product. Without the client's photo, a generated product is an invention; for anything that must be exact (a car, a package, a phone screen) ask for a photo.
 - Real people: no celebrity, public figure or named person, and no voice cloning.
 - Edit a video the user uploads, or extend a clip past 10 seconds; cut several shots instead.
-- Any of the generating tools for teams whose AI processing must stay in the EU. `render-video` calls no generating model, so template motion works for them.
+- Footage, voice-over or music for teams whose AI processing must stay in the EU. They have `generate-image` and `render-video`, so template motion with a generated photo works for them.
