@@ -48,7 +48,7 @@ When the request names a video, a Story or Reels video, a video ad or a motion v
 
 Write the video into your plan as its own step, before the board: "Make the finished video for concept <n> (shots, voice-over, music, render_video)". The board comes after it and plays the video.
 
-- Make the strongest video concept as a finished video first. Put the other video concepts on the board as plans with their cost, and offer to make them.
+- Make the strongest video concept as a finished video first, the way `generating-videos` says for its format: live-action shots with sound when you have `generate-video`. A silent animation of text over a picture does not count. Put the other video concepts on the board as plans with their cost, and offer to make them.
 - When the request asks for several things, such as a report, images and videos, the turn still ends with at least one finished video.
 - Without `generate-video` in your tool list, make the video with `render-video` as template motion from real product images, and say in one line why it has no live-action footage. Without `render-video` either, say at the start that you cannot make video here, then do the rest.
 - Deliver plans or storyboards instead of a video only when the user asks for ideas, a plan or storyboards.
