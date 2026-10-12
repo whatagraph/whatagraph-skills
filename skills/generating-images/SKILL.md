@@ -211,7 +211,7 @@ Generated people break in predictable ways: two left or right hands, an arm from
 1. **Collect the brand kit.** The logo and product photos (`list-assets`, `search-assets`, or ask), colors and fonts (`list-themes`, the brand's ads, the website, or ask), and the tone. Pass the logo as a `logo` reference and the product as a `subject` reference instead of describing them. Without a logo, set the brand name as a wordmark and tell the user it is a placeholder. Without a product photo, make one clean packshot first (the product alone on a plain background), and pass it as `subject` in every image of the set, so the product looks the same everywhere.
 2. **Pin down the brief.** The goal, the audience, the offer, the placements and anything that must appear. Ask one question only when the goal or the offer is missing and cannot be inferred.
 3. **Decide the concept, the layout and the direction.** For an ad, pick an archetype from `designing-ad-creatives`. For an open request, think of 2 or 3 ideas that differ in angle and in style, and render each as its own call, or pick one with the user. Give each concept a different direction from "Pick a visual direction for each concept" and write it down.
-4. **Write the copy.** A headline of 7 words or fewer, one support line, up to three proof points, the offer, and a button of three words or fewer. Prices, claims, codes, dates and legal text come from the user or the data, word for word.
+4. **Write the copy.** A headline of 7 words or fewer, one support line, up to three proof points, the offer, and a call to action of three words or fewer. Prices, claims, codes, dates and legal text come from the user or the data, word for word.
 5. **Build it**: the spec and `generate-image`, or the picture and then `render-design`.
 6. **Check it** (below), and fix what fails.
 7. **Adapt it to every placement the user needs.** See "Editing, resizing and series".
@@ -226,7 +226,7 @@ You get every image back. Look at it the way a picky client would, in this order
 3. **Brand and counts.** The logo and the product match their references side by side: shape, colors, label text. Colors are on brand, and text has strong contrast with what is behind it. When the copy states a count (12 eggs, 3 bottles, 4 seats), count them in the image: image models often get counts wrong, so fix the image or make the copy match what is shown.
 4. **Placement.** Text and logo stay inside the safe zones and nothing important is cut off. In a 9:16 image, the last line of text sits above 65% of the height.
 5. **Claims.** Nothing appears that the brief does not support: no extra numbers, badges, ratings or platform logos.
-6. **Design.** One clear focal point, one message a viewer gets in three seconds, the hierarchy headline then image then button, and an image that still reads at thumbnail size.
+6. **Design.** One clear focal point, one message a viewer gets in three seconds, the hierarchy headline then image then call to action, and an image that still reads at thumbnail size.
 
 Fix a failure with one `generate-image` call that passes the image as `edit_base` and names the single change, and repeat what must stay: "Change only her left arm so it hangs relaxed at her side, ending in her left hand. Keep everything else exactly the same." Editing beats re-rolling. A body that is wrong in several places is faster to regenerate with a simpler pose. In a composed design, fix the HTML and render again. Stop after three rounds and tell the user what is still wrong.
 
@@ -234,8 +234,8 @@ Fix a failure with one `generate-image` call that passes the image as `edit_base
 
 | Format | Ratio and pixels | What makes it work |
 |---|---|---|
-| Feed ad | 4:5 (1080x1350) or 1:1 (1080x1080) | One hero, a headline, up to three proof points, a button, a small logo. |
-| Story or Reel ad | 9:16 (1080x1920) | Keep text and logo out of the top 14%, the bottom 35% and 6% on each side; the image still fills the frame. A large headline and the button in the middle. |
+| Feed ad | 4:5 (1080x1350) or 1:1 (1080x1080) | One hero, a headline, up to three proof points, a call to action, a logo. |
+| Story or Reel ad | 9:16 (1080x1920) | Keep text and logo out of the top 14%, the bottom 35% and 6% on each side; the image still fills the frame. A large headline in the middle and the call to action as a short line of words, because Instagram adds its own button. |
 | Landscape ad (LinkedIn, web) | 16:9 or 1.91:1 (1200x628) | Copy on one side, the image on the other. |
 | Google display and Performance Max images | 1.91:1, 1:1, 4:5 | No text, logo or button in the image: Google assembles the ad from the image plus separate headline, description and logo assets. Keep the subject in the center 80%, and deliver the copy as text. |
 | Billboard or wide banner | 21:9, 4:1 or 8:1 | Seven words or fewer, readable from a distance. |

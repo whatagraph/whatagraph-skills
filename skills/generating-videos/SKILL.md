@@ -53,7 +53,7 @@ Formats in the order they win on Meta (Motion's 2025 library): unboxing, offer, 
 | Hotel, travel | **Travel montage** | A drone shot · a guest's reaction · the pool, the view or the room · breakfast, with the offer |
 | Real estate | **Property tour** | The door opening · the main room · the kitchen or bedroom · the view, with the price card |
 | Car dealer | **Dealer offer** | The car on the road · people inside · the key handover · the car parked, with the offer and its legal line |
-| Software, app, online service | **Product demo** | A person hits the problem and says it, to camera or in a voice-over · the real product on screen doing the job · the result on screen, such as the number or the finished page · the person's reaction, with the logo, the offer and the button |
+| Software, app, online service | **Product demo** | A person hits the problem and says it, to camera or in a voice-over · the real product on screen doing the job · the result on screen, such as the number or the finished page · the person's reaction, with the logo, the offer and the call to action |
 
 A 15 second ad has four shots of 2.5 to 5 seconds. Make all four. One clip with an end card on it is not an ad, unless the user asked for a single clip. Stories show up to 15 seconds in one card, so keep a Story ad at 15 seconds or less.
 
@@ -65,7 +65,7 @@ A clip costs about as much as 40 images. Write the plan first, then make every s
 
 1. The shots, from the table above, each with what is seen and heard and any spoken line.
 2. The lines: the creator's or guest's words are spoken in the clip. A voice-over goes over shots in which nobody speaks.
-3. The copy: the captions of every line, the end card's brand, offer, button and legal line.
+3. The copy: the captions of every line, the end card's logo, offer, call to action and legal line.
 4. The cost: four shots at 1080p are about 620 credits, the voice and the music about 5.
 
 When the brief is thin (no offer, no brand line, no market) and there is no website, brand kit or earlier ad to take it from, ask once before you generate anything. Otherwise make the video in this turn. The plan is a step toward the video, never the answer to a request for one.
@@ -143,8 +143,9 @@ Most Reels are watched with the sound off, so caption every spoken line and voic
 - Keep each caption to two lines, about 12 words. Split a longer line into two captions.
 - One caption on screen at a time. Each caption ends before the next one starts, and the last one ends before the end card appears.
 - No emoji in captions, the end card or any text. The renderer has no emoji font, so an emoji shows as an empty gap.
-- The end card takes the last 3.5 to 4.5 seconds: brand name, the offer, the call to action and the legal line together. The logo is the client's real logo file passed in `images`, at least 15% of the frame width (160 px on 1080).
-- Design the end card like the last frame of a commercial, in one of three ways: the last shot, darkened only where the words sit, with the logo large and one line; a full-frame flat brand color with the logo at 30 to 40% of the width and one line; or the line set huge as type, with the logo under it. No card, panel, glass, chips, row of stats or drawn button. Write the call to action as a short line of words, because Instagram adds its own button below the Story.
+- The end card takes the last 3.5 to 4.5 seconds. It holds the logo, one line with the offer, and the call to action, plus the legal line when the offer needs one. Nothing else: no tagline, divider, address or second note under it. The logo is the client's real logo file passed in `images`, at least 15% of the frame width (160 px on 1080). Without a logo, set the wordmark at the same size.
+- Design the end card like the last frame of a commercial, in one of three ways: the last shot, darkened only where the words sit, with the logo large and one line; a full-frame flat brand color with the logo at 30 to 40% of the width and one line; or the line set huge as type, with the logo under it. No card, panel, glass, chips, row of stats, drawn button, or dark radial glow over the whole frame. Write the call to action as a short line of words, because Instagram adds its own button below the Story.
+- No label, pill or badge over the shots. The brand shows on the end card.
 - The overlay follows the design rules of `generating-images` for composed designs: no interface components, a display face for the big words, no symbols typed as text. Put it where the shot is calm (often the sky or a wall), never over the product, a face or a label. Move captions that overlap it above it, at about y = 640.
 - Leave `html` and `body` without a background. Draw scrims as their own elements.
 - Text in Chinese, Japanese, Korean, Arabic, Hebrew, Thai or Hindi needs the Noto Sans font for that script from Google Fonts (Noto Sans SC, Noto Sans JP, Noto Sans KR, Noto Sans Arabic, Noto Sans Hebrew, Noto Sans Thai, Noto Sans Devanagari), named first in `font-family`. The renderer has fonts for Latin, Greek and Cyrillic letters only, so other letters show as empty boxes without it. Set `dir="rtl"` on Arabic and Hebrew text.
@@ -188,14 +189,14 @@ The EU AI Act (Article 50(4)) asks whoever publishes a "deep fake" to show a vis
 
 ## Meta safe zones (Stories and Reels, 1080 x 1920)
 
-Keep all text, logos and buttons out of the top 14% (above y = 270), the bottom 35% (below y = 1248) and 6% on each side (65 px). Instagram draws its profile row, reply box and buttons there.
+Keep all text and logos out of the top 14% (above y = 270), the bottom 35% (below y = 1248) and 6% on each side (65 px). Instagram draws its profile row, reply box and buttons there.
 
 ## Check every video before you show it
 
 1. The first frame is already moving and shows the subject.
 2. It has sound: spoken lines or a voice-over, and music.
 3. Every caption matches its spoken line in time and words, and every line is inside the safe zone and spelled exactly as given. Each caption is one box, alone on screen, with no empty gap in it.
-4. The end card is the last 3.5 to 4.5 seconds, covers no product, face or label, shows the price and the button together, has the complete legal line, and has a logo at least 160 px wide.
+4. The end card is the last 3.5 to 4.5 seconds, covers no product, face or label, shows the offer and the call to action together with nothing else but the legal line, and has a logo at least 160 px wide.
 5. No interface, dashboard or chart appears that is not a real screenshot, and every number on screen comes from the client.
 6. The person and the product look the same in every shot, and no logo or text appeared in any clip.
 7. `spoken_lines` of the finished ad match the script.
@@ -216,7 +217,7 @@ For a quick offer, a sale, a countdown, or a team without generate-video. Pass t
 | 0 to 0.5 s | The picture alone, already moving. |
 | 0.3 to 1.5 s | Kicker and headline rise in, line by line. The brand is visible by 2 seconds. |
 | 1.5 to 2.5 s | The offer or price pops in, the biggest number on screen. |
-| 5 to 8 s | End card: brand, button and legal line, held for at least 2.5 seconds. |
+| 5 to 8 s | End card: the logo, the offer, the call to action and the legal line, held for at least 2.5 seconds. |
 
 ```
 render-video html="<the layout with {{image_1}}>" width=1080 height=1920 duration_seconds=8 images=[{"asset_ulid": "<photo>"}] title="Weekend offer story"

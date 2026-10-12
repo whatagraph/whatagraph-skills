@@ -89,7 +89,7 @@ For each concept write:
 - **Builds on**: the winning pattern from step 2 with its number, or "white space" and why.
 - **Hypothesis**: the one thing it tests ("an offer-first ad beats the lifestyle ad for cold audiences").
 - **Direction, style and mode**: the visual direction and the style from `generating-images`, and whether it is built all in one image or composed. No two concepts share a direction.
-- **Copy, written before any image**: the words in the image (a headline of 3 to 9 words, the proof, the offer, a button of three words or fewer) and the platform's text fields:
+- **Copy, written before any image**: the words in the image (a headline of 3 to 9 words, the proof, the offer, a call to action of three words or fewer) and the platform's text fields:
 
   | Platform | Fields |
   |---|---|
