@@ -59,7 +59,7 @@ Write copy the way a person talks, not the way a brochure does:
 
 - Concrete and specific: "Dry after 3 hours of rain", not "Unbeatable protection".
 - The wit carries the benefit; a joke that leaves out the product is wasted.
-- A headline of 3 to 9 words, one support line, a button of three words or fewer.
+- A headline of 3 to 9 words, one support line, a call to action of three words or fewer.
 - No slogans any company could sign ("Experience the difference", "Elevate your everyday"), no exclamation marks in a row, no invented numbers.
 - No invented facts about the product. How long the dough proves, the ingredients, the materials, where something is made and what it is certified for are claims, like prices. Use them only when the brief, the website or the client states them. When the brief gives none, build the copy from what it does give, such as the opening hour or the weekend-only rule.
 - In the client's language and voice; match formality and humor to the brand.
