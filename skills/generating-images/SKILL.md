@@ -61,6 +61,25 @@ The user wants something visual made or changed:
 
 Use composed whenever an error in a word, a price, the logo or a number would matter and `render-design` is in your tool list. Otherwise build it all in one image and check every word.
 
+## Pick a visual direction for each concept
+
+This applies to both ways of building. Each concept in a set gets a different direction. Name the direction of every concept in your plan before the first image, and write each concept's spec or HTML from scratch. Reuse a concept's spec or HTML only for its other sizes. Three ads with the same header band, the same photo box and the same footer line are one ad with new words, even when the photos differ. When the brand has its own look (its ads, its website, its theme), the directions bend to it: its colors, its fonts, light or dark as the brand is.
+
+| Direction | Composition | Headline type (Google Fonts) | Fits |
+|---|---|---|---|
+| Photo poster | One full-bleed photo, generated with empty space for the words; the headline set straight on the photo; the logo in a corner | Anton, Archivo Black, Barlow Condensed 800, Big Shoulders Display | People, lifestyle, the product in use |
+| Type as the image | Two to five words filling 60 to 80% of the frame on a flat brand color; one small photo or cut-out tucked into the type | Archivo Black, Bricolage Grotesque 800, Unbounded, Anton | Offers, bold claims, a pun, a deadline |
+| Color-field split | Half photo, half flat brand color; the headline and the number on the color half | Bricolage Grotesque, Archivo, Familjen Grotesk | B2B, results, the old way and the new way |
+| Editorial page | A warm off-white page, a large serif headline, a photo with a thin rule and a one-line caption | Fraunces, Instrument Serif, DM Serif Display, Playfair Display | Premium brands, case studies, thought leadership |
+| One big number | One real number set at 40 to 60% of the width on a flat color, one line saying what it means, the source in small type | Big Shoulders Display, Oswald, Anton, or a serif for a calm brand | Proof and results |
+| The object carries it | A generated photo of a real object with the words on it: a sticky note, a receipt, a whiteboard, a calendar page, a cup sleeve, a chalkboard by the door | The words written by `generate-image`, checked letter by letter | Social, humor, a relatable pain, local businesses |
+| Cut-out collage | Cut-out photos with hard shadows, tape or torn paper, a flat background, one handwritten note | One display face plus Caveat or Permanent Marker | Young brands, launches, events |
+
+In an all-in-one image, describe the headline face in the spec in words ("a tall condensed poster sans like Anton", "a soft high-contrast serif like Fraunces"), because the image model draws the letters itself.
+
+Inter, Plus Jakarta Sans, DM Sans, Poppins, Montserrat, Roboto and Space Grotesk are interface fonts. Use them only for small text, or when they are the client's own font. A headline set in one of them reads as an app screen.
+
+
 ## The creative spec (all in one image)
 
 When the image carries a message, the image is the deliverable. Write the spec as full sentences, the way you would brief a designer, with these parts:
@@ -139,25 +158,9 @@ An ad is not a web page. HTML pulls layouts toward app components, and those rea
 - Set type on the picture or on a full-bleed color field, as a print designer would. The headline is big (at least 9% of the width for a feed ad) and the price is the biggest number. No text smaller than 26 px on a 1080 px canvas, except the legal line.
 - Make the logo readable: at least 15% of the width, on the picture or the color field, with no box behind it.
 - No symbols typed as text: arrows, checkmarks, stars and emoji are missing from the renderer's fonts and show as empty boxes. Draw them in inline SVG, or leave them out.
-- Before you show it, ask: would this pass as a section of a software landing page, or a screen in an app? If it would, start again with another direction from the table below.
+- Before you show it, ask: would this pass as a section of a software landing page, or a screen in an app? If it would, start again with another direction from "Pick a visual direction for each concept".
 - Take the idea and the headline from `designing-ad-creatives`. "Spring Bike Tune-Up" names the product; it is not a headline.
 - Every claim comes from the brief. When the user says the service "includes a free safety check", do not add what else the service includes.
-
-### Pick a visual direction for each concept
-
-Each concept in a set gets a different direction, and its HTML is written from scratch. Reuse a concept's HTML only for its other sizes. When the brand has its own look (its ads, its website, its theme), the directions bend to it: its colors, its fonts, light or dark as the brand is.
-
-| Direction | Composition | Headline type (Google Fonts) | Fits |
-|---|---|---|---|
-| Photo poster | One full-bleed photo, generated with empty space for the words; the headline set straight on the photo; the logo in a corner | Anton, Archivo Black, Barlow Condensed 800, Big Shoulders Display | People, lifestyle, the product in use |
-| Type as the image | Two to five words filling 60 to 80% of the frame on a flat brand color; one small photo or cut-out tucked into the type | Archivo Black, Bricolage Grotesque 800, Unbounded, Anton | Offers, bold claims, a pun, a deadline |
-| Color-field split | Half photo, half flat brand color; the headline and the number on the color half | Bricolage Grotesque, Archivo, Familjen Grotesk | B2B, results, the old way and the new way |
-| Editorial page | A warm off-white page, a large serif headline, a photo with a thin rule and a one-line caption | Fraunces, Instrument Serif, DM Serif Display, Playfair Display | Premium brands, case studies, thought leadership |
-| One big number | One real number set at 40 to 60% of the width on a flat color, one line saying what it means, the source in small type | Big Shoulders Display, Oswald, Anton, or a serif for a calm brand | Proof and results |
-| The object carries it | A generated photo of a real object with the words on it: a sticky note, a receipt, a whiteboard, a calendar page, a cup sleeve | The words written by `generate-image`, checked letter by letter | Social, humor, a relatable pain |
-| Cut-out collage | Cut-out photos with hard shadows, tape or torn paper, a flat background, one handwritten note | One display face plus Caveat or Permanent Marker | Young brands, launches, events |
-
-Inter, Plus Jakarta Sans, DM Sans, Poppins, Montserrat, Roboto and Space Grotesk are interface fonts. Use them only for small text, or when they are the client's own font. A headline set in one of them reads as an app screen.
 
 ## Choose the mode and the style on purpose
 
@@ -207,7 +210,7 @@ Generated people break in predictable ways: two left or right hands, an arm from
 
 1. **Collect the brand kit.** The logo and product photos (`list-assets`, `search-assets`, or ask), colors and fonts (`list-themes`, the brand's ads, the website, or ask), and the tone. Pass the logo as a `logo` reference and the product as a `subject` reference instead of describing them. Without a logo, set the brand name as a wordmark and tell the user it is a placeholder. Without a product photo, make one clean packshot first (the product alone on a plain background), and pass it as `subject` in every image of the set, so the product looks the same everywhere.
 2. **Pin down the brief.** The goal, the audience, the offer, the placements and anything that must appear. Ask one question only when the goal or the offer is missing and cannot be inferred.
-3. **Decide the concept and the layout.** For an ad, pick an archetype from `designing-ad-creatives`. For an open request, think of 2 or 3 ideas that differ in angle and in style, and render each as its own call, or pick one with the user.
+3. **Decide the concept, the layout and the direction.** For an ad, pick an archetype from `designing-ad-creatives`. For an open request, think of 2 or 3 ideas that differ in angle and in style, and render each as its own call, or pick one with the user. Give each concept a different direction from "Pick a visual direction for each concept" and write it down.
 4. **Write the copy.** A headline of 7 words or fewer, one support line, up to three proof points, the offer, and a button of three words or fewer. Prices, claims, codes, dates and legal text come from the user or the data, word for word.
 5. **Build it**: the spec and `generate-image`, or the picture and then `render-design`.
 6. **Check it** (below), and fix what fails.
