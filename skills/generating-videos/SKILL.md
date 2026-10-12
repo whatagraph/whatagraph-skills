@@ -137,6 +137,9 @@ Most Reels are watched with the sound off, so caption every spoken line and voic
 
 - The time of a line in the ad = where its shot starts in the ad + (the line's `start` in `spoken_lines` − the shot's `start_seconds`). A voice-over phrase starts at its `start_seconds` + its segment's `start`.
 - The style that reads as native: white bold text, about 50 px, on a dark translucent box, centered at about y = 1010. Each caption pops in at its start and fades at its end.
+- One box per caption. When a caption names who speaks, put the name inside the same box as bold text (`<b>Max:</b> Squat-proof.`), never in a span or box of its own.
+- One caption on screen at a time. Each caption ends before the next one starts, and the last one ends before the end card appears.
+- No emoji in captions, the end card or any text. The renderer has no emoji font, so an emoji shows as an empty gap.
 - The end card takes the last 3.5 to 4.5 seconds: brand name, the offer, the button and the legal line together. The logo is the client's real logo file passed in `images`, at least 15% of the frame width (160 px on 1080). Put it where the shot is calm (often the sky or a wall), never over the product, a face or a label. Move captions that overlap it above it, at about y = 640.
 - Leave `html` and `body` without a background. Draw scrims as their own elements.
 - Text in Chinese, Japanese, Korean, Arabic, Hebrew, Thai or Hindi needs the Noto Sans font for that script from Google Fonts (Noto Sans SC, Noto Sans JP, Noto Sans KR, Noto Sans Arabic, Noto Sans Hebrew, Noto Sans Thai, Noto Sans Devanagari), named first in `font-family`. The renderer has fonts for Latin, Greek and Cyrillic letters only, so other letters show as empty boxes without it. Set `dir="rtl"` on Arabic and Hebrew text.
@@ -146,12 +149,12 @@ Most Reels are watched with the sound off, so caption every spoken line and voic
 html,body{margin:0;width:1080px;height:1920px;overflow:hidden;font-family:Inter,sans-serif;background:transparent}
 .cap{position:absolute;left:66px;right:66px;top:1010px;display:flex;justify-content:center;opacity:0;
   animation:capIn .22s cubic-bezier(.2,.9,.3,1.2) both, capOut .15s ease-in forwards}
-.cap span{padding:12px 22px 14px;border-radius:16px;background:rgba(0,0,0,.58);color:#fff;font:800 50px/1.16 Inter;text-align:center}
+.cap>.box{max-width:100%;padding:12px 22px 14px;border-radius:16px;background:rgba(0,0,0,.58);color:#fff;font:800 50px/1.16 Inter;text-align:center}
 @keyframes capIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes capOut{from{opacity:1}to{opacity:0}}
 </style>
 <!-- animation-delay: start, end - 0.15 -->
-<div class="cap" style="animation-delay:.72s,3.75s"><span>Okay… this is the best carbonara in the city.</span></div>
+<div class="cap" style="animation-delay:.72s,3.75s"><div class="box">Okay… this is the best carbonara in the city.</div></div>
 ```
 
 render-video returns `spoken_lines` for the finished ad. Compare them with your script: every line present, in order, said once.
@@ -186,7 +189,7 @@ Keep all text, logos and buttons out of the top 14% (above y = 270), the bottom 
 
 1. The first frame is already moving and shows the subject.
 2. It has sound: spoken lines or a voice-over, and music.
-3. Every caption matches its spoken line in time and words, and every line is inside the safe zone and spelled exactly as given.
+3. Every caption matches its spoken line in time and words, and every line is inside the safe zone and spelled exactly as given. Each caption is one box, alone on screen, with no empty gap in it.
 4. The end card covers no product, face or label; the price and the button are on screen together; the legal line is complete; the logo is at least 160 px wide.
 5. The person and the product look the same in every shot, and no logo or text appeared in any clip.
 6. `spoken_lines` of the finished ad match the script.
