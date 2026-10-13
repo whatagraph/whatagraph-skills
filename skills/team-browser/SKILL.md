@@ -110,6 +110,29 @@ never call a number a benchmark when no page you opened says it.
 Write the sources into the deliverable as a small table: publisher, year, sample, definition,
 value and URL.
 
+## Audits and ad libraries
+
+A site audit or an ad library review states only what the browser read, with the URL it was read
+on.
+
+- `blocked_hosts` lists requests the browser refused. Those files never loaded and their scripts
+  never ran, so report them as "requested and blocked", never as tags or tools the site runs.
+- An empty extract (head tags, canonical, JSON-LD, meta description) means the read failed, not
+  that the page lacks the element. Try another selector or a screenshot. If nothing works, write
+  "could not read", never "missing" or "lacks".
+- A search result snippet is not the page's meta description or title. Quote those only from the
+  page itself.
+- An ad is "active" only when the library shows its status or start date. Otherwise say "seen in
+  the library on <date>".
+- Quote ad copy together with what the ad says it applies to ("up to 60% off last chance styles",
+  not "60% off").
+- Each quote and number cites the URL it was read on. Do not cite a page for a fact read on
+  another page.
+- Mark inferences as inference: the vendor behind a host name, why an issue matters, what a
+  competitor intends.
+- Page speed comes only from a PageSpeed Insights or CrUX result that loaded. Name lab or field
+  data, the device, and the URL or origin. If neither loads, write "not measured".
+
 ## Clicking and typing
 
 Use `browser-act` to click, fill, type, select, scroll or go back. Use an element reference from
