@@ -110,6 +110,14 @@ never call a number a benchmark when no page you opened says it.
 Write the sources into the deliverable as a small table: publisher, year, sample, definition,
 value and URL.
 
+Before you answer, check every figure you took from the web, in chat as in a file. On the
+computer, run `research.cite([...])` from `wgviz` with one entry per figure: `figure` as you will
+write it, `url` of the page you cite and a `label`. It confirms a figure only when every number of
+it is on that exact page as the browser read it, and names the page a misplaced figure is really
+on. Give only confirmed figures. Write "no source found" in a cell that has none, and never fill it
+with a range of your own, a country estimate or a typical value. A figure you computed from page
+figures (a currency conversion, an average of two sources) is labeled as computed, with its inputs.
+
 ## Audits and ad libraries
 
 A site audit or an ad library review states only what the browser read, with the URL it was read
@@ -127,7 +135,7 @@ on.
 - Quote ad copy together with what the ad says it applies to ("up to 60% off last chance styles",
   not "60% off").
 - Each quote and number cites the URL it was read on. Do not cite a page for a fact read on
-  another page.
+  another page. Check the numbers with `research.cite` as for benchmarks.
 - Mark inferences as inference: the vendor behind a host name, why an issue matters, what a
   competitor intends.
 - Page speed comes only from a PageSpeed Insights or CrUX result that loaded. Name lab or field
