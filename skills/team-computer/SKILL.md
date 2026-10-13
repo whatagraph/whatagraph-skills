@@ -364,6 +364,14 @@ describe the missing days as a change in performance. A recurring report that re
 totals as its last run has the same cause. The context of each turn states today's date and the
 team's time zone, so do not run `date` to learn them.
 
+Rates come from totals (cost / clicks, revenue / cost), never from an average of rates. A rate
+whose denominator is zero (no deals, no clicks, no spend) is "not computable": never show it as 0
+or as infinite, and say why the denominator is zero. Never add amounts in different currencies.
+Convert them with a published reference rate (for example the European Central Bank's) for a
+named date or month, and show the rate and its date. A rate set on a blend, a report or a
+currency override is a display setting, not a source. Today is incomplete in every source, so
+leave it out of any model, forecast or comparison of days.
+
 Check totals, labels, date ranges and produced files before handing over a result. When
 the same figure appears in the answer, a workbook and a deck, it must be the same number
 in all three; reconcile a modelled total with the actual total in the data and say how
