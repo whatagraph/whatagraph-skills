@@ -248,6 +248,12 @@ target, the share reached and the amount needed per remaining day. Show the proj
 run rate side by side and say which figure is which. Drop today and, for platforms that revise
 recent days, the last two or three days before fitting.
 
+Never cut the history to "the stable period" before calling `run`. After a change of tracking or
+of level, pass `fit_from="YYYY-MM-DD"`: the models fit from that date, and the year-over-year model
+still reads the year before as its reference. When `warnings` says that last year's same periods
+give a different total, a yearly event lies ahead (a seasonal rise, a sale, a holiday). Report both
+figures, name what happened in those weeks last year, and give the widened range.
+
 A weekly series comes from `forecast.complete_weeks(daily, date_col=..., value_cols=[...])`,
 which keeps full Monday-to-Sunday weeks only; a partial last week looks like a collapse to every
 model. A forecast of spend, clicks, conversions or revenue is never below zero; the helper cuts
@@ -299,6 +305,14 @@ skip one.
 `mmm.curves_chart(result, path=...)` draws what each channel returns as its spend grows, with a
 dot at today's spend. Budget advice stays within the spend levels the data has seen; a shift
 beyond them is an assumption and is labeled one.
+
+Budget shifts follow the intervals, not the point estimates. Move money from one channel to another
+only when the return on the next euro (`marginal_roi` and its interval in the cross-check, and the
+response curves of the fit) is lower for the first channel in both methods and the intervals do not
+overlap. Do not cut a channel whose return moved a lot between refits or whose two methods disagree;
+say instead that the data cannot tell, and propose a holdout test for it. Give the expected gain of
+a shift as a range, never as one number, and never call a figure "verified": say which checks it
+passed.
 
 To reuse a finished fit, call `mmm.load(out_dir)`, which repeats the fit's warnings; do not read
 `summary.json` yourself, and say in the answer and in the file that the fit is from an earlier run
