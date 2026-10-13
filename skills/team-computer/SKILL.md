@@ -216,29 +216,45 @@ list, and you never type a bullet, a dash or a number at the start of an item; `
 | Style and brand | `from wgviz import style`: `Theme`, `Theme.from_colors`, `Theme.from_report_theme`, `Theme.load`, `style.use`, `style.current` |
 | Workbook | `from wgviz.excel import write_table, write_frame, add_chart, link, highlight, cover, add_index, polish, verify_totals, FORMATS` |
 | Interactive chart | `from wgviz import echarts as ec`, then `computer-chart` if granted |
-| Forecast | `from wgviz import forecast`: complete_weeks for a weekly series from daily rows; run with date_col, value_col and horizon; read `warnings`; target_plan, chart and echarts_option |
-| Marketing mix model | `from wgviz import mmm`: fit with frame, channels and out_dir at `quality="standard"`, then validate (can it predict weeks it never saw), both in one background job; read `warnings`, `diagnostics`, the 90% intervals and the validation verdict; curves_chart for spend against return |
+| Forecast | `from wgviz import forecast`: complete_weeks for a weekly series from daily rows; run with date_col, value_col and horizon (backtests the models and returns `reading`, `backtest`, `totals`, `warnings`); pacing for a month-end projection from daily rows; target_plan, chart and echarts_option |
+| Marketing mix model | `from wgviz import mmm`: audit first; then, in one background job, fit at `quality="standard"`, validate, crosscheck, triangulate and stability; read `warnings`, `review`, the 90% intervals and `range_to_report`; curves_chart for spend against return |
 
 ## Forecasts
 
 A request to forecast or project a series (spend, conversions or revenue to month end,
-next month or next quarter) is a statistical forecast: fit the forecast helper on the
-daily or weekly history, and report the point forecast with its prediction interval and
-the model it chose. A straight-line run rate (average per day times the days left) is
-pacing arithmetic, not a forecast; show it alongside when the user asks about pacing, and
-say which figure is which. A forecast chart shows the actuals, the forecast beyond the
-last actual date and the interval band.
+next month or next quarter) is a statistical forecast made with `forecast.run`. It never picks a
+model by how well it fits the history it was trained on. It cuts the history at several points,
+lets each candidate (seasonal naive, drift, ETS, ARIMA, Theta, MSTL for daily data, Croston when
+many periods are zero, and the median of the best three) forecast periods it never saw, and keeps
+the one with the lowest error. It keeps that model only when it beats repeating the last season
+by 5%; otherwise it reports the seasonal naive forecast and says so in `warnings`.
 
-A weekly series for a forecast comes from `forecast.complete_weeks(daily, date_col=..., value_cols=[...])`,
-which keeps full Monday-to-Sunday weeks only. A partial last week looks like a collapse to the
-model and pulls the whole forecast down. Read `result["warnings"]` after every `forecast.run`: it
-says when the last period looks incomplete and when the forecast total is more than a third away
-from the same number of recent periods. Fix the input or explain the change before you report it.
-A forecast of spend, clicks, conversions or revenue is never below zero; the helper cuts it there.
+Report what the result holds, and nothing it does not:
 
-With under three years of weekly history the forecast carries no season. Put beside it what the
-same weeks brought a year before and how the last 13 weeks compare with the year before, and say
-when the forecast is therefore likely cautious. Forecast spend is an assumption.
+- `totals`: the forecast total and its range (`forecast_lo` to `forecast_hi`). The range of the
+  total comes from the errors of whole-horizon totals in the backtest. Never add the bands of
+  single periods to get it.
+- `reading`: the sentence that says which model won, its backtest error, how much better it did
+  than repeating the last season, and how often the range held the actual values. Put it in the
+  answer and in the methods note of every file.
+- `warnings`: every one is read and either fixed (drop an incomplete last period, use a longer
+  history) or said in the deliverable.
+
+A straight-line run rate (average per day times the days left) is pacing arithmetic, not a
+forecast. For "where will we land this month", call `forecast.pacing(daily, date_col=...,
+value_col=..., period_end="YYYY-MM-DD", target=...)` with daily rows up to yesterday. It returns
+the actual to date, the projected total with its range, the run rate for reference and, with a
+target, the share reached and the amount needed per remaining day. Show the projection and the
+run rate side by side and say which figure is which. Drop today and, for platforms that revise
+recent days, the last two or three days before fitting.
+
+A weekly series comes from `forecast.complete_weeks(daily, date_col=..., value_cols=[...])`,
+which keeps full Monday-to-Sunday weeks only; a partial last week looks like a collapse to every
+model. A forecast of spend, clicks, conversions or revenue is never below zero; the helper cuts
+it there. With under three years of weekly history the forecast carries no yearly season: put
+beside it what the same weeks brought a year before, and say when the forecast is therefore
+likely cautious. Forecast spend is an assumption, and a forecast chart shows the actuals, the
+forecast beyond the last actual date and the band.
 
 ## Marketing mix models
 
@@ -249,33 +265,50 @@ they leave no baseline, and the platforms count the same sale more than once. Lo
 that holds the business result (sales, new business, orders, a CRM or a shop) before you settle
 for platform numbers, and show the platforms' own claim beside the model's as a finding.
 
-A mix model that a person will act on is fitted with `mmm.fit(...)` at its default
-`quality="standard"` (four chains), as a background job, and `mmm.validate(frame, channels,
-out_dir=...)` runs in the same job. `validate` refits with a fifth of the weeks held out at random
-and says how well the model predicts them: `verdict` is "holds", "weak" or "fails", `reading` is
-the sentence to say it with, and `expected_vs_actual.csv` is the chart. Do not hold out the last
-weeks as one block: a mix model explains the past and is not a forecast, so that test fails for a
-reason that says nothing about the channels. The baseline follows trend and season by itself
-(`knots="auto"`). `mmm.curves_chart(result, path=...)` draws what each channel returns as its
-spend grows, with a dot at today's spend: a curve that is flat at the dot is a channel where more
-money no longer pays.
+A mix model that a person will act on goes through five steps. Do them in this order and do not
+skip one.
+
+1. `gate = mmm.audit(frame, channels)` before any fit. It counts the weeks and the weeks per
+   estimated parameter, and checks that each channel's spend varies, carries a real share and does
+   not move in lockstep with another channel. When `gate["usable"]` is false, report no channel
+   return. Say which check failed (`gate["blocking"]`) and offer what the data supports: a holdout
+   or geo test, a pre and post readout, or the observed cost per result. Channels in
+   `gate["joint_groups"]` move together and are reported only together, never one by one.
+2. `result = mmm.fit(frame, channels, out_dir=...)` at its default `quality="standard"` (four
+   chains), as a background job. It runs the audit again and then Meridian's model review
+   (`result["review"]`: convergence, baseline, predictive checks, fit, how far the data moved the
+   priors, consistency of the returns). A review that fails, or warnings that say the modelled
+   media contribution is above the actual total, mean the fit is not usable however it is
+   explained.
+3. `mmm.validate(frame, channels, out_dir=...)` in the same job refits with a fifth of the weeks
+   held out at random and says how well it predicts them (`verdict` "holds", "weak" or "fails",
+   and `reading`). Do not hold out the last weeks as one block: a mix model explains the past and
+   is not a forecast.
+4. `cross = mmm.crosscheck(frame, channels)` is an independent second method (carryover and
+   saturation per channel chosen by blocked cross-validation, non-negative coefficients, and a
+   bootstrap that chooses them again in every replicate). `tri = mmm.triangulate(result, cross,
+   gate)` compares the two channel by channel. Report each channel's `range_to_report`, which is
+   the union of both intervals. Give a single ROI only for a channel whose row says `agree`, and
+   still give its range. Report a ranking only where both methods and their intervals support it.
+   On simulated data with known returns, Meridian's 90% interval held the true ROI in 88% of the
+   channels and `range_to_report` held it in all of them; a single point was off by about 20% at
+   the median. Say this kind of uncertainty plainly.
+5. `mmm.stability(frame, channels, out_dir=...)` refits with other seeds and with the last weeks
+   cut off. A channel whose return moves a lot between refits is reported as uncertain.
+
+`mmm.curves_chart(result, path=...)` draws what each channel returns as its spend grows, with a
+dot at today's spend. Budget advice stays within the spend levels the data has seen; a shift
+beyond them is an assumption and is labeled one.
 
 To reuse a finished fit, call `mmm.load(out_dir)`, which repeats the fit's warnings; do not read
 `summary.json` yourself, and say in the answer and in the file that the fit is from an earlier run
 and when it ran. `quality="quick"` only proves that the script runs and is never the fit a
-deliverable reports. After the fit, read `result["warnings"]` and `result["diagnostics"]`, and put
-these in the deliverable in plain words: the sampler settings, the largest R-hat (in a methods note
-or an appendix, in plain words), and each channel's ROI with its 90% interval. When the intervals
-of two channels overlap widely, say that the data cannot rank them, and base the budget advice on
-what the intervals do support. A chart whose title names a range or an interval draws it:
-`charts.bar(names, values, intervals=[(low, high), ...], value_format="{:.2f}x")` puts a whisker
-on every bar and both ends in its label. Do not draw the low end, the mean and the high end as
-three bars. A fit whose warnings say that the modelled media contribution is above the actual
-total is not usable, however it is explained: report no ROI, no contribution and no reallocation
-from it. Refit on the total business outcome when the data has one. When it has only the
-conversions the ad platforms attribute to the same channels, say plainly that this data cannot
-separate the channels, and base the advice on observed efficiency. Do not call Meridian's classes
-directly when `mmm.fit` covers the request.
+deliverable reports. Put these in the deliverable in plain words: the weeks used, the sampler
+settings and the largest R-hat (in a methods note), the review result, the validation reading, the
+triangulation verdict, and each channel's range. A chart whose title names a range draws it:
+`charts.bar(names, values, intervals=[(low, high), ...], value_format="{:.2f}x")` puts a whisker on
+every bar. Do not draw the low end, the mean and the high end as three bars. Do not call
+Meridian's classes directly when `mmm` covers the request.
 
 ## Numbers and checks before handing over
 

@@ -2,7 +2,7 @@
 name: team-browser
 type: domain
 group: computer
-description: Read and use websites in the browser that belongs to the acting person. Covers when to use the browser and when the Whatagraph tools read a report instead, pictures of pages for a deck, research across many sites, challenge pages and cookie banners, what never to click, and asking the person on the page when it needs a sign-in.
+description: Read and use websites in the browser that belongs to the acting person. Covers when to use the browser and when the Whatagraph tools read a report instead, pictures of pages for a deck, research across many sites, industry benchmarks with matched definitions, challenge pages and cookie banners, what never to click, and asking the person on the page when it needs a sign-in.
 required_tools:
   - browser-navigate
   - browser-extract
@@ -83,6 +83,32 @@ pass the challenge yourself. When the task needs that site, ask the person with
 `browser-ask-person` (kind `captcha`). Otherwise note the site as not readable today and continue
 with the next one. `blocked_hosts` in a navigate result names hosts whose files the page could not
 load; when the preview looks unstyled, say in the caption that the page did not render fully.
+
+## Benchmarks
+
+A benchmark is a number read on a page in this conversation. Never give one from memory, and
+never call a number a benchmark when no page you opened says it.
+
+1. Find at least two independent sources, and three before you use the word "benchmark". Prefer
+   publishers that state their sample (an ad platform's own data, an industry body, a tool vendor
+   that publishes its method). For each one note the URL, the publisher, the year of the data,
+   the sample (accounts, countries, industry), and the exact metric definition.
+2. Match definitions before you compare. Search network only or search and display together.
+   Link clicks or all clicks. Conversions per click or per interaction. Mean or median. Currency,
+   country and device. A figure whose definition differs from the account's metric is not
+   compared, or is compared only after it is converted and the conversion is said.
+3. Prefer data from the last 24 months. Email open rates from before 2022 are not comparable,
+   because Apple Mail Privacy Protection inflates opens since then.
+4. Report the range across the sources, not one figure, and say where they disagree and why
+   (sample, year, definition).
+5. Put the account's own history beside it: the same metric a year before and its trend over the
+   last 13 weeks. That comparison does not depend on anyone's sample.
+6. When no source covers the industry or the country, say so and use the closest proxy you could
+   verify, labeled as a proxy with what differs. "No reliable benchmark exists for this" is a
+   valid answer.
+
+Write the sources into the deliverable as a small table: publisher, year, sample, definition,
+value and URL.
 
 ## Clicking and typing
 
