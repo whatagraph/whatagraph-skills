@@ -144,10 +144,11 @@ instead of placing text boxes and shapes by hand with python-pptx or matplotlib.
   `add_index(wb, descriptions={sheet: what it holds})` and `polish(wb)`.
 - Reports: `wgviz.report.Report` for PDF or Word.
 
-Style and brand. Every helper draws in one theme: by default the Whatagraph look (white and
-light grey surfaces, near-black text, the Whatagraph pink as a small accent, Inter). A customer
-who names brand colours, a typeface or a company name, attaches a logo or a file to follow, or asks
-for their report theme gets exactly that, for every chart, slide, page and sheet of the deliverable:
+Style and brand. Every helper draws in one theme. Its default is Whatagraph's own look (white and
+light grey surfaces, near-black text, the Whatagraph pink as a small accent, Inter), which is right
+only for a deliverable about Whatagraph itself. For a customer, set a theme from their brand before
+the first chart or `Deck(...)`, from the first source below that has it, and use it for every
+chart, slide, page and sheet of the deliverable:
 
 - Brand colours in the request: `style.use(style.Theme.from_colors(["#0B3D2E", "#BEF264"], brand="Northstar Digital"))`
   before the first chart or `Deck(...)`; the first colour becomes the accent and the list the
@@ -173,6 +174,10 @@ for their report theme gets exactly that, for every chart, slide, page and sheet
   title, the chart and the text, its cover and its closing page, with the Deck slide types that
   match. Never guess a brand colour from memory. Say in the answer which colours and typeface you
   used and what of the layout the helpers could not follow.
+- Nothing about the brand can be found (no colours, no file, no website, no report theme): do not
+  keep the default. Choose two or three colours and a typeface that suit the customer's industry
+  and the reader, pass them to `from_colors`, and say in the answer that they are a choice and that
+  the customer's website or brand guide would let you match the brand.
 - One accent, at most three colours on a slide beside the chart palette, no gradients,
   shadows or clip art, and a chart placed on a slide that already has a title is drawn without
   its own title. Do not paint large areas in the accent.

@@ -124,6 +124,7 @@ AGENT_NATIVE_TOOLS = {
     "generate-voiceover",
     "render-design",
     "render-video",
+    "view-website",
 }
 
 # Every tool name a skill may declare or invoke.

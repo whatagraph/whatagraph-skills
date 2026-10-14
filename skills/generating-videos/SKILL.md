@@ -18,6 +18,8 @@ optional_tools:
     purpose: Publish a finished video so an HTML document can play it, or import the client's photo from a URL.
   - tool_name: view-creatives
     purpose: Find the client's best current ad or product photo to turn into a video.
+  - tool_name: view-website
+    purpose: See the client's website with its colors, type and photography, and save its logo as an image for the end card.
   - tool_name: list-assets
     purpose: Find the client's logo, product photos or an earlier clip.
   - tool_name: search-assets
@@ -70,7 +72,7 @@ The format decides the shots. The direction decides how the video looks and read
 | **Cinematic** | Cinema camera, slow moves, graded color, wide shots and close-ups | Almost none: plain subtitles for speech and at most one line of type | The logo centered with space around it, one line and the call to action under it | Premium brands, hospitality, real estate, fashion, cars |
 | **Product close-up** | Macro shots: texture, steam, pours, hands, with strong sound | One word or the offer, set large at the calm moment | A flat brand color, the logo large, the offer and the call to action | Food, drink, beauty, gadgets |
 
-- Follow the brand's own look when it has one: its ads (`view-creatives`), its website, its brand kit. A style the user names always wins. Otherwise pick the direction that suits the idea and the audience, not the first row.
+- Follow the brand's own look when it has one: its website (`view-website`), its ads (`view-creatives`), its brand kit. A style the user names always wins. Otherwise pick the direction that suits the idea and the audience, not the first row.
 - Pick one direction from the table for each video and use its name. A mix of two, such as "title cards and punchy contrast", ends up as neither.
 - When you make two or more videos, give each one a different direction and write it next to the video in your plan, for example "Video 2, the queue: Title cards". Videos in a set share the brand's colors and fonts. They never share one HTML with new words in it: write each video's HTML from the sample of its own direction (see Samples), not from the HTML of the video before it.
 - The direction is what the frames show, not the name in your plan. A two-line headline over a darkened shot is none of these directions, whatever the plan calls it.
