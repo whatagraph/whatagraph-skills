@@ -55,7 +55,7 @@ Formats in the order they win on Meta (Motion's 2025 library): unboxing, offer, 
 | Car dealer | **Dealer offer** | The car on the road · people inside · the key handover · the car parked, with the offer and its legal line |
 | Software, app, online service | **Product demo** | A person hits the problem and says it, to camera or in a voice-over · the real product on screen doing the job · the result on screen, such as the number or the finished page · the person's reaction, with the logo, the offer and the call to action |
 
-A 15 second ad has four shots of 2.5 to 5 seconds. Make all four. A 10 second ad has two or three shots before its end card. When you have one clip for an ad, cut two or three parts of it (a wide moment, a close reaction, a later beat) instead of playing it from start to end: one unbroken clip under the whole ad reads as a stock video. One clip with an end card on it is not an ad, unless the user asked for a single clip. Stories show up to 15 seconds in one card, so keep a Story ad at 15 seconds or less.
+A 15 second ad has four shots of 2.5 to 5 seconds. Make all four. A 10 second ad has two or three shots before its end card. When you have one clip for an ad, cut two or three parts of it (a wide moment, a close reaction, a later beat) instead of playing it from start to end: one unbroken clip under the whole ad reads as a stock video. The parts the viewer sees never repeat a moment: start each part at or after the point where the one before it ended, because the same second shown twice reads as a glitch. Under a full-frame end card or title card the footage is hidden, so any part can run there. One clip with an end card on it is not an ad, unless the user asked for a single clip. Stories show up to 15 seconds in one card, so keep a Story ad at 15 seconds or less.
 
 ## Pick a direction for each video
 
@@ -63,15 +63,17 @@ The format decides the shots. The direction decides how the video looks and read
 
 | Direction | The footage | Words on screen | End card | Fits |
 |---|---|---|---|---|
-| **Documentary** | Handheld or locked-off, available light, people in the middle of a task who never look at the camera | Subtitles as in a film: white sentence case, semibold, about 48 px, a soft shadow. A time or a place as one small line of the same type, such as "Tuesday, 11:42 pm" | The last shot held, darkened under the words, with the logo and one line | Pain and relief stories, services, B2B, honest brands |
+| **Documentary** | Handheld or locked-off, available light, people in the middle of a task who never look at the camera | Subtitles as in a film: white sentence case, semibold, about 48 px, a soft shadow. A time or a place as one small line of the same type, such as "Tuesday, 11:42 pm" | The last shot held, darkened under the words, with the logo, one line and the call to action | Pain and relief stories, services, B2B, honest brands |
 | **Creator** | A phone held by the speaker or a friend; the person talks to the camera | The words the way people caption their own posts: bold white with a thin dark outline, two to five words at a time, in step with the speech | The creator says the call to action; the logo and one line over the last shot | Consumer products, apps, testimonials, younger audiences |
-| **Kinetic type** | Short shots, often slow or still, each with a calm area | The script is the type: one to four words at a time, at least 160 px tall, changing in step with the voice-over every half second to a second, in the display face and the brand colors, placed in the calm part of each shot. There is no separate caption row. A full sentence in one block is a headline, not kinetic type | The line huge on a flat brand color, the logo under it | Bold claims, provocative B2B, launches, offers |
+| **Kinetic type** | Short shots, often slow or still, each with a calm area | The script is the type: one to four words at a time, at least 160 px tall, changing in step with the voice-over every half second to a second, in the display face and the brand colors, placed in the calm part of each shot. There is no separate caption row. A full sentence in one block is a headline, not kinetic type | The line huge on a flat brand color, the logo and the call to action under it | Bold claims, provocative B2B, launches, offers |
 | **Title cards** | Shots in story order, with a full-frame card cut in between them | Each beat gets its own card: one short line, large, on an opaque flat brand color that hides the footage for 0.8 to 1.5 seconds, then a hard cut back to the next shot. Text laid over footage is not a title card. Speech over the shots gets plain subtitles | The last card: the logo, one line and the call to action | Stories told in steps or times of day, before and after, how-tos |
-| **Cinematic** | Cinema camera, slow moves, graded color, wide shots and close-ups | Almost none: plain subtitles for speech and at most one line of type | The logo centered with space around it, one line under it | Premium brands, hospitality, real estate, fashion, cars |
+| **Cinematic** | Cinema camera, slow moves, graded color, wide shots and close-ups | Almost none: plain subtitles for speech and at most one line of type | The logo centered with space around it, one line and the call to action under it | Premium brands, hospitality, real estate, fashion, cars |
 | **Product close-up** | Macro shots: texture, steam, pours, hands, with strong sound | One word or the offer, set large at the calm moment | A flat brand color, the logo large, the offer and the call to action | Food, drink, beauty, gadgets |
 
 - Follow the brand's own look when it has one: its ads (`view-creatives`), its website, its brand kit. A style the user names always wins. Otherwise pick the direction that suits the idea and the audience, not the first row.
-- When you make two or more videos, give each one a different direction and write it next to the video in your plan, for example "Video 2, the queue: Title cards". Videos in a set share the brand's colors and fonts. They never share one HTML with new words in it.
+- Pick one direction from the table for each video and use its name. A mix of two, such as "title cards and punchy contrast", ends up as neither.
+- When you make two or more videos, give each one a different direction and write it next to the video in your plan, for example "Video 2, the queue: Title cards". Videos in a set share the brand's colors and fonts. They never share one HTML with new words in it: write each video's HTML from the sample of its own direction (see Samples), not from the HTML of the video before it.
+- The direction is what the frames show, not the name in your plan. A two-line headline over a darkened shot is none of these directions, whatever the plan calls it.
 - Take the colors and the type from the client's brand kit, never from these samples. Without a kit, choose them for the business, the audience and the direction. For the type, for example: a plain grotesk such as Inter or IBM Plex Sans for documentary subtitles, a heavy sans such as Archivo Black for creator captions, a condensed display face such as Anton or Bebas Neue for kinetic type, a sharp grotesk such as Inter Tight or a serif such as Fraunces for title cards, and a refined serif such as Cormorant Garamond for cinematic.
 
 Template motion (a photo with moving text, no generated footage) is a fallback. Use it only when the user asks for a quick price change, a sale or a countdown, or when your tool list has no `generate-video` (EU teams). See the last section. When the user asks for a Story, a Reel or a video ad and you have `generate-video`, make live-action shots with sound. A silent animation of text over a picture does not answer that request.
@@ -83,7 +85,7 @@ A clip costs about as much as 40 images. Write the plan first, then make every s
 1. The direction, and the shots from the format table, each with what is seen and heard and any spoken line.
 2. The lines: the creator's or guest's words are spoken in the clip. A voice-over goes over shots in which nobody speaks.
 3. The copy: the captions of every line, and the end card written out as its three things, word for word: the logo, the one line and the call to action (plus the legal line when the offer needs one).
-4. The cost: four shots at 1080p are about 620 credits, the voice and the music about 5.
+4. The cost: four shots at 1080p are about 620 credits, the voice and the music about 5. Make every shot of an ad you deliver at `quality` "standard". A draft clip is softer and shorter, and is only for a cheap motion test the user asked for.
 
 When the brief is thin (no offer, no brand line, no market) and there is no website, brand kit or earlier ad to take it from, ask once before you generate anything. Otherwise make the video in this turn. The plan is a step toward the video, never the answer to a request for one.
 
@@ -156,6 +158,8 @@ render-video html="<captions and end card>" clips=[
 Over the footage sit only the words of the story: the captions, a line that says when or where, and in the kinetic type direction the big words. They are type set on the picture, the way film and TV set words, with a soft shadow, or with a soft dark scrim rising from the edge of the frame when the shot is bright or busy.
 
 - Nothing holds the words. No box or bubble behind a caption, no pill, chip, badge, tag or framed label, no border, glass or blurred panel, no card with a shadow, no logo in a corner, no drawn button. A colored shape with rounded corners over a shot reads as an app, so leave it out even where it would add contrast. Use the shadow, the scrim or a calmer position instead.
+- Darken only behind the words and only while they show: a shadow on the type, or a scrim rising from the edge under a caption. A dark layer over the whole frame for the whole ad hides the footage that makes the ad look real.
+- While a person or the voice-over speaks, the words on screen are the words being said, in the same order. A rewritten line at the same moment makes the viewer choose between reading and listening. A line that nobody says goes on a title card or the end card.
 - A time, a place, "POV:" or a chapter name is part of the story. Set it as plain type in the caption face, or put it on a title card.
 - Most Reels are watched with the sound off, so caption every spoken line and voice-over phrase, in the type of the direction. Leave the tags and the CAPITALS out of the captions: write the words as they read normally.
 - The time of a line in the ad = where its shot starts in the ad + (the line's `start` in `spoken_lines` − the shot's `start_seconds`). A voice-over phrase starts at its `start_seconds` + its segment's `start`. Creator captions that show a few words at a time split a line's time across its words.
@@ -171,75 +175,128 @@ Over the footage sit only the words of the story: the captions, a line that says
 
 - The end card takes the last 3.5 to 4.5 seconds and follows the direction (see its column in the table).
 - It holds three things: the logo, one line with the offer, and the call to action written as a few words, plus the legal line when the offer needs one. Count them before you render. A second line under the headline, a tagline, a badge, a rule, a second logo or a button is a fourth thing, so cut it. Instagram adds its own button below the Story, so a drawn one only repeats it.
-- The most common failure is a landing-page hero: a small logo icon next to the brand name, a small uppercase label, a headline, a grey line under it and a rounded button, all centered in the middle of the frame. It reads as a website, not as the end of an ad. Build the end card from the direction instead, at the sizes of the sample: the logo 300 to 450 px wide, the line in the display face at 96 px or more, the call to action as words at about 44 px.
-- The logo is the client's real logo file passed in `images`, at least 300 px wide on a flat color and at least 160 px over the last shot. When the file is only a square icon, set the brand name as a wordmark in type next to or under it, at the same visual size. Without a logo, set the wordmark at that size.
+- The most common failure is a landing-page hero: a small logo icon next to the brand name, a small uppercase label, a headline, a grey line under it and a rounded button, all centered in the middle of the frame. It reads as a website, not as the end of an ad. Build the end card from the sample of the direction instead, at its sizes: the logo large, the line in the display face at 96 px or more, the call to action as words at about 44 px.
+- The logo is the client's real logo file passed in `images`. Show it large: a wide logo 300 to 450 px wide, a square icon 220 to 300 px tall. When the file is only a square icon, look for the full logo first (`search-assets`, the client's website). If there is none, set the brand name in type under the icon, about as wide as the icon. A small icon in a row with the brand name is a website header, not the end of an ad. Without a logo file, set the brand name as a wordmark 300 to 450 px wide.
 - Design it like the last frame of a commercial: the last shot, darkened only where the words sit; a full-frame flat brand color; or the line set huge as type. No card, panel, glass, chips, row of stats, button, or dark radial glow over the whole frame.
 
 ### Samples, one per direction
 
-These show the treatment, not a template to repeat. Every color, face and word in them is a placeholder from an imagined client: replace them with the client's brand kit, and when there is none, choose them for the client's business and audience. A bakery, a law firm, a festival and a software company should not end up with the same type and colors. Change the size and the position to fit the shot, and load every face you use from Google Fonts in the `<link>`, as the first sample does.
+These show the treatment, not a template to repeat. Every color, face and word in them is a placeholder from an imagined client: replace them with the client's brand kit, and when there is none, choose them for the client's business and audience. A bakery, a law firm, a festival and a software company should not end up with the same type and colors. Change the size and the position to fit the shot.
 
-Documentary, with the whole page around it:
+Every page has the same frame around the classes of its direction. Load every face you use from Google Fonts in the `<link>`:
 
 ```
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
 <style>
 html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:transparent}
-.sub{position:absolute;left:90px;right:90px;bottom:680px;margin:0;text-align:center;color:#fff;
-  font:600 48px/1.26 Inter,sans-serif;text-shadow:0 2px 3px rgba(0,0,0,.8),0 0 28px rgba(0,0,0,.6);
-  opacity:0;animation:on .12s linear both,off .12s linear forwards}
+@keyframes on{from{opacity:0}to{opacity:1}}
+@keyframes off{from{opacity:1}to{opacity:0}}
+/* the classes of the direction */
+</style>
+```
+
+Each sample is a 12 second ad with its end card from 8 s. `animation-delay` holds two times: when the element appears and when it starts to fade. `{{image_1}}` is the logo passed in `images`. Its `width`, `max-height` and `object-fit:contain` show a wide logo at the full width and a square icon at the full height.
+
+**Documentary**: film subtitles low in the frame, a time line at the top, the end card on the last shot.
+
+```
+.sub{position:absolute;left:90px;right:90px;bottom:680px;margin:0;text-align:center;color:#fff;font:600 48px/1.26 Inter,sans-serif;
+  text-shadow:0 2px 3px rgba(0,0,0,.8),0 0 28px rgba(0,0,0,.6);opacity:0;animation:on .12s linear both,off .12s linear forwards}
 .when{position:absolute;left:72px;top:330px;margin:0;color:#fff;font:600 32px Inter,sans-serif;
   text-shadow:0 1px 3px rgba(0,0,0,.8);opacity:0;animation:on .3s linear both,off .3s linear forwards}
 .scrim{position:absolute;left:0;right:0;bottom:0;height:1000px;opacity:0;
   background:linear-gradient(to top,rgba(0,0,0,.6),rgba(0,0,0,0));animation:on .3s linear both,off .3s linear forwards}
-.end{position:absolute;inset:0;background:#B5462A;opacity:0;animation:on .3s ease-out 11s forwards}
-.end img{position:absolute;left:50%;top:560px;width:400px;transform:translateX(-50%)}
-.end .line{position:absolute;left:66px;right:66px;top:860px;margin:0;font:600 104px/1 Fraunces,serif;color:#FFF4E6;text-align:center}
-.end .cta{position:absolute;left:66px;right:66px;top:1130px;font:700 42px Inter,sans-serif;color:#FFF4E6;text-align:center}
-@keyframes on{from{opacity:0}to{opacity:1}}
-@keyframes off{from{opacity:1}to{opacity:0}}
-</style>
-<!-- animation-delay: start, end - the fade time. Add the scrim only under a bright or busy shot. -->
+.endshot{position:absolute;inset:0;opacity:0;animation:on .4s ease-out 8s forwards;
+  background:linear-gradient(to top,rgba(0,0,0,.8),rgba(0,0,0,.5) 45%,rgba(0,0,0,0) 72%)}
+.endshot .stack{position:absolute;left:72px;right:72px;bottom:680px;display:flex;flex-direction:column;align-items:flex-start;gap:34px}
+.endshot img{width:360px;max-height:260px;object-fit:contain;object-position:left}
+.endshot h1{margin:0;color:#fff;font:600 96px/1.02 Fraunces,serif}
+.endshot p{margin:0;color:#fff;font:700 44px Inter,sans-serif}
+
+<!-- the scrim only under a bright or busy shot -->
 <div class="scrim" style="animation-delay:.6s,3.5s"></div>
 <p class="when" style="animation-delay:.3s,3.4s">Thursday, 8:40 pm</p>
 <p class="sub" style="animation-delay:.72s,3.63s">Okay… this is the best carbonara in the city.</p>
-<!-- the end card, the last 4 seconds of a 15 second ad: one brand color, the logo, one line, the call to action -->
-<div class="end"><img src="{{image_1}}"><h1 class="line">Pasta night is Thursday</h1><div class="cta">Book a table</div></div>
+<div class="endshot"><div class="stack"><img src="{{image_1}}"><h1>Pasta night is Thursday</h1><p>Book a table</p></div></div>
 ```
 
-`{{image_1}}` is the logo passed in `images`.
-
-The end card on the last shot instead, for documentary, kinetic type and cinematic videos: the shot keeps playing, darkened from below, with the line large and the logo and the call to action under it.
+**Creator**: the words the way people caption their own posts, two to five at a time, in step with the speech. The creator says the call to action, with the logo and one line over the last shot.
 
 ```
-.endshot{position:absolute;inset:0;opacity:0;animation:on .3s ease-out 6.4s forwards;
-  background:linear-gradient(to top,rgba(0,0,0,.78) 0%,rgba(0,0,0,.45) 45%,rgba(0,0,0,0) 70%)}
-.endshot .line{position:absolute;left:72px;right:72px;top:760px;margin:0;color:#fff;font:400 132px/.9 Anton,sans-serif;text-transform:uppercase}
-.endshot img{position:absolute;left:72px;top:1010px;width:420px}
-.endshot .cta{position:absolute;left:72px;top:1160px;margin:0;color:#fff;font:700 44px Inter,sans-serif}
-<div class="endshot"><h1 class="line">Your first class is on us</h1><img src="{{image_1}}"><p class="cta">Book a class</p></div>
-```
-
-Creator, a few words at a time in step with the speech:
-
-```
-.say{position:absolute;left:80px;right:80px;bottom:700px;margin:0;text-align:center;color:#fff;font:900 66px/1.08 'Archivo Black',sans-serif;
+.say{position:absolute;left:80px;right:80px;bottom:700px;margin:0;text-align:center;color:#fff;font:400 68px/1.08 'Archivo Black',sans-serif;
   text-shadow:-3px -3px 0 #000,3px -3px 0 #000,-3px 3px 0 #000,3px 3px 0 #000,0 5px 0 #000;opacity:0;animation:on .06s linear both,off .06s linear forwards}
+.endtop{position:absolute;left:80px;right:80px;top:300px;display:flex;flex-direction:column;align-items:center;gap:26px;opacity:0;animation:on .3s ease-out 8s forwards}
+.endtop img{width:340px;max-height:240px;object-fit:contain;filter:drop-shadow(0 2px 14px rgba(0,0,0,.45))}
+.endtop h1{margin:0;text-align:center;color:#fff;font:400 88px/1.02 'Archivo Black',sans-serif;
+  text-shadow:-3px -3px 0 #000,3px -3px 0 #000,-3px 3px 0 #000,3px 3px 0 #000,0 5px 0 #000}
+
+<!-- each caption timed to its words in spoken_lines -->
+<p class="say" style="animation-delay:.42s,1.05s">Squat-proof.</p>
+<p class="say" style="animation-delay:1.10s,2.10s">I checked. Twice.</p>
+<!-- above the face; move it below the face when the face is high in the frame -->
+<div class="endtop"><img src="{{image_1}}"><h1>Free returns on every pair</h1></div>
 ```
 
-Kinetic type, set in the calm part of the shot:
+**Kinetic type**: the voice-over's own words, one to four at a time, huge, in the calm part of each shot. The end card is the line on a flat brand color.
 
 ```
 .big{position:absolute;left:66px;right:66px;top:330px;margin:0;color:#FFF4E6;font:400 210px/.84 Anton,sans-serif;text-transform:uppercase;
   text-shadow:0 6px 30px rgba(0,0,0,.35);opacity:0;animation:rise .25s cubic-bezier(.2,.8,.2,1) both,off .1s linear forwards}
 @keyframes rise{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
+.endflat{position:absolute;inset:0;background:#D9F23A;opacity:0;animation:on .05s linear 8s forwards}
+.endflat h1{position:absolute;left:66px;right:66px;top:300px;margin:0;color:#141414;font:400 200px/.92 Anton,sans-serif;text-transform:uppercase}
+.endflat .foot{position:absolute;left:66px;right:66px;bottom:680px;display:flex;flex-direction:column;align-items:flex-start;gap:26px}
+.endflat img{width:360px;max-height:220px;object-fit:contain;object-position:left}
+.endflat p{margin:0;color:#141414;font:700 44px Inter,sans-serif}
+
+<!-- one element per group of words, timed to the voice-over's words -->
+<p class="big" style="animation-delay:.4s,1.1s">Your first</p>
+<p class="big" style="animation-delay:1.15s,1.9s">class</p>
+<p class="big" style="animation-delay:1.95s,3.0s">is on us.</p>
+<div class="endflat"><h1>Your first class is on us</h1><div class="foot"><img src="{{image_1}}"><p>Book a class</p></div></div>
 ```
 
-Title cards, cut in hard between shots:
+**Title cards**: full-frame cards in a flat brand color, cut in hard between shots. The last card is the end card. Open on a shot, never on a card.
 
 ```
 .card{position:absolute;inset:0;background:#2E4A3B;opacity:0;animation:on .01s linear both,off .01s linear forwards}
-.card p{position:absolute;left:96px;right:96px;top:780px;margin:0;color:#F4EEE3;font:600 88px/1.04 'Inter Tight',sans-serif}
+.card p{position:absolute;left:96px;right:96px;top:760px;margin:0;color:#F4EEE3;font:600 92px/1.04 'Inter Tight',sans-serif}
+.lastcard{position:absolute;inset:0;background:#2E4A3B;opacity:0;animation:on .01s linear 8s forwards;box-sizing:border-box;
+  display:flex;flex-direction:column;justify-content:center;gap:56px;padding:270px 96px 680px}
+.lastcard img{width:360px;max-height:240px;object-fit:contain;object-position:left}
+.lastcard h1{margin:0;color:#F4EEE3;font:600 104px/1.02 'Inter Tight',sans-serif}
+.lastcard p{margin:0;color:#F4EEE3;font:600 44px 'Inter Tight',sans-serif}
+
+<div class="card" style="animation-delay:2.4s,3.4s"><p>7:00 am. Nobody is up.</p></div>
+<div class="card" style="animation-delay:5.6s,6.6s"><p>7:20 am. Breakfast is here.</p></div>
+<div class="lastcard"><img src="{{image_1}}"><h1>Breakfast before the school run</h1><p>Order ahead</p></div>
+```
+
+**Cinematic**: no words over the shots except subtitles for speech (the `.sub` of the documentary sample). The logo is centered with space around it at the end.
+
+```
+.endcine{position:absolute;inset:0;background:rgba(8,8,8,.5);opacity:0;animation:on 1.2s ease-out 8s forwards;box-sizing:border-box;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:44px;padding:270px 96px 680px;text-align:center}
+.endcine img{width:380px;max-height:260px;object-fit:contain}
+.endcine h1{margin:0;color:#F5EFE6;font:500 96px/1.05 'Cormorant Garamond',serif}
+.endcine p{margin:0;color:#F5EFE6;font:600 40px 'Cormorant Garamond',serif;letter-spacing:.14em;text-transform:uppercase}
+
+<div class="endcine"><img src="{{image_1}}"><h1>Summer on the lake</h1><p>Book your stay</p></div>
+```
+
+**Product close-up**: one word or the offer, set large at the calm moment of a macro shot and never over the product. The end card is a flat brand color with the logo large.
+
+```
+.word{position:absolute;left:66px;right:66px;top:300px;margin:0;color:#fff;font:400 260px/.84 'Bebas Neue',sans-serif;
+  text-shadow:0 4px 28px rgba(0,0,0,.4);opacity:0;animation:on .2s ease-out both,off .2s linear forwards}
+.endbrand{position:absolute;inset:0;background:#3B2416;opacity:0;animation:on .3s ease-out 8s forwards;box-sizing:border-box;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:48px;padding:270px 80px 680px;text-align:center}
+.endbrand img{width:420px;max-height:300px;object-fit:contain}
+.endbrand h1{margin:0;color:#F2E6D8;font:400 136px/.9 'Bebas Neue',sans-serif}
+.endbrand p{margin:0;color:#F2E6D8;font:600 44px Inter,sans-serif}
+
+<p class="word" style="animation-delay:2.2s,4.6s">Roasted Monday</p>
+<div class="endbrand"><img src="{{image_1}}"><h1>Fresh beans every Monday</h1><p>Order online</p></div>
 ```
 
 render-video returns `spoken_lines` for the finished ad. Compare them with your script: every line present, in order, said once.
@@ -274,11 +331,11 @@ Keep all text and logos out of the top 14% (above y = 270), the bottom 35% (belo
 
 1. The first frame is already moving and shows the subject.
 2. It has sound: spoken lines or a voice-over, and music.
-3. Every caption matches its spoken line in time and words, sits inside the safe zone, is spelled exactly as given, is alone on screen and covers no face.
+3. Every caption says the words being spoken at that moment, in time, word for word, sits inside the safe zone, is spelled exactly as given, is alone on screen and covers no face.
 4. Over the shots there is only type: the captions, a when or where line, or the big words of kinetic type. No box, bubble, pill, badge, framed label, panel, logo or button sits over any shot.
 5. No speaker is cut off: every spoken line in the finished ad is complete, and in the language of the ad.
 6. The end card is the last 3.5 to 4.5 seconds and holds three things: the logo at least 300 px wide, one line and the call to action as words, plus the legal line when needed. It covers no product, face or label. Look at its frame in render-video's result: a label above the line, a second line under it or a shape around the call to action means it is a web page, so remove them and render again.
-7. When you made several videos, each has its own direction, done as the table describes it (kinetic type changes every second, title cards hide the footage), and no two share the same layout of words or the same end card.
+7. The frames show the direction, not only your plan: documentary has small white subtitles low in the frame; creator has outlined words that change with the speech; kinetic type has a new group of one to four huge words for every second of the voice; title cards have frames that are a flat color with no footage; cinematic has almost no words; product close-up has macro shots and one word or the offer. A headline over a darkened shot is none of them. When you made several videos, no two share the same layout of words or the same end card; rebuild a copy from its own direction's sample.
 8. No interface, dashboard or chart appears that is not a real screenshot, and every number on screen comes from the client.
 9. The person and the product look the same in every shot, and no logo or text appeared in any clip.
 10. `spoken_lines` of the finished ad match the script.
