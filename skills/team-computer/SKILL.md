@@ -246,7 +246,9 @@ value_col=..., period_end="YYYY-MM-DD", target=...)` with daily rows up to yeste
 the actual to date, the projected total with its range, the run rate for reference and, with a
 target, the share reached and the amount needed per remaining day. Show the projection and the
 run rate side by side and say which figure is which. Drop today and, for platforms that revise
-recent days, the last two or three days before fitting.
+recent days, the last two or three days before fitting. Say plainly whether the projection is above or below the
+target. When the target lies inside the range, the outcome is uncertain: say so, and do not call a
+target below the projection "within reach" or one above it "safe".
 
 Never cut the history to "the stable period" before calling `run`. A lasting change of level is
 found and applied by `run` itself: it fits from that week (returned as `fit_from`) and says so in
