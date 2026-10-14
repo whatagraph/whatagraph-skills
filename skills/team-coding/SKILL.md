@@ -50,7 +50,9 @@ git and curl follow on their own. Private and internal addresses are always refu
 - Python: `python3 -m venv .venv && . .venv/bin/activate && pip install flask`. Many packages are
   already installed (pandas, flask, beautifulsoup4, duckdb, pyyaml, markdown); check with
   `python3 -c "import flask"` before installing.
-- Node: `npm install` in the project folder. Never `npm install -g`; use `npx` for a tool.
+- Node: `npm install --no-audit --no-fund` in the project folder. Never `npm install -g`; use `npx`
+  for a tool. An install that reaches the 60-second limit of `computer-exec` keeps what it
+  downloaded, so run the same command again and it finishes.
 - PHP: `composer install` or `composer require` in the project folder.
 
 When an install fails with a refused connection or `403`, the team's setting does not allow that
@@ -70,7 +72,14 @@ that covers the time you need, for example 1800. The answer gives `preview_url`.
 | PHP or WordPress | `php -S 0.0.0.0:8000 -t <public folder>` |
 | Flask | `flask --app app run --host 0.0.0.0 --port 8000` |
 | Node or Express | `node server.js`, with the server listening on `0.0.0.0` |
-| Vite (React, Vue) | `npx vite --host 0.0.0.0 --port 5173` |
+| Vite (React, Vue) | `npx vite --host 0.0.0.0 --port 5173`, with `server: { allowedHosts: true }` in `vite.config.js` |
+
+A turn can start one `computer-job`; a second call in the same turn returns the first job. So get the
+server right before you start it: run it briefly first with `timeout 5 <command>` in `computer-exec`
+and read its output. The team runs at most two background jobs at a time. When the limit is reached,
+say so and end the turn, or check the project with a short `computer-exec` run instead. Never stop a
+process that this conversation did not start: the computer is the team's, and the other processes
+belong to other people's work.
 
 Another conversation of the team may already run a server on that port, so first check the port is
 free with `curl -s -o /dev/null localhost:<port> || echo free`, and pick another one when it is
