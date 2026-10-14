@@ -115,31 +115,32 @@ several independent commands into one script instead of one command per call.
    and the sources sheet come from `wgviz.images.pages_read(project_folder)`, which lists every
    page that was opened and captured, so nothing is retyped and nothing unread is cited.
 
-**The deck of a board pack** (35 to 45 slides). A board reads the first three slides and looks at
-the rest, so: title, `agenda`, `summary` with the answer and its reasons, `kpis`. Then one part
-per question, each opened by `section`:
+**The deck of a board pack.** Its length follows from the questions the request asks and the
+evidence you have, usually thirty to forty-five slides; do not pad it to reach a number or cut
+evidence to stay under one. Its look follows the customer's template or brand, as `team-computer`
+describes, never a house style. A board reads the first three slides and looks at the rest, so the
+deck opens with the answer: the title, the summary with the answer and its reasons, and the key
+numbers. Then one part per question, in the order the board needs them. The parts a board pack
+usually has, and what each must hold:
 
-- Performance (5 to 8 slides): spend, outcome and efficiency by channel and over time, pacing of
-  the current month, what changed against the previous period.
-- What marketing really adds (6 to 9): what the model is in two sentences, `waterfall` of the
-  baseline and each channel, return per euro with 90% ranges (`bar` with `intervals`), the
-  response curves, the platforms' claim beside the model's, the validation (actual against
-  expected with the held-out weeks), the recommended reallocation as a table, and its limits.
-- The next 13 weeks (2 to 3): forecast with its range, what it means against the target.
-- Market and benchmarks (4 to 6): us against published benchmarks (`grouped_bar` or `ranking`),
-  the market's direction, `timeline` of the news, a `quote` when a source says it better.
-- Competitors (12 to 16): three `gallery` slides that show the pages you captured side by side
-  (the home pages, the pricing pages, the product or AI pages, up to six on each, the most
-  important competitors first), a `matrix` of who offers what (every
-  cell from your notes of the page, "us" highlighted), a `ranking` of entry prices made comparable
-  (the same number of clients or sources for everyone, and say which), then one profile per
-  competitor that matters most (four or five, never more): `screenshot(path, facts=[...])` with the same
-  five or six labels for each (who it is for, what it leads with, entry price and what it
-  includes, how it charges, what it says about AI, what it means for us), and one closing slide
-  on where we stand. The remaining competitors get a row in the matrix and the workbook and their
-  pages appear in the galleries or in an appendix gallery, so that nearly every page you captured
-  is shown once. No layout is used more than three times in a row.
-- What to do (2 to 3): `decisions` with two to four decisions, each with the number it moves and
+- Performance: spend, outcome and efficiency by channel and over time, pacing of the current
+  month, what changed against the previous period.
+- What marketing really adds: what the model is in two sentences, the baseline and each channel's
+  share, return per euro with 90% ranges, the response curves, the platforms' claim beside the
+  model's, the validation (actual against expected with the held-out weeks), the recommended
+  reallocation, and its limits.
+- The next 13 weeks: the forecast with its range, and what it means against the target.
+- Market and benchmarks: us against published benchmarks, the market's direction, recent news,
+  and a source's own words when it says something better.
+- Competitors: the pages you captured, shown so the board can compare them; who offers what, with
+  every cell from your notes of the page and "us" marked; entry prices made comparable (the same
+  number of clients or sources for everyone, and say which); a profile of the four or five
+  competitors that matter most, each with the same facts (who it is for, what it leads with, entry
+  price and what it includes, how it charges, what it says about AI, what it means for us); and
+  where we stand. The remaining competitors appear in the comparison and the workbook, so nearly
+  every page you captured is shown once.
+
+- What to do: two to four decisions (`decisions`), each with the number it moves and
   that number's period, what it costs or puts at risk, the evidence in a sentence, an owner and a
   date. Before you write them, read your notes of our own site again: do not ask the board to
   build what our site already offers (say what exists and what the decision adds), and do not
@@ -151,6 +152,11 @@ per question, each opened by `section`:
 - Appendix: method and data notes (what is measured, what is modelled, what the model cannot
   support, what is demonstration data, how you scored anything you scored yourself), and
   `sources` from `images.pages_read`.
+
+The Deck helpers have a slide type for most of these (`section`, `summary`, `kpis`, `waterfall`,
+`bar` with `intervals`, `grouped_bar`, `ranking`, `timeline`, `quote`, `gallery`, `matrix`,
+`screenshot` with `facts`, `decisions`, `sources`). Choose each slide's type by what its content
+needs, and vary them so the deck does not repeat one layout page after page.
 
 The title of a slide is its finding ("Review sites return the most per euro"), not its topic
 ("ROI by channel"), in at most 70 characters so it stays on one line. The size of the word
@@ -221,7 +227,7 @@ address and the day it was captured. Add `notes()` on the slides a presenter wil
 - In the workbook a count, a rate and a return never carry the euro format, and a click cost
   shows two decimals.
 
-**The workbook** (12 to 16 sheets) carries every number of the deck: `cover`, contents
+**The workbook** carries every number of the deck, usually in twelve to sixteen sheets: `cover`, contents
 (`add_index` last), key numbers, channel performance, monthly trend, the weekly frame the model
 was fitted on, model results with ranges, response curves, validation, reallocation, forecast,
 benchmarks with their sources, competitor facts, pricing, news, sources with links. Native charts

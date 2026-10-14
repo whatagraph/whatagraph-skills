@@ -18,8 +18,10 @@ optional_tools:
     purpose: Look at the client's existing ads to learn their visual style, or pass one as a reference for a variant.
   - tool_name: manage-widgets
     purpose: Put a published image into a report image widget.
+  - tool_name: view-website
+    purpose: See the client's website with its colors, fonts and photography, and save its logo as an image to pass as a reference.
   - tool_name: list-themes
-    purpose: Read the brand colors, fonts and logo of a report theme.
+    purpose: Read a report theme when the client has no website, ads or brand files to take the look from.
   - tool_name: create-document
     purpose: Build an HTML page or board that shows published images.
 ---
@@ -152,7 +154,7 @@ Layout rules that make a composed design look designed, not templated: one displ
 
 An ad is not a web page. HTML pulls layouts toward app components, and those read as a template at a glance. In testing, an agent's first composed ad was a rounded card with a drop shadow, status pills, a checkmark list and a small logo in a dark box. A later set of five ads for a software brand was five copies of one landing page section: a near-black background with a colored glow, a small logo top left, a label in a pill top right, bordered cards, a row of three stats, small gray text and a pill button. None of them had a picture. So:
 
-- No UI components: no pills or chips, no labels in a box, no checkmark or bullet lists, no cards with borders, rounded corners or shadows, no rows of stats, no badges such as "Save €20" unless the brief asks for them. When the archetype has a button, make it one plain block in the accent color with the words in the display face, never a rounded pill with an arrow. Stories and Reels get no drawn button: the platform adds its own, so write the call to action as a short line of words.
+- No UI components: no pills or chips, no labels in a box, no checkmark or bullet lists, no cards with borders, rounded corners or shadows, no rows of stats, no badges such as "Save €20" unless the brief asks for them. When the archetype has a button, make it one plain block in the accent color with the words in the display face, never a rounded pill with an arrow. Stories and Reels get no drawn button: the platform adds its own, so write the call to action as a short line of words. The end card of a video follows `generating-videos`: a large logo, one line and the call to action as words, with no button.
 - No landing page look: no near-black background with a glowing gradient and a neon accent, unless the brand's own ads look like that.
 - Every ad has a picture or a strong graphic idea: a photo, a cut-out, an illustration, a real object, or type so large that it is the image. A dark background with some text on it is not an ad.
 - Set type on the picture or on a full-bleed color field, as a print designer would. The headline is big (at least 9% of the width for a feed ad) and the price is the biggest number. No text smaller than 26 px on a 1080 px canvas, except the legal line.
@@ -169,7 +171,7 @@ First decide the mode, because it sets the layout:
 - **Performance** (sales, sign-ups, offers): the product or the offer dominates, the headline carries the benefit, a proof point appears (a number, a rating the client can stand behind), the button is high-contrast, and the grid is tight.
 - **Editorial** (brand, launches, covers): one strong image, five words of copy or fewer, generous white space, display or serif type, a small logo.
 
-Then pick the style. Follow the brand's existing material when it has any: its ads (`view-creatives`), its theme (`list-themes`), its website. A style the user names always wins. Otherwise pick what fits the brand, the audience and the placement, and vary it across concepts:
+Then pick the style. Follow the brand's existing material when it has any: its website (`view-website`), its ads (`view-creatives`), its files in the library, and a report theme (`list-themes`) only when there is nothing else. A style the user names always wins. Otherwise pick what fits the brand, the audience and the placement, and vary it across concepts:
 
 | Style | Fits | Put in the spec |
 |---|---|---|
@@ -208,7 +210,7 @@ Generated people break in predictable ways: two left or right hands, an arm from
 
 ## Workflow
 
-1. **Collect the brand kit.** The logo and product photos (`list-assets`, `search-assets`, or ask), colors and fonts (`list-themes`, the brand's ads, the website, or ask), and the tone. Pass the logo as a `logo` reference and the product as a `subject` reference instead of describing them. Without a logo, set the brand name as a wordmark and tell the user it is a placeholder. Without a product photo, make one clean packshot first (the product alone on a plain background), and pass it as `subject` in every image of the set, so the product looks the same everywhere.
+1. **Collect the brand kit.** The logo and product photos (`list-assets`, `search-assets`, the logo `view-website` saves, or ask), colors and fonts (the website through `view-website`, the brand's ads, a brand guide, a report theme only when there is nothing else, or ask), and the tone. "Use our website" means opening it with `view-website`; a report theme is not the website. Pass the logo as a `logo` reference and the product as a `subject` reference instead of describing them. Without a logo, set the brand name as a wordmark and tell the user it is a placeholder. Without a product photo, make one clean packshot first (the product alone on a plain background), and pass it as `subject` in every image of the set, so the product looks the same everywhere.
 2. **Pin down the brief.** The goal, the audience, the offer, the placements and anything that must appear. Ask one question only when the goal or the offer is missing and cannot be inferred.
 3. **Decide the concept, the layout and the direction.** For an ad, pick an archetype from `designing-ad-creatives`. For an open request, think of 2 or 3 ideas that differ in angle and in style, and render each as its own call, or pick one with the user. Give each concept a different direction from "Pick a visual direction for each concept" and write it down.
 4. **Write the copy.** A headline of 7 words or fewer, one support line, up to three proof points, the offer, and a call to action of three words or fewer. Prices, claims, codes, dates and legal text come from the user or the data, word for word.
