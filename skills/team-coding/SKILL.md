@@ -22,7 +22,7 @@ optional_tools:
 
 # Coding on the team computer
 
-The team computer is Linux with Python 3.13, Node.js 22 with npm, PHP 8 with Composer and SQLite,
+The team computer is Linux with Python 3.12, Node.js 22 with npm, PHP 8 with Composer and SQLite,
 git, jq, ripgrep, zip and ffmpeg. Build the whole thing yourself in the same turn: write the files,
 run them, open the result, fix what is wrong, and hand it over.
 
@@ -81,8 +81,8 @@ plugin instead of a MySQL server, which the computer does not run.
 
 ## Check before you hand it over
 
-Look at every page you built with `browser-screenshot`, at desktop width and, when it matters, as a
-phone (`browser-act` cannot resize, so say when you did not check a phone width). Click the links and
+Look at every page you built with `browser-screenshot`. The browser shows a desktop width, so say
+that a phone layout was not checked when it matters. Click the links and
 submit the forms you built with test data that is clearly fake. Fix what is broken before you
 answer. Describe only what you saw on the screen; do not claim a check you did not run.
 
