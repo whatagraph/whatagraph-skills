@@ -74,9 +74,8 @@ that covers the time you need, for example 1800. The answer gives `preview_url`.
 | Node or Express | `node server.js`, with the server listening on `0.0.0.0` |
 | Vite (React, Vue) | `npx vite --host 0.0.0.0 --port 5173`, with `server: { allowedHosts: true }` in `vite.config.js` |
 
-A turn can start one `computer-job`; a second call in the same turn returns the first job. So get the
-server right before you start it: run it briefly first with `timeout 5 <command>` in `computer-exec`
-and read its output. The team runs at most two background jobs at a time. When the limit is reached,
+Get the server right before you start it: run it briefly first with `timeout 5 <command>` in
+`computer-exec` and read its output. The team runs at most two background jobs at a time. When the limit is reached,
 say so and end the turn, or check the project with a short `computer-exec` run instead. Never stop a
 process that this conversation did not start: the computer is the team's, and the other processes
 belong to other people's work.
