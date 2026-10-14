@@ -100,6 +100,12 @@ if ( isset( $_SERVER['HTTP_HOST'] ) && str_ends_with( $_SERVER['HTTP_HOST'], '.c
 
 Without it, WordPress writes `http://localhost` links and the browser refuses them.
 
+WordPress itself is about 36 MB zipped, more than the 8 MB a delivered file may have. Hand over only
+the site's own files and leave WordPress out: `wp-config.php` and `wp-content` without the default
+themes you did not change (`-x '<project>/wp-content/themes/twentytwenty*'`). The database is in
+`wp-content/database/`. In the answer, say to unpack it over a fresh download of the same WordPress
+version from wordpress.org.
+
 ## Check before you hand it over
 
 Look at every page you built with `browser-screenshot`. The browser shows a desktop width, so say
@@ -114,7 +120,9 @@ before you answer. Describe only what you saw on the screen; do not claim a chec
 Zip the project without its dependencies, next to the project in the conversation folder, and
 deliver it with `computer-export`: `cd "$WG_CONVERSATION_DIR" && zip -r <project>.zip <project>
 -x '<project>/node_modules/*' '<project>/.venv/*' '<project>/.tmp/*'`. Do not write the zip to
-`/team` unless the project lives there.
+`/team` unless the project lives there. A delivered file may be at most 8 MB; when the zip is
+larger, check what made it large (`unzip -l <project>.zip | sort -k1 -n | tail`) and leave out what
+the person can download or rebuild, instead of trying one zip after another.
 A zip downloads and is never opened in the chat. In the answer, say how to run it (the one command)
 and what it needs (for example PHP 8 or Node 22).
 
