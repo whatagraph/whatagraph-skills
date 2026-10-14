@@ -177,7 +177,8 @@ Over the footage sit only the words of the story: the captions, a line that says
 - The end card takes the last 3.5 to 4.5 seconds and follows the direction (see its column in the table).
 - It holds three things: the logo, one line with the offer, and the call to action written as a few words, plus the legal line when the offer needs one. Count them before you render. A second line under the headline, a tagline, a badge, a rule, a second logo or a button is a fourth thing, so cut it. Instagram adds its own button below the Story, so a drawn one only repeats it.
 - The most common failure is a landing-page hero: a small logo icon next to the brand name, a small uppercase label, a headline, a grey line under it and a rounded button, all centered in the middle of the frame. It reads as a website, not as the end of an ad. Build the end card from the sample of the direction instead, at its sizes: the logo large, the line in the display face at 96 px or more, the call to action as words at about 44 px.
-- The logo is the client's real logo file passed in `images`. Show it large: a wide logo 300 to 450 px wide, a square icon 220 to 300 px tall. When the file is only a square icon, look for the full logo first (`search-assets`, the client's website). If there is none, set the brand name in type under the icon, about as wide as the icon. A small icon in a row with the brand name is a website header, not the end of an ad. Without a logo file, set the brand name as a wordmark 300 to 450 px wide.
+- The logo is the client's real logo file passed in `images`. Show it large: a wide logo 300 to 450 px wide, a square icon 180 to 260 px tall. When the file is only a square icon, look for the full logo first (`search-assets`, the client's website). If there is none, set the brand name in type under the icon, about as wide as the icon. A small icon in a row with the brand name is a website header, not the end of an ad. Without a logo file, set the brand name as a wordmark 300 to 450 px wide.
+- Keep the end card in one flex column, as the samples do, so a long line pushes the logo down instead of running into it. When the column runs past the bottom of the safe zone, shorten the line or lower its size.
 - Design it like the last frame of a commercial: the last shot, darkened only where the words sit; a full-frame flat brand color; or the line set huge as type. No card, panel, glass, chips, row of stats, button, or dark radial glow over the whole frame.
 
 ### Samples, one per direction
@@ -202,8 +203,8 @@ When the logo file is only a square icon, show the brand name under it. When the
 
 ```
 .mark{display:flex;flex-direction:column;align-items:flex-start;gap:18px}
-.mark img{width:220px;height:220px;object-fit:contain}
-.mark span{margin:0;color:#fff;font:700 100px/1 Inter,sans-serif;letter-spacing:-.01em}
+.mark img{width:200px;height:200px;object-fit:contain}
+.mark span{margin:0;color:#fff;font:700 88px/1 Inter,sans-serif;letter-spacing:-.01em}
 
 <div class="mark"><img src="{{image_1}}"><span>Lumbra</span></div>
 <!-- no logo file: the name alone, 300 to 450 px wide -->
@@ -256,9 +257,10 @@ When the logo file is only a square icon, show the brand name under it. When the
 .big{position:absolute;left:66px;right:66px;top:330px;margin:0;color:#FFF4E6;font:400 210px/.84 Anton,sans-serif;text-transform:uppercase;
   text-shadow:0 6px 30px rgba(0,0,0,.35);opacity:0;animation:rise .25s cubic-bezier(.2,.8,.2,1) both,off .1s linear forwards}
 @keyframes rise{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
-.endflat{position:absolute;inset:0;background:#D9F23A;opacity:0;animation:on .05s linear 8s forwards}
-.endflat h1{position:absolute;left:66px;right:66px;top:300px;margin:0;color:#141414;font:400 200px/.92 Anton,sans-serif;text-transform:uppercase}
-.endflat .foot{position:absolute;left:66px;right:66px;bottom:680px;display:flex;flex-direction:column;align-items:flex-start;gap:26px}
+.endflat{position:absolute;inset:0;background:#D9F23A;opacity:0;animation:on .05s linear 8s forwards;box-sizing:border-box;
+  display:flex;flex-direction:column;justify-content:space-between;gap:48px;padding:300px 66px 680px}
+.endflat h1{margin:0;color:#141414;font:400 160px/.92 Anton,sans-serif;text-transform:uppercase}
+.endflat .foot{display:flex;flex-direction:column;align-items:flex-start;gap:26px}
 .endflat img{width:360px;max-height:220px;object-fit:contain;object-position:left}
 .endflat p{margin:0;color:#141414;font:700 44px Inter,sans-serif}
 
@@ -347,7 +349,7 @@ Keep all text and logos out of the top 14% (above y = 270), the bottom 35% (belo
 3. Every caption says the words being spoken at that moment, in time, word for word, sits inside the safe zone, is spelled exactly as given, is alone on screen and covers no face.
 4. Over the shots there is only type: the captions, a when or where line, or the big words of kinetic type. No box, bubble, pill, badge, framed label, panel, logo or button sits over any shot.
 5. No speaker is cut off: every spoken line in the finished ad is complete, and in the language of the ad.
-6. The end card is the last 3.5 to 4.5 seconds and holds three things: the logo or brand name at least 300 px wide, one line and the call to action as words, plus the legal line when needed. It covers no product, face or label. Look at its frame in render-video's result: a brand smaller than the line, an icon in a row with the name, a label above the line, a second line under it or a shape around the call to action means it is a web page, so fix them and render again.
+6. The end card is the last 3.5 to 4.5 seconds and holds three things: the logo or brand name at least 300 px wide, one line and the call to action as words, plus the legal line when needed. It covers no product, face or label, and nothing on it overlaps. Look at its frame in render-video's result: a brand smaller than the line, an icon in a row with the name, a label above the line, a second line under it or a shape around the call to action means it is a web page, so fix them and render again.
 7. The frames show the direction, not only your plan: documentary has small white subtitles low in the frame; creator has outlined words that change with the speech; kinetic type has a new group of one to four huge words for every second of the voice; title cards have frames that are a flat color with no footage; cinematic has almost no words; product close-up has macro shots and one word or the offer. A headline over a darkened shot is none of them. When you made several videos, no two share the same layout of words or the same end card; rebuild a copy from its own direction's sample.
 8. No interface, dashboard or chart appears that is not a real screenshot, and every number on screen comes from the client.
 9. The person and the product look the same in every shot, and no logo or text appeared in any clip.
