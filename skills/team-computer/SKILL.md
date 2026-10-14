@@ -248,11 +248,13 @@ target, the share reached and the amount needed per remaining day. Show the proj
 run rate side by side and say which figure is which. Drop today and, for platforms that revise
 recent days, the last two or three days before fitting.
 
-Never cut the history to "the stable period" before calling `run`. After a change of tracking or
-of level, pass `fit_from="YYYY-MM-DD"`: the models fit from that date, and the year-over-year model
-still reads the year before as its reference. When `warnings` says that last year's same periods
-give a different total, a yearly event lies ahead (a seasonal rise, a sale, a holiday). Report both
-figures, name what happened in those weeks last year, and give the widened range.
+Never cut the history to "the stable period" before calling `run`. A lasting change of level is
+found and applied by `run` itself: it fits from that week (returned as `fit_from`) and says so in
+`reading`, while the year-over-year model still reads the year before. Pass `fit_from` yourself only
+for a change you know of that it did not find, or `fit_from=False` to fit on all rows. When
+`reading` says that last year's same periods give a different total, a yearly event lies ahead (a
+seasonal rise, a sale, a holiday). Quote `reading` whole, name what happened in those weeks last
+year, and give the range it states.
 
 A weekly series comes from `forecast.complete_weeks(daily, date_col=..., value_cols=[...])`,
 which keeps full Monday-to-Sunday weeks only; a partial last week looks like a collapse to every
@@ -306,13 +308,14 @@ skip one.
 dot at today's spend. Budget advice stays within the spend levels the data has seen; a shift
 beyond them is an assumption and is labeled one.
 
-Budget shifts follow the intervals, not the point estimates. Move money from one channel to another
-only when the return on the next euro (`marginal_roi` and its interval in the cross-check, and the
-response curves of the fit) is lower for the first channel in both methods and the intervals do not
-overlap. Do not cut a channel whose return moved a lot between refits or whose two methods disagree;
-say instead that the data cannot tell, and propose a holdout test for it. Give the expected gain of
-a shift as a range, never as one number, and never call a figure "verified": say which checks it
-passed.
+Budget shifts come from `triangulate(...)["budget_shifts"]` (pass it the stability result), never
+from your own reading of the numbers. Its `reading` names the moves the data supports and the
+channels not to cut, with the reason; quote it. A move is allowed only when both methods rank the
+channels the same way and their ROI ranges do not overlap. The return on the next euro
+(`marginal_returns`, the cross-check's `marginal_roi`) is indicative only: its intervals missed the
+true value in tests, so never move budget or size a gain on it. The size of a gain is not known from
+the model; propose a holdout or geo test to measure it, and never call a figure "verified": say which
+checks it passed.
 
 To reuse a finished fit, call `mmm.load(out_dir)`, which repeats the fit's warnings; do not read
 `summary.json` yourself, and say in the answer and in the file that the fit is from an earlier run
