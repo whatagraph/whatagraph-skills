@@ -119,7 +119,7 @@ NATIVE_AGENT_TOOLS = {
     "browser-ask-person",
     # Agent-only tools from AgentToolRegistry::nonGrantableToolNames() that a skill declares.
     "create-document", "generate-image", "generate-music", "generate-video",
-    "generate-voiceover", "render-design", "render-video",
+    "generate-voiceover", "render-design", "render-video", "view-website",
 }
 
 # Every tool name a skill may declare or invoke.
