@@ -118,10 +118,11 @@ version from wordpress.org.
 
 Look at every page you built with `browser-screenshot`. The browser shows a desktop width, so say
 that a phone layout was not checked when it matters. Click the links you built. Test each form you
-built from the computer with `curl -s -X POST -d 'name=Test Person' localhost:<port>/<path>` and test
-data that is clearly fake, then open the page that shows the result; pressing the form's button in
-the browser is a `browser-submit` step that waits for the person to approve it. Fix what is broken
-before you answer. Describe only what you saw on the screen; do not claim a check you did not run.
+built with test data that is clearly fake: fill it and click its button with `browser-act`. On the
+preview, a form that sends to the preview itself goes through without approval, because the server
+is this project. Never change a form (removing the `<form>` element, a button of type `button`) to
+get it past a submit check; a form that sends anywhere else is a `browser-submit` step that the
+person approves. Fix what is broken before you answer. Describe only what you saw on the screen; do not claim a check you did not run.
 
 ## Hand it over
 
