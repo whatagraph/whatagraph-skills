@@ -114,8 +114,16 @@ Before you answer, check every figure you took from the web, in chat as in a fil
 computer, run `research.cite([...])` from `wgviz` with one entry per figure: `figure` as you will
 write it, `url` of the page you cite and a `label`. It confirms a figure only when every number of
 it is on that exact page as the browser read it, and names the page a misplaced figure is really
-on. Give only confirmed figures. Write "no source found" in a cell that has none, and never fill it
-with a range of your own, a country estimate or a typical value. A figure you computed from page
+on. Pass every number you will write, not only the headline ones: sample sizes, ranks, data
+periods and the numbers in your summary. Put the statistic in the `label` ("median CTR", "average
+CPC"): a figure called a median is confirmed only on a page that uses that word. Give only confirmed
+figures. Write "no source found" in a cell that has none, and never fill it with a range of your own,
+a country estimate or a typical value. When the check names a page that calls its figures estimates,
+say so next to them.
+
+A summary or a recommendation repeats confirmed figures with their source and country. It never
+merges figures from several sources into a new range or target ("expect a CTR of 5.5 to 6%"), and
+never presents another country's figures as targets for this one. A figure you computed from page
 figures (a currency conversion, an average of two sources) is labeled as computed, with its inputs.
 
 ## Audits and ad libraries
