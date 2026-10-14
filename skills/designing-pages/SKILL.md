@@ -69,7 +69,9 @@ high-contrast serif) and say which one you chose.
 
 **Logo.** Use the logo `view-website` saved, or the file from the library. Publish it to show it
 on a page. Never redraw a logo or set the name in another font as the logo. `shown_on` tells you
-which background the logo was made for: a white logo needs a dark background.
+which background the logo was made for: a white logo needs a dark background. When no logo file
+exists, set the name as plain text in the page's heading face, and tell the user that it stands in
+for the logo.
 
 ## 2. Let the kind of document set the form
 
@@ -139,6 +141,10 @@ back on the default stack. Decide the look instead:
 
 - Fix every problem the check lists, and change every template pattern it names unless the brand
   calls for it.
+- Every fact on the page comes from the request, the client's data or a page you read. Do not add
+  an email address, a phone number, a time saved, a count of integrations, a percentage or a quote
+  that nobody gave you. A figure you work out from the numbers you were given is fine when the page
+  shows how.
 - Look at the two screenshots. Does the page look like the kind of document it is? Would the
   client recognise their own brand in it? Is anything on the page that its reader does not need?
 - At phone width nothing scrolls sideways, and a wide table scrolls inside its own box.
