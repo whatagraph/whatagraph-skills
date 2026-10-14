@@ -197,6 +197,18 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:transpa
 
 Each sample is a 12 second ad with its end card from 8 s. `animation-delay` holds two times: when the element appears and when it starts to fade. `{{image_1}}` is the logo passed in `images`. Its `width`, `max-height` and `object-fit:contain` show a wide logo at the full width and a square icon at the full height.
 
+When the logo file is only a square icon, show the brand name under it. When there is no logo file, show the name alone. Use this block in place of the `<img>` of any sample, in the brand's own face, with `align-items:center` on a centered end card:
+
+```
+.mark{display:flex;flex-direction:column;align-items:flex-start;gap:18px}
+.mark img{width:220px;height:220px;object-fit:contain}
+.mark span{margin:0;color:#fff;font:700 100px/1 Inter,sans-serif;letter-spacing:-.01em}
+
+<div class="mark"><img src="{{image_1}}"><span>Lumbra</span></div>
+<!-- no logo file: the name alone, 300 to 450 px wide -->
+<div class="mark"><span style="font-size:120px;letter-spacing:.06em">LUMBRA</span></div>
+```
+
 **Documentary**: film subtitles low in the frame, a time line at the top, the end card on the last shot.
 
 ```
@@ -334,7 +346,7 @@ Keep all text and logos out of the top 14% (above y = 270), the bottom 35% (belo
 3. Every caption says the words being spoken at that moment, in time, word for word, sits inside the safe zone, is spelled exactly as given, is alone on screen and covers no face.
 4. Over the shots there is only type: the captions, a when or where line, or the big words of kinetic type. No box, bubble, pill, badge, framed label, panel, logo or button sits over any shot.
 5. No speaker is cut off: every spoken line in the finished ad is complete, and in the language of the ad.
-6. The end card is the last 3.5 to 4.5 seconds and holds three things: the logo at least 300 px wide, one line and the call to action as words, plus the legal line when needed. It covers no product, face or label. Look at its frame in render-video's result: a label above the line, a second line under it or a shape around the call to action means it is a web page, so remove them and render again.
+6. The end card is the last 3.5 to 4.5 seconds and holds three things: the logo or brand name at least 300 px wide, one line and the call to action as words, plus the legal line when needed. It covers no product, face or label. Look at its frame in render-video's result: a brand smaller than the line, an icon in a row with the name, a label above the line, a second line under it or a shape around the call to action means it is a web page, so fix them and render again.
 7. The frames show the direction, not only your plan: documentary has small white subtitles low in the frame; creator has outlined words that change with the speech; kinetic type has a new group of one to four huge words for every second of the voice; title cards have frames that are a flat color with no footage; cinematic has almost no words; product close-up has macro shots and one word or the offer. A headline over a darkened shot is none of them. When you made several videos, no two share the same layout of words or the same end card; rebuild a copy from its own direction's sample.
 8. No interface, dashboard or chart appears that is not a real screenshot, and every number on screen comes from the client.
 9. The person and the product look the same in every shot, and no logo or text appeared in any clip.
