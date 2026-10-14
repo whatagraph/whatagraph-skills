@@ -367,6 +367,11 @@ describe the missing days as a change in performance. A recurring report that re
 totals as its last run has the same cause. The context of each turn states today's date and the
 team's time zone, so do not run `date` to learn them.
 
+Users, sessions, reach and other counts of distinct people or visits do not add up across days or
+segments: the same person or a visit that crosses midnight is counted in each. Take the total of a
+period from a fetch of the whole period, and the share of a segment from the same fetch. A sum of
+daily rows is right only for additive counts (clicks, cost, conversions, events).
+
 Rates come from totals (cost / clicks, revenue / cost), never from an average of rates. A rate
 whose denominator is zero (no deals, no clicks, no spend) is "not computable": never show it as 0
 or as infinite, and say why the denominator is zero. Never add amounts in different currencies.
