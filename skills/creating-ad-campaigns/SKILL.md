@@ -88,7 +88,7 @@ For each concept write:
 - **Name**, **archetype** and **idea** (one line from "Find the idea first" in `designing-ad-creatives`), with the three headline options you considered and why the chosen one wins.
 - **Builds on**: the winning pattern from step 2 with its number, or "white space" and why.
 - **Hypothesis**: the one thing it tests ("an offer-first ad beats the lifestyle ad for cold audiences").
-- **Direction, style and mode**: the visual direction and the style from `generating-images`, and whether it is built all in one image or composed. No two concepts share a direction.
+- **Direction, style and mode**: the visual direction and the style from `generating-images`, and whether it is built all in one image or composed. A video concept takes its direction from "Pick a direction for each video" in `generating-videos`. No two concepts share a direction.
 - **Copy, written before any image**: the words in the image (a headline of 3 to 9 words, the proof, the offer, a call to action of three words or fewer) and the platform's text fields:
 
   | Platform | Fields |
@@ -110,7 +110,7 @@ Keep the brand fixed across concepts: the colors, the logo, the product and the 
 3. **Check it** with the checks in `generating-images`: bodies, every word, logo and product, counts, safe zones, claims, then the design. Fix with an edit or with the layout.
 4. **Every placement.** Composed: render the same layout for 1080x1920 (story and reel, text out of the top 14%, the bottom 35% and the sides), 1080x1080, 1200x628 and any banner sizes. One-image: adapt the approved master with `edit_base` and the new ratio. For Google display and Performance Max, make text-free versions and deliver the copy as text assets.
 5. **Variants.** For a test, change one thing per variant (the headline, the image or the offer), so a result can be read.
-6. **Videos.** For each video concept you make, follow `generating-videos`: plan the shots, make every shot, cut them with `render-video`, check the result and publish it.
+6. **Videos.** For each video concept you make, follow `generating-videos`: pick its direction, plan the shots, make every shot, cut them with `render-video`, check the result and publish it. Each video in the set has its own direction, so the set does not share one layout of words or one end card.
 7. **Name every ad so its results come back**: `<client>_<campaign>_<concept>_<archetype>_<placement>_v<n>`, for example `northpeak_firstsnow_c2_offerfirst_9x16_v1`. The name appears in Whatagraph's ad-level data, so the next campaign can read which concept, archetype and placement won.
 8. **Credits.** Generated images cost credits; renders do not. Three concepts in four placements is about twelve images, fewer when composed. Ask before going beyond that, and use `draft` for exploration. A finished 15 second video with four live-action shots costs about 620 credits. Make one without asking when the user asked for video, and ask before making more.
 

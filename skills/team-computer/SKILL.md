@@ -246,7 +246,9 @@ value_col=..., period_end="YYYY-MM-DD", target=...)` with daily rows up to yeste
 the actual to date, the projected total with its range, the run rate for reference and, with a
 target, the share reached and the amount needed per remaining day. Show the projection and the
 run rate side by side and say which figure is which. Drop today and, for platforms that revise
-recent days, the last two or three days before fitting.
+recent days, the last two or three days before fitting. Say plainly whether the projection is above or below the
+target. When the target lies inside the range, the outcome is uncertain: say so, and do not call a
+target below the projection "within reach" or one above it "safe".
 
 Never cut the history to "the stable period" before calling `run`. A lasting change of level is
 found and applied by `run` itself: it fits from that week (returned as `fit_from`) and says so in
@@ -366,6 +368,11 @@ stopped arriving days ago: lead the report with that sentence, name the source, 
 describe the missing days as a change in performance. A recurring report that repeats the same
 totals as its last run has the same cause. The context of each turn states today's date and the
 team's time zone, so do not run `date` to learn them.
+
+Users, sessions, reach and other counts of distinct people or visits do not add up across days or
+segments: the same person or a visit that crosses midnight is counted in each. Take the total of a
+period from a fetch of the whole period, and the share of a segment from the same fetch. A sum of
+daily rows is right only for additive counts (clicks, cost, conversions, events).
 
 Rates come from totals (cost / clicks, revenue / cost), never from an average of rates. A rate
 whose denominator is zero (no deals, no clicks, no spend) is "not computable": never show it as 0
