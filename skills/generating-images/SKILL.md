@@ -179,7 +179,7 @@ Then pick the style. Follow the brand's existing material when it has any: its a
 | Illustration | Events, local businesses, explainers, friendly brands | The technique (flat vector, risograph, linocut, gouache, hand-drawn, isometric), line and texture |
 | 3D | Apps, fintech, playful brands | The material (glossy, jelly, clay), the lighting, a solid background color |
 | Editorial or magazine | Covers, reports, premium brands | A display serif, generous margins, a photo inset |
-| Creator or native | Social ads that must not look like ads | Phone-camera framing, caption boxes, imperfect light; no app buttons or usernames |
+| Creator or native | Social ads that must not look like ads | Phone-camera framing, imperfect light, the words set the way people caption their own posts (bold type with an outline or a shadow); no caption bubbles, app buttons or usernames |
 | Infographic | Results, how-tos, B2B posts | Numbered rows, simple line icons, one accent color for the numbers |
 
 Avoid the defaults that look like generic AI art unless the brand uses them: abstract waves and ribbons, glowing particles, holograms, floating dashboards, neon gradients, and a lone person gazing at a sunset.

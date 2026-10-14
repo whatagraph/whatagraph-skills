@@ -2,7 +2,7 @@
 name: team-browser
 type: domain
 group: computer
-description: Read and use websites in the browser that belongs to the acting person. Covers when to use the browser and when the Whatagraph tools read a report instead, pictures of pages for a deck, research across many sites, challenge pages and cookie banners, what never to click, and asking the person on the page when it needs a sign-in.
+description: Read and use websites in the browser that belongs to the acting person. Covers when to use the browser and when the Whatagraph tools read a report instead, pictures of pages for a deck, research across many sites, industry benchmarks with matched definitions, challenge pages and cookie banners, what never to click, and asking the person on the page when it needs a sign-in.
 required_tools:
   - browser-navigate
   - browser-extract
@@ -83,6 +83,71 @@ pass the challenge yourself. When the task needs that site, ask the person with
 `browser-ask-person` (kind `captcha`). Otherwise note the site as not readable today and continue
 with the next one. `blocked_hosts` in a navigate result names hosts whose files the page could not
 load; when the preview looks unstyled, say in the caption that the page did not render fully.
+
+## Benchmarks
+
+A benchmark is a number read on a page in this conversation. Never give one from memory, and
+never call a number a benchmark when no page you opened says it.
+
+1. Find at least two independent sources, and three before you use the word "benchmark". Prefer
+   publishers that state their sample (an ad platform's own data, an industry body, a tool vendor
+   that publishes its method). For each one note the URL, the publisher, the year of the data,
+   the sample (accounts, countries, industry), and the exact metric definition.
+2. Match definitions before you compare. Search network only or search and display together.
+   Link clicks or all clicks. Conversions per click or per interaction. Mean or median. Currency,
+   country and device. A figure whose definition differs from the account's metric is not
+   compared, or is compared only after it is converted and the conversion is said.
+3. Prefer data from the last 24 months. Email open rates from before 2022 are not comparable,
+   because Apple Mail Privacy Protection inflates opens since then.
+4. Report the range across the sources, not one figure, and say where they disagree and why
+   (sample, year, definition).
+5. Put the account's own history beside it: the same metric a year before and its trend over the
+   last 13 weeks. That comparison does not depend on anyone's sample.
+6. When no source covers the industry or the country, say so and use the closest proxy you could
+   verify, labeled as a proxy with what differs. "No reliable benchmark exists for this" is a
+   valid answer.
+
+Write the sources into the deliverable as a small table: publisher, year, sample, definition,
+value and URL.
+
+Before you answer, check every figure you took from the web, in chat as in a file. On the
+computer, run `research.cite([...])` from `wgviz` with one entry per figure: `figure` as you will
+write it, `url` of the page you cite and a `label`. It confirms a figure only when every number of
+it is on that exact page as the browser read it, and names the page a misplaced figure is really
+on. Pass every number you will write, not only the headline ones: sample sizes, ranks, data
+periods and the numbers in your summary. Put the statistic in the `label` ("median CTR", "average
+CPC"): a figure called a median is confirmed only on a page that uses that word. Give only confirmed
+figures. Write "no source found" in a cell that has none, and never fill it with a range of your own,
+a country estimate or a typical value. When the check names a page that calls its figures estimates,
+say so next to them.
+
+A summary or a recommendation repeats confirmed figures with their source and country. It never
+merges figures from several sources into a new range or target ("expect a CTR of 5.5 to 6%"), and
+never presents another country's figures as targets for this one. A figure you computed from page
+figures (a currency conversion, an average of two sources) is labeled as computed, with its inputs.
+
+## Audits and ad libraries
+
+A site audit or an ad library review states only what the browser read, with the URL it was read
+on.
+
+- `blocked_hosts` lists requests the browser refused. Those files never loaded and their scripts
+  never ran, so report them as "requested and blocked", never as tags or tools the site runs.
+- An empty extract (head tags, canonical, JSON-LD, meta description) means the read failed, not
+  that the page lacks the element. Try another selector or a screenshot. If nothing works, write
+  "could not read", never "missing" or "lacks".
+- A search result snippet is not the page's meta description or title. Quote those only from the
+  page itself.
+- An ad is "active" only when the library shows its status or start date. Otherwise say "seen in
+  the library on <date>".
+- Quote ad copy together with what the ad says it applies to ("up to 60% off last chance styles",
+  not "60% off").
+- Each quote and number cites the URL it was read on. Do not cite a page for a fact read on
+  another page. Check the numbers with `research.cite` as for benchmarks.
+- Mark inferences as inference: the vendor behind a host name, why an issue matters, what a
+  competitor intends.
+- Page speed comes only from a PageSpeed Insights or CrUX result that loaded. Name lab or field
+  data, the device, and the URL or origin. If neither loads, write "not measured".
 
 ## Clicking and typing
 
