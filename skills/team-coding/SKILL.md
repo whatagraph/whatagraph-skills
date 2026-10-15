@@ -50,7 +50,9 @@ git and curl follow on their own. Private and internal addresses are always refu
 - Python: `python3 -m venv .venv && . .venv/bin/activate && pip install flask`. Many packages are
   already installed (pandas, flask, beautifulsoup4, duckdb, pyyaml, markdown); check with
   `python3 -c "import flask"` before installing.
-- Node: `npm install` in the project folder. Never `npm install -g`; use `npx` for a tool.
+- Node: `npm install --no-audit --no-fund` in the project folder. Never `npm install -g`; use `npx`
+  for a tool. An install that reaches the 60-second limit of `computer-exec` keeps what it
+  downloaded, so run the same command again and it finishes.
 - PHP: `composer install` or `composer require` in the project folder.
 
 When an install fails with a refused connection or `403`, the team's setting does not allow that
@@ -70,26 +72,66 @@ that covers the time you need, for example 1800. The answer gives `preview_url`.
 | PHP or WordPress | `php -S 0.0.0.0:8000 -t <public folder>` |
 | Flask | `flask --app app run --host 0.0.0.0 --port 8000` |
 | Node or Express | `node server.js`, with the server listening on `0.0.0.0` |
-| Vite (React, Vue) | `npx vite --host 0.0.0.0 --port 5173` |
+| Vite (React, Vue) | `npx vite --host 0.0.0.0 --port 5173`, with `server: { allowedHosts: true }` in `vite.config.js` |
 
-Before opening the preview, check the server answers from the computer itself with
+Get the server right before you start it: run it briefly first with `timeout 5 <command>` in
+`computer-exec` and read its output. The team runs at most two background jobs at a time. When the limit is reached,
+say so and end the turn, or check the project with a short `computer-exec` run instead. Never stop a
+process that this conversation did not start: the computer is the team's, and the other processes
+belong to other people's work.
+
+Another conversation of the team may already run a server on that port, so first check the port is
+free with `curl -s -o /dev/null localhost:<port> || echo free`, and pick another one when it is
+taken. Before opening the preview, check the server answers from the computer itself with
 `curl -s localhost:<port> | head` in `computer-exec`. If it does not, read `/runs/<run>/job.log`
 with `computer-read-file`, fix the cause and start the job again on a new port.
 
-For WordPress, download it from wordpress.org, and use SQLite with the SQLite Database Integration
-plugin instead of a MySQL server, which the computer does not run.
+The preview is HTTPS and the browser opens only `https://` addresses on it. An app that writes
+absolute links from its own address must therefore write `https://` links; links that start with
+`/` work as they are.
+
+### WordPress
+
+Download WordPress from wordpress.org, and use SQLite with the SQLite Database Integration plugin
+(copy its `db.copy` to `wp-content/db.php`) instead of a MySQL server, which the computer does not
+run. Install and fill it with WP-CLI (`php wp-cli.phar ... --allow-root`; commands run as root on
+the computer, so WP-CLI needs that flag). Then add this to `wp-config.php` above the line
+`/* That's all, stop editing! */`, so every link uses the preview address and HTTPS:
+
+```php
+if ( isset( $_SERVER['HTTP_HOST'] ) && str_ends_with( $_SERVER['HTTP_HOST'], '.computer.internal' ) ) {
+	$_SERVER['HTTPS'] = 'on';
+	define( 'WP_HOME', 'https://' . $_SERVER['HTTP_HOST'] );
+	define( 'WP_SITEURL', 'https://' . $_SERVER['HTTP_HOST'] );
+}
+```
+
+Without it, WordPress writes `http://localhost` links and the browser refuses them.
+
+WordPress itself is about 36 MB zipped, more than the 8 MB a delivered file may have. Hand over only
+the site's own files and leave WordPress out: `wp-config.php` and `wp-content` without the default
+themes you did not change (`-x '<project>/wp-content/themes/twentytwenty*'`). The database is in
+`wp-content/database/`. In the answer, say to unpack it over a fresh download of the same WordPress
+version from wordpress.org.
 
 ## Check before you hand it over
 
 Look at every page you built with `browser-screenshot`. The browser shows a desktop width, so say
-that a phone layout was not checked when it matters. Click the links and
-submit the forms you built with test data that is clearly fake. Fix what is broken before you
-answer. Describe only what you saw on the screen; do not claim a check you did not run.
+that a phone layout was not checked when it matters. Click the links you built. Test each form you
+built with test data that is clearly fake: fill it and click its button with `browser-act`. On the
+preview, a form that sends to the preview itself goes through without approval, because the server
+is this project. Never change a form (removing the `<form>` element, a button of type `button`) to
+get it past a submit check; a form that sends anywhere else is a `browser-submit` step that the
+person approves. Fix what is broken before you answer. Describe only what you saw on the screen; do not claim a check you did not run.
 
 ## Hand it over
 
-Zip the project without its dependencies and deliver it with `computer-export`:
-`zip -r site.zip <project> -x '<project>/node_modules/*' '<project>/.venv/*' '<project>/.tmp/*'`.
+Zip the project without its dependencies, next to the project in the conversation folder, and
+deliver it with `computer-export`: `cd "$WG_CONVERSATION_DIR" && zip -r <project>.zip <project>
+-x '<project>/node_modules/*' '<project>/.venv/*' '<project>/.tmp/*'`. Do not write the zip to
+`/team` unless the project lives there. A delivered file may be at most 8 MB; when the zip is
+larger, check what made it large (`unzip -l <project>.zip | sort -k1 -n | tail`) and leave out what
+the person can download or rebuild, instead of trying one zip after another.
 A zip downloads and is never opened in the chat. In the answer, say how to run it (the one command)
 and what it needs (for example PHP 8 or Node 22).
 
