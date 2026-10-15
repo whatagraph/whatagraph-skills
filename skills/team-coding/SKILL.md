@@ -43,6 +43,25 @@ virtual environment counts toward it. When the project is handed over, delete th
 `/tmp` cannot run programs. Before an install that compiles anything, run
 `export TMPDIR=$PWD/.tmp && mkdir -p $TMPDIR` in the same command.
 
+## An app is an application
+
+When a person asks for an app, a tool, a planner, a tracker or a portal, build a working
+application, not a page:
+
+- A server with an API (Flask or FastAPI, Express, or Laravel) and a SQLite database in the
+  project folder that keeps what people enter after a restart.
+- The records the app is about, each with create, read, update and delete in the interface. For a
+  budget planner these are saved scenarios: a person names one, sets its amounts, edits it,
+  copies it, deletes it and compares it with another.
+- The figures it works from (a model's results, a dataset, a price list) loaded into the database
+  from the files your analysis produced and read through the API, never pasted into the page.
+- Checks on the server, with a message that says what is wrong when an input is refused.
+
+Before you hand it over, run it with `computer-job` and `serve_port`, and in the browser create a
+record, change it and delete it; fix what fails. A page that only shows numbers, or recomputes
+them in the browser, is an HTML page made with `create-document`, not an app. Never hand over a
+copy of a report page as the app.
+
 ## How it looks
 
 Load the `designing-pages` skill before you write the first page, and follow it. These parts of it
