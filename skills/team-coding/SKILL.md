@@ -13,7 +13,7 @@ optional_tools:
   - tool_name: computer-read-file
     purpose: Read a job log or a file the project produced.
   - tool_name: computer-export
-    purpose: Hand the finished project over as one zip file.
+    purpose: Hand the finished project over as one zip file, or as an app card when it runs as a site.
   - tool_name: browser-navigate
     purpose: Open the running project at its preview_url.
   - tool_name: browser-screenshot
@@ -181,14 +181,16 @@ deliver it with `computer-export`: `cd "$WG_CONVERSATION_DIR" && zip -r <project
 `/team` unless the project lives there. A delivered file may be at most 8 MB; when the zip is
 larger, check what made it large (`unzip -l <project>.zip | sort -k1 -n | tail`) and leave out what
 the person can download or rebuild, instead of trying one zip after another.
-A zip downloads and is never opened in the chat. In the answer, say how to run it (the one command)
-and what it needs (for example PHP 8 or Node 22).
+When the project runs as a site, pass the `run_id` of the `computer-job` that serves it as
+`app_run_id`. The person then gets an app card: Open starts the site again in their browser, at any
+later time, and Download gives the zip. Without `app_run_id` the zip is only a download.
+In the answer, say how to run it (the one command) and what it needs (for example PHP 8 or Node 22).
 
 The person cannot open `preview_url` themselves; they see the site only in your browser. So the last
 page you open before you answer is the site's start page on the preview. In the answer, tell them to
-open your browser with the globe button at the top of the conversation to try the site, and that it
-stays up while the server runs. When the server stops at its timeout, nothing is said in the
-conversation; if they come back later, start it again when they ask.
+open the app card, or your browser with the globe button at the top of the conversation, to try the
+site. Both start the site again by themselves when its server has stopped, so they can come back to
+it later without asking you.
 
 Write the answer about the site, not about the computer: what was built, how it was checked, the
 zip, and how to try it. Leave out run ids, exit codes, signals, process ids and durations.
