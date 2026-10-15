@@ -2,7 +2,7 @@
 name: designing-pages
 type: domain
 group: team_workspace_branding
-description: Design an HTML page with create-document so that it looks made for its client and its subject, not generated. Covers reports, plans, briefs, proposals, one-page summaries, campaign boards, showcases of ads and videos, menus and price lists, landing pages and small tools. Says where the look comes from (the client's website through view-website, their logo, their ads, their brand guide), how the kind of document sets the form of the page, what makes a page look generated, which of those patterns the automatic check names, and what to do when nothing about the brand can be found. Load it before you write any HTML page. It does not apply to Markdown, CSV, JSON or text files.
+description: Design an HTML page with create-document, or a website or web app built on the team computer, so that it looks made for its client and its subject, not generated. Covers reports, plans, briefs, proposals, one-page summaries, campaign boards, showcases of ads and videos, menus and price lists, landing pages, sign-up and booking sites, and small tools. Says where the look comes from (the client's website through view-website, their logo, their ads, their brand guide), how the kind of document sets the form of the page, what makes a page look generated, which of those patterns the automatic check names, and what to do when nothing about the brand can be found. Load it before you write any HTML page or the first page of a site. It does not apply to Markdown, CSV, JSON or text files.
 required_tools:
   - create-document
 optional_tools:
@@ -24,8 +24,9 @@ optional_tools:
 
 # Designing pages
 
-A page you write with `create-document` is read by the client, or by the client's manager. It
-should look as if someone who knows the client and the subject made it. It should not look like
+A page you write with `create-document`, or a site you build on the team computer, is read by the
+client, the client's manager or the client's customers. It should look as if someone who knows the
+client and the subject made it. It should not look like
 the page that every generated page looks like.
 
 This skill does not give you a style. A house style, applied to every client, is exactly what
@@ -63,12 +64,23 @@ a hero, buttons, cards and a footer. A report built from those parts looks like 
 Take the colors, the type, the photography and the tone, and use them in the form of the page you
 are making.
 
-**Fonts.** A font from Google Fonts can be used directly. For any other font, choose the Google
-Font closest in shape (a geometric sans for a geometric sans, a high-contrast serif for a
-high-contrast serif) and say which one you chose.
+**Fonts.** A font from Google Fonts can be used directly. Most brand fonts are not on Google Fonts:
+they come from Typekit, from the brand's own server or from a paid foundry. For such a font, look
+at it in the screenshot and describe it before you choose:
 
-**Logo.** Use the logo `view-website` saved, or the file from the library. Publish it to show it
-on a page. Never redraw a logo or set the name in another font as the logo. `shown_on` tells you
+- its kind: a geometric, grotesque or humanist sans, a slab, or an old-style, transitional or
+  high-contrast serif;
+- its width (narrow, normal or wide) and how tall its lowercase letters are;
+- its ends and corners: round or square, soft or sharp.
+
+Then choose the Google Font that shares those traits, and say in the reply which font stands in
+for which. Do not reach for the same face for every brand. Plus Jakarta Sans, Inter and Poppins
+are what generated pages use when nothing was decided, so choose one of them only when the
+brand uses it or its traits really match.
+
+**Logo.** Use the logo `view-website` saved, or the file from the library. To show it on a page,
+load the `whatagraph-assets` skill and publish the logo with `manage-assets`: a publish made
+before that skill is loaded is refused. Never redraw a logo or set the name in another font as the logo. `shown_on` tells you
 which background the logo was made for: a white logo needs a dark background. When no logo file
 exists, set the name as plain text in the page's heading face, and tell the user that it stands in
 for the logo.
@@ -88,6 +100,8 @@ quarterly report by the same agent no longer look alike.
 | A showcase of ads or videos | A gallery | Each piece at its real shape, a caption under it |
 | A menu, a price list, a timetable | The thing itself | What a printed one has, in the client's look |
 | A landing page for the client's customers | The client's own website | Its sections, its buttons, its tone |
+| A sign-up, booking or order site | The client's own website | Its look and tone, a form with visible labels, one clear button, a plain confirmation that says what happens next |
+| A screen for the client's staff, such as a bookings list | A working tool | Navigation named by what people do there, data in a table, one main action per screen, statuses as words |
 | A calculator or a small tool | A tool | The inputs and the answer, and nothing around them |
 
 A long report is read from top to bottom. A list of contents at the start helps; app parts do not
@@ -112,6 +126,11 @@ the request calls for it.
   that is read in order, hover effects, a print or export button, a dark mode switch.
 - **Decoration:** glows, frosted glass, gradients on text or behind blocks, emoji used as icons,
   colored stripes down the side of cards, blurred blobs.
+- **Startup-template parts on a site:** a small tag next to the name ("Run club", "Beta"), a
+  pill above the headline, a row of round counters ("450+ runners", "3x weekly") that nobody gave,
+  and a success message with confetti or an emoji.
+- **The default dark theme:** a near-black navy page with one neon accent (lime, emerald, violet),
+  glowing buttons and gradient stripes, when the client's brand is not dark.
 - **The default stack:** Tailwind's grey and indigo, violet or emerald, set in Inter or the
   system font, when these are not the client's own.
 - **Colors without meaning:** a different color for each card or each label.
@@ -122,6 +141,10 @@ After each save, the check of `create-document` lists the patterns it finds unde
 `template_patterns`, with examples. Change each one before you reply, unless the brand or the
 request calls for it.
 
+No check runs on a site you build on the team computer. There, take a `browser-screenshot` of each
+page you built and go through this list against it yourself, one item at a time, and change what
+you find before you reply.
+
 ## 4. When nothing about the brand can be found
 
 Sometimes there is no website, no logo, no ad, no theme, and the user does not answer. Do not fall
@@ -131,20 +154,43 @@ back on the default stack. Decide the look instead:
 - **Type and color from the subject and the reader.** Ask what a good designer working in the
   client's industry would choose. A law firm's annual report, a bakery's menu and a game studio's
   media kit do not share a palette or a typeface. Choose one pair of faces and two or three colors,
-  each with one role, and keep to them.
+  each with one role, and keep to them. A fictional or new brand is no exception. The faces that
+  generated pages fall back on (Plus Jakarta Sans, Inter, Poppins) and a dark page with a neon
+  accent are what nobody chose, so they are not a choice for the subject either.
 - **Restraint.** One accent, no decoration and a plain structure. A plain page that is set well
   looks made. A decorated page looks generated.
 - **Say it.** Tell the user in the reply which look you used, and that their website, logo or
   brand guide would let you match the brand.
 
-## 5. Before you reply
+## 5. Before you save, and before you reply
+
+**Check every fact before you save.** A page written to sound complete fills its gaps with
+plausible content, and the reader cannot tell it from what they gave you. So read your page once
+against the request before the first save, and again before saving any change that adds text. For
+every number, name, date, address, source and claim, find where it came from:
+
+- the request or a file the user gave;
+- the client's data, fetched in this conversation;
+- a page you read in this conversation.
+
+Delete whatever has none of these, or ask the user for it. A figure you work out from the numbers
+you were given stays when the page shows how it was worked out. What gets added most often: a
+budget split nobody gave, named retailers, markets or partners, benchmarks and targets, an office
+address or phone number, time saved, counts of integrations or clients, a "Source:" line naming
+tools nobody used, a "Generated on" date, and praise such as "above industry benchmarks". On a
+site, also member counts, testimonials, opening times, places and team names, and a message that
+says something happened when nothing does it, such as "we've sent you a welcome email" from a form
+that sends nothing. When a page needs
+content nobody gave, such as the text of an about section, write it from what you were told, or
+leave a short, plain placeholder that says what belongs there.
+
+**After each save** (on the team computer, after each change, with a screenshot of each page):
 
 - Fix every problem the check lists, and change every template pattern it names unless the brand
-  calls for it.
-- Every fact on the page comes from the request, the client's data or a page you read. Do not add
-  an email address, a phone number, a time saved, a count of integrations, a percentage or a quote
-  that nobody gave you. A figure you work out from the numbers you were given is fine when the page
-  shows how.
+  calls for it. On the team computer, go through the list in section 3 yourself.
 - Look at the two screenshots. Does the page look like the kind of document it is? Would the
   client recognise their own brand in it? Is anything on the page that its reader does not need?
 - At phone width nothing scrolls sideways, and a wide table scrolls inside its own box.
+
+**In the reply,** name what stands in for the brand: a Google Font in place of the brand's own
+font, a name set as text in place of a logo, or the look you chose when nothing was found.
