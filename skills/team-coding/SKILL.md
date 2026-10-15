@@ -152,6 +152,12 @@ if (str_ends_with(request()->getHost(), '.computer.internal')) {
 }
 ```
 
+Build on the current releases. Run `composer create-project laravel/laravel <project>` and
+`composer require filament/filament` without a version, so Composer picks the newest ones that fit
+PHP 8.4. Never pin an older major version from memory, and never take an older Laravel to fit a
+package: an old pin is what makes a package refuse the current Laravel. When Composer refuses, read
+its message and drop the pin that causes it. Name the versions you got in the answer.
+
 For an admin panel, install Filament with `composer require filament/filament` and
 `php artisan filament:install --panels --no-interaction` (both in one `computer-job`). Create the
 login without prompts: `php artisan make:filament-user --name="..." --email="..." --password="..."`.
