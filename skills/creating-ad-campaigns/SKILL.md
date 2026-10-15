@@ -20,8 +20,10 @@ optional_tools:
     purpose: Find the client's ad accounts on every channel and the ad-level fields they expose.
   - tool_name: fetch-data
     purpose: Pull ad-level results (spend, CTR, CPA, ROAS) for the period.
+  - tool_name: view-website
+    purpose: See the client's website with its colors, fonts and logo, and save the logo as an image, for the brand kit.
   - tool_name: list-themes
-    purpose: Read the brand colors, fonts and logo of the client's report theme.
+    purpose: Read a report theme when the client has no website, ads or brand files to take the look from.
   - tool_name: list-assets
     purpose: Find the client's logo and product photos.
   - tool_name: search-assets
@@ -57,9 +59,10 @@ Write the video into your plan as its own step, before the board: "Make the fini
 
 Collect it once per client and save it as a memory note named "Brand kit: <client>", so the next campaign starts from it.
 
-- **From the website**, when you have web access: the logo, the color palette as hex codes with roles (background, text, accent), the fonts (from the page styles), hero product photos, prices, current offers, guarantees, shipping and return terms, the tone in 3 to 7 words, and the phrases customers use in reviews. Import the logo and product photos with `manage-assets` (load `whatagraph-assets` first).
-- **From Whatagraph**: the report theme (`list-themes`), the team library (`list-assets`, `search-assets`) and the current ads (`view-creatives`).
-- **From the user**: anything missing that matters, in one question.
+- **From the user**: a brand guide, colors, fonts or files they give. They win over everything below.
+- **From the website**: open it with `view-website`. It returns the colors the site uses with their roles, the fonts, the hero photos and their addresses, and the logo saved as an image in the conversation. When you also have web search or web fetch, read the prices, current offers, guarantees, shipping and return terms, the tone in 3 to 7 words and the phrases customers use in reviews. Import product photos with `manage-assets` (load `whatagraph-assets` first).
+- **From Whatagraph**: the team library (`list-assets`, `search-assets`), the current ads (`view-creatives`), and the report theme (`list-themes`) only when none of these show the brand.
+- **From the user again**: anything missing that matters, in one question.
 
 Write fonts as a Google Font name or a style ("a heavy condensed sans", "a refined lowercase serif"). Note anything the brand always does (a color band, a sticker, a photo style). Claims, prices and reviews go in the note word for word with their source. If there is no logo, set the brand name as a wordmark and say it is a placeholder. Never invent a logo for a real client.
 
@@ -117,7 +120,7 @@ Keep the brand fixed across concepts: the colors, the logo, the product and the 
 ## 5. Present the campaign
 
 1. Publish the finished ads with `manage-assets action=publish`.
-2. Build one board with `create-document`: an HTML page in the client's colors. Start with the brand kit and what has worked, with the numbers. For each concept show the name, archetype, idea, hypothesis and what it builds on; the ads in each placement (`<img>` with the published URLs, and each finished video as a `<video>` as `generating-videos` shows); and the headline, primary text and button as copyable text. End with a test plan: which concept runs first, the budget split, the KPI that decides, and when to read the result.
+2. Build one board with `create-document`, designed as `designing-pages` describes: in the client's look, in the form their team will use it, and with the ads as the largest thing in it. It holds what has worked, with the numbers; each concept with its idea, why it should work and what it builds on; the ads in each placement (`<img>` with the published URLs, and each finished video as a `<video>` as `generating-videos` shows); the headline, primary text and button as copyable text; and a test plan: which concept runs first, the budget split, the KPI that decides, and when to read the result. The archetype and the hypothesis are part of the text, not labels.
 3. In the chat, give the three-line summary: what has worked, the concepts, and the next step.
 
 Offer the next steps: translations, one version per location, more variants of the strongest concept, or a creative report that tracks the new ads by their names once they run.

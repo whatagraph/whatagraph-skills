@@ -38,7 +38,9 @@ and where the state is). Never create both, create no other wake-up or reminder,
 never ask the person whether to continue: the request already said so. Ask nothing that a
 careful analyst would decide alone.
 Deliver the files in a turn that has calls left for it: checking, exporting both files and the
-final answer take about ten calls, so when fewer are left, continue in the next turn.
+final answer take about ten calls, so when fewer are left, continue in the next turn. Before you
+write the first page of a summary or an app beside the deck and the workbook, load
+`designing-pages`, and follow it for how each page looks.
 
 **State lives in files, not in your memory.** The conversation is compacted between turns, so a
 number or a fact that is only in an earlier message is lost. Use one project folder, for example
@@ -58,7 +60,8 @@ several independent commands into one script instead of one command per call.
    and see where the rows begin, because a mix model wants two years or more and a forecast wants
    every season it can get. Write the mix model script (`mmm.fit`, `mmm.validate` and
    `mmm.curves_chart` in one script, as `team-computer` describes) and start it as a background
-   job. Do not wait for it: continue with the research while it runs.
+   job with `computer-job`, never in `computer-exec`, whose time limit stops the fit. Do not wait
+   for it: continue with the research while it runs.
 2. Competitors in the browser. For each competitor open the home page, the pricing page and one
    product or feature page. On each page read the text you need with `browser-extract`, then take
    its picture as `team-browser` describes (height 1800 for a pricing table that is below the
@@ -115,31 +118,32 @@ several independent commands into one script instead of one command per call.
    and the sources sheet come from `wgviz.images.pages_read(project_folder)`, which lists every
    page that was opened and captured, so nothing is retyped and nothing unread is cited.
 
-**The deck of a board pack** (35 to 45 slides). A board reads the first three slides and looks at
-the rest, so: title, `agenda`, `summary` with the answer and its reasons, `kpis`. Then one part
-per question, each opened by `section`:
+**The deck of a board pack.** Its length follows from the questions the request asks and the
+evidence you have, usually thirty to forty-five slides; do not pad it to reach a number or cut
+evidence to stay under one. Its look follows the customer's template or brand, as `team-computer`
+describes, never a house style. A board reads the first three slides and looks at the rest, so the
+deck opens with the answer: the title, the summary with the answer and its reasons, and the key
+numbers. Then one part per question, in the order the board needs them. The parts a board pack
+usually has, and what each must hold:
 
-- Performance (5 to 8 slides): spend, outcome and efficiency by channel and over time, pacing of
-  the current month, what changed against the previous period.
-- What marketing really adds (6 to 9): what the model is in two sentences, `waterfall` of the
-  baseline and each channel, return per euro with 90% ranges (`bar` with `intervals`), the
-  response curves, the platforms' claim beside the model's, the validation (actual against
-  expected with the held-out weeks), the recommended reallocation as a table, and its limits.
-- The next 13 weeks (2 to 3): forecast with its range, what it means against the target.
-- Market and benchmarks (4 to 6): us against published benchmarks (`grouped_bar` or `ranking`),
-  the market's direction, `timeline` of the news, a `quote` when a source says it better.
-- Competitors (12 to 16): three `gallery` slides that show the pages you captured side by side
-  (the home pages, the pricing pages, the product or AI pages, up to six on each, the most
-  important competitors first), a `matrix` of who offers what (every
-  cell from your notes of the page, "us" highlighted), a `ranking` of entry prices made comparable
-  (the same number of clients or sources for everyone, and say which), then one profile per
-  competitor that matters most (four or five, never more): `screenshot(path, facts=[...])` with the same
-  five or six labels for each (who it is for, what it leads with, entry price and what it
-  includes, how it charges, what it says about AI, what it means for us), and one closing slide
-  on where we stand. The remaining competitors get a row in the matrix and the workbook and their
-  pages appear in the galleries or in an appendix gallery, so that nearly every page you captured
-  is shown once. No layout is used more than three times in a row.
-- What to do (2 to 3): `decisions` with two to four decisions, each with the number it moves and
+- Performance: spend, outcome and efficiency by channel and over time, pacing of the current
+  month, what changed against the previous period.
+- What marketing really adds: what the model is in two sentences, the baseline and each channel's
+  share, return per euro with 90% ranges, the response curves, the platforms' claim beside the
+  model's, the validation (actual against expected with the held-out weeks), the recommended
+  reallocation, and its limits.
+- The next 13 weeks: the forecast with its range, and what it means against the target.
+- Market and benchmarks: us against published benchmarks, the market's direction, recent news,
+  and a source's own words when it says something better.
+- Competitors: the pages you captured, shown so the board can compare them; who offers what, with
+  every cell from your notes of the page and "us" marked; entry prices made comparable (the same
+  number of clients or sources for everyone, and say which); a profile of the four or five
+  competitors that matter most, each with the same facts (who it is for, what it leads with, entry
+  price and what it includes, how it charges, what it says about AI, what it means for us); and
+  where we stand. The remaining competitors appear in the comparison and the workbook, so nearly
+  every page you captured is shown once.
+
+- What to do: two to four decisions (`decisions`), each with the number it moves and
   that number's period, what it costs or puts at risk, the evidence in a sentence, an owner and a
   date. Before you write them, read your notes of our own site again: do not ask the board to
   build what our site already offers (say what exists and what the decision adds), and do not
@@ -151,6 +155,11 @@ per question, each opened by `section`:
 - Appendix: method and data notes (what is measured, what is modelled, what the model cannot
   support, what is demonstration data, how you scored anything you scored yourself), and
   `sources` from `images.pages_read`.
+
+The Deck helpers have a slide type for most of these (`section`, `summary`, `kpis`, `waterfall`,
+`bar` with `intervals`, `grouped_bar`, `ranking`, `timeline`, `quote`, `gallery`, `matrix`,
+`screenshot` with `facts`, `decisions`, `sources`). Choose each slide's type by what its content
+needs, and vary them so the deck does not repeat one layout page after page.
 
 The title of a slide is its finding ("Review sites return the most per euro"), not its topic
 ("ROI by channel"), in at most 70 characters so it stays on one line. The size of the word
@@ -205,9 +214,10 @@ address and the day it was captured. Add `notes()` on the slides a presenter wil
   has one value in the whole pack.
 - A monthly trend is grouped by calendar month from the daily frame, without the month that is
   not complete. Weeks grouped into months give months of four or five weeks and a false zigzag.
-- A figure in another currency stays in its currency. Convert only with a rate you read in this
+- A price read on a web page stays in its currency. Convert it only with a rate you read in this
   work (the European Central Bank's euro reference rates page), record the rate and its date in
-  the notes, and state both where the converted figure stands. Never assume a rate.
+  the notes, and state both where the converted figure stands. Never assume a rate. Spend from
+  sources in different currencies follows the currency rule of `team-computer`.
 - Compare like with like. A search benchmark is held against our search campaigns only (filter
   the campaign level data), not the whole account with display in it; a cost per lead is not a
   cost per trial. Say what each side measures, and let the title claim only what survives that.
@@ -221,11 +231,18 @@ address and the day it was captured. Add `notes()` on the slides a presenter wil
 - In the workbook a count, a rate and a return never carry the euro format, and a click cost
   shows two decimals.
 
-**The workbook** (12 to 16 sheets) carries every number of the deck: `cover`, contents
+**The workbook** carries every number of the deck, usually in twelve to sixteen sheets: `cover`, contents
 (`add_index` last), key numbers, channel performance, monthly trend, the weekly frame the model
 was fitted on, model results with ranges, response curves, validation, reallocation, forecast,
 benchmarks with their sources, competitor facts, pricing, news, sources with links. Native charts
 next to the main tables.
+
+**A one-page summary and an app** are two different deliverables when the request asks for both.
+The summary is a short report people can share, made with `create-document` and the
+`designing-pages` skill: the answer, the key numbers, three to five findings and the decisions,
+with no controls. The app is built with `team-coding` as a working application with a database,
+where people save and change their own scenarios and the model's figures are read through its API.
+Never deliver the same page twice under two names.
 
 **The answer at the end** names the two files, the answer to the person's question in one
 sentence, the three to five findings that matter, what to decide, and what limits the pack has
