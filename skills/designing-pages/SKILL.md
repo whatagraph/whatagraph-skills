@@ -233,16 +233,24 @@ something happened when nothing does it, such as "we've sent you a welcome email
 sends nothing. When a page needs content nobody gave, such as the text of an about section, write
 it from what you were told, or leave a short, plain placeholder that says what belongs there.
 
-**After each save** (on the team computer, after each change, with a screenshot of each page):
+**Write the page in one go, with everything in front of you.** Before the first save, have ready:
+the site's screenshots, your notes on its design language, and the published URLs of the logo and
+of every picture the page shows. Then write the whole page in one call, from those notes, not from
+memory of earlier steps.
 
-- Fix every problem the check lists, and change every template pattern it names unless the brand
-  calls for it. On the team computer, go through the list in section 3 yourself.
-- Put the page's screenshot next to the customer's site. Would someone who knows the site see the
-  same company at a glance? If not, name what the site has that the page lacks (its scale, its
-  devices, its images, its voice) and carry it over. Would the page still look right with another
-  customer's logo on it? Then it is a template; change it until it would not.
-- Does the page do what this customer needs from it? Is anything on it that its reader does not need?
-- Every control you built works, and at phone width nothing scrolls sideways.
+**Then revise it once, always** (on the team computer, after each change, with a screenshot of
+each page). A first version is a draft. Look at the check's screenshot next to the customer's site
+and write down, in a few lines:
+
+- what the site has that the page lacks: its scale, its signature devices, its images, its voice;
+- every pattern from section 3 the page still shows, and every problem the check lists;
+- whether the page would still look right with another customer's logo on it, which makes it a
+  template;
+- any number or claim that is not in the request or the data.
+
+Then save the revised page (with `edit-document`, or in the project files on the team computer),
+and change the first version enough that each of those lines is answered. Check also that every control works and that nothing scrolls sideways at
+phone width.
 
 **In the reply,** say what you made and why it suits this customer, and name what stands in for
 the brand: a Google Font in place of the brand's own font, a name set as text in place of a logo,
