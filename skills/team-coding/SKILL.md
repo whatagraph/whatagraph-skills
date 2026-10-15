@@ -18,6 +18,8 @@ optional_tools:
     purpose: Open the running project at its preview_url.
   - tool_name: browser-screenshot
     purpose: Look at the running project the way the person will see it.
+  - tool_name: view-website
+    purpose: See the client's own website, its colors, fonts and logo, before you choose the look of a site.
 ---
 
 # Coding on the team computer
@@ -39,6 +41,19 @@ virtual environment counts toward it. When the project is handed over, delete th
 
 `/tmp` cannot run programs. Before an install that compiles anything, run
 `export TMPDIR=$PWD/.tmp && mkdir -p $TMPDIR` in the same command.
+
+## How it looks
+
+Before you write the first page of a site or app, load the `designing-pages` skill and follow it:
+
+- A site for a client takes the client's look. Open their website with `view-website` and use
+  their colors, type and logo. With no brand to follow, the skill says how to choose a look for the
+  subject, so the site does not fall back on a dark page with a neon accent, emoji, pills and
+  counters.
+- Write only facts the person gave or the data holds: no member counts, testimonials, addresses or
+  prices that nobody gave.
+- No check runs on a site here, so after you build each page, compare its screenshot with the
+  skill's list of generated patterns and change what you find.
 
 ## Packages and the network
 
