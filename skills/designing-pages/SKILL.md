@@ -3,9 +3,12 @@ name: designing-pages
 type: domain
 group: team_workspace_branding
 description: Design an HTML page with create-document, or a website or web app built on the team computer, so that it is made for its customer, in their look and in the form their use of it needs, and does not look generated. Covers reports, plans, briefs, proposals, summaries, campaign boards, showcases of ads and videos, dashboards, menus and price lists, landing pages, sign-up and booking sites, and small tools. Says where the look comes from (the customer's website through view-website, their logo, their ads, their brand guide, what they already make), how to decide what the page should be and do, which patterns every generated page shares and which of them the automatic check names, what to do when nothing about the brand can be found, and how to check every fact. Load it before you write any HTML page or the first page of a site. It does not apply to Markdown, CSV, JSON or text files.
-required_tools:
-  - create-document
+required_tools: []
 optional_tools:
+  - tool_name: create-document
+    purpose: Save a page as a document in the conversation; the save opens it in a browser and lists what to fix.
+  - tool_name: computer-write-file
+    purpose: Write the pages of a site or an app on the team computer.
   - tool_name: view-website
     purpose: See the customer's website as a person does, with screenshots, the colors and fonts it uses and its logo saved as an image, before you choose the look of a page.
   - tool_name: search-assets

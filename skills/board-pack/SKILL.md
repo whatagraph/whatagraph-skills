@@ -38,7 +38,9 @@ and where the state is). Never create both, create no other wake-up or reminder,
 never ask the person whether to continue: the request already said so. Ask nothing that a
 careful analyst would decide alone.
 Deliver the files in a turn that has calls left for it: checking, exporting both files and the
-final answer take about ten calls, so when fewer are left, continue in the next turn.
+final answer take about ten calls, so when fewer are left, continue in the next turn. Before you
+write the first page of a summary or an app beside the deck and the workbook, load
+`designing-pages`, and follow it for how each page looks.
 
 **State lives in files, not in your memory.** The conversation is compacted between turns, so a
 number or a fact that is only in an earlier message is lost. Use one project folder, for example
