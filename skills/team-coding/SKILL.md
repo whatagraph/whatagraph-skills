@@ -24,8 +24,9 @@ optional_tools:
 
 # Coding on the team computer
 
-The team computer is Linux with Python 3.12, Node.js 22 with npm, PHP 8 with Composer and SQLite,
-git, jq, ripgrep, zip and ffmpeg. Build the whole thing yourself in the same turn: write the files,
+The team computer is Linux with Python 3.12, Node.js 22 with npm, PHP 8.4 with Composer and SQLite
+(with the intl and bcmath extensions that Laravel and Filament need), git, jq, ripgrep, zip and
+ffmpeg. Build the whole thing yourself in the same turn: write the files,
 run them, open the result, fix what is wrong, and hand it over.
 
 ## Where the project lives
@@ -68,7 +69,11 @@ git and curl follow on their own. Private and internal addresses are always refu
 - Node: `npm install --no-audit --no-fund` in the project folder. Never `npm install -g`; use `npx`
   for a tool. An install that reaches the 60-second limit of `computer-exec` keeps what it
   downloaded, so run the same command again and it finishes.
-- PHP: `composer install` or `composer require` in the project folder.
+- PHP: `composer install` or `composer require` in the project folder. Installing a framework
+  (`composer create-project laravel/laravel <project>`, or adding Filament) takes longer than the
+  60 seconds of `computer-exec`, so run it with `computer-job` (no `serve_port`) and continue when
+  it wakes the conversation. Do not run it again in `computer-exec` after a timeout; a cut-off
+  Composer run leaves the project half installed.
 
 When an install fails with a refused connection or `403`, the team's setting does not allow that
 site. Say so in one sentence, name the setting, and build without the package when you can (plain
@@ -86,6 +91,7 @@ browser. Carry on in the same turn.
 |---|---|
 | Static HTML | `python3 -m http.server 8000 --bind 0.0.0.0` in the folder |
 | PHP or WordPress | `php -S 0.0.0.0:8000 -t <public folder>` |
+| Laravel | `php artisan serve --host=0.0.0.0 --port=8000` in the project folder |
 | Flask | `flask --app app run --host 0.0.0.0 --port 8000` |
 | Node or Express | `node server.js`, with the server listening on `0.0.0.0` |
 | Vite (React, Vue) | `npx vite --host 0.0.0.0 --port 5173`, with `server: { allowedHosts: true }` in `vite.config.js` |
@@ -129,6 +135,33 @@ the site's own files and leave WordPress out: `wp-config.php` and `wp-content` w
 themes you did not change (`-x '<project>/wp-content/themes/twentytwenty*'`). The database is in
 `wp-content/database/`. In the answer, say to unpack it over a fresh download of the same WordPress
 version from wordpress.org.
+
+### Laravel and Filament
+
+Use SQLite: in `.env` set `DB_CONNECTION=sqlite` and remove the other `DB_` lines, then
+`touch database/database.sqlite && php artisan migrate --seed --force`. Sample rows go in a seeder,
+so the person gets them again with the same command.
+
+The preview reaches Laravel over HTTP behind its HTTPS address, so Laravel writes `http://` links
+for its pages, styles and scripts, and the browser refuses them. Add this to the `boot` method of
+`app/Providers/AppServiceProvider.php` (with `use Illuminate\Support\Facades\URL;`):
+
+```php
+if (str_ends_with(request()->getHost(), '.computer.internal')) {
+    URL::forceScheme('https');
+}
+```
+
+For an admin panel, install Filament with `composer require filament/filament` and
+`php artisan filament:install --panels --no-interaction` (both in one `computer-job`). Create the
+login without prompts: `php artisan make:filament-user --name="..." --email="..." --password="..."`.
+Make up a password, and give the email and password in the answer: they are for this test copy,
+and the person changes them. Open `/admin` on the preview, sign in with `browser-act`, and check
+each resource's list and create form.
+
+Hand over the project without `vendor` and `node_modules` (`-x '<project>/vendor/*'`), and keep
+`database/database.sqlite` so the sample data comes with it. In the answer, say to run
+`composer install`, then `php artisan serve`.
 
 ## Check before you hand it over
 
