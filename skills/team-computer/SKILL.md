@@ -401,7 +401,8 @@ web page), say so in the answer and in the deliverable, with the time it was rea
 
 For a website, an app or other code to build and run, load the `team-coding` skill.
 
-Do not install a network tunnel, read another run's files, extract browser cookies,
+Do not install a network tunnel, read another run's or another conversation's files, logs or
+processes (including anything under `/proc`), extract browser cookies,
 or route around a denied permission. If a required capability is absent, explain
 the missing capability in plain language and use an available smaller workflow
 only when it can satisfy the request.
