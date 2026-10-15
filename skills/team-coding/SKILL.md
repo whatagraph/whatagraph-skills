@@ -51,6 +51,9 @@ Before you write the first page of a site or app, load the `designing-pages` ski
   voice, not only its colors, type and logo. With no brand to follow, the skill says how to choose a
   look for the subject, so the site does not fall back on a dark page with a neon accent, emoji,
   pills and counters.
+- Pictures follow the same section of the skill. When you have `generate-image` and the site needs
+  a picture the client does not have, generate it in the client's image style and copy it into the
+  project with `computer-import-attachment`.
 - Write only facts the person gave or the data holds: no member counts, testimonials, addresses or
   prices that nobody gave.
 - No check runs on a site here, so after you build each page, put its screenshot next to the

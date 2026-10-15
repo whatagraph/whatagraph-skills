@@ -20,6 +20,8 @@ optional_tools:
     purpose: Read a report theme, when the page belongs with the customer's Whatagraph report.
   - tool_name: manage-assets
     purpose: Publish the logo and the images a page shows, and import an image from the customer's website.
+  - tool_name: generate-image
+    purpose: Make a picture the page needs and the customer does not have, in the customer's own image style.
 ---
 
 # Designing pages
@@ -74,6 +76,29 @@ Before the first line of HTML, look at the screenshots again and write down:
 
 Then make the page with all of it, in the form the page needs (section 2). Save the result as the
 brand kit note when the customer will come back.
+
+**Pictures the customer does not have.** Pictures do much of the work of a look, and a page with
+none rarely looks like anyone's. When the page needs a picture the customer has none of, and you
+have `generate-image`, make it. Load `generating-images` first: its rules on what must never be
+generated, on photographs that look real and on checking every image apply here too.
+
+- Make it in the customer's own image language: the light and color of their photographs, or the
+  technique of their illustrations. Pass one of their images as a `style` reference, so the new
+  picture sits with their real ones. With no brand to follow, choose the treatment for the subject
+  as section 4 says.
+- Use pictures where the customer's own site would: a site full of photographs can have a page
+  with them, a site built on type may need none.
+- Generate scenes, places, materials and moods. Never present a generated picture as a record of
+  something real: the customer's own team, premises, product, events or results, a screenshot or a
+  chart. Those come from the customer or stay out.
+- Make the few pictures the page needs, not one for every section; each one costs credits.
+- For a document, publish each picture with `manage-assets` and use its URL. For a site on the
+  team computer, copy it into the project with `computer-import-attachment`.
+- Say in the reply which pictures are generated.
+
+Many teams have no `generate-image`. Then the customer's own pictures and the page's type, color and
+composition carry the look. Do not draw stand-in pictures in SVG or CSS, and do not leave empty
+image frames or placeholders where a picture would go.
 
 **Fonts.** A font from Google Fonts can be used directly. Most brand fonts are not on Google Fonts:
 they come from Typekit, from the brand's own server or from a paid foundry. For such a font, look
