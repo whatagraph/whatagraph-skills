@@ -109,12 +109,12 @@ browser. Carry on in the same turn.
 | Vite (React, Vue) | `npx vite --host 0.0.0.0 --port 5173`, with `server: { allowedHosts: true }` in `vite.config.js` |
 
 Get the server right before you start it: run it briefly first with `timeout 5 <command>` in
-`computer-exec` and read its output. The team runs at most two background jobs at a time. When the limit is reached,
-say so and end the turn, or check the project with a short `computer-exec` run instead. Never stop a
-process that this conversation did not start: the computer is the team's, and the other processes
-belong to other people's work. Open only the preview of the server this conversation started: a
-server or a project of another conversation on the same computer is not yours to open, read or
-reuse.
+`computer-exec` and read its output. A conversation runs at most two background jobs at a time, and
+the team three. When a limit is reached, the refusal says which one: say so in plain words and end
+the turn, or check the project with a short `computer-exec` run instead. Other conversations'
+processes, runs and folders are other people's work: do not list, read, inspect or stop them, and
+do not look into `/proc` or `/runs` to find out who holds a slot. Open only the preview of the
+server this conversation started, never another conversation's.
 
 Another conversation of the team may already run a server on that port, so first check the port is
 free with `curl -s -o /dev/null localhost:<port> || echo free`, and pick another one when it is
@@ -165,6 +165,12 @@ if (str_ends_with(request()->getHost(), '.computer.internal')) {
     URL::forceScheme('https');
 }
 ```
+
+Build on the current releases. Run `composer create-project laravel/laravel <project>` and
+`composer require filament/filament` without a version, so Composer picks the newest ones that fit
+PHP 8.4. Never pin an older major version from memory, and never take an older Laravel to fit a
+package: an old pin is what makes a package refuse the current Laravel. When Composer refuses, read
+its message and drop the pin that causes it. Name the versions you got in the answer.
 
 For an admin panel, install Filament with `composer require filament/filament` and
 `php artisan filament:install --panels --no-interaction` (both in one `computer-job`). Create the
