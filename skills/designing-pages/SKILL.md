@@ -87,7 +87,8 @@ generated, on photographs that look real and on checking every image apply here 
   picture sits with their real ones. With no brand to follow, choose the treatment for the subject
   as section 4 says.
 - Use pictures where the customer's own site would: a site full of photographs can have a page
-  with them, a site built on type may need none.
+  with them, a site built on type may need none. With no site to follow, a page or site for a
+  business, a place, food, products or an activity needs pictures.
 - Generate scenes, places, materials and moods. Never present a generated picture as a record of
   something real: the customer's own team, premises, product, events or results, a screenshot or a
   chart. Those come from the customer or stay out.

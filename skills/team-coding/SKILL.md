@@ -44,20 +44,28 @@ virtual environment counts toward it. When the project is handed over, delete th
 
 ## How it looks
 
-Before you write the first page of a site or app, load the `designing-pages` skill and follow it:
+Load the `designing-pages` skill before you write the first page, and follow it. These parts of it
+apply to every site here, so they are repeated:
 
-- A site for a client takes the client's design language and the form its users need. Open their
-  website with `view-website` and carry over its scale, its signature devices, its images and its
-  voice, not only its colors, type and logo. With no brand to follow, the skill says how to choose a
-  look for the subject, so the site does not fall back on a dark page with a neon accent, emoji,
-  pills and counters.
-- Pictures follow the same section of the skill. When you have `generate-image` and the site needs
-  a picture the client does not have, generate it in the client's image style and copy it into the
-  project with `computer-import-attachment`.
-- Write only facts the person gave or the data holds: no member counts, testimonials, addresses or
-  prices that nobody gave.
-- No check runs on a site here, so after you build each page, put its screenshot next to the
-  client's site, go through the skill's list of generated patterns, and change what you find.
+- **The client's look.** For a real client, open their website with `view-website` and carry over
+  its design language: its scale, its signature devices, its images and its voice, not only its
+  colors, type and logo.
+- **No brand to follow.** Choose a look for the subject and the people who use the site, as a
+  designer in that trade would. A dark page with one neon accent, Inter, Plus Jakarta Sans or
+  Poppins, emoji, pills, a tag next to the name and round counters are what generated sites fall
+  back on, so none of them is a choice.
+- **Pictures.** A site for a business, a place, food, products or an activity needs pictures, and a
+  site with none rarely looks like anyone's. Use the client's own first. When you have
+  `generate-image`, make the missing ones, in the client's image style or in one chosen for the
+  subject, and copy each into the project with `computer-import-attachment`. Never present a
+  generated picture as the client's own team, premises, product or results. Without
+  `generate-image`, let type, color and composition carry the look, and leave no empty image frames.
+- **Facts.** Write only what the person gave or the data holds: no schedules, groups, member counts,
+  testimonials, addresses, prices or opening times that nobody gave, and no message that says
+  something happened when nothing does it.
+- **Check and revise once.** No automatic check runs here. Take a `browser-screenshot` of each page
+  you built, put it next to the client's site, go through the skill's list of generated patterns,
+  and revise the page once before you answer.
 
 ## Packages and the network
 
@@ -98,7 +106,9 @@ Get the server right before you start it: run it briefly first with `timeout 5 <
 `computer-exec` and read its output. The team runs at most two background jobs at a time. When the limit is reached,
 say so and end the turn, or check the project with a short `computer-exec` run instead. Never stop a
 process that this conversation did not start: the computer is the team's, and the other processes
-belong to other people's work.
+belong to other people's work. Open only the preview of the server this conversation started: a
+server or a project of another conversation on the same computer is not yours to open, read or
+reuse.
 
 Another conversation of the team may already run a server on that port, so first check the port is
 free with `curl -s -o /dev/null localhost:<port> || echo free`, and pick another one when it is
