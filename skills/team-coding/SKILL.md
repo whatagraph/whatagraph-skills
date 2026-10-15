@@ -46,8 +46,8 @@ virtual environment counts toward it. When the project is handed over, delete th
 
 Before you write the first page of a site or app, load the `designing-pages` skill and follow it:
 
-- A site for a client takes the client's look. Open their website with `view-website` and use
-  their colors, type and logo. With no brand to follow, the skill says how to choose a look for the
+- A site for a client takes the client's look, and the form its users need. Open their website
+  with `view-website` and use their colors, type and logo. With no brand to follow, the skill says how to choose a look for the
   subject, so the site does not fall back on a dark page with a neon accent, emoji, pills and
   counters.
 - Write only facts the person gave or the data holds: no member counts, testimonials, addresses or
