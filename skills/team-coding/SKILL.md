@@ -18,6 +18,8 @@ optional_tools:
     purpose: Open the running project at its preview_url.
   - tool_name: browser-screenshot
     purpose: Look at the running project the way the person will see it.
+  - tool_name: view-website
+    purpose: See the client's own website, its colors, fonts and logo, before you choose the look of a site.
 ---
 
 # Coding on the team computer
@@ -40,6 +42,31 @@ virtual environment counts toward it. When the project is handed over, delete th
 
 `/tmp` cannot run programs. Before an install that compiles anything, run
 `export TMPDIR=$PWD/.tmp && mkdir -p $TMPDIR` in the same command.
+
+## How it looks
+
+Load the `designing-pages` skill before you write the first page, and follow it. These parts of it
+apply to every site here, so they are repeated:
+
+- **The client's look.** For a real client, open their website with `view-website` and carry over
+  its design language: its scale, its signature devices, its images and its voice, not only its
+  colors, type and logo.
+- **No brand to follow.** Choose a look for the subject and the people who use the site, as a
+  designer in that trade would. A dark page with one neon accent, Inter, Plus Jakarta Sans or
+  Poppins, emoji, pills, a tag next to the name and round counters are what generated sites fall
+  back on, so none of them is a choice.
+- **Pictures.** A site for a business, a place, food, products or an activity needs pictures, and a
+  site with none rarely looks like anyone's. Use the client's own first. When you have
+  `generate-image`, make the missing ones, in the client's image style or in one chosen for the
+  subject, and copy each into the project with `computer-import-attachment`. Never present a
+  generated picture as the client's own team, premises, product or results. Without
+  `generate-image`, let type, color and composition carry the look, and leave no empty image frames.
+- **Facts.** Write only what the person gave or the data holds: no schedules, groups, member counts,
+  testimonials, addresses, prices or opening times that nobody gave, and no message that says
+  something happened when nothing does it.
+- **Check and revise once.** No automatic check runs here. Take a `browser-screenshot` of each page
+  you built, put it next to the client's site, go through the skill's list of generated patterns,
+  and revise the page once before you answer.
 
 ## Packages and the network
 
@@ -86,7 +113,8 @@ Get the server right before you start it: run it briefly first with `timeout 5 <
 the team three. When a limit is reached, the refusal says which one: say so in plain words and end
 the turn, or check the project with a short `computer-exec` run instead. Other conversations'
 processes, runs and folders are other people's work: do not list, read, inspect or stop them, and
-do not look into `/proc` or `/runs` to find out who holds a slot.
+do not look into `/proc` or `/runs` to find out who holds a slot. Open only the preview of the
+server this conversation started, never another conversation's.
 
 Another conversation of the team may already run a server on that port, so first check the port is
 free with `curl -s -o /dev/null localhost:<port> || echo free`, and pick another one when it is
