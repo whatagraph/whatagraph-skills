@@ -13,7 +13,7 @@ optional_tools:
   - tool_name: computer-read-file
     purpose: Read a job log or a file the project produced.
   - tool_name: computer-export
-    purpose: Hand the finished project over as one zip file.
+    purpose: Hand the finished project over as one zip file, or as an app card when it runs as a site.
   - tool_name: browser-navigate
     purpose: Open the running project at its preview_url.
   - tool_name: browser-screenshot
@@ -24,8 +24,9 @@ optional_tools:
 
 # Coding on the team computer
 
-The team computer is Linux with Python 3.12, Node.js 22 with npm, PHP 8 with Composer and SQLite,
-git, jq, ripgrep, zip and ffmpeg. Build the whole thing yourself in the same turn: write the files,
+The team computer is Linux with Python 3.12, Node.js 22 with npm, PHP 8.4 with Composer and SQLite
+(with the intl and bcmath extensions that Laravel and Filament need), git, jq, ripgrep, zip and
+ffmpeg. Build the whole thing yourself in the same turn: write the files,
 run them, open the result, fix what is wrong, and hand it over.
 
 ## Where the project lives
@@ -80,7 +81,11 @@ git and curl follow on their own. Private and internal addresses are always refu
 - Node: `npm install --no-audit --no-fund` in the project folder. Never `npm install -g`; use `npx`
   for a tool. An install that reaches the 60-second limit of `computer-exec` keeps what it
   downloaded, so run the same command again and it finishes.
-- PHP: `composer install` or `composer require` in the project folder.
+- PHP: `composer install` or `composer require` in the project folder. Installing a framework
+  (`composer create-project laravel/laravel <project>`, or adding Filament) takes longer than the
+  60 seconds of `computer-exec`, so run it with `computer-job` (no `serve_port`) and continue when
+  it wakes the conversation. Do not run it again in `computer-exec` after a timeout; a cut-off
+  Composer run leaves the project half installed.
 
 When an install fails with a refused connection or `403`, the team's setting does not allow that
 site. Say so in one sentence, name the setting, and build without the package when you can (plain
@@ -98,6 +103,7 @@ browser. Carry on in the same turn.
 |---|---|
 | Static HTML | `python3 -m http.server 8000 --bind 0.0.0.0` in the folder |
 | PHP or WordPress | `php -S 0.0.0.0:8000 -t <public folder>` |
+| Laravel | `php artisan serve --host=0.0.0.0 --port=8000` in the project folder |
 | Flask | `flask --app app run --host 0.0.0.0 --port 8000` |
 | Node or Express | `node server.js`, with the server listening on `0.0.0.0` |
 | Vite (React, Vue) | `npx vite --host 0.0.0.0 --port 5173`, with `server: { allowedHosts: true }` in `vite.config.js` |
@@ -144,6 +150,33 @@ themes you did not change (`-x '<project>/wp-content/themes/twentytwenty*'`). Th
 `wp-content/database/`. In the answer, say to unpack it over a fresh download of the same WordPress
 version from wordpress.org.
 
+### Laravel and Filament
+
+Use SQLite: in `.env` set `DB_CONNECTION=sqlite` and remove the other `DB_` lines, then
+`touch database/database.sqlite && php artisan migrate --seed --force`. Sample rows go in a seeder,
+so the person gets them again with the same command.
+
+The preview reaches Laravel over HTTP behind its HTTPS address, so Laravel writes `http://` links
+for its pages, styles and scripts, and the browser refuses them. Add this to the `boot` method of
+`app/Providers/AppServiceProvider.php` (with `use Illuminate\Support\Facades\URL;`):
+
+```php
+if (str_ends_with(request()->getHost(), '.computer.internal')) {
+    URL::forceScheme('https');
+}
+```
+
+For an admin panel, install Filament with `composer require filament/filament` and
+`php artisan filament:install --panels --no-interaction` (both in one `computer-job`). Create the
+login without prompts: `php artisan make:filament-user --name="..." --email="..." --password="..."`.
+Make up a password, and give the email and password in the answer: they are for this test copy,
+and the person changes them. Open `/admin` on the preview, sign in with `browser-act`, and check
+each resource's list and create form.
+
+Hand over the project without `vendor` and `node_modules` (`-x '<project>/vendor/*'`), and keep
+`database/database.sqlite` so the sample data comes with it. In the answer, say to run
+`composer install`, then `php artisan serve`.
+
 ## Check before you hand it over
 
 Look at every page you built with `browser-screenshot`. The browser shows a desktop width, so say
@@ -162,14 +195,16 @@ deliver it with `computer-export`: `cd "$WG_CONVERSATION_DIR" && zip -r <project
 `/team` unless the project lives there. A delivered file may be at most 8 MB; when the zip is
 larger, check what made it large (`unzip -l <project>.zip | sort -k1 -n | tail`) and leave out what
 the person can download or rebuild, instead of trying one zip after another.
-A zip downloads and is never opened in the chat. In the answer, say how to run it (the one command)
-and what it needs (for example PHP 8 or Node 22).
+When the project runs as a site, pass the `run_id` of the `computer-job` that serves it as
+`app_run_id`. The person then gets an app card: Open starts the site again in their browser, at any
+later time, and Download gives the zip. Without `app_run_id` the zip is only a download.
+In the answer, say how to run it (the one command) and what it needs (for example PHP 8 or Node 22).
 
 The person cannot open `preview_url` themselves; they see the site only in your browser. So the last
 page you open before you answer is the site's start page on the preview. In the answer, tell them to
-open your browser with the globe button at the top of the conversation to try the site, and that it
-stays up while the server runs. When the server stops at its timeout, nothing is said in the
-conversation; if they come back later, start it again when they ask.
+open the app card, or your browser with the globe button at the top of the conversation, to try the
+site. Both start the site again by themselves when its server has stopped, so they can come back to
+it later without asking you.
 
 Write the answer about the site, not about the computer: what was built, how it was checked, the
 zip, and how to try it. Leave out run ids, exit codes, signals, process ids and durations.
