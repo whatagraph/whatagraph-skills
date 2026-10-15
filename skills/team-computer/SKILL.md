@@ -266,6 +266,11 @@ for a change you know of that it did not find, or `fit_from=False` to fit on all
 seasonal rise, a sale, a holiday). Quote `reading` whole, name what happened in those weeks last
 year, and give the range it states.
 
+After a tracking change, report a series as it is recorded now. Never scale it to what the old
+tracking would have counted (an "underlying" or "adjusted" figure): no data measures that ratio.
+Two forecasts of one series for different periods must agree per week, or the slide says why
+they do not.
+
 Ask for a horizon the history can test. The backtest needs about four times the horizon in
 periods, so 58 weeks test a forecast of about 13 weeks and not 24. When `warnings` say the
 series is too short to backtest, shorten the horizon (for example to the end of the quarter), or
