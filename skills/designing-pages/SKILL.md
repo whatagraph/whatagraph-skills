@@ -55,14 +55,25 @@ Use every source you have, in this order, and stop when you know the look:
 6. **A report theme.** Only when the page belongs with the customer's Whatagraph report, or when
    nothing above exists. Someone chose it for charts; it may not be the brand.
 
-Before the first line of HTML, write the look down in a few lines: the background, the text color,
-the accents and what each one marks, the heading face and the body face, how the brand uses
-photographs, space and motion, and its tone. Save it as the brand kit note when the customer will
-come back.
+**Take the design language, not only the colors and fonts.** Two colors and a font on a plain page
+do not make a page look like the customer's. What makes a site recognisable is how it uses them.
+Before the first line of HTML, look at the screenshots again and write down:
 
-The website's own parts (a navigation bar, a hero, buttons, cards, a footer) belong on a page that
-is part of the customer's site. For any other page, take the look and the tone, and let the page's
-use decide its parts (section 2).
+- **The colors and faces,** and what each color marks.
+- **The scale.** How large the biggest type is against the body text, how much space there is, and
+  whether the site feels dense or open, loud or quiet.
+- **The signature devices.** The two or three things that make this site recognisable at a glance,
+  and that another brand would not have: for example a word picked out in the accent color inside
+  each headline, duotone illustrations, a ring shape behind the title, full-width blocks of color,
+  an italic serif word inside a sans headline, a hand-drawn underline. Name what you see on this
+  site; these examples are not a list to choose from.
+- **The images.** Which of the site's photographs, illustrations or textures the page can use.
+  `view-website` lists the largest images with their addresses: import the ones that fit with
+  `manage-assets`, publish them, and use them.
+- **The voice.** How the site talks: plain or playful, short or long, any wordplay it repeats.
+
+Then make the page with all of it, in the form the page needs (section 2). Save the result as the
+brand kit note when the customer will come back.
 
 **Fonts.** A font from Google Fonts can be used directly. Most brand fonts are not on Google Fonts:
 they come from Typekit, from the brand's own server or from a paid foundry. For such a font, look
@@ -81,17 +92,16 @@ brand uses it or its traits really match.
 **Logo.** Use the logo `view-website` saved, or the file from the library. To show it on a page,
 load the `whatagraph-assets` skill and publish the logo with `manage-assets`: a publish made
 before that skill is loaded is refused. Never redraw a logo or set the name in another font as the
-logo. `shown_on` tells you which background the logo was made for: a white logo needs a dark
-background. When no logo file exists, set the name as plain text in the page's heading face, and
-tell the user that it stands in for the logo. When `view-website` cannot open a real customer's
+logo, and never change its proportions: set only its height or only its width. `shown_on` tells
+you which background the logo was made for: a white logo needs a dark background. When no logo
+file exists, set the name as plain text in the page's heading face, and tell the user that it stands
+in for the logo. When `view-website` cannot open a real customer's
 site, do not invent a mark or a color for them: say so, and ask for the logo or the brand guide.
 
 ## 2. Decide what the page should be and do
 
-No kind of page has a fixed form. A monthly report can be a long read, a few screens to click
-through in a meeting, a dashboard with a view per channel, one chart the reader can play with, or a
-story that unfolds as it scrolls. A plan can be a document, a timeline, or a budget the client can
-move around. Decide for this customer, from:
+No kind of page has a fixed form: the same monthly report can rightly look nothing alike for two
+customers. Decide for this customer, from:
 
 - **The request.** What they asked for, in their words. When they name a form ("a one-pager",
   "something to click through in the meeting", "an app for our staff", "keep it simple"), build that.
@@ -105,12 +115,8 @@ move around. Decide for this customer, from:
   choice between options, a set of ads: each has forms that show it best, and a table is only one
   of them.
 
-Then use what a web page can do whenever it serves that use, and only then: charts drawn to scale
-that show their values under the pointer, a switch between channels or periods, a slider that
-recomputes a budget split, a table the reader can sort, ads and videos that play where they sit,
-motion that shows a change happening, a view of a product or a place in 3D. Every control must
-change something the reader wants to see. A page read once from top to bottom is one of these
-choices, not the default.
+Use what a web page can do only where this use calls for it, and only in the way the customer's
+own site would. Every control must change something the reader wants to see.
 
 When the request leaves the use open and the person is in the conversation, you may ask one
 question about it. Otherwise decide, and say in the reply what you made and why it suits them.
@@ -120,10 +126,10 @@ made for it, their products, their places, their words, their photographs. Pages
 should not share a layout.
 
 **What the preview of a document allows.** Scripts load from cdnjs.cloudflare.com and
-cdn.jsdelivr.net, which serve the common chart, 3D and animation libraries. Fonts load from Google
-Fonts. The page cannot fetch data files, so put the data in the page. Motion may draw things in or
-move them, but every text and number must also be readable when it does not run: in a printed copy,
-for a reader who turned motion off, and in the check's screenshots. A site on the team computer can
+cdn.jsdelivr.net, and fonts from Google Fonts. The page cannot fetch data files, so put the data in
+the page. Motion may draw things in or move them, but every text and number must also be readable
+when it does not run: in a printed copy, for a reader who turned motion off, and in the check's
+screenshots. A site on the team computer can
 install what it needs instead.
 
 ## 3. What makes a page look generated
@@ -206,9 +212,11 @@ it from what you were told, or leave a short, plain placeholder that says what b
 
 - Fix every problem the check lists, and change every template pattern it names unless the brand
   calls for it. On the team computer, go through the list in section 3 yourself.
-- Look at the screenshots. Does the page do what this customer needs from it? Would the customer
-  recognise their own brand in it? Would a page you made for another customer look the same? Is
-  anything on the page that its reader does not need?
+- Put the page's screenshot next to the customer's site. Would someone who knows the site see the
+  same company at a glance? If not, name what the site has that the page lacks (its scale, its
+  devices, its images, its voice) and carry it over. Would the page still look right with another
+  customer's logo on it? Then it is a template; change it until it would not.
+- Does the page do what this customer needs from it? Is anything on it that its reader does not need?
 - Every control you built works, and at phone width nothing scrolls sideways.
 
 **In the reply,** say what you made and why it suits this customer, and name what stands in for

@@ -46,14 +46,15 @@ virtual environment counts toward it. When the project is handed over, delete th
 
 Before you write the first page of a site or app, load the `designing-pages` skill and follow it:
 
-- A site for a client takes the client's look, and the form its users need. Open their website
-  with `view-website` and use their colors, type and logo. With no brand to follow, the skill says how to choose a look for the
-  subject, so the site does not fall back on a dark page with a neon accent, emoji, pills and
-  counters.
+- A site for a client takes the client's design language and the form its users need. Open their
+  website with `view-website` and carry over its scale, its signature devices, its images and its
+  voice, not only its colors, type and logo. With no brand to follow, the skill says how to choose a
+  look for the subject, so the site does not fall back on a dark page with a neon accent, emoji,
+  pills and counters.
 - Write only facts the person gave or the data holds: no member counts, testimonials, addresses or
   prices that nobody gave.
-- No check runs on a site here, so after you build each page, compare its screenshot with the
-  skill's list of generated patterns and change what you find.
+- No check runs on a site here, so after you build each page, put its screenshot next to the
+  client's site, go through the skill's list of generated patterns, and change what you find.
 
 ## Packages and the network
 
