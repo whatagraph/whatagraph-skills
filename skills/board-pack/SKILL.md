@@ -60,7 +60,8 @@ several independent commands into one script instead of one command per call.
    and see where the rows begin, because a mix model wants two years or more and a forecast wants
    every season it can get. Write the mix model script (`mmm.fit`, `mmm.validate` and
    `mmm.curves_chart` in one script, as `team-computer` describes) and start it as a background
-   job. Do not wait for it: continue with the research while it runs.
+   job with `computer-job`, never in `computer-exec`, whose time limit stops the fit. Do not wait
+   for it: continue with the research while it runs.
 2. Competitors in the browser. For each competitor open the home page, the pricing page and one
    product or feature page. On each page read the text you need with `browser-extract`, then take
    its picture as `team-browser` describes (height 1800 for a pricing table that is below the
