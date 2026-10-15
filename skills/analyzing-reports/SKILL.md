@@ -98,7 +98,7 @@ list-widgets action: csv_export, report_id: <report_id>, widget_id: <id>
 
 `csv_export` returns data **inline** as `csv_rows: string[][]` — first row is headers (human-readable names like "Gross impressions"), subsequent rows are data values. To see raw field IDs, use `list-widgets action=show` instead.
 
-For a full-report export — all widgets at once — use `export-report`. This is **architecturally different**: it generates a temporary `.xlsx` file server-side and returns a **download URL** (expires in 1 hour), one sheet per widget. It does NOT return inline data. Use shell tools (`head`, `cut`, `wc -l`) to inspect the downloaded file. The export may fail with a storage error if the file generation hasn't completed — retry after a short delay if this happens.
+For a full-report export — all widgets at once — use `export-report`. This is **architecturally different**: it generates an `.xlsx` file server-side, one sheet per widget. It does NOT return inline data. Outside an agent conversation it returns a **download URL** (expires in 1 hour). Inside an agent conversation it saves the file to the conversation as a document card and returns its `asset_ulid` instead; copy it to the computer with `computer_import_attachment`. Use shell tools (`head`, `cut`, `wc -l`) to inspect the file. The export may fail with a storage error if the file generation hasn't completed — retry after a short delay if this happens.
 
 ### Step 5b — Look at the ad creatives (media widgets)
 
