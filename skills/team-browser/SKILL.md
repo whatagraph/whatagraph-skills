@@ -8,7 +8,7 @@ required_tools:
   - browser-extract
 optional_tools:
   - tool_name: browser-act
-    purpose: Click, type, select or scroll on the current page using a reference from the latest snapshot. It never submits a form.
+    purpose: Click, type, select, scroll or reload the current page using a reference from the latest snapshot. It never submits a form.
   - tool_name: browser-submit
     purpose: Submit a form or press the button that sends, saves, posts, buys or deletes something. The person approves it unless they chose Always allow.
   - tool_name: browser-screenshot
@@ -78,11 +78,22 @@ sites that do not belong to the same company, and say in the answer which sites 
 site only when the person names it.
 
 A page titled "Just a moment", "Attention required" or "Verify you are human", or a page that holds
-only a challenge frame, is a site refusing automated browsers. Retry at most once and never try to
-pass the challenge yourself. When the task needs that site, ask the person with
-`browser-ask-person` (kind `captcha`). Otherwise note the site as not readable today and continue
-with the next one. `blocked_hosts` in a navigate result names hosts whose files the page could not
-load; when the preview looks unstyled, say in the caption that the page did not render fully.
+only a challenge frame, is a site refusing automated browsers. Many sites answer the first visit
+with such a page or an error status and let the browser through a moment later. `browser-navigate`
+already loads the page a second time when it ends on an error status or a short "something went
+wrong" page: `reloaded: true` says it did, `first_status` is the status of the first answer and
+`status` is the status of the page you now see. Judge the site by `status` and the snapshot, never
+by `first_status`. When the page still refuses, reload once more with the `browser-act` action
+`reload`, and never try to pass the challenge yourself. When the task needs that site, ask the
+person with `browser-ask-person` (kind `captcha`). Otherwise note the site as not readable today
+and continue with the next one. `blocked_hosts` in a navigate result names hosts whose files the
+page could not load; when the preview looks unstyled, say in the caption that the page did not
+render fully.
+
+A site that refuses the browser is never tested with the team computer. `computer-http-request`
+and programs on the computer run no page scripts, carry none of the person's sign-ins and may
+reach only the sites the team's setting allows, so their error says nothing about whether the
+site works in the browser.
 
 ## Benchmarks
 
@@ -151,10 +162,31 @@ on.
 
 ## Clicking and typing
 
-Use `browser-act` to click, fill, type, select, scroll or go back. Use an element reference from
-the latest snapshot or a selector grounded in the current page. Navigation and other actions can
-invalidate references, so read the page again before you retry a stale reference. Read the result
-after each action.
+Use `browser-act` to click, fill, type, select, scroll, reload or go back. Use an element reference
+from the latest snapshot or a selector grounded in the current page. Navigation and other actions
+can invalidate references, so read the page again before you retry a stale reference. Read the
+result after each action.
+
+The snapshot lists what a person can use on the page, with its state:
+
+- A line `dialog "..." is open on top` comes first. Act inside that dialog before anything else.
+- An element marked `covered` has something drawn over it, usually a cookie banner or an overlay.
+  Close or answer what covers it first; a click on a covered element reaches the cover instead.
+- A dropdown is a `combobox` (or an element marked `opens listbox` or `opens menu`). A native one
+  shows its value and its options in the line: choose with the `select` action. Any other dropdown
+  shows its options only while it is open: click it, read the new snapshot, and click the `option`
+  by its visible name. Type into a search box inside the dropdown when the list is long, then read
+  the options again. Never look for the value somewhere else (an ID on another site, a page of the
+  advertiser) because the options were not in the snapshot before the dropdown was open.
+- `disabled`, `expanded`, `collapsed`, `selected`, `checked` and `required` are the state a person
+  sees. A disabled button does not respond until the form is complete.
+- Content inside a frame (a consent box, an embedded form) is listed under a `frame` line with its
+  own references. Use those references as they are.
+
+Stop after two attempts that did not change the page. Read the page again with a screenshot, and
+when you still cannot reach the control, ask the person with `browser-ask-person` instead of
+trying other routes. A long detour that ends far from the page the person asked about is worse
+than a short question.
 
 Never click "Sign out", "Log out", "Switch account" or any other control that ends the person's
 session or changes their account, unless the person asked for exactly that. Account and profile
@@ -184,6 +216,13 @@ a key from the vault, another site or a search. A saved key belongs to the API i
 is not a sign-in to a website.
 
 Never copy cookies, tokens or the value of a password field into a message, a file or a log.
+
+## When the person gives the browser back
+
+After the person used the browser (a sign-in you asked for, or a page they took over), the result
+says whether they changed the page and what is on it now. When the page is as you left it, continue
+from your last step. When it changed, read the new page with a snapshot before you act, because
+your old references point at the page that was there before.
 
 ## Session changes
 
