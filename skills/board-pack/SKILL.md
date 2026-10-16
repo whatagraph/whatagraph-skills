@@ -38,7 +38,9 @@ and where the state is). Never create both, create no other wake-up or reminder,
 never ask the person whether to continue: the request already said so. Ask nothing that a
 careful analyst would decide alone.
 Deliver the files in a turn that has calls left for it: checking, exporting both files and the
-final answer take about ten calls, so when fewer are left, continue in the next turn.
+final answer take about ten calls, so when fewer are left, continue in the next turn. Before you
+write the first page of a summary or an app beside the deck and the workbook, load
+`designing-pages`, and follow it for how each page looks.
 
 **State lives in files, not in your memory.** The conversation is compacted between turns, so a
 number or a fact that is only in an earlier message is lost. Use one project folder, for example
@@ -58,7 +60,8 @@ several independent commands into one script instead of one command per call.
    and see where the rows begin, because a mix model wants two years or more and a forecast wants
    every season it can get. Write the mix model script (`mmm.fit`, `mmm.validate` and
    `mmm.curves_chart` in one script, as `team-computer` describes) and start it as a background
-   job. Do not wait for it: continue with the research while it runs.
+   job with `computer-job`, never in `computer-exec`, whose time limit stops the fit. Do not wait
+   for it: continue with the research while it runs.
 2. Competitors in the browser. For each competitor open the home page, the pricing page and one
    product or feature page. On each page read the text you need with `browser-extract`, then take
    its picture as `team-browser` describes (height 1800 for a pricing table that is below the
@@ -211,9 +214,10 @@ address and the day it was captured. Add `notes()` on the slides a presenter wil
   has one value in the whole pack.
 - A monthly trend is grouped by calendar month from the daily frame, without the month that is
   not complete. Weeks grouped into months give months of four or five weeks and a false zigzag.
-- A figure in another currency stays in its currency. Convert only with a rate you read in this
+- A price read on a web page stays in its currency. Convert it only with a rate you read in this
   work (the European Central Bank's euro reference rates page), record the rate and its date in
-  the notes, and state both where the converted figure stands. Never assume a rate.
+  the notes, and state both where the converted figure stands. Never assume a rate. Spend from
+  sources in different currencies follows the currency rule of `team-computer`.
 - Compare like with like. A search benchmark is held against our search campaigns only (filter
   the campaign level data), not the whole account with display in it; a cost per lead is not a
   cost per trial. Say what each side measures, and let the title claim only what survives that.
@@ -232,6 +236,13 @@ address and the day it was captured. Add `notes()` on the slides a presenter wil
 was fitted on, model results with ranges, response curves, validation, reallocation, forecast,
 benchmarks with their sources, competitor facts, pricing, news, sources with links. Native charts
 next to the main tables.
+
+**A one-page summary and an app** are two different deliverables when the request asks for both.
+The summary is a short report people can share, made with `create-document` and the
+`designing-pages` skill: the answer, the key numbers, three to five findings and the decisions,
+with no controls. The app is built with `team-coding` as a working application with a database,
+where people save and change their own scenarios and the model's figures are read through its API.
+Never deliver the same page twice under two names.
 
 **The answer at the end** names the two files, the answer to the person's question in one
 sentence, the three to five findings that matter, what to decide, and what limits the pack has
