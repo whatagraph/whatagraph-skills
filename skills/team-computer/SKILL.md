@@ -92,9 +92,16 @@ inside a workbook is part of the workbook and is fine.
 
 Deliverables must look finished the first time: no label printed over another, no text
 running out of its box, no table stretched to fill a slide, no empty half-slides, no
-shadows, gradients or clip-art. The way to get that is to build every chart, deck,
-workbook and report with the installed `wgviz` helpers and to let them lay things out,
-instead of placing text boxes and shapes by hand with python-pptx or matplotlib.
+shadows, gradients or clip-art. The usual way to get that is to build every chart, deck,
+workbook and report with the installed `wgviz` helpers and to let them lay things out.
+
+A deck may also be built another way when the request needs a look the helpers do not make: by
+hand with python-pptx, from a customer's template, or from pages rendered to PDF. Then nothing lays
+it out for you, so the review below is the only check of the layout: give it the time the build
+took. Keep content well inside its box. A rounded card needs room in its corners: start text and
+tables at least the corner's radius from a rounded edge (python-pptx draws a corner of one sixth of
+the card's shorter side unless you set it), and never let a table or a picture reach the card's
+edge. Size a card to what it holds instead of leaving its lower half empty.
 
 - Charts for a file: `wgviz.charts` (`bar`, `grouped_bar`, `stacked_bar`, `line`,
   `donut`, `kpi_cards`, `quadrant`, `heatmap`, and for a long pack `waterfall`, `ranking`
@@ -187,9 +194,18 @@ chart, slide, page and sheet of the deliverable:
 
 Before handing a deck, a document or a workbook over, look at it: `deck.render(dir)` or
 `wgviz.render.pages(path, dir)` writes one PNG per page, and `computer-read-file` on a
-PNG shows it to you. Read every page image. If a label is cut, text overflows, two
-elements overlap or a slide is mostly empty, fix the input (shorter text, fewer rows,
-another slide type) and render again. Hand over only what you have seen. For a deck of more
+PNG shows it to you. Read every page image, and write one line per page of what you checked
+and what you found before you change anything. Look for each of these on every page:
+
+- text or a table that touches or crosses the edge of its card, or sits on a rounded corner;
+- a label, a number or a word cut off at an edge;
+- two elements drawn over each other;
+- a picture cropped through the thing it is meant to show (a face, a product, an ad's headline);
+- a card or a half of the slide that is mostly empty;
+- a number in the text that differs from the chart or table beside it.
+
+Fix the script for every finding (shorter text, fewer rows, more room, another slide type) and
+render again. A page with no line written was not reviewed. Hand over only what you have seen. For a deck of more
 than twelve slides use `deck.preview(dir)`: it renders the deck and tiles the pages twelve to a
 sheet with their slide numbers, so forty slides are four pictures to read. Read every sheet, then
 open a single page only where a sheet shows something to check.
@@ -432,6 +448,22 @@ slide's text with the chart or table on the same slide, and fix the script when 
 When a figure comes from an earlier conversation or an earlier turn rather than from
 data fetched in this turn (for example competitor numbers another run read from a
 web page), say so in the answer and in the deliverable, with the time it was read.
+
+## Sites, the browser and the computer
+
+Three tools reach the internet, and each answers a different question:
+
+| You need | Use |
+| --- | --- |
+| A page as a person sees it: reading it, clicking, signing in, a picture of it | the browser tools (`team-browser` skill) |
+| An API answer or a file download, with a secret from the vault when it needs one | `computer-http-request` |
+| Packages or data that a program on the computer downloads itself | `computer-exec` or `computer-job` |
+
+The browser carries the person's sign-ins and runs the page's scripts. The computer does neither,
+and reaches only the sites the team's setting allows. A result with `network_note` means the
+team's setting refused that site: the site itself said nothing. Never use the computer to test a
+site that refused the browser, and never report a site as blocking you from an error on the
+computer. Go back to the browser, or ask the person.
 
 ## Boundaries and recovery
 
