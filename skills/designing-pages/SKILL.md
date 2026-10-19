@@ -237,10 +237,25 @@ something happened when nothing does it, such as "we've sent you a welcome email
 sends nothing. When a page needs content nobody gave, such as the text of an about section, write
 it from what you were told, or leave a short, plain placeholder that says what belongs there.
 
-**Write the page in one go, with everything in front of you.** Before the first save, have ready:
-the site's screenshots, your notes on its design language, and the published URLs of the logo and
-of every picture the page shows. Then write the whole page in one call, from those notes, not from
-memory of earlier steps.
+**Have everything in front of you before the first save.** Have ready: the site's screenshots,
+your notes on its design language, and the published URLs of the logo and of every picture the page
+shows. Write from those notes, not from memory of earlier steps.
+
+**Build the page so the person watches it come together.** The open preview reloads after every
+save, so a page written in one call shows nothing until it is finished, and a call that large is the
+one most likely to fail before it reaches the tool. Build it in steps instead:
+
+1. Save a skeleton with `create-document`: the head with all the styles, the title, and every
+   section heading in its final order, each followed by a marker comment such as
+   `<!-- section: pricing -->` where its content goes. The person sees the layout and can redirect
+   you before the content exists.
+2. Fill one section per `edit-document` call by replacing its marker with the section's content.
+3. Change a finished page the same way: replace the section that changes, never the whole page.
+
+`create-document` refuses an HTML page over its size limit, and `edit-document` refuses a call that
+adds more than that limit of new text, so a section too long for one call is split in two with a
+marker between them. A site or a web app built on the team computer is the exception: it is built
+in its project files, as `team-coding` describes.
 
 **Then revise it once, always** (on the team computer, after each change, with a screenshot of
 each page). A first version is a draft. Look at the check's screenshot next to the customer's site
