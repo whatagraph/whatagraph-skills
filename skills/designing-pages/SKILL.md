@@ -193,8 +193,15 @@ alike. Leave each one out unless the customer's brand or the request calls for i
   titles, notes to yourself.
 
 After each save, the check of `create-document` lists the patterns it finds under
-`template_patterns`, with examples. Change each one before you reply, unless the brand or the
-request calls for it.
+`template_patterns`, with examples. The findings are not optional. Before the next section is
+written, change every pattern the check lists, so later sections are not built on top of it. A
+pattern stays only when the brand or the request calls for it, for example tabs the user asked
+for. Then name it and the reason in the reply. Never reply while the check lists a pattern you
+have not either changed or named.
+
+Write the first section without these patterns rather than relying on the check to catch them.
+Emoji are never icons, and a status word such as "Early access" sits in the text, colored only
+when the color carries meaning, not in a pill.
 
 No check runs on a site you build on the team computer. There, take a `browser-screenshot` of each
 page you built and go through this list against it yourself, one item at a time, and change what
@@ -273,4 +280,5 @@ phone width.
 
 **In the reply,** say what you made and why it suits this customer, and name what stands in for
 the brand: a Google Font in place of the brand's own font, a name set as text in place of a logo,
-or the look you chose when nothing was found.
+or the look you chose when nothing was found. List any template pattern that remains on purpose,
+with the reason.

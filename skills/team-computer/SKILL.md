@@ -37,6 +37,8 @@ Keep private or temporary inputs out of `/team` unless the person intends to sha
 attachment of this conversation comes onto the computer with `computer-import-attachment`. For
 connected marketing data use `computer-fetch-data` with discovered source and field identifiers;
 do not rebuild a large dataset from chat snippets. Use only the tools granted to this agent.
+Do not clone repositories or install packages from the internet to do work that a granted tool
+already covers.
 
 Start the work without exploring the computer. The tool descriptions name the folders, so do not
 print the environment, list `/runs` or read `.run.json` first. Save a file that a later turn or the
@@ -470,6 +472,11 @@ computer. Go back to the browser, or ask the person.
 For a website, an app or other code to build and run, load the `team-coding` skill. Before
 you write any HTML page, such as a one-pager beside a deck or the first page of an app, load
 `designing-pages` and follow it; writing or exporting a page is refused until it is loaded.
+
+Videos and animations are made with `render-video` (load `generating-videos`), not on the
+computer. `computer-export` does not hand over video or audio files, so an MP4 made with ffmpeg
+here never reaches the person. Use the computer for a video only to prepare inputs, such as a
+cropped screenshot to import, never for the finished file.
 
 Do not install a network tunnel, read another run's or another conversation's files, logs or
 processes (including anything under `/proc`), extract browser cookies,
