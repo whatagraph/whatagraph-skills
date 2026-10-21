@@ -69,8 +69,11 @@ against one page shape. A different format means authoring the pages again.
 2. **Pick the brand.** `list-design-systems` `action=list`. Use the team's default unless the
    user asks for something else. A design with no brand is drawn in the default one — never
    unstyled — so this step is optional, not skippable-with-consequences.
-3. **Fetch the data.** `list-sources`, then `fetch-data`. Do this *before* authoring: a design
-   holds the numbers you write into it, and you cannot query from inside a page.
+3. **Fetch the data.** `list-sources`, then `fetch-data`. Do this *before* authoring: the story
+   comes from reading the numbers, and you cannot query from inside a page. Keep every call you
+   made, because each one becomes a `binding`: the block that shows that data carries the call's
+   `source_id`, `report_type`, `metrics` and `dimensions`, not the figures it returned. See
+   *Inline or bound*.
 4. **Decide the story, then the design direction.** See *Choose a design direction* below.
 5. **Author it in one call.** `manage-canvases` `action=create` with `pages`.
 6. **Read it back.** `list-canvases` `action=show`, and `show_page` on anything you are unsure
@@ -105,8 +108,9 @@ A page object:
       "text": {"role": "heading", "content": "Sessions climbed every month of the quarter"} },
     { "id": "trend-chart", "type": "chart",
       "frame": {"x": 0.06, "y": 0.2025, "w": 0.54, "h": 0.2588},
-      "chart": {"chart_type": "line", "categories": ["Jul", "Aug", "Sep"],
-                "series": [{"name": "Sessions", "values": [9840, 11200, 12400]}]} },
+      "chart": {"chart_type": "bar"},
+      "binding": {"kind": "query", "sources": [2], "metrics": ["sessions"],
+                  "dimensions": ["sessionDefaultChannelGrouping"]} },
     { "id": "trend-takeaway", "type": "text",
       "frame": {"x": 0.65, "y": 0.2025, "w": 0.29, "h": 0.09},
       "text": {"role": "body",
@@ -117,6 +121,10 @@ A page object:
 
 Every block carries an **`id`**, unique within the page. It is how you address that block later
 with `patch_blocks`, so make them mean something: `hero-metric`, `trend-chart`, `cta`.
+
+The chart above carries no numbers. It carries the query that produces them, which is how every
+block showing a source's figures is written, in a deck as much as in a dashboard. The payload
+fields under *Block types* are for the figures no source reports. See *Inline or bound*.
 
 ## Frames — the one thing worth getting exactly right
 
@@ -384,6 +392,10 @@ shrinking it.
   formatted string shown. `horizontal` is a ranked comparison; `vertical` is a short progression.
   Max 6. **Prefer this over a chart for six or fewer figures** — it reads as part of the page
   instead of as a chart dropped onto it.
+  **`metric`, `chart`, `table` and `bar_list` take a `binding` instead of the payload above**
+  whenever the figures come from a source. A bound `chart` keeps its `chart_type` and `title`;
+  a bound `metric` keeps nothing, and its label is the metric's own name from the catalogue. See
+  *Inline or bound* for the rule and the shape.
 - **`control`** — a slider, a row of chips or a switch that narrows what its group shows. It goes
   **only inside a card carrying a `query` binding**, and it filters the rows that card fetched
   without refetching anything and without changing the document. See *A control* under *Groups*.
@@ -739,11 +751,28 @@ Propose a new one only when they want a different answer rather than a change to
 Every data-bearing block — `metric`, `chart`, `table`, `bar_list` — either **carries** its
 numbers or **fetches** them.
 
-**Inline** is the default and the right answer for a deck or a printed report: you fetched the
-data, you decided what the story was, and the page holds exactly the figures you wrote.
+**Bound is the default, in every format.** A figure a connected source reports is written as a
+`binding` on the block, never typed into it. The binding is the `fetch-data` call you already
+made: `source_id` becomes `sources`, and `report_type`, `metrics` and `dimensions` are copied
+over as they are. This holds for a deck and a printed page as much as for a dashboard. A typed-in
+figure is connected to nothing: the editor's Data panel says "Not connected to data" on every
+such block, nothing can refresh it, and the person opening the design cannot see where it came
+from. A design full of them reads as invented, however carefully each number was fetched, and
+"why is this not linked to the source you pulled it from" is the first thing they will ask.
 
-**Bound** is the right answer for a dashboard somebody opens twice a week. Give the block a
-`binding` and no payload of its own — the resolver fills it every time the design is opened:
+**Inline** is for the figures no source reports: a number you computed from two fetched ones (a
+share, a ratio of ratios), a figure you researched on the web, an estimate, a target. Write those
+as formatted strings and say in `notes` how each was arrived at.
+
+**A deck's numbers do not drift when they are bound.** Set the document's `date_range` to the
+period the deck is about (`lastQuarter` for a quarterly review, `lastMonth` for a monthly one) and
+`compare` to what the deltas are against, and every bound block reads that period. A PDF, a
+PowerPoint file and a Google Slides deck resolve the bindings when they are exported, so they
+carry the numbers the page shows. When the person wants a copy that never changes, `freeze` makes
+one and the design stays live.
+
+Give the block a `binding` and no payload of its own — the resolver fills it every time the
+design is opened:
 
 ```json
 { "id": "sessions", "type": "metric", "frame": {"x": 0.04, "y": 0.16, "w": 0.2, "h": 0.11},
@@ -772,14 +801,16 @@ the point. A **share link** can pin a period too, standing in for the document's
 is how a client gets March while the dashboard keeps rolling.
 
 ```
-manage-canvases action=update canvas_id=12 data_mode=bound date_range=last30Days compare=previous
+manage-canvases action=update canvas_id=12 date_range=lastQuarter compare=previous
 ```
 
 A period is a **calendar key, and it is camelCase**: `last30Days`, `lastMonth`, `thisQuarter`,
 `last12Month`. Snake case looks right and is not — an unknown key is refused with the full list,
 so read the message rather than guessing again.
 
-`data_mode=bound` is what makes a document live. Leave it `inlined` (the default) for a deck.
+`data_mode` follows the bindings: the first binding written onto a design promotes it from
+`inlined` to `bound`, so there is nothing to set. `inlined` only ever describes a design that has
+no bindings at all.
 
 ### Three ways to make a block live
 
@@ -788,7 +819,7 @@ three answers and they are not interchangeable.
 
 **A `query` binding is the default.** One source, some metrics, resolved on every open. Nothing is
 created, nothing has to be cleaned up, and the block is the whole statement of what it shows.
-Reach for this first for a dashboard's numbers, charts, tables and bar lists.
+Reach for this first for any block's numbers, charts, tables and bar lists, whatever the format.
 
 One thing it does **not** do: a query binding names a source without **attaching** it to the
 design. `sources` on a binding is the global integration source id, so the numbers are live and
@@ -916,6 +947,8 @@ Six to ten pages for a review. Twenty is a report nobody will sit through.
   a good deck is built from. Three of those across a page beats three bare numbers floating.
 - **Kicker on every content page, source on every page with numbers.** They cost nothing and they
   are what turns a bare heading into a composed slide.
+- **The numbers are bound here too.** A slide's metric reads the quarter from its source exactly
+  as a dashboard's does. What makes it a slide is the composition, never typed-in figures.
 
 ### A4 — read in the hand
 
@@ -945,7 +978,8 @@ worth of content on it looks empty and expensive.
 - **Build it in bands.** A row of KPI metrics at a shared `y` and `h`; then a chart band; then a
   table. Blocks in a row share `y` and `h`; blocks in a column share `x` and `w`.
 - **The top band is the answer.** Whoever opens this reads the first screen and often no more.
-  Put the three or four numbers that matter at the top, with their deltas.
+  Put the three or four numbers that matter at the top, bound and with `compare` set so their
+  deltas draw.
 - **No source band.** Put the credit in a `caption` block at the bottom, at the rail.
 - **Smaller type is fine.** The legibility floor is lower here than on a slide because the reader
   is 60cm away, so `caption` and `body` do real work.
@@ -1160,6 +1194,11 @@ Surface a finished design as an artifact card in the chat rather than writing a 
 
 ## Common pitfalls
 
+- **Figures from a source typed into a block.** You fetched it, so bind it: the block carries the
+  `fetch-data` call as its `binding`, not the answer it returned. A typed-in figure shows as "Not
+  connected to data" and nothing can refresh it. Inline only what no source reports.
+- **A whole design inlined because it is a deck or a print.** The format changes the composition,
+  not where the numbers come from. Pin the period with the document's `date_range` instead.
 - **Authoring before fetching.** You cannot query from inside a page. Fetch first.
 - **A report and a design confused.** "Live, always current, in the reporting tool" means a
   report. "I'm presenting this Thursday" or "send them a PDF" means a design.
