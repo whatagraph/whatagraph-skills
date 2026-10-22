@@ -375,7 +375,8 @@ shrinking it.
   `alt`. Browse the library with `list-widgets action=list_icons`; a file it does not have is
   refused. It draws in the block's ink, so a themed page recolours it. The `Streamline-Sharp`
   files are single-stroke line icons and take the ink wholesale; the older multicolour files
-  take it for their first shade and the chart ramp for the rest.
+  take it for their first shade and the chart ramp for the rest, and the few drawn in fixed
+  colours — the reactions, the search-engine logos — keep them.
 - **`card`** — a surface holding other blocks. Give it `blocks`. **Child frames are fractions of
   the card on both axes**, not of the page, and **every child needs a real frame** — one filling
   its card is `{"x": 0, "y": 0, "w": 1, "h": 1}`. Cards cannot nest.
