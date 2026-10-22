@@ -199,7 +199,8 @@ Text is the block whose height you have to compute. The rest divide into two kin
 which is the difference between a tidy page and a page with a hole in it:
 
 - **A `chart`, a `bar_list`, an `image` and a `card` fill the frame you give them.** Make the
-  frame the size you want the thing to be.
+  frame the size you want the thing to be. An **`icon`** fills the largest square its frame
+  holds, centred, so give it a square frame.
 - **A `table` draws top-aligned at its natural height and does not stretch.** A row — the header
   included — is about **0.032 of the page width**, or **0.039 on `a4_portrait`**, where the
   legibility floor lifts the type. So a six-row table plus its header is `h: 0.22` on a slide or
@@ -306,6 +307,8 @@ Every type reads the same object, and a few ignore parts of it that make no sens
   here) and `opacity`. It has no ground and no corner.
 - A **divider** is its own ground, so `background` is its colour. It has no edge and no depth.
 - An **image** has no text, so `ink` does nothing.
+- An **icon** is nothing but ink: `ink` recolours the glyph, `emphasis` draws it in the accent,
+  and a multicolour icon's further shades follow the ground's chart ramp.
 - A **shape**'s `background` replaces `tint` and `fill` outright rather than mixing with them.
   Set one or the other, never both.
 - A **card**'s `background` replaces the ground it draws, and its children still resolve their
@@ -367,6 +370,12 @@ shrinking it.
   sentence with a `run`.
 - **`image`** — a public `https` `url`, plus `alt` and `fit` (`cover` crops, `contain`
   letterboxes).
+- **`icon`** — one glyph from the icon library, the same library a single value widget picks
+  from: `file`, written verbatim (`"Heart--Streamline-Sharp.svg"`, `"Ad-clicks.svg"`), plus
+  `alt`. Browse the library with `list-widgets action=list_icons`; a file it does not have is
+  refused. It draws in the block's ink, so a themed page recolours it. The `Streamline-Sharp`
+  files are single-stroke line icons and take the ink wholesale; the older multicolour files
+  take it for their first shade and the chart ramp for the rest.
 - **`card`** — a surface holding other blocks. Give it `blocks`. **Child frames are fractions of
   the card on both axes**, not of the page, and **every child needs a real frame** — one filling
   its card is `{"x": 0, "y": 0, "w": 1, "h": 1}`. Cards cannot nest.
@@ -918,13 +927,14 @@ want:
 | They ask for | They get | Cost |
 |---|---|---|
 | a PDF, a PNG | the page itself, drawn headlessly | nothing is lost |
-| a PowerPoint file | editable shapes, tables and native charts | a `widget` block becomes a picture |
-| a Google Slides deck | the same, with charts that stay editable in Google | 16:9 only, and no `widget` blocks at all |
+| a PowerPoint file | editable shapes, tables and native charts; an `icon` stays a vector | a `widget` block becomes a picture |
+| a Google Slides deck | the same, with charts that stay editable in Google | 16:9 only, and no `widget` or `icon` blocks at all |
 
 PDF and PNG cannot disagree with the screen, because they *are* the screen. The two writers redraw
 each page from the spec, so they are the ones with a cost — and both costs land on `widget` blocks,
 which is worth remembering when you are choosing between a `widget` and a `chart` for something
-that will be presented from PowerPoint.
+that will be presented from PowerPoint. Google Slides also draws an `icon` as a labelled gap: it
+takes pictures from a public URL only, and the glyph is markup the server holds.
 
 ## Composing for the format
 
