@@ -43,6 +43,7 @@ whether the output is a composed page. If the user wants the familiar report gri
 
 - "Build me a deck for Thursday's client review."
 - "Turn last month's performance into a report I can send as a PDF."
+- "Put a channel filter at the top of this dashboard so they can narrow it themselves."
 - "Make a one-page summary of the quarter."
 - "Fix page 4 — the headline is wrong."
 - "Show me where paid budget is being wasted." — one composed answer rather than a page, offered
@@ -406,9 +407,12 @@ shrinking it.
   whenever the figures come from a source. A bound `chart` keeps its `chart_type` and `title`;
   a bound `metric` keeps nothing, and its label is the metric's own name from the catalogue. See
   *Inline or bound* for the rule and the shape.
-- **`control`** — a slider, a row of chips or a switch that narrows what its group shows. It goes
-  **only inside a card carrying a `query` binding**, and it filters the rows that card fetched
-  without refetching anything and without changing the document. See *A control* under *Groups*.
+- **`control`** — a filter the reader moves, and **where it sits decides what it reaches**.
+  Inside a card carrying a `query` binding it is a slider, a row of chips or a switch that narrows
+  the rows that card fetched, in the browser, without refetching anything. On the page, or inside
+  a card with no binding, it names a `source` and re-queries every block around it bound to that
+  source — the report's filter control, on a design. Neither changes the document. See *A
+  control* and *A filter* under *Groups*.
 - **`widget`** — an existing Whatagraph widget, drawn on the page. Its `binding` names the
   `widget_id`; the widget keeps its own configuration and picks up the design's brand. Chrome is
   off by default because the page already has its own text blocks. Give it at least 232 × 110
@@ -550,9 +554,10 @@ the rows that card fetched. Every metric, chart, table and bar list in the card 
 is left. It changes nothing in the document, costs no fetch, and works for somebody reading a
 share link.
 
-It may only go **inside a card carrying a `query` binding**, and its `field` must be one of the
-metrics or dimensions that binding names. Anywhere else there is no row set to narrow and the
-write is rejected.
+Inside a card carrying a `query` binding its `field` must be one of the metrics or dimensions
+that binding names, and it takes no `source` — the card already names one. The same block **on
+the page, or inside a card with no binding, is a filter** that re-queries instead of narrowing;
+see *A filter* below.
 
 Three kinds:
 
@@ -585,6 +590,83 @@ a rate draws nothing rather than a figure, because adding two percentages togeth
 and there is no way to recompute the rate from one column. Put the counts in a group that has a
 control on it and leave the rate to the table, or set `agg` to `avg` and say in the sentence that
 it is an average of the rows on screen.
+
+### A filter: letting the reader refilter the page
+
+The same `control` block **on the page**, or inside a card with no binding, is a filter over the
+page rather than over one card. It names a `source` and a `field`, and when the reader moves it
+every block around it bound to that source — a metric, a chart, a table, a bound card, a `widget`
+block — is fetched again with one more filter row, the way a report's Filter Control refetches
+every widget of its source. Nothing is stored but the control's own default: a reader's pick lives
+in their browser, travels with the data requests, and is drawn into the PDF or PNG they export.
+
+**Placement decides reach, and there is no scope field to disagree with it.**
+
+- **On the page**: every block on the page bound to `source`, wherever it sits, a bound card and a
+  widget block included.
+- **Inside a card with no binding**: that card's blocks only.
+- **Inside a card carrying a `query` binding**: it is the group control of the previous section —
+  it narrows the card's rows in the browser and is refused a `source`.
+
+A block bound to another source is left alone, and a block that reads nothing — an inlined
+figure — is reached by nothing. `targets` narrows the reach to the block ids it names, each of
+which must be one the control reaches anyway. Leave it off; that is the usual case.
+
+Three kinds, and when each is honest:
+
+- `choice` — a select over a dimension. Leave `options` off and the source's own values are
+  fetched when the select opens. **A source that lists values for none of its dimensions offers
+  an empty select** — Google Analytics 4 is one — so there, write the `options` yourself when the
+  set is known (the default channel groupings are), or use `text`. `eq` picks one, `in` several.
+- `text` — a text box matched by what the dimension contains: "campaigns containing `brand`".
+  Page only: inside a bound card the rows are already fetched and a `choice` over them is the
+  honest control. Give it `"apply": "button"`, because every apply re-queries every block the
+  control reaches, and nobody wants that per keystroke.
+- `range` — a slider over a metric, with `min`, `max` and `gte` or `lte`, as in a card. It
+  applies when released.
+
+`toggle` stays in the card: no filter can ask a source whether a column "holds anything at all".
+
+`apply` is `change` (the default) or `button`. `value` is the stored default — what a reader who
+never touches the control sees, and what a share link, a frozen copy and an export start from.
+Omit it and the page opens unfiltered.
+
+**A deck refuses it.** A page filter is allowed in the dashboard, A4 and custom formats and is
+rejected on a slide: a presentation has nobody to move it. Put the control inside a bound card
+there, pin the question in the binding's `filters`, or leave it out.
+
+**Name a source a block on the page reads.** The validator cannot check this, because the control
+fetches nothing on its own: a filter over a source no block is bound to saves cleanly and reaches
+nothing. Copy `source` from the `binding.sources` of the blocks it should move.
+
+A dashboard page with a channel filter over three metrics and a table, all reading one source:
+
+```json
+{ "layout": "content", "page_height": 0.9, "blocks": [
+  { "id": "channel", "type": "control",
+    "frame": {"x": 0.04, "y": 0.04, "w": 0.3, "h": 0.06},
+    "control": { "kind": "choice", "label": "Channel", "source": 2,
+      "field": "sessionDefaultChannelGrouping",
+      "options": ["Organic Search", "Paid Search", "Direct", "Referral", "Organic Social", "Email"] } },
+  { "id": "sessions", "type": "metric", "frame": {"x": 0.04, "y": 0.14, "w": 0.28, "h": 0.12},
+    "binding": { "kind": "query", "sources": [2], "metrics": ["sessions"], "compare": "previous" } },
+  { "id": "conversions", "type": "metric", "frame": {"x": 0.36, "y": 0.14, "w": 0.28, "h": 0.12},
+    "binding": { "kind": "query", "sources": [2], "metrics": ["conversions"], "compare": "previous" } },
+  { "id": "revenue", "type": "metric", "frame": {"x": 0.68, "y": 0.14, "w": 0.28, "h": 0.12},
+    "binding": { "kind": "query", "sources": [2], "metrics": ["totalRevenue"], "compare": "previous" } },
+  { "id": "pages", "type": "table", "frame": {"x": 0.04, "y": 0.3, "w": 0.92, "h": 0.5},
+    "binding": { "kind": "query", "sources": [2],
+      "metrics": ["sessions", "conversions"], "dimensions": ["pagePath"] } }
+] }
+```
+
+Every block the filter reaches draws a small caption of its own — *Filtered by Channel: Paid
+Search* — so the reader sees what was narrowed, and nothing in your text needs to say so. The
+deltas keep drawing: the comparison period is filtered the same way.
+
+A write that puts a filter where it cannot work is refused with the fix in the message — the
+`source` it is missing, the kind that belongs in a card, the slide it cannot sit on, the target
+it would not reach. Repair from the message; do not drop the filter to get past it.
 
 ### Suggested actions: the changes worth making to a group
 
@@ -796,6 +878,10 @@ design is opened:
   chart's categories, a table's first column, a bar list's labels.
 - A `metric` draws a delta only when there is a comparison to draw it from — set `compare` on the
   block, the page, or the document.
+- `filters` pins a condition on the query: a flat list of `{"dimension" | "metric", "operator",
+  "value" | "values", "join"}` in the `manage-filters` vocabulary (`includes`, `contains`, `>=`,
+  …), rows joined with `and` unless one says `or`. That is the filter the **author** decides;
+  the filter the **reader** moves is a `control` — see *A filter* under *Groups*.
 - A bound `table` or `bar_list` is **cut to what its frame holds**, so give it room for the rows
   you expect rather than assuming everything comes back.
 - `kind: "widget"` with a `widget_id` draws a widget instead of a query — either one a report
@@ -856,7 +942,8 @@ per-widget behaviour a binding has no field for. Create one when the ask needs a
 - conditional formatting or auto colors on a table's column
 - currency conversion on a money metric
 - values typed by hand rather than fetched, which is what the offline widget types are for
-- a source filter, or a date range pinned per widget with a comparison of its own
+- a date range pinned per widget with a comparison of its own. A fixed filter on a query is
+  `binding.filters`, and a filter the reader moves is a `control`; neither needs a widget
 - a widget the person can go on editing in the drawer afterwards, with the report's own editor
 
 **And create one whenever the person asked for one.** The list above is about what a block cannot
@@ -991,6 +1078,9 @@ worth of content on it looks empty and expensive.
 - **The top band is the answer.** Whoever opens this reads the first screen and often no more.
   Put the three or four numbers that matter at the top, bound and with `compare` set so their
   deltas draw.
+- **A filter at the top when the reader will want to narrow.** One `control` strip in the first
+  band, over the source the KPI row reads, reaches every bound block below it. See *A filter*
+  under *Groups*. It is the one format where a page filter is the normal shape.
 - **No source band.** Put the credit in a `caption` block at the bottom, at the rail.
 - **Smaller type is fine.** The legibility floor is lower here than on a slide because the reader
   is 60cm away, so `caption` and `body` do real work.
@@ -1152,8 +1242,9 @@ Composition is validated server-side and the message names the block and the fix
 **Repair from the message and resend.** Do not simplify the page to get past the validator — the
 error tells you the number to change, and dropping the block instead makes the document worse
 than the rule was protecting it from. The rules are: overlap, off-page frames, text that will not
-fit its frame, bars given too little room, block budgets, chrome bands, duplicate block ids, and
-a data-bearing block carrying neither values nor a binding.
+fit its frame, bars given too little room, block budgets, chrome bands, duplicate block ids, a
+data-bearing block carrying neither values nor a binding, and a `control` placed where it cannot
+work.
 
 ## Brands
 
@@ -1256,3 +1347,9 @@ Surface a finished design as an artifact card in the chat rather than writing a 
   one-line caption becomes a clipped two-line one. Use the exception table.
 - **A deck of ten `content` pages.** Vary the layout and the background. A dark `section` page and
   a `full_chart` are what give a document rhythm.
+- **A filter in a deck.** A page `control` is refused on a slide; a presentation has nobody to move
+  it. Narrow with a control inside a bound card, or pin the condition in the binding's `filters`.
+- **A filter whose source no block uses.** It saves and reaches nothing, and no message says so.
+  `control.source` is the id the `binding.sources` on the same page hold.
+- **`source` left off a page filter, or written on a card's control.** On the page it is required;
+  inside a card carrying a `query` binding it is refused. The message says which you have.
