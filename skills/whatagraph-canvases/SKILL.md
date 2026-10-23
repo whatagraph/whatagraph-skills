@@ -908,10 +908,64 @@ so read the message rather than guessing again.
 `inlined` to `bound`, so there is nothing to set. `inlined` only ever describes a design that has
 no bindings at all.
 
+### A summary: letting the page write its own narrative
+
+Commentary is data too. A paragraph that says "sessions rose 18% while spend held" is a figure
+typed into prose, and it goes stale the first time the range moves. A `text` block with a
+`summary` binding is written by the model from the data blocks around it, stored on the block,
+and written again whenever the data it read changes. It is the report's AI summary, drawn in the
+design's own typography.
+
+```json
+{ "id": "takeaways", "type": "text", "frame": {"x": 0.06, "y": 0.34, "w": 0.88, "h": 0.16},
+  "text": { "role": "body" },
+  "binding": { "kind": "summary", "sections": ["wins", "issues"] } }
+```
+
+- **`text` carries only `role`** (and `align` or `scale` if you want them). No `content`, no
+  `runs`: the resolver writes them.
+- **Where it sits decides what it reads.** On the page it reads every data block on that page.
+  Inside a card it reads that card. `scope: "document"` reads every page, for an executive summary
+  at the front of a deck. `targets: ["revenue_chart"]` reads only the blocks named, for "what does
+  this chart say". Text, images, icons, shapes and controls are never read; the page's title,
+  kicker and headings travel along so the model knows what the page is about.
+- **`sections`** are `summary`, `wins`, `issues`, `recommendations` and `custom`, written in the
+  order given. `custom` needs `custom_prompt`. `length` is `short` (about three sentences a
+  section, the default) or `long` (about eight). `language` takes the report's list, `English` by
+  default.
+- **`refresh`** is `auto` (rewritten when the data moves) or `manual` (kept until somebody asks for
+  new words). Leave it off: it defaults to `auto` where the team has AI summary auto-update and
+  `manual` where it does not, and the team's plan is checked on every read anyway.
+- **Nothing is written when you save the block.** The words are written the first time the page
+  is opened, which costs one model call and a few seconds. To write them now and read what came
+  out, call:
+
+  ```
+  manage-canvases action=regenerate_summary canvas_id=12 page_id=41 block_id=takeaways
+  → { "text": "Summary\nSessions rose 18%…", "inputs": ["sessions", "spend", "trend"] }
+  ```
+
+  `inputs` names the blocks it read. An empty one means the summary had nothing to read: put it
+  where the data blocks are, or name them in `targets`. The same call is how you change words the
+  person did not like, `manual` or not.
+- **Give it room.** One short section is three or four lines of body text; two sections with
+  their headings are about twice that. The block cannot be sized from its words because you do
+  not have them, so size the frame for the sections and length you asked for. A frame that is too
+  small clips the summary; the editor flags it, and nothing in the write refuses it.
+- **A summary over sample data only is refused** when it is read, as the report's is. One over a
+  mix leaves the sample blocks out of the narrative.
+
+**Write the narrative as a summary, not as typed text.** Your own `text` blocks are for headings,
+framing and what no data says ("Q3 was the first quarter on the new pricing"). The paragraph that
+reads the numbers back to the person belongs to a summary block. Do not inline it, even when you
+have just read the same numbers in `fetch-data`: to the person, typed commentary next to bound
+figures looks like the agent typed the numbers in, and it will disagree with them next month.
+
 ### Three ways to make a block live
 
-A `binding` has two kinds, and the `widget` kind covers two different situations, so there are
-three answers and they are not interchangeable.
+A `binding` that fetches figures has two kinds (the third, `summary`, writes words and is above),
+and the `widget` kind covers two different situations, so there are three answers and they are not
+interchangeable.
 
 **A `query` binding is the default.** One source, some metrics, resolved on every open. Nothing is
 created, nothing has to be cleaned up, and the block is the whole statement of what it shows.
@@ -991,7 +1045,7 @@ Six things a design refuses, most because its own editor offers no equivalent:
 | `position_x`, `position_y`, `auto_place`, `target_tab_id` | A design has no widget grid. The block's `frame` places it. |
 | `action=apply_premade` | Premade widgets are a report library. Create the widget with `action=create`. |
 | `action=duplicate`, `batch_duplicate` | Copy the block with `patch_blocks`; the widget follows it. |
-| `action=update_ai_text` | AI text is a comment widget's setting. A design writes prose in `text` blocks. |
+| `action=update_ai_text` | AI text is a comment widget's setting. On a design it is a `text` block with a `summary` binding; see *A summary*. |
 | Comment, calendar, image, filter control, report shortcut types | The design draws these with its own blocks, or has no surface for them. |
 | Multi-source table (37) | Deprecated in favour of blends and source groups, so nothing creates one any more, and a design will not draw an existing one either. Use `widget_type_id="table"`, or a `table` block. |
 
@@ -1301,6 +1355,10 @@ Surface a finished design as an artifact card in the chat rather than writing a 
 - **Figures from a source typed into a block.** You fetched it, so bind it: the block carries the
   `fetch-data` call as its `binding`, not the answer it returned. A typed-in figure shows as "Not
   connected to data" and nothing can refresh it. Inline only what no source reports.
+- **Commentary on the numbers typed into a `text` block.** It is a figure in prose, and it goes
+  stale with the range. Use a `summary` binding; keep your own text for headings and framing.
+- **A summary placed away from what it should read.** On the page it reads the page; inside a
+  card it reads only that card. An empty `inputs` from `regenerate_summary` means it read nothing.
 - **A whole design inlined because it is a deck or a print.** The format changes the composition,
   not where the numbers come from. Pin the period with the document's `date_range` instead.
 - **Authoring before fetching.** You cannot query from inside a page. Fetch first.
