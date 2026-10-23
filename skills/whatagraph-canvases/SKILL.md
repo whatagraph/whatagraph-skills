@@ -968,8 +968,8 @@ manage-widgets action=create design_id=12 page_id=41 channel_id="9" widget_type_
 → { "widget": { "id": 8814, ... } }
 
 manage-canvases action=patch_blocks canvas_id=12 page_id=41
-  blocks=[{ "id": "funnel", "type": "widget", "frame": {"x":0.06,"y":0.18,"w":0.4,"h":0.3},
-            "binding": { "kind": "widget", "widget_id": 8814 } }]
+  pages=[{ "blocks": [{ "id": "funnel", "type": "widget", "frame": {"x":0.06,"y":0.18,"w":0.4,"h":0.3},
+                        "binding": { "kind": "widget", "widget_id": 8814 } }] }]
 ```
 
 The widget is invisible until the block exists — a widget is data and a block is what draws it. A
@@ -1148,11 +1148,13 @@ Fix one block without resending the page:
 
 ```
 manage-canvases action=patch_blocks canvas_id=<id> page_id=<id>
-                blocks=[{...the corrected block, same id...}]
+                pages=[{ "blocks": [{...the corrected block, same id...}] }]
                 remove_block_ids=["stray-caption"]
 ```
 
-Blocks whose `id` already exists are replaced in place; new ids are appended.
+Blocks whose `id` already exists are replaced in place; new ids are appended. The blocks ride in
+`pages` with one entry, the same field every other action writes blocks through; a page's other
+fields are ignored here, so `layout` can be left off.
 
 Rewrite a whole page — `pages` carries the page objects for every action, so this is `pages` with
 exactly one entry, and more than one is refused:
