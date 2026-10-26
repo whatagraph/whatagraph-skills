@@ -201,11 +201,11 @@ Operators:
 | Metric | `equal_metric` (`=`), `not_equal_metric` (`!=`), `greater_metric` (`>`), `greater_or_equal_metric` (`>=`), `less_metric` (`<`), `less_or_equal_metric` (`<=`), `empty_metric`, `not_empty_metric` |
 
 - Each channel supports only some operators. One it does not support is rejected with the list it does support.
-- The empty operators need no `value`. `includes` and `excludes` take an array of values and match them exactly.
+- The empty operators need no `value`. `includes` and `excludes` take an array of values and match them exactly. Every other operator takes one value, and an array is rejected.
 - **GA4:** `exactly_matches_dimension` and the regex operators are case sensitive, and a regex must match the whole value (`.*/blog/.*`, not `/blog/`). `contains`, `starts_with` and `ends_with` are not case sensitive. A GA4 dimension condition takes one value, so use a regex instead of `includes`.
 - **Google Sheets** compares a metric condition with each sheet row before rows are grouped, so `> 900` can drop rows whose group total is above 900. A widget on the same sheet does the same.
 
-**`filter_ids`** takes up to 10 saved filter ids of the same channel as the source, and applies all of them together (AND). A filter of another team answers `not_found`.
+**`filter_ids`** takes up to 10 saved filter ids of the same channel as the source. Their groups are put into one filter. When a report source filter is among them, that filter takes the source filter's version, as a widget does; otherwise all the saved filters must have the same version. A version 2 filter joins its groups with AND, a version 1 filter with OR. A filter of another team answers `not_found`.
 
 #### Reproduce a filtered widget
 
