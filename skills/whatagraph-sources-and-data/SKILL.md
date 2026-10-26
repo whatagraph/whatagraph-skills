@@ -205,11 +205,11 @@ Operators:
 - **GA4:** `exactly_matches_dimension` and the regex operators are case sensitive, and a regex must match the whole value (`.*/blog/.*`, not `/blog/`). `contains`, `starts_with` and `ends_with` are not case sensitive. A GA4 dimension condition takes one value, so use a regex instead of `includes`.
 - **Google Sheets** compares a metric condition with each sheet row before rows are grouped, so `> 900` can drop rows whose group total is above 900. A widget on the same sheet does the same.
 
-**`filter_ids`** takes up to two saved filter ids of the same channel as the source. A filter of another team answers `not_found`.
+**`filter_ids`** takes up to 10 saved filter ids of the same channel as the source, and applies all of them together (AND). A filter of another team answers `not_found`.
 
 #### Reproduce a filtered widget
 
-A widget applies two filters together: its own widget config filter and the filter of its report source. One of them alone gives different numbers.
+A widget applies all its filters together: every filter on its widget config (there can be more than one) and the filter of its report source. Leaving one out gives different numbers.
 
 1. `list-widgets action=show` on the widget. Note its `source_id`, report type, fields, and `inline_filters`.
 2. Pass every `inline_filters` id as `filter_ids`. Leave out the one with scope `source` when the widget shows `source_filter_off: true`.
