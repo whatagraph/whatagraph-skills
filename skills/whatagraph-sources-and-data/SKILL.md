@@ -209,7 +209,7 @@ Operators:
 
 #### Reproduce a filtered widget
 
-A widget applies all its filters together: every filter on its widget config (there can be more than one) and the filter of its report source. Leaving one out gives different numbers.
+A widget uses every filter on its widget config (there can be more than one) and the filter of its report source. Leaving one out gives different numbers.
 
 1. `list-widgets action=show` on the widget. Note its `source_id`, report type, fields, and `inline_filters`.
 2. Pass every `inline_filters` id as `filter_ids`. Leave out the one with scope `source` when the widget shows `source_filter_off: true`.
@@ -221,7 +221,9 @@ fetch-data source_id=<id> report_type=<rt> metrics=[...] dimensions=[...]
    filter_ids=[<widget_config_filter_id>, <source_filter_id>]
 ```
 
-The saved filters are combined the way the widget combines them: the widget config conditions are added to the source conditions, and the source filter's channel settings (such as an attribution window) are kept.
+When the widget uses its source filter, the saved filters are combined the way the widget combines them: the widget config conditions are added to the source conditions, and the source filter's channel settings (such as an attribution window) are kept.
+
+**When the numbers can differ:** a widget with no source filter in use (none on the report source, or `source_filter_off: true`) and two or more widget config filters keeps the rows that match any one of those filters. `filter_ids` keeps only the rows that match all of them. For such a widget, fetch once per filter id instead, and say in the answer that the widget's own total may not equal the sum, because a row can match more than one filter.
 
 ### Field-id family by source type
 
