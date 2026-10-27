@@ -152,7 +152,7 @@ How the report's usual page types map onto blocks:
 
 | In the file | In the design |
 |---|---|
-| Section divider: one huge title on a band | `section` layout, `dark` or `accent` background, `heading` at `scale` 2 or more; a band of colour is a `card` with no blocks. Two-tone italic display type is one `heading` with two `runs`, both `italic: true`, each with its own `ink` |
+| Section divider: one huge title on a band | `section` layout, `dark` or `accent` background, `heading` at `scale` 2 or more; a band of colour is a `card` with no blocks. Two-tone italic display type is one `heading` with two `runs`, each with its own `ink`, on a brand whose `type` is `display_italic` (every heading italic, in the face's real italic); on another brand, set `italic: true` on the runs |
 | KPI tiles: a dark box per figure with its label | A toned `card` (`tone: dark`) per tile, each holding a `metric`; tiles at one `y` and `h` form one row |
 | Headline figures with icons and a change | `icon` plus `metric` with `delta`, `delta_direction` and `delta_sentiment` |
 | Monthly trend: a small bar chart per measure | `chart`, `bar`, the months as categories |
