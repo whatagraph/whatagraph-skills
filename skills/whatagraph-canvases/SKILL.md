@@ -48,6 +48,8 @@ whether the output is a composed page. If the user wants the familiar report gri
 - "Fix page 4 — the headline is wrong."
 - "Show me where paid budget is being wasted." — one composed answer rather than a page, offered
   in the conversation for the person to place. See *Offering a group instead of writing one*.
+- "Recreate this report in Whatagraph", with a PDF or deck attached — a replica, which is a
+  different job from composing a deck. See *Replicating a file somebody gave you*.
 
 ## Choose the format first
 
@@ -61,6 +63,78 @@ whether the output is a composed page. If the user wants the familiar report gri
 Ask when it is genuinely ambiguous; otherwise pick and say which you picked. Getting it wrong is
 not fatal — but the format cannot be changed afterwards, because every frame was composed
 against one page shape. A different format means authoring the pages again.
+
+## Replicating a file somebody gave you
+
+When the person attaches a report, a deck or a PDF and asks for it **recreated, replicated,
+rebuilt or copied**, the file decides the document, not you. Everything under *Composing for the
+format* and *Choose a design direction first* is about deciding a document yourself, and none of
+it applies: not the six to ten slides, not one idea per page, not the direction you would have
+picked. The person is judging one thing, whether it looks like their report, and every page you
+merge, drop or "improve" is a page that does not.
+
+**Look at the pages, not only the text.** `read-document` with `pages` returns up to three pages
+of the file as pictures per call. The extracted text carries the words and the figures but no
+layout, colour, chart type or picture. Look at every page you build before you write it, and look
+again at any page whose figures you are about to copy.
+
+The steps:
+
+1. **Inventory first.** Read the whole text once, then look at the pages, and write down what each
+   page is: its number, its type (cover, section divider, KPI tiles, chart and commentary, table,
+   funnel, screenshots, closing) and its blocks. Most reports repeat a dozen types across many
+   pages. Put the inventory in the first page's `notes`, so a later turn can carry on.
+2. **One frame-set per type.** Decide each type's frames once and reuse them exactly on every page
+   of that type. A report where the KPI strip sits at a slightly different height on every page
+   looks generated; the original did not.
+3. **Keep every page, in order.** A 93-page report becomes a 93-page design. Merge or drop pages
+   only when the person asks you to, and if the file is too long to finish in one turn, say how far
+   you got and carry on in the next rather than condensing.
+4. **Match the page shape.** A 16:9 deck is `slide_16_9`, an A4 report is `a4_portrait` or
+   `a4_landscape`. Anything else is `custom`, with a `design_width` and each page's `page_height`
+   set to the file's own proportions.
+5. **Brand from the file.** Make the design system from what the pages show: the brand colour as
+   its exact hex, the mood (light or dark grounds), the type, the chart colours in the order the
+   file uses them. Check `list-design-systems` first; a brand made for this client before is the
+   one to reuse.
+6. **Build in batches.** `create` with the cover and the next four pages, then add the rest with
+   `update_page` and no `page_id`, which appends one page per call. A refused write names every
+   page that failed, so fix them all before resending. After each batch, `preview_canvas` one page
+   of each type you introduced and compare it with the same page of the file.
+7. **Copy figures from the page they are printed on.** Read each number and its change next to
+   the label the file prints it under, from the page picture when the text is ambiguous. A delta
+   belongs to the metric it sits beside; never carry one across from another page, and never fill
+   a chart with values the file does not show. A figure you cannot read is `—`, and you say so.
+8. **Bind what a connected source reports; type in only the rest.** Check `list-sources`. A
+   figure a connected source reports is a `binding` (see *Inline or bound*). A figure from an
+   account that is not connected, an offline buy or a computed share is typed in, copied exactly,
+   with `notes` naming the file and page it came from.
+9. **Report what you built, from the tool's answer.** Every write returns `data_blocks`: how many
+   data blocks read a source and how many are typed in. Your reply states the pages built against
+   the pages in the file, those two numbers, the sources the person has to connect for the typed-in
+   ones to become live, and the page types you could not reproduce. Never say a design updates by
+   itself while any of its figures are typed in.
+
+**It is always a new design.** Do not present a design that already exists as the replica, even
+one with the same name made earlier in this conversation or by another agent. Build a new one, and
+describe only what this turn wrote.
+
+How the report's usual page types map onto blocks:
+
+| In the file | In the design |
+|---|---|
+| Section divider: one huge title on a band | `section` layout, `dark` or `accent` background, `heading` at `scale` 2 or more; a band of colour is a `card` with no blocks |
+| KPI tiles: a dark box per figure with its label | A toned `card` (`tone: dark`) per tile, each holding a `metric`; tiles at one `y` and `h` form one row |
+| Headline figures with icons and a change | `icon` plus `metric` with `delta`, `delta_direction` and `delta_sentiment` |
+| Monthly trend: a small bar chart per measure | `chart`, `bar`, the months as categories |
+| Horizontal bar ranking | `bar_list`, `horizontal`, up to 6 rows; more rows is a `table` or a `chart` |
+| Bars with a line on a second axis | `chart` with a `series_style` `scale: secondary` on the line's series; the chart cannot draw bars and a line together yet, so say which you drew |
+| Pie or donut breakdown | `chart`, `pie` or `donut`, one series |
+| Conversion funnel with step rates | `shape` blocks for the steps joined by `connector` blocks, the rates in `pill` or `shape` blocks |
+| Table | `table`, every cell a formatted string |
+| Commentary paragraph or bullet box | `text` with `role: body`, inside a `card` when the file boxes it |
+| Ad creatives, screenshots, logos | `image` when the picture is at a public URL; otherwise a `card` captioned with what the file shows there, and list these in your reply |
+| Learnings grid (continue, optimise, stop, start) | One `card` per column at one `y` and `h`, each with a heading and a body |
 
 ## The workflow
 
@@ -1085,7 +1159,8 @@ composition rules different. Everything above is shared; this is not.
 
 ### Slides — read across a room
 
-Six to ten pages for a review. Twenty is a report nobody will sit through.
+Six to ten pages for a review. Twenty is a report nobody will sit through. (A replica keeps the
+file's page count instead; see *Replicating a file somebody gave you*.)
 
 - **One idea per page.** If a page needs two headings, it is two pages.
 - **Big and few.** Three to five metrics at most; six numbers is a table, and a table on a
@@ -1344,13 +1419,23 @@ its chart palette beside it — and how it looks is the whole of what the person
   person presses the button. See *Sharing and exporting* above for what each one costs.
 - **Changing a format.** Every frame was composed against one page shape. Author again in the new
   format.
-- **Uploading an image.** `image` blocks take a public `https` URL that already exists.
+- **Uploading an image.** `image` blocks take a public `https` URL that already exists, so a
+  picture inside an attached file cannot be placed on a page yet.
+- **Bars and a line in one chart.** A series can sit on a second axis, but every series of a chart
+  draws as the same chart type.
 - **Styling a block in an Office export.** A block's own `style` reaches the browser, the PDF and
   the PNG. The PowerPoint and Google Slides writers draw the brand instead.
 
 Surface a finished design as an artifact card in the chat rather than writing a link to it.
 
 ## Common pitfalls
+
+- **A replica condensed into a summary.** Asked to recreate a file, keep every page. The
+  composition rules are for documents you decide, not for copies.
+- **Describing a design as live while its figures are typed in.** Read `data_blocks` in the write's
+  answer and report it. Typed-in figures do not change next month.
+- **Copying from the text alone.** The text has no layout and loses which number sits under which
+  label. Look at the page with `read-document` `pages`.
 
 - **Figures from a source typed into a block.** You fetched it, so bind it: the block carries the
   `fetch-data` call as its `binding`, not the answer it returned. A typed-in figure shows as "Not
