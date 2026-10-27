@@ -120,6 +120,13 @@ The steps:
    channels the person has to connect, and the page types you could not reproduce. Never say a
    design updates by itself while any of its figures are typed in or waiting.
 
+**Pictures come from the file's own pages.** `manage-assets action=crop_page asset_id=<the file>
+page=<n> region={"x", "y", "w", "h"}` cuts a region out of that page and answers a public `url` for
+an `image` block. The region is fractions of the page (0 to 1) from its top left, measured on the
+picture `read-document` `pages` returned. Leave a small margin around the picture, crop each
+creative or logo once, and reuse its `url` wherever the file repeats it. Use `fit: contain` when the
+frame's shape differs from the crop's.
+
 **It is always a new design.** Do not present a design that already exists as the replica, even
 one with the same name made earlier in this conversation or by another agent. Build a new one, and
 describe only what this turn wrote.
@@ -138,7 +145,7 @@ How the report's usual page types map onto blocks:
 | Conversion funnel with step rates | `shape` blocks for the steps joined by `connector` blocks, the rates in `pill` or `shape` blocks |
 | Table | `table`, every cell a formatted string |
 | Commentary paragraph or bullet box | `text` with `role: body`, inside a `card` when the file boxes it |
-| Ad creatives, screenshots, logos | `image` when the picture is at a public URL; otherwise a `card` captioned with what the file shows there, and list these in your reply |
+| Ad creatives, screenshots, logos | `image` with the `url` that `manage-assets action=crop_page` returns for that region of the file's page (see below) |
 | Learnings grid (continue, optimise, stop, start) | One `card` per column at one `y` and `h`, each with a heading and a body |
 
 ## The workflow
@@ -1477,8 +1484,8 @@ its chart palette beside it — and how it looks is the whole of what the person
   person presses the button. See *Sharing and exporting* above for what each one costs.
 - **Changing a format.** Every frame was composed against one page shape. Author again in the new
   format.
-- **Uploading an image.** `image` blocks take a public `https` URL that already exists, so a
-  picture inside an attached file cannot be placed on a page yet.
+- **Uploading an image.** `image` blocks take a public `https` URL. A picture inside an attached
+  file is placed with `manage-assets action=crop_page`; any other picture needs a URL already.
 - **Styling a block in an Office export.** A block's own `style` reaches the browser, the PDF and
   the PNG. The PowerPoint and Google Slides writers draw the brand instead.
 
