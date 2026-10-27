@@ -106,15 +106,19 @@ The steps:
    the label the file prints it under, from the page picture when the text is ambiguous. A delta
    belongs to the metric it sits beside; never carry one across from another page, and never fill
    a chart with values the file does not show. A figure you cannot read is `—`, and you say so.
-8. **Bind what a connected source reports; type in only the rest.** Check `list-sources`. A
-   figure a connected source reports is a `binding` (see *Inline or bound*). A figure from an
-   account that is not connected, an offline buy or a computed share is typed in, copied exactly,
-   with `notes` naming the file and page it came from.
+8. **Bind every figure a channel reports, connected or not.** Check `list-sources`. A figure a
+   connected source reports is a `binding` (see *Inline or bound*). A figure from a channel with no
+   account connected yet keeps its typed-in payload **and** gets a binding naming the channel with
+   `channel_id` instead of `sources` (see *A channel with no account yet*), so it becomes live the
+   day the account is connected. A total across several ad platforms or a split by business unit is
+   a blend or a source group plus a custom dimension (see *Totals across channels*). Only an offline
+   buy or a computed share is typed in with no binding, copied exactly, with `notes` naming the file
+   and page it came from.
 9. **Report what you built, from the tool's answer.** Every write returns `data_blocks`: how many
-   data blocks read a source and how many are typed in. Your reply states the pages built against
-   the pages in the file, those two numbers, the sources the person has to connect for the typed-in
-   ones to become live, and the page types you could not reproduce. Never say a design updates by
-   itself while any of its figures are typed in.
+   data blocks read a source, how many wait for a channel (`placeholder`) and how many are typed in.
+   Your reply states the pages built against the pages in the file, those three numbers, the
+   channels the person has to connect, and the page types you could not reproduce. Never say a
+   design updates by itself while any of its figures are typed in or waiting.
 
 **It is always a new design.** Do not present a design that already exists as the replica, even
 one with the same name made earlier in this conversation or by another agent. Build a new one, and
@@ -975,6 +979,16 @@ is how a client gets March while the dashboard keeps rolling.
 manage-canvases action=update canvas_id=12 date_range=lastQuarter compare=previous
 ```
 
+A block can also pin **dates** instead of a key. `date_from` and `date_till` with no `date_range`
+is a fixed range; that is how a monthly trend from January to July sits on a page about July.
+`date_range: "customRangeYesterday"` with a `date_from` runs from that date up to yesterday, and
+`thisYearExclToday` is the year to date. Both dates are `YYYY-MM-DD`.
+
+```json
+{ "kind": "query", "sources": [2], "metrics": ["spend"], "dimensions": ["date"], "grouping": "1 month",
+  "date_from": "2026-01-01", "date_till": "2026-07-31" }
+```
+
 A period is a **calendar key, and it is camelCase**: `last30Days`, `lastMonth`, `thisQuarter`,
 `last12Month`. Snake case looks right and is not — an unknown key is refused with the full list,
 so read the message rather than guessing again.
@@ -982,6 +996,45 @@ so read the message rather than guessing again.
 `data_mode` follows the bindings: the first binding written onto a design promotes it from
 `inlined` to `bound`, so there is nothing to set. `inlined` only ever describes a design that has
 no bindings at all.
+
+### A channel with no account yet
+
+A report copied from a file usually names channels the team has not connected: Meta, TikTok,
+DV360. Do not settle for typing those figures in. Bind them to the **channel** instead of a
+source, and keep the payload you copied from the file:
+
+```json
+{ "id": "meta-spend", "type": "metric", "frame": {"x": 0.04, "y": 0.16, "w": 0.2, "h": 0.11},
+  "metric": {"value": "$41,200", "label": "Spend"},
+  "binding": { "kind": "query", "channel_id": 4, "metrics": ["spend"] } }
+```
+
+- `channel_id` is the channel's id from `list-integrations`; `metrics` and `dimensions` come from
+  `list-sources` `action=list_dimensions_and_metrics` with that `channel_id` and no `source_id`.
+  A metric the channel does not have is refused when the block is read, naming the ones it does.
+- The block draws its payload until the channel is mapped, so the page looks like the file.
+- Bind a **block**, not a card: a card's query feeds its children and has nothing to show
+  meanwhile, so a card waiting for a channel is refused.
+- Once the person connects the account, one call makes every such block live, on every page:
+
+```
+manage-canvases action=map_channel canvas_id=12 channel_id=4 source_ids=[318]
+```
+
+### Totals across channels, and splits by business unit
+
+A figure summed over several ad platforms is one source when the platforms are blended. A
+**blend** (`manage-blends`) or a cross-channel **source group** (`manage-source-groups`) is an
+integration source like any other, so a binding names its id in `sources`. Their summed metrics
+have their own ids: list them with `list-sources action=list_dimensions_and_metrics` on the blend or group (a
+blend's are `aggregation_metric_universal_metric_<id>`; a source group's need its `report_type`).
+`list-sources action=list` hides blends and groups unless you pass their channel in `channels`.
+
+A split the file makes by **business unit, product or objective** usually lives only in campaign
+names. Make it a custom dimension with `manage-custom-dimensions` (`map_type: data`, one rule per
+unit, such as campaign name `contains` "brand" then "Brand") and name its
+`universal_dimension_<id>` in `dimensions` or in a `filters` condition. Make one dimension per
+split and reuse it on every page.
 
 ### A summary: letting the page write its own narrative
 
