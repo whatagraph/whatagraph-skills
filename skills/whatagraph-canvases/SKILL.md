@@ -1374,7 +1374,7 @@ Composition is validated server-side and the message names the block and the fix
 **Repair from the message and resend.** Do not simplify the page to get past the validator — the
 error tells you the number to change, and dropping the block instead makes the document worse
 than the rule was protecting it from. The rules are: overlap, off-page frames, text that will not
-fit its frame, bars given too little room, block budgets, chrome bands, duplicate block ids, a
+fit its frame, a pill or a table wider than its frame (neither wraps, so both are cut off), bars given too little room, block budgets, chrome bands, duplicate block ids, a
 data-bearing block carrying neither values nor a binding, and a `control` placed where it cannot
 work.
 
