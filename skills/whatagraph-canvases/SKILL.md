@@ -132,8 +132,8 @@ How the report's usual page types map onto blocks:
 | KPI tiles: a dark box per figure with its label | A toned `card` (`tone: dark`) per tile, each holding a `metric`; tiles at one `y` and `h` form one row |
 | Headline figures with icons and a change | `icon` plus `metric` with `delta`, `delta_direction` and `delta_sentiment` |
 | Monthly trend: a small bar chart per measure | `chart`, `bar`, the months as categories |
-| Horizontal bar ranking | `bar_list`, `horizontal`, up to 6 rows; more rows is a `table` or a `chart` |
-| Bars with a line on a second axis | `chart` with a `series_style` `scale: secondary` on the line's series; the chart cannot draw bars and a line together yet, so say which you drew |
+| Horizontal bar ranking | Up to 6 rows: `bar_list`, `horizontal`. 7 to 12 rows: `chart`, `bar`, `orientation: horizontal`, usually with `show_data_labels` |
+| Bars with a line on a second axis | `chart`, `bar`, and on the line's series `series_style` `{"type": "line", "scale": "secondary"}` |
 | Pie or donut breakdown | `chart`, `pie` or `donut`, one series |
 | Conversion funnel with step rates | `shape` blocks for the steps joined by `connector` blocks, the rates in `pill` or `shape` blocks |
 | Table | `table`, every cell a formatted string |
@@ -442,7 +442,9 @@ shrinking it.
   `positive`. Omit the sentiment and the delta renders neutral rather than guessing.
 - **`chart`** — `chart_type`, `categories`, `series`. Every series' `values` must be the same
   length as `categories`. `pie` and `donut` take one series. Types: `bar`, `line`, `area`, `pie`,
-  `donut`, `scatter`, `radar`.
+  `donut`, `scatter`, `radar`. On a `bar`, `line` or `area` chart one series can draw as another of
+  those three through `series_style[i].type`, which is how bars get a line through them. A `bar`
+  chart with `orientation: horizontal` lays its categories down the side, first at the top.
 - **`table`** — `headers` and `rows`; every row has one cell per header. **Every cell is a string
   you have already formatted** — `"1,842"`, `"$34.02"`, `"—"` — never a raw number, and never an
   object: a cell carries no colour or weight of its own, and a non-string cell is rejected. When a
@@ -1477,8 +1479,6 @@ its chart palette beside it — and how it looks is the whole of what the person
   format.
 - **Uploading an image.** `image` blocks take a public `https` URL that already exists, so a
   picture inside an attached file cannot be placed on a page yet.
-- **Bars and a line in one chart.** A series can sit on a second axis, but every series of a chart
-  draws as the same chart type.
 - **Styling a block in an Office export.** A block's own `style` reaches the browser, the PDF and
   the PNG. The PowerPoint and Google Slides writers draw the brand instead.
 
