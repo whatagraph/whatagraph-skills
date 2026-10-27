@@ -93,10 +93,11 @@ The steps:
 4. **Match the page shape.** A 16:9 deck is `slide_16_9`, an A4 report is `a4_portrait` or
    `a4_landscape`. Anything else is `custom`, with a `design_width` and each page's `page_height`
    set to the file's own proportions.
-5. **Brand from the file.** Make the design system from what the pages show: the brand colour as
-   its exact hex, the mood (light or dark grounds), the type, the chart colours in the order the
-   file uses them. Check `list-design-systems` first; a brand made for this client before is the
-   one to reuse.
+5. **Brand from the file.** Check `list-design-systems` first; a brand made for this client before
+   is the one to reuse. Otherwise `manage-design-systems action=generate asset=<the file's id>`,
+   with a `brief` naming the client: the model reads the pages, and a brand generated from a file
+   keeps its exact colour on the panel instead of deepening it. Then `create` with what it
+   returns.
 6. **Build in batches.** `create` with the cover and the next four pages, then add the rest with
    `update_page` and no `page_id`, which appends one page per call. A refused write names every
    page that failed, so fix them all before resending. After each batch, `preview_canvas` one page
@@ -1397,7 +1398,9 @@ manage-design-systems action=generate brief="a warm editorial brand for an indep
 manage-design-systems action=create name="Bookshop" decisions={...the six it returned...}
 ```
 
-`generate` saves nothing — keep what it returns and pass its `decisions` to `create`.
+`generate` saves nothing — keep what it returns and pass its `decisions` to `create`. Pass
+`asset` with a file's id (a brand book, a deck to match, a logo or a screenshot) to have the
+brand read from it.
 
 Attach a brand with `manage-canvases` `action=update design_system_id=<id>`. Switching it
 restyles every page and touches no block.
