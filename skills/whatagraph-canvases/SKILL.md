@@ -120,6 +120,16 @@ The steps:
    channels the person has to connect, and the page types you could not reproduce. Never say a
    design updates by itself while any of its figures are typed in or waiting.
 
+**A funnel** (page views, add to cart, payment, purchase) is shapes, one card per funnel so four
+platforms side by side stay inside a page's block budget. In each card: the platform name as a
+`subheading` text, then one `stadium` `shape` per step with `fill: solid`, one `tint` for every step,
+`role: caption`, and the step name and figure on two lines in `content` (`"Ajout panier\n9,640"`).
+Each step is about 15% narrower than the one above it and centred under it. Between two steps, a
+`circle` `shape` with `fill: soft` holds the conversion rate (`"40%"`). In page units, a 0.21 wide
+card 0.44 tall fits four steps 0.06 tall with gaps of 0.036, and a rate circle needs about 0.042 of
+the page's width: a smaller circle cuts a percentage off. Convert to the card's interior as
+*Sizing a group's children* says.
+
 **Pictures come from the file's own pages.** `manage-assets action=crop_page asset_id=<the file>
 page=<n> region={"x", "y", "w", "h"}` cuts a region out of that page and answers a public `url` for
 an `image` block. The region is fractions of the page (0 to 1) from its top left, measured on the
@@ -142,7 +152,7 @@ How the report's usual page types map onto blocks:
 | Horizontal bar ranking | Up to 6 rows: `bar_list`, `horizontal`. 7 to 12 rows: `chart`, `bar`, `orientation: horizontal`, usually with `show_data_labels` |
 | Bars with a line on a second axis | `chart`, `bar`, and on the line's series `series_style` `{"type": "line", "scale": "secondary"}` |
 | Pie or donut breakdown | `chart`, `pie` or `donut`, one series |
-| Conversion funnel with step rates | `shape` blocks for the steps joined by `connector` blocks, the rates in `pill` or `shape` blocks |
+| Conversion funnel with step rates | One `card` per funnel, each step a `stadium` `shape` narrowing down the card, the step rate in a `circle` between steps (see *A funnel* below) |
 | Table | `table`, every cell a formatted string |
 | Commentary paragraph or bullet box | `text` with `role: body`, inside a `card` when the file boxes it |
 | Ad creatives, screenshots, logos | `image` with the `url` that `manage-assets action=crop_page` returns for that region of the file's page (see below) |
