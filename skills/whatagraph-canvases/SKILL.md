@@ -130,6 +130,13 @@ card 0.44 tall fits four steps 0.06 tall with gaps of 0.036, and a rate circle n
 the page's width: a smaller circle cuts a percentage off. Convert to the card's interior as
 *Sizing a group's children* says.
 
+**A dense page** (six small charts in a 3 x 2 grid, with a heading, tiles and a paragraph) can pass
+a layout's block budget, which counts only the blocks on the page itself, not those inside a card.
+Take `split` first, which holds 10 on a slide. Past that, put what the file draws as a box into a
+`card`: a KPI tile strip is one card, a boxed commentary with its chart is one card. Do not wrap
+blocks in a card the file does not box: a card draws a panel, and while `style.background:
+transparent` hides it in the browser and the PDF, the PowerPoint and Google Slides exports draw it.
+
 **Pictures come from the file's own pages.** `manage-assets action=crop_page asset_id=<the file>
 page=<n> region={"x", "y", "w", "h"}` cuts a region out of that page and answers a public `url` for
 an `image` block. The region is fractions of the page (0 to 1) from its top left, measured on the
