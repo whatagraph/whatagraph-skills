@@ -475,6 +475,11 @@ shrinking it.
   `donut`, `scatter`, `radar`. On a `bar`, `line` or `area` chart one series can draw as another of
   those three through `series_style[i].type`, which is how bars get a line through them. A `bar`
   chart with `orientation: horizontal` lays its categories down the side, first at the top.
+  A report that colours things consistently (each platform, each business unit) fixes those
+  colours: `series_style[i].color` for a series, `category_colors: [{"category": "Brand", "color":
+  "#C8102E"}]` for a pie's slices or a one-series chart's bars, matched by label. A colour is a role,
+  a ramp slot (`brand.3`) or `#RRGGBB`; read the file's own colour legend when it has one. Google
+  Slides cannot colour a pie slice, so a pie there keeps the ramp.
 - **`table`** — `headers` and `rows`; every row has one cell per header. **Every cell is a string
   you have already formatted** — `"1,842"`, `"$34.02"`, `"—"` — never a raw number, and never an
   object: a cell carries no colour or weight of its own, and a non-string cell is rejected. When a
