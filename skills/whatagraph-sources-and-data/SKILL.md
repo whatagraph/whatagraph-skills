@@ -13,7 +13,9 @@ optional_tools:
   - tool_name: list-source-groups
     purpose: Reuse an existing group before fetching the same question from many sources one by one.
   - tool_name: list-widgets
-    purpose: Read a widget's bound fields to tell a retired metric apart from a typo.
+    purpose: Read a widget's bound fields to tell a retired metric apart from a typo, and its filter ids to reproduce it with fetch-data.
+  - tool_name: list-filters
+    purpose: Read a saved filter's conditions and version before passing it to fetch-data.
   - tool_name: manage-custom-dimensions
     purpose: Create a tag dimension and its values; `tag` only assigns ones that already exist.
 ---
@@ -171,6 +173,57 @@ fetch-data source_id=<id> metrics=[...] from="2025-10-01" till="2025-10-31"
 ```
 
 Values: `previous` (matching-length previous period), `last_year` (same dates, year prior), `custom` (explicit `vs_from`/`vs_till`).
+
+### Filtering the fetch — `filters` and `filter_ids`
+
+`fetch-data` filters data the same way a widget filter does. The filter applies to the rows, to `totals` and to the `comparison` block. Use `filters` for an ad hoc filter, `filter_ids` for saved filters, or both in one call.
+
+**`filters`** is an array of groups. Each group is an array of conditions.
+
+- Groups are joined with **AND**. The conditions inside one group are joined with **OR**.
+- On a channel that still uses version 1 filters, groups are joined with OR as well. `list-filters action=show` reports a saved filter's `version`.
+- A condition is `{"dimension": <id>, "filter_operator": <op>, "value": <v>}` or `{"metric": <id>, "filter_operator": <op>, "value": <v>}`. Take the ids from `list_dimensions_and_metrics` for the same source and report type, the same as for `metrics` and `dimensions`. Custom dimensions (`universal_dimension_<n>`) work too.
+- One group holds only dimensions or only metrics, and only channel fields or only custom fields. Put different kinds in separate groups.
+
+```
+fetch-data source_id=<ga4_source_id> metrics=["screenPageViews"] dimensions=["unifiedPagePathScreen"]
+   period="lastMonth"
+   filters=[[{"dimension":"unifiedPagePathScreen","filter_operator":"contain_dimension","value":"/blog/"}],
+            [{"metric":"screenPageViews","filter_operator":"greater_metric","value":"0"}]]
+# pages whose path contains /blog/ AND that had at least one view
+```
+
+Operators:
+
+| Kind | Operators (everyday spelling accepted) |
+|---|---|
+| Dimension | `contain_dimension` (`contains`), `not_contain_dimension`, `exactly_matches_dimension` (`equals`), `not_exactly_matches_dimension`, `starts_with_dimension`, `not_starts_with_dimension`, `ends_with_dimension`, `not_ends_with_dimension`, `matches_regex_dimension` (`regex`), `not_matches_regex_dimension`, `empty_dimension`, `not_empty_dimension`, `includes`, `excludes` |
+| Metric | `equal_metric` (`=`), `not_equal_metric` (`!=`), `greater_metric` (`>`), `greater_or_equal_metric` (`>=`), `less_metric` (`<`), `less_or_equal_metric` (`<=`), `empty_metric`, `not_empty_metric` |
+
+- Each channel supports only some operators. One it does not support is rejected with the list it does support.
+- The empty operators need no `value`. `includes` and `excludes` take an array of values and match them exactly. Every other operator takes one value, and an array is rejected.
+- **GA4:** `exactly_matches_dimension` and the regex operators are case sensitive, and a regex must match the whole value (`.*/blog/.*`, not `/blog/`). `contains`, `starts_with` and `ends_with` are not case sensitive. A GA4 dimension condition takes one value, so use a regex instead of `includes`.
+- **Google Sheets** compares a metric condition with each sheet row before rows are grouped, so `> 900` can drop rows whose group total is above 900. A widget on the same sheet does the same.
+
+**`filter_ids`** takes up to 10 saved filter ids of the same channel as the source. Their groups are put into one filter. When a report source filter is among them, that filter takes the source filter's version, as a widget does; otherwise all the saved filters must have the same version. A version 2 filter joins its groups with AND, a version 1 filter with OR. A filter of another team answers `not_found`.
+
+#### Reproduce a filtered widget
+
+A widget uses every filter on its widget config (there can be more than one) and the filter of its report source. Leaving one out gives different numbers.
+
+1. `list-widgets action=show` on the widget. Note its `source_id`, report type, fields, and `inline_filters`.
+2. Pass every `inline_filters` id as `filter_ids`. Leave out the one with scope `source` when the widget shows `source_filter_off: true`.
+3. Call `fetch-data` with the widget's source, report type, metrics, dimensions and date range.
+
+```
+fetch-data source_id=<id> report_type=<rt> metrics=[...] dimensions=[...]
+   from="2026-10-01" till="2026-10-31"
+   filter_ids=[<widget_config_filter_id>, <source_filter_id>]
+```
+
+When the widget uses its source filter, the saved filters are combined the way the widget combines them: the widget config conditions are added to the source conditions, and the source filter's channel settings (such as an attribution window) are kept.
+
+**When the numbers can differ:** a widget with no source filter in use (none on the report source, or `source_filter_off: true`) and two or more widget config filters keeps the rows that match any one of those filters. `filter_ids` keeps only the rows that match all of them. For such a widget, fetch once per filter id instead, and say in the answer that the widget's own total may not equal the sum, because a row can match more than one filter.
 
 ### Field-id family by source type
 
