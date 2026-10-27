@@ -162,7 +162,8 @@ How the report's usual page types map onto blocks:
 | Conversion funnel with step rates | One `card` per funnel, each step a `stadium` `shape` narrowing down the card, the step rate in a `circle` between steps (see *A funnel* below) |
 | Table | `table`, every cell a formatted string |
 | Commentary paragraph or bullet box | `text` with `role: body`, inside a `card` when the file boxes it |
-| Ad creatives, screenshots, logos | `image` with the `url` that `manage-assets action=crop_page` returns for that region of the file's page (see below) |
+| Platform logos (Meta, Google Ads, TikTok…) | `icon` with `channel` set to the integration slug |
+| Ad creatives, screenshots, other logos | `image` with the `url` that `manage-assets action=crop_page` returns for that region of the file's page (see below) |
 | Learnings grid (continue, optimise, stop, start) | One `card` per column at one `y` and `h`, each with a heading and a body |
 
 ## The workflow
@@ -483,6 +484,10 @@ shrinking it.
   files are single-stroke line icons and take the ink wholesale; the older multicolour files
   take it for their first shade and the chart ramp for the rest, and the few drawn in fixed
   colours — the reactions, the search-engine logos — keep them.
+  **A channel's logo** is an `icon` with `channel` instead of `file`: the integration `slug` from
+  `list-integrations` (`"facebook-ads"`, `"google-ads"`, `"tiktok"`, `"linkedin-ads"`,
+  `"snapchat"`, `"google-dv360"`, `"youtube"`). It keeps the brand's own colours in every export.
+  X / Twitter has no bundled logo yet: crop it from the file with `crop_page`.
 - **`card`** — a surface holding other blocks. Give it `blocks`. **Child frames are fractions of
   the card on both axes**, not of the page, and **every child needs a real frame** — one filling
   its card is `{"x": 0, "y": 0, "w": 1, "h": 1}`. Cards cannot nest.
