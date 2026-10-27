@@ -93,25 +93,30 @@ The steps:
    carry on until the count is complete. Do not stop at a natural-looking break to report progress
    or offer to continue: the person asked for the report, and a fraction of it is not what they asked
    for.
-4. **Match the page shape.** A 16:9 deck is `slide_16_9`, an A4 report is `a4_portrait` or
+4. **Match the type size.** An agency deck prints its commentary small, often under the format's
+   legibility floor, and copied at the default size it will not fit the frames the file gives it.
+   When the file's body text is visibly smaller than a normal slide's, pass `compact_type: true` on
+   `create`: the floor drops by a third. Then set body copy and captions with `scale` (0.6 to 0.8)
+   to the size the file prints them at, rather than enlarging frames or cutting words.
+5. **Match the page shape.** A 16:9 deck is `slide_16_9`, an A4 report is `a4_portrait` or
    `a4_landscape`. Anything else is `custom`, with a `design_width` and each page's `page_height`
    set to the file's own proportions.
-5. **Brand from the file.** Check `list-design-systems` first; a brand made for this client before
+6. **Brand from the file.** Check `list-design-systems` first; a brand made for this client before
    is the one to reuse. Otherwise `manage-design-systems action=generate asset=<the file's id>`,
    with a `brief` naming the client: the model reads the pages, and a brand generated from a file
    keeps its exact colour on the panel instead of deepening it. Then `create` with what it
    returns.
-6. **Build in batches.** `create` with the cover and the next four pages, then add the rest with
+7. **Build in batches.** `create` with the cover and the next four pages, then add the rest with
    `update_page` and no `page_id`, which appends one page per call. Work through the file three
    pages at a time: read the next three with `read-document` `pages`, append them, and move on.
    A refused write names every page that failed, so fix them all before resending. The first time
    you build a page type, `preview_canvas` it and compare it with the same page of the file; after
    that, reuse its frames and skip the preview.
-7. **Copy figures from the page they are printed on.** Read each number and its change next to
+8. **Copy figures from the page they are printed on.** Read each number and its change next to
    the label the file prints it under, from the page picture when the text is ambiguous. A delta
    belongs to the metric it sits beside; never carry one across from another page, and never fill
    a chart with values the file does not show. A figure you cannot read is `—`, and you say so.
-8. **Bind every figure a channel reports, connected or not.** Check `list-sources`. A figure a
+9. **Bind every figure a channel reports, connected or not.** Check `list-sources`. A figure a
    connected source reports is a `binding` (see *Inline or bound*). A figure from a channel with no
    account connected yet keeps its typed-in payload **and** gets a binding naming the channel with
    `channel_id` instead of `sources` (see *A channel with no account yet*), so it becomes live the
@@ -119,7 +124,7 @@ The steps:
    a blend or a source group plus a custom dimension (see *Totals across channels*). Only an offline
    buy or a computed share is typed in with no binding, copied exactly, with `notes` naming the file
    and page it came from.
-9. **Report what you built, from the tool's answer.** Every write returns `data_blocks`: how many
+10. **Report what you built, from the tool's answer.** Every write returns `data_blocks`: how many
    data blocks read a source, how many wait for a channel (`placeholder`) and how many are typed in.
    Your reply states the pages built against the pages in the file, those three numbers, the
    channels the person has to connect, and the page types you could not reproduce. Never say a
