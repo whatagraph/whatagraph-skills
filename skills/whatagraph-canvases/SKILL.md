@@ -87,9 +87,12 @@ The steps:
 2. **One frame-set per type.** Decide each type's frames once and reuse them exactly on every page
    of that type. A report where the KPI strip sits at a slightly different height on every page
    looks generated; the original did not.
-3. **Keep every page, in order.** A 93-page report becomes a 93-page design. Merge or drop pages
-   only when the person asks you to, and if the file is too long to finish in one turn, say how far
-   you got and carry on in the next rather than condensing.
+3. **Keep every page, in order, and build all of them in this turn.** A 93-page report becomes a
+   93-page design. Merge or drop pages only when the person asks you to. Pass the file's page count
+   as `source_pages` on `create`; every write then answers with how many pages are built, and you
+   carry on until the count is complete. Do not stop at a natural-looking break to report progress
+   or offer to continue: the person asked for the report, and a fraction of it is not what they asked
+   for.
 4. **Match the page shape.** A 16:9 deck is `slide_16_9`, an A4 report is `a4_portrait` or
    `a4_landscape`. Anything else is `custom`, with a `design_width` and each page's `page_height`
    set to the file's own proportions.
@@ -99,9 +102,11 @@ The steps:
    keeps its exact colour on the panel instead of deepening it. Then `create` with what it
    returns.
 6. **Build in batches.** `create` with the cover and the next four pages, then add the rest with
-   `update_page` and no `page_id`, which appends one page per call. A refused write names every
-   page that failed, so fix them all before resending. After each batch, `preview_canvas` one page
-   of each type you introduced and compare it with the same page of the file.
+   `update_page` and no `page_id`, which appends one page per call. Work through the file three
+   pages at a time: read the next three with `read-document` `pages`, append them, and move on.
+   A refused write names every page that failed, so fix them all before resending. The first time
+   you build a page type, `preview_canvas` it and compare it with the same page of the file; after
+   that, reuse its frames and skip the preview.
 7. **Copy figures from the page they are printed on.** Read each number and its change next to
    the label the file prints it under, from the page picture when the text is ambiguous. A delta
    belongs to the metric it sits beside; never carry one across from another page, and never fill
