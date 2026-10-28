@@ -94,8 +94,16 @@ The steps:
    text line: right, but connected to nothing. Look at the page (`list-canvases action=preview`
    and `action=show_page`), then swap one traced block at a time with `patch_blocks` and
    `replace_block_id` set to its id, sending one block and no `frame`:
-   - a chart picture becomes a `chart` (or `table`, `bar_list`) of the same shape: a monthly bar
-     chart stays a monthly bar chart, never one `metric`. The server refuses a metric on a picture.
+   - a chart picture becomes a `chart` (or `table`, `bar_list`) of the same shape, never one
+     `metric` (the server refuses a metric on a picture). Before sending it, read the picture
+     (`list-canvases action=preview`) and match it:
+     - **periods**: an axis of months (janvier to juillet) is the date dimension with
+       `grouping: monthly` and `date_from`/`date_till` spanning those months. Without them the chart
+       reads the design's period, by day.
+     - **what each bar is**: platforms, business units or campaigns, each a different dimension.
+     - **series**: one bar per category, or two side by side (cost and impressions) is two metrics.
+     - **colours**: for a chart of one series the server takes the bar colour and direction from the
+       picture and says so. For more series, set each `series_style[i].color` to the file's colour.
    - a text line that prints a figure becomes a `metric` bound to that figure. The server draws it
      as that line, in its face and colours: "3.16M DH investis" stays one line with its words, and
      a line that is only a percentage ("+0.86 %") draws the change alone. For a change line, bind
