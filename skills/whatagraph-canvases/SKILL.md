@@ -105,9 +105,9 @@ The steps:
      - **colours**: for a chart of one series the server takes the bar colour and direction from the
        picture and says so. For more series, set each `series_style[i].color` to the file's colour.
      - **platforms**: a chart whose bars are several platforms (Meta, Google, TikTok) reads several
-       channels. Bind it to their connected sources together, or to a blend of them. A waiting block
-       names one channel, so with any of those platforms not connected, leave the picture and
-       report it. Never bind it to one platform's channel: that draws one platform as all of them.
+       channels, and a binding reads one source: bind it to a blend or a cross-channel source group
+       of them, which is one source. A waiting block names one channel, so with no such blend, or
+       any of those platforms not connected, leave the picture and report it. Never bind it to one platform's channel: that draws one platform as all of them.
    - a text line that prints a figure becomes a `metric` bound to that figure. The server draws it
      as that line, in its face and colours: "3.16M DH investis" stays one line with its words, and
      a line that is only a percentage ("+0.86 %") draws the change alone. For a change line, bind
