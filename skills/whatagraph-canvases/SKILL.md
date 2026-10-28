@@ -73,62 +73,36 @@ it applies: not the six to ten slides, not one idea per page, not the direction 
 picked. The person is judging one thing, whether it looks like their report, and every page you
 merge, drop or "improve" is a page that does not.
 
-**Look at the pages, not only the text.** `read-document` with `pages` returns up to three pages
-of the file as pictures per call. The extracted text carries the words and the figures but no
-layout, colour, chart type or picture. Look at every page you build before you write it, and look
-again at any page whose figures you are about to copy.
+**Trace the file, do not draw it.** `manage-canvases action=trace_pages` reads the file's pages and
+appends them to the design exactly as the file draws them: every line of text in its own face, size
+and colour, every panel and band in its colour, every chart, photo, logo and icon as a picture of
+itself. A page you compose from a picture of the original comes out as your idea of that page; a
+traced page is the page.
 
 The steps:
 
-1. **Inventory first.** Read the whole text once, then look at the pages, and write down what each
-   page is: its number, its type (cover, section divider, KPI tiles, chart and commentary, table,
-   funnel, screenshots, closing) and its blocks. Most reports repeat a dozen types across many
-   pages. Put the inventory in the first page's `notes`, so a later turn can carry on.
-2. **One frame-set per type.** Decide each type's frames once and reuse them exactly on every page
-   of that type. A report where the KPI strip sits at a slightly different height on every page
-   looks generated; the original did not.
-3. **Keep every page, in order, and build all of them in this turn.** A 93-page report becomes a
-   93-page design. Merge or drop pages only when the person asks you to. Pass the file's page count
-   as `source_pages` on `create`; every write then answers with how many pages are built, and you
-   carry on until the count is complete. Do not stop at a natural-looking break to report progress
-   or offer to continue: the person asked for the report, and a fraction of it is not what they asked
-   for.
-4. **Match the type size.** An agency deck prints its commentary small, often under the format's
-   legibility floor, and copied at the default size it will not fit the frames the file gives it.
-   When the file's body text is visibly smaller than a normal slide's, pass `compact_type: true` on
-   `create`: the floor drops by a third. Then set body copy and captions with `scale` (0.6 to 0.8)
-   to the size the file prints them at, rather than enlarging frames or cutting words.
-5. **Match the page shape.** A 16:9 deck is `slide_16_9`, an A4 report is `a4_portrait` or
-   `a4_landscape`. Anything else is `custom`, with a `design_width` and each page's `page_height`
-   set to the file's own proportions.
-6. **Brand from the file.** Check `list-design-systems` first; a brand made for this client before
-   is the one to reuse. Otherwise `manage-design-systems action=generate asset=<the file's id>`,
-   with a `brief` naming the client: the model reads the pages, and a brand generated from a file
-   keeps its exact colour on the panel instead of deepening it. Then `create` with what it
-   returns.
-7. **Build in batches.** `create` with the cover and the next four pages, then add the rest with
-   `update_page` and no `page_id`, which appends one page per call. Work through the file three
-   pages at a time: read the next three with `read-document` `pages`, append them, and move on.
-   A refused write names every page that failed, so fix them all before resending. The first time
-   you build a page type, `preview_canvas` it and compare it with the same page of the file; after
-   that, reuse its frames and skip the preview.
-8. **Copy figures from the page they are printed on.** Read each number and its change next to
-   the label the file prints it under, from the page picture when the text is ambiguous. A delta
-   belongs to the metric it sits beside; never carry one across from another page, and never fill
-   a chart with values the file does not show. A figure you cannot read is `—`, and you say so.
-9. **Bind every figure a channel reports, connected or not.** Check `list-sources`. A figure a
-   connected source reports is a `binding` (see *Inline or bound*). A figure from a channel with no
-   account connected yet keeps its typed-in payload **and** gets a binding naming the channel with
-   `channel_id` instead of `sources` (see *A channel with no account yet*), so it becomes live the
-   day the account is connected. A total across several ad platforms or a split by business unit is
-   a blend or a source group plus a custom dimension (see *Totals across channels*). Only an offline
-   buy or a computed share is typed in with no binding, copied exactly, with `notes` naming the file
-   and page it came from.
-10. **Report what you built, from the tool's answer.** Every write returns `data_blocks`: how many
-   data blocks read a source, how many wait for a channel (`placeholder`) and how many are typed in.
-   Your reply states the pages built against the pages in the file, those three numbers, the
-   channels the person has to connect, and the page types you could not reproduce. Never say a
-   design updates by itself while any of its figures are typed in or waiting.
+1. **Create the design empty, in the file's shape.** A 16:9 deck is `slide_16_9`, an A4 report is
+   `a4_portrait` or `a4_landscape`; anything else is `custom` with a `design_width`. Give it a brand
+   generated from the file (`manage-design-systems action=generate asset=<the file's id>`), and no
+   `pages`.
+2. **Trace every page, in order, in this turn.** `trace_pages` with `asset_id` and `file_pages`
+   `[1..10]`, then `[11..20]`, and so on to the last page. The first call records the file's page
+   count, and every answer says how many pages are built: carry on until it says all of them are.
+   Do not stop to summarise or to offer to continue, and do not skip or merge pages.
+3. **Then make the figures live, page by page.** A traced chart is a picture and a traced KPI is
+   text: right, but connected to nothing. Look at the page (`read-document` `pages`) and
+   `list-canvases action=show_page`, then with `patch_blocks` replace the picture of a chart with a
+   `chart` block in the same `frame` (and `remove_block_ids` for the picture), and a typed figure
+   with a `metric` block in the same frame, each bound to a source or waiting for its channel (see
+   *Inline or bound*). Keep the file's colours with `series_style[i].color` and `category_colors`.
+   Leave a picture where no source could ever fill it: creatives, screenshots, logos.
+4. **Report from the tool's answers.** Pages traced against the file's pages, `data_blocks` (bound,
+   waiting for a channel, typed in), the channels the person has to connect, and the charts still
+   drawn as pictures.
+
+**It is always a new design.** Do not present a design that already exists as the replica, even
+one with the same name made earlier in this conversation or by another agent. Build a new one, and
+describe only what this turn wrote.
 
 **A funnel** (page views, add to cart, payment, purchase) is shapes, one card per funnel so four
 platforms side by side stay inside a page's block budget. In each card: the platform name as a
@@ -140,25 +114,7 @@ card 0.44 tall fits four steps 0.06 tall with gaps of 0.036, and a rate circle n
 the page's width: a smaller circle cuts a percentage off. Convert to the card's interior as
 *Sizing a group's children* says.
 
-**A dense page** (six small charts in a 3 x 2 grid, with a heading, tiles and a paragraph) can pass
-a layout's block budget, which counts only the blocks on the page itself, not those inside a card.
-Take `split` first, which holds 10 on a slide. Past that, put what the file draws as a box into a
-`card`: a KPI tile strip is one card, a boxed commentary with its chart is one card. Do not wrap
-blocks in a card the file does not box: a card draws a panel, and while `style.background:
-transparent` hides it in the browser and the PDF, the PowerPoint and Google Slides exports draw it.
-
-**Pictures come from the file's own pages.** `manage-assets action=crop_page asset_id=<the file>
-page=<n> region={"x", "y", "w", "h"}` cuts a region out of that page and answers a public `url` for
-an `image` block. The region is fractions of the page (0 to 1) from its top left, measured on the
-picture `read-document` `pages` returned. Leave a small margin around the picture, crop each
-creative or logo once, and reuse its `url` wherever the file repeats it. Use `fit: contain` when the
-frame's shape differs from the crop's.
-
-**It is always a new design.** Do not present a design that already exists as the replica, even
-one with the same name made earlier in this conversation or by another agent. Build a new one, and
-describe only what this turn wrote.
-
-How the report's usual page types map onto blocks:
+When you rebuild a block live, these are the usual page types and the blocks that draw them:
 
 | In the file | In the design |
 |---|---|
@@ -169,11 +125,11 @@ How the report's usual page types map onto blocks:
 | Horizontal bar ranking | Up to 6 rows: `bar_list`, `horizontal`. 7 to 12 rows: `chart`, `bar`, `orientation: horizontal`, usually with `show_data_labels` |
 | Bars with a line on a second axis | `chart`, `bar`, and on the line's series `series_style` `{"type": "line", "scale": "secondary"}` |
 | Pie or donut breakdown | `chart`, `pie` or `donut`, one series |
-| Conversion funnel with step rates | One `card` per funnel, each step a `stadium` `shape` narrowing down the card, the step rate in a `circle` between steps (see *A funnel* below) |
+| Conversion funnel with step rates | One `card` per funnel, each step a `stadium` `shape` narrowing down the card, the step rate in a `circle` between steps (see *A funnel* above) |
 | Table | `table`, every cell a formatted string |
 | Commentary paragraph or bullet box | `text` with `role: body`, inside a `card` when the file boxes it |
 | Platform logos (Meta, Google Ads, TikTok…) | `icon` with `channel` set to the integration slug |
-| Ad creatives, screenshots, other logos | `image` with the `url` that `manage-assets action=crop_page` returns for that region of the file's page (see below) |
+| Ad creatives, screenshots, other logos | Already pictures on a traced page; elsewhere an `image` with the `url` `manage-assets action=crop_page` returns for that region of the file's page |
 | Learnings grid (continue, optimise, stop, start) | One `card` per column at one `y` and `h`, each with a heading and a body |
 
 ## The workflow
