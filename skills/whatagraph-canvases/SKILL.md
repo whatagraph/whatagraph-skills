@@ -94,11 +94,18 @@ The steps:
    `list-canvases action=show_page`, then with `patch_blocks` replace the picture of a chart with a
    `chart` block in the same `frame` (and `remove_block_ids` for the picture), and a typed figure
    with a `metric` block in the same frame, each bound to a source or waiting for its channel (see
-   *Inline or bound*). Keep the file's colours with `series_style[i].color` and `category_colors`.
+   *Inline or bound*). Work out which platform each figure comes from (the page title, its logo,
+   the metric's name) and check `list-sources` for a connected account of it. Where there is none,
+   do not leave the figure typed in: bind it to that platform's channel (*A channel with no account
+   yet*), which draws the channel's sample data until the person connects the account. Keep the
+   file's colours with `series_style[i].color` and `category_colors`.
    Leave a picture where no source could ever fill it: creatives, screenshots, logos.
 4. **Report from the tool's answers.** Pages traced against the file's pages, `data_blocks` (bound,
    waiting for a channel, typed in), the channels the person has to connect, and the charts still
-   drawn as pictures.
+   drawn as pictures. Say plainly that figures waiting for a channel are sample data, not theirs.
+
+**If `trace_pages` fails, stop and report the error.** Do not draw the pages yourself instead: a
+hand-built page is what tracing replaces, and the person needs to know the tool failed.
 
 **It is always a new design.** Do not present a design that already exists as the replica, even
 one with the same name made earlier in this conversation or by another agent. Build a new one, and
@@ -1003,7 +1010,9 @@ no bindings at all.
 
 A report copied from a file usually names channels the team has not connected: Meta, TikTok,
 DV360. Do not settle for typing those figures in. Bind them to the **channel** instead of a
-source, and keep the payload you copied from the file:
+source, and keep the payload you copied from the file. The block draws the channel's **sample
+data**, the same figures a demo report shows, so the page looks live and has the shape its real
+figures will take:
 
 ```json
 { "id": "meta-spend", "type": "metric", "frame": {"x": 0.04, "y": 0.16, "w": 0.2, "h": 0.11},
@@ -1014,7 +1023,11 @@ source, and keep the payload you copied from the file:
 - `channel_id` is the channel's id from `list-integrations`; `metrics` and `dimensions` come from
   `list-sources` `action=list_dimensions_and_metrics` with that `channel_id` and no `source_id`.
   A metric the channel does not have is refused when the block is read, naming the ones it does.
-- The block draws its payload until the channel is mapped, so the page looks like the file.
+- The block draws sample data until the channel is mapped: a dated chart gets one point per
+  period of the range. Only a channel with no sample data falls back to the payload, which is why
+  you still keep it.
+- Sample figures are not the person's. Never present them as their results, and keep any
+  commentary you write about them general until the channel is mapped.
 - Bind a **block**, not a card: a card's query feeds its children and has nothing to show
   meanwhile, so a card waiting for a channel is refused.
 - Once the person connects the account, one call makes every such block live, on every page:
