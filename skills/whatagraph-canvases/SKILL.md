@@ -113,8 +113,10 @@ The steps:
      a line that is only a percentage ("+0.86 %") draws the change alone. For a change line, bind
      the metric that changed with `compare: previous`; its value is not what is drawn.
    The new block takes the traced block's exact frame and place. Over a picture, the text lines
-   inside it go too, and the answer lists their words: a delta printed over the chart (`+0.86 %`)
-   is one of them, so put it back as a bound `metric` with a comparison in the frame it had.
+   inside it go too, except a change printed over the chart (`+0.86 %`): the answer names it as
+   kept, so swap it with `replace_block_id` too. Every answer quotes the words it replaced; if they
+   are not the figure you meant (a footer's date, a title), patch that id back as a `text` block
+   with the quoted words (its frame and style are kept) and swap the right line.
    Do not use `remove_block_ids` on a traced page and never resend or rebuild its panels, bands,
    headings or commentary: the traced page is already right, and only its figures change. Bind each block to a source or to
    its channel (see *Inline or bound*). Work out which platform each figure comes from (the page title, its logo,
