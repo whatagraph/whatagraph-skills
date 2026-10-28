@@ -92,12 +92,16 @@ The steps:
 3. **Then make the figures live, page by page, without redrawing the page.** A traced chart is a
    picture with its title, axis labels and values as separate text lines, and a traced KPI is a
    text line: right, but connected to nothing. Look at the page (`list-canvases action=preview`
-   and `action=show_page`), then send each live block with `patch_blocks` and `clear_under: true`:
-   a `chart` whose `frame` covers the chart's picture and its labels, a `metric` whose frame covers
-   the figure and its label. The server drops exactly the traced blocks lying inside each new
-   frame and keeps everything else, the panel underneath included. Do not use `remove_block_ids`
-   on a traced page and never resend or rebuild its panels, bands, headings or commentary: the
-   traced page is already right, and only its figures change. Bind each block to a source or to
+   and `action=show_page`), then swap one traced block at a time with `patch_blocks` and
+   `replace_block_id` set to its id, sending one block and no `frame`:
+   - a chart picture becomes a `chart` (or `table`, `bar_list`) of the same shape: a monthly bar
+     chart stays a monthly bar chart, never one `metric`. The server refuses a metric on a picture.
+   - a text line that prints a figure becomes a `metric` bound to that figure.
+   The new block takes the traced block's exact frame and place. Over a picture, the text lines
+   inside it go too, and the answer lists their words: a delta printed over the chart (`+0.86 %`)
+   is one of them, so put it back as a bound `metric` with a comparison in the frame it had.
+   Do not use `remove_block_ids` on a traced page and never resend or rebuild its panels, bands,
+   headings or commentary: the traced page is already right, and only its figures change. Bind each block to a source or to
    its channel (see *Inline or bound*). Work out which platform each figure comes from (the page title, its logo,
    the metric's name) and check `list-sources` for a connected account of it. Where there is none,
    do not leave the figure typed in: bind it to that platform's channel (*A channel with no account
