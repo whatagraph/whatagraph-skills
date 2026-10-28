@@ -96,7 +96,10 @@ The steps:
    `replace_block_id` set to its id, sending one block and no `frame`:
    - a chart picture becomes a `chart` (or `table`, `bar_list`) of the same shape: a monthly bar
      chart stays a monthly bar chart, never one `metric`. The server refuses a metric on a picture.
-   - a text line that prints a figure becomes a `metric` bound to that figure.
+   - a text line that prints a figure becomes a `metric` bound to that figure. The server draws it
+     as that line, in its face and colours: "3.16M DH investis" stays one line with its words, and
+     a line that is only a percentage ("+0.86 %") draws the change alone. For a change line, bind
+     the metric that changed with `compare: previous`; its value is not what is drawn.
    The new block takes the traced block's exact frame and place. Over a picture, the text lines
    inside it go too, and the answer lists their words: a delta printed over the chart (`+0.86 %`)
    is one of them, so put it back as a bound `metric` with a comparison in the frame it had.
