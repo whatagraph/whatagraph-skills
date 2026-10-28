@@ -89,12 +89,16 @@ The steps:
    `[1..10]`, then `[11..20]`, and so on to the last page. The first call records the file's page
    count, and every answer says how many pages are built: carry on until it says all of them are.
    Do not stop to summarise or to offer to continue, and do not skip or merge pages.
-3. **Then make the figures live, page by page.** A traced chart is a picture and a traced KPI is
-   text: right, but connected to nothing. Look at the page (`read-document` `pages`) and
-   `list-canvases action=show_page`, then with `patch_blocks` replace the picture of a chart with a
-   `chart` block in the same `frame` (and `remove_block_ids` for the picture), and a typed figure
-   with a `metric` block in the same frame, each bound to a source or waiting for its channel (see
-   *Inline or bound*). Work out which platform each figure comes from (the page title, its logo,
+3. **Then make the figures live, page by page, without redrawing the page.** A traced chart is a
+   picture with its title, axis labels and values as separate text lines, and a traced KPI is a
+   text line: right, but connected to nothing. Look at the page (`list-canvases action=preview`
+   and `action=show_page`), then send each live block with `patch_blocks` and `clear_under: true`:
+   a `chart` whose `frame` covers the chart's picture and its labels, a `metric` whose frame covers
+   the figure and its label. The server drops exactly the traced blocks lying inside each new
+   frame and keeps everything else, the panel underneath included. Do not use `remove_block_ids`
+   on a traced page and never resend or rebuild its panels, bands, headings or commentary: the
+   traced page is already right, and only its figures change. Bind each block to a source or to
+   its channel (see *Inline or bound*). Work out which platform each figure comes from (the page title, its logo,
    the metric's name) and check `list-sources` for a connected account of it. Where there is none,
    do not leave the figure typed in: bind it to that platform's channel (*A channel with no account
    yet*), which draws the channel's sample data until the person connects the account. Keep the
