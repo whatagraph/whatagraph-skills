@@ -98,7 +98,7 @@ The steps:
      `metric` (the server refuses a metric on a picture). Before sending it, read the picture
      (`list-canvases action=preview`) and match it:
      - **periods**: an axis of months (janvier to juillet) is the date dimension with
-       `grouping: monthly` and `date_from`/`date_till` spanning those months. Without them the chart
+       `grouping: 1 month` and `date_from`/`date_till` spanning those months. Without them the chart
        reads the design's period, by day.
      - **what each bar is**: platforms, business units or campaigns, each a different dimension.
      - **series**: one bar per category, or two side by side (cost and impressions) is two metrics.
