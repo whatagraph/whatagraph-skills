@@ -104,10 +104,13 @@ The steps:
      - **series**: one bar per category, or two side by side (cost and impressions) is two metrics.
      - **colours**: for a chart of one series the server takes the bar colour and direction from the
        picture and says so. For more series, set each `series_style[i].color` to the file's colour.
-     - **platforms**: a chart whose bars are several platforms (Meta, Google, TikTok) reads several
-       channels, and a binding reads one source: bind it to a blend or a cross-channel source group
-       of them, which is one source. A waiting block names one channel, so with no such blend, or
-       any of those platforms not connected, leave the picture and report it. Never bind it to one platform's channel: that draws one platform as all of them.
+     - **platforms**: a chart whose bars are platforms (Meta, Google, TikTok) takes `per_channel`
+       in place of `sources`: one entry per bar, in the picture's order, each a `channel_id` with
+       the `source_id` of a connected account where there is one. An entry without one draws that
+       channel's sample data until `map_channel` fills it. Name universal metrics every channel has,
+       and no `dimensions`. Never bind such a chart to one platform's channel: that draws one
+       platform as all of them. A chart of business units or objectives across platforms is a
+       custom dimension over a blend: leave that picture and report it.
    - a text line that prints a figure becomes a `metric` bound to that figure. The server draws it
      as that line, in its face and colours: "3.16M DH investis" stays one line with its words, and
      a line that is only a percentage ("+0.86 %") draws the change alone. For a change line, bind
