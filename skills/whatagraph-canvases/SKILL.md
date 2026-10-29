@@ -113,8 +113,15 @@ The steps:
        platform as all of them. Read every chart's own labels, not the page title: bars named
        Meta, Google, TikTok are platforms on a page titled by BU too. DV360 is the channel
        `Google Display & Video 360`, not `Google Campaign Manager 360`. A write naming a metric one
-       channel lacks is refused by channel; give that entry its own `metrics`. A chart of business units or objectives across platforms is a
-       custom dimension over a blend: leave that picture and report it.
+       channel lacks is refused by channel; give that entry its own `metrics`.
+     - **business units or objectives across platforms**: a pie of spend by BU, or bars of CPM by
+       objective, summed over Meta, Google and TikTok, is `per_channel` with one `dimensions`
+       entry: the custom dimension for that split (see "Totals across channels, and splits by
+       business unit"). Every platform's rows are added together per value. A rate (CPM, CPC,
+       CPV) does not add up across platforms, so bind its parts as `metrics` and name the rate in
+       `ratio`: `{"name": "CPM", "numerator": "spend", "denominator": "impressions", "scale": 1000}`.
+       The server sums each part, then divides. A chart of one objective only takes a `filters`
+       condition on the objective dimension.
    - a text line that prints a figure becomes a `metric` bound to that figure. The server draws it
      as that line, in its face and colours: "3.16M DH investis" stays one line with its words, and
      a line that is only a percentage ("+0.86 %") draws the change alone. For a change line, bind
@@ -1082,10 +1089,30 @@ blend's are `aggregation_metric_universal_metric_<id>`; a source group's need it
 `list-sources action=list` hides blends and groups unless you pass their channel in `channels`.
 
 A split the file makes by **business unit, product or objective** usually lives only in campaign
-names. Make it a custom dimension with `manage-custom-dimensions` (`map_type: data`, one rule per
-unit, such as campaign name `contains` "brand" then "Brand") and name its
-`universal_dimension_<id>` in `dimensions` or in a `filters` condition. Make one dimension per
-split and reuse it on every page.
+names. Make it a custom dimension with `manage-custom-dimensions`, before the pages that use it:
+
+```
+manage-custom-dimensions action=create name="Business unit" map_type=data transformation_level=channel
+  fields=[{"channel_id": 4, "field_external_id": "<Meta's campaign name>"},
+          {"channel_id": 12, "field_external_id": "<Google Ads' campaign name>"},
+          {"channel_id": 31, "field_external_id": "<TikTok's campaign name>"}]
+  maps=[{"when": "contains", "value": "B2C", "then": "B2C"},
+        {"when": "contains", "value": "B2B", "then": "B2B"},
+        {"default": "Other"}]
+```
+
+- Take the unit names from the file itself: the pie's legend, the chart's axis. One rule per
+  name, and `{default: "Other"}` last.
+- `fields` names the campaign-name dimension of **every** channel the split covers, found with
+  `list-sources action=list_dimensions_and_metrics` and that `channel_id`. A channel left out has
+  no such dimension, and a `per_channel` entry for it is refused.
+- `list-custom-dimensions action=list` shows the team's existing custom
+  dimensions; reuse one that already splits by the same names instead of making another.
+- Name its `universal_dimension_<id>` in `dimensions` or in a `filters` condition. Make one
+  dimension per split (one for BU, one for objective) and reuse it on every page.
+- On a channel still waiting for an account, the sample campaigns match none of the rules, so
+  the sample rows are spread over the rule's names. The chart shows the file's units with sample
+  figures, and the real split once an account is connected.
 
 ### A summary: letting the page write its own narrative
 
