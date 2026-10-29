@@ -110,7 +110,10 @@ The steps:
        the `source_id` of a connected account where there is one. An entry without one draws that
        channel's sample data until `map_channel` fills it. Name universal metrics every channel has,
        and no `dimensions`. Never bind such a chart to one platform's channel: that draws one
-       platform as all of them. A chart of business units or objectives across platforms is a
+       platform as all of them. Read every chart's own labels, not the page title: bars named
+       Meta, Google, TikTok are platforms on a page titled by BU too. DV360 is the channel
+       `Google Display & Video 360`, not `Google Campaign Manager 360`. A write naming a metric one
+       channel lacks is refused by channel; give that entry its own `metrics`. A chart of business units or objectives across platforms is a
        custom dimension over a blend: leave that picture and report it.
    - a text line that prints a figure becomes a `metric` bound to that figure. The server draws it
      as that line, in its face and colours: "3.16M DH investis" stays one line with its words, and
