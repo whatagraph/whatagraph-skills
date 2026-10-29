@@ -133,6 +133,10 @@ The steps:
      - **media no connector reads** (premium publishers, TV, radio, print, out of home): put the
        file's figures into a Custom API source and bind the chart to it with `sources`. See
        "Figures no connector reads".
+     Both are part of making the page live, not extras to offer afterwards: when no custom
+     dimension splits by the file's units yet, create it; when no source holds the publishers,
+     create the Custom API source. Leave such a chart as a picture only when a tool refuses, and
+     say which refusal.
    - a text line that prints a figure becomes a `metric` bound to that figure. The server draws it
      as that line, in its face and colours: "3.16M DH investis" stays one line with its words, and
      a line that is only a percentage ("+0.86 %") draws the change alone. For a change line, bind
