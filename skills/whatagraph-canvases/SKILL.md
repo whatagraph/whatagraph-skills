@@ -102,8 +102,9 @@ The steps:
        reads the design's period, by day.
      - **what each bar is**: platforms, business units or campaigns, each a different dimension.
      - **series**: one bar per category, or two side by side (cost and impressions) is two metrics.
-     - **colours**: for a chart of one series the server takes the bar colour and direction from the
-       picture and says so. For more series, set each `series_style[i].color` to the file's colour.
+     - **colours**: the server takes the bar direction and each series' colour from the picture
+       (black included, in the order the bars stand) and says so. Where it says nothing, set each
+       `series_style[i].color` to the file's colour yourself.
      - **platforms**: a chart whose bars are platforms (Meta, Google, TikTok) takes `per_channel`
        in place of `sources`: one entry per bar, in the picture's order, each a `channel_id` with
        the `source_id` of a connected account where there is one. An entry without one draws that
