@@ -50,6 +50,12 @@ challenge page or a pop-up over the content.
 - The viewport is 1440 by 900. `height: 1800` captures the page from its top down to two screens,
   which suits a pricing table that starts below the first screen. `full_page` of a long marketing
   page is a very tall picture that no slide can show, so prefer `height`.
+- To show one thing from a page (an ad, a chart, a product card), pass its `ref` from the
+  snapshot, or a CSS `selector` when it has no ref, and only that element is captured at its own
+  size. Never crop it out of a page capture afterwards: the coordinates are guesses and the result
+  is cut in the wrong place. A list or grid usually shows a small, cut-off preview of each item, so
+  first open the largest clean view of it: the item's own page, an enlarged view, or the original
+  image or video file when its address is on the page.
 - Give every picture its own file name that says what it shows (`<vendor>-home.png`,
   `<vendor>-pricing.png`). Note the page's address and today's date next to it.
 - A field that holds a value is covered with a grey box in every picture, so nothing a person
