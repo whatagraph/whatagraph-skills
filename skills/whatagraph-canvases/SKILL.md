@@ -122,6 +122,9 @@ The steps:
        `ratio`: `{"name": "CPM", "numerator": "spend", "denominator": "impressions", "scale": 1000}`.
        The server sums each part, then divides. A chart of one objective only takes a `filters`
        condition on the objective dimension.
+     - **media no connector reads** (premium publishers, TV, radio, print, out of home): put the
+       file's figures into a Custom API source and bind the chart to it with `sources`. See
+       "Figures no connector reads".
    - a text line that prints a figure becomes a `metric` bound to that figure. The server draws it
      as that line, in its face and colours: "3.16M DH investis" stays one line with its words, and
      a line that is only a percentage ("+0.86 %") draws the change alone. For a change line, bind
@@ -1113,6 +1116,25 @@ manage-custom-dimensions action=create name="Business unit" map_type=data transf
 - On a channel still waiting for an account, the sample campaigns match none of the rules, so
   the sample rows are spread over the rule's names. The chart shows the file's units with sample
   figures, and the real split once an account is connected.
+
+### Figures no connector reads
+
+A file often reports media bought outside the ad platforms: premium publishers, TV, radio, print.
+No channel holds those, so there is no sample data either. Store the file's own figures in a
+**Custom API source** with `manage-custom-api`, and bind the chart to it like any source:
+
+1. `action=create_source`, named for what it holds ("Premium publishers"), with the design's
+   space in `space_ids`. Make one source per kind of media, and reuse it on every page.
+2. `action=define_schema`: one dimension per thing the chart splits by (`publisher`, type
+   `string`) and one metric per figure (`spend`, type `float`, accumulator `sum`).
+3. `action=push_data`: one row per bar, each dated the last day of the period the file reports
+   (`{"date": "2026-07-31", "publisher": "Hespress", "spend": 120000}`).
+4. Bind with `"sources": [<source_id>]`, the same `metrics` and `dimensions`, and `date_from` /
+   `date_till` spanning that period, so the chart keeps the file's month whatever the design's
+   date range.
+
+These are the file's figures, not a connection: say so in your answer, and tell the person they
+can send next month's rows to the same source to update the page.
 
 ### A summary: letting the page write its own narrative
 
