@@ -43,10 +43,13 @@ whether the output is a composed page. If the user wants the familiar report gri
 
 - "Build me a deck for Thursday's client review."
 - "Turn last month's performance into a report I can send as a PDF."
+- "Put a channel filter at the top of this dashboard so they can narrow it themselves."
 - "Make a one-page summary of the quarter."
 - "Fix page 4 — the headline is wrong."
 - "Show me where paid budget is being wasted." — one composed answer rather than a page, offered
   in the conversation for the person to place. See *Offering a group instead of writing one*.
+- "Recreate this report in Whatagraph", with a PDF or deck attached — a replica, which is a
+  different job from composing a deck. See *Replicating a file somebody gave you*.
 
 ## Choose the format first
 
@@ -60,6 +63,114 @@ whether the output is a composed page. If the user wants the familiar report gri
 Ask when it is genuinely ambiguous; otherwise pick and say which you picked. Getting it wrong is
 not fatal — but the format cannot be changed afterwards, because every frame was composed
 against one page shape. A different format means authoring the pages again.
+
+## Replicating a file somebody gave you
+
+When the person attaches a report, a deck or a PDF and asks for it **recreated, replicated,
+rebuilt or copied**, the file decides the document, not you. Everything under *Composing for the
+format* and *Choose a design direction first* is about deciding a document yourself, and none of
+it applies: not the six to ten slides, not one idea per page, not the direction you would have
+picked. The person is judging one thing, whether it looks like their report, and every page you
+merge, drop or "improve" is a page that does not.
+
+**Trace the file, do not draw it.** `manage-canvases action=trace_pages` reads the file's pages and
+appends them to the design exactly as the file draws them: every line of text in its own face, size
+and colour, every panel and band in its colour, every chart, photo, logo and icon as a picture of
+itself. A page you compose from a picture of the original comes out as your idea of that page; a
+traced page is the page.
+
+The steps:
+
+1. **Create the design empty, in the file's shape.** A 16:9 deck is `slide_16_9`, an A4 report is
+   `a4_portrait` or `a4_landscape`; anything else is `custom` with a `design_width`. Give it a brand
+   generated from the file (`manage-design-systems action=generate asset=<the file's id>`), and no
+   `pages`.
+2. **Trace every page, in order, in this turn.** `trace_pages` with `asset_id` and `file_pages`
+   `[1..10]`, then `[11..20]`, and so on to the last page. The first call records the file's page
+   count, and every answer says how many pages are built: carry on until it says all of them are.
+   Do not stop to summarise or to offer to continue, and do not skip or merge pages.
+3. **Then make the figures live, page by page, without redrawing the page.** A traced chart is a
+   picture with its title, axis labels and values as separate text lines, and a traced KPI is a
+   text line: right, but connected to nothing. Look at the page (`list-canvases action=preview`,
+   and `action=show_page` with `fields=lines` for each block's id, words and frame), then swap one traced block at a time with `patch_blocks` and
+   `replace_block_id` set to its id, sending one block and no `frame`:
+   - a chart picture becomes a `chart` (or `table`, `bar_list`) of the same shape, never one
+     `metric` (the server refuses a metric on a picture). Before sending it, read the picture
+     (`list-canvases action=preview`) and match it:
+     - **periods**: an axis of months (janvier to juillet) is the date dimension with
+       `grouping: 1 month` and `date_from`/`date_till` spanning those months. Without them the chart
+       reads the design's period, by day.
+     - **what each bar is**: platforms, business units or campaigns, each a different dimension.
+     - **series**: one bar per category, or two side by side (cost and impressions) is two metrics.
+     - **colours**: the server takes the bar direction and each series' colour from the picture
+       (black included, in the order the bars stand) and says so. Where it says nothing, set each
+       `series_style[i].color` to the file's colour yourself.
+     - **platforms**: a chart whose bars are platforms (Meta, Google, TikTok) takes `per_channel`
+       in place of `sources`: one entry per bar, in the picture's order, each a `channel_id` with
+       the `source_id` of a connected account where there is one. An entry without one draws that
+       channel's sample data until `map_channel` fills it. Name universal metrics every channel has,
+       and no `dimensions`. Never bind such a chart to one platform's channel: that draws one
+       platform as all of them. Read every chart's own labels, not the page title: bars named
+       Meta, Google, TikTok are platforms on a page titled by BU too. DV360 is the channel
+       `Google Display & Video 360`, not `Google Campaign Manager 360`. A write naming a metric one
+       channel lacks is refused by channel; give that entry its own `metrics`. A chart of business units or objectives across platforms is a
+       custom dimension over a blend: leave that picture and report it.
+   - a text line that prints a figure becomes a `metric` bound to that figure. The server draws it
+     as that line, in its face and colours: "3.16M DH investis" stays one line with its words, and
+     a line that is only a percentage ("+0.86 %") draws the change alone. For a change line, bind
+     the metric that changed with `compare: previous`; its value is not what is drawn.
+   The new block takes the traced block's exact frame and place. Over a picture, the text lines
+   inside it go too, except a change printed over the chart (`+0.86 %`): the answer names it as
+   kept, so swap it with `replace_block_id` too. Every answer quotes the words it replaced; if they
+   are not the figure you meant, undo it with `patch_blocks` `restore_block_ids` (it puts the traced
+   line or picture back exactly) and swap the right one. A line with no figure in it (a label, a
+   heading, a date) is refused, and the refusal lists the page's lines that do print one.
+   Do not use `remove_block_ids` on a traced page and never resend or rebuild its panels, bands,
+   headings or commentary: the traced page is already right, and only its figures change. Bind each block to a source or to
+   its channel (see *Inline or bound*). Work out which platform each figure comes from (the page title, its logo,
+   the metric's name) and check `list-sources` for a connected account of it. Where there is none,
+   do not leave the figure typed in: bind it to that platform's channel (*A channel with no account
+   yet*), which draws the channel's sample data until the person connects the account. Keep the
+   file's colours with `series_style[i].color` and `category_colors`.
+   Leave a picture where no source could ever fill it: creatives, screenshots, logos.
+4. **Report from the tool's answers.** Pages traced against the file's pages, `data_blocks` (bound,
+   waiting for a channel, typed in), the channels the person has to connect, and the charts still
+   drawn as pictures. Say plainly that figures waiting for a channel are sample data, not theirs.
+
+**If `trace_pages` fails, stop and report the error.** Do not draw the pages yourself instead: a
+hand-built page is what tracing replaces, and the person needs to know the tool failed.
+
+**It is always a new design.** Do not present a design that already exists as the replica, even
+one with the same name made earlier in this conversation or by another agent. Build a new one, and
+describe only what this turn wrote.
+
+**A funnel** (page views, add to cart, payment, purchase) is shapes, one card per funnel so four
+platforms side by side stay inside a page's block budget. In each card: the platform name as a
+`subheading` text, then one `stadium` `shape` per step with `fill: solid`, one `tint` for every step,
+`role: caption`, and the step name and figure on two lines in `content` (`"Ajout panier\n9,640"`).
+Each step is about 15% narrower than the one above it and centred under it. Between two steps, a
+`circle` `shape` with `fill: soft` holds the conversion rate (`"40%"`). In page units, a 0.21 wide
+card 0.44 tall fits four steps 0.06 tall with gaps of 0.036, and a rate circle needs about 0.042 of
+the page's width: a smaller circle cuts a percentage off. Convert to the card's interior as
+*Sizing a group's children* says.
+
+When you rebuild a block live, these are the usual page types and the blocks that draw them:
+
+| In the file | In the design |
+|---|---|
+| Section divider: one huge title on a band | `section` layout, `dark` or `accent` background, `heading` at `scale` 2 or more; a band of colour is a `card` with no blocks. Two-tone italic display type is one `heading` with two `runs`, each with its own `ink`, on a brand whose `type` is `display_italic` (every heading italic, in the face's real italic); on another brand, set `italic: true` on the runs |
+| KPI tiles: a dark box per figure with its label | A toned `card` (`tone: dark`) per tile, each holding a `metric`; tiles at one `y` and `h` form one row |
+| Headline figures with icons and a change | `icon` plus `metric` with `delta`, `delta_direction` and `delta_sentiment` |
+| Monthly trend: a small bar chart per measure | `chart`, `bar`, the months as categories |
+| Horizontal bar ranking | Up to 6 rows: `bar_list`, `horizontal`. 7 to 12 rows: `chart`, `bar`, `orientation: horizontal`, usually with `show_data_labels` |
+| Bars with a line on a second axis | `chart`, `bar`, and on the line's series `series_style` `{"type": "line", "scale": "secondary"}` |
+| Pie or donut breakdown | `chart`, `pie` or `donut`, one series |
+| Conversion funnel with step rates | One `card` per funnel, each step a `stadium` `shape` narrowing down the card, the step rate in a `circle` between steps (see *A funnel* above) |
+| Table | `table`, every cell a formatted string |
+| Commentary paragraph or bullet box | `text` with `role: body`, inside a `card` when the file boxes it |
+| Platform logos (Meta, Google Ads, TikTok…) | `icon` with `channel` set to the integration slug |
+| Ad creatives, screenshots, other logos | Already pictures on a traced page; elsewhere an `image` with the `url` `manage-assets action=crop_page` returns for that region of the file's page |
+| Learnings grid (continue, optimise, stop, start) | One `card` per column at one `y` and `h`, each with a heading and a body |
 
 ## The workflow
 
@@ -199,7 +310,8 @@ Text is the block whose height you have to compute. The rest divide into two kin
 which is the difference between a tidy page and a page with a hole in it:
 
 - **A `chart`, a `bar_list`, an `image` and a `card` fill the frame you give them.** Make the
-  frame the size you want the thing to be.
+  frame the size you want the thing to be. An **`icon`** fills the largest square its frame
+  holds, centred, so give it a square frame.
 - **A `table` draws top-aligned at its natural height and does not stretch.** A row — the header
   included — is about **0.032 of the page width**, or **0.039 on `a4_portrait`**, where the
   legibility floor lifts the type. So a six-row table plus its header is `h: 0.22` on a slide or
@@ -306,6 +418,8 @@ Every type reads the same object, and a few ignore parts of it that make no sens
   here) and `opacity`. It has no ground and no corner.
 - A **divider** is its own ground, so `background` is its colour. It has no edge and no depth.
 - An **image** has no text, so `ink` does nothing.
+- An **icon** is nothing but ink: `ink` recolours the glyph, `emphasis` draws it in the accent,
+  and a multicolour icon's further shades follow the ground's chart ramp.
 - A **shape**'s `background` replaces `tint` and `fill` outright rather than mixing with them.
   Set one or the other, never both.
 - A **card**'s `background` replaces the ground it draws, and its children still resolve their
@@ -359,7 +473,14 @@ shrinking it.
   `positive`. Omit the sentiment and the delta renders neutral rather than guessing.
 - **`chart`** — `chart_type`, `categories`, `series`. Every series' `values` must be the same
   length as `categories`. `pie` and `donut` take one series. Types: `bar`, `line`, `area`, `pie`,
-  `donut`, `scatter`, `radar`.
+  `donut`, `scatter`, `radar`. On a `bar`, `line` or `area` chart one series can draw as another of
+  those three through `series_style[i].type`, which is how bars get a line through them. A `bar`
+  chart with `orientation: horizontal` lays its categories down the side, first at the top.
+  A report that colours things consistently (each platform, each business unit) fixes those
+  colours: `series_style[i].color` for a series, `category_colors: [{"category": "Brand", "color":
+  "#C8102E"}]` for a pie's slices or a one-series chart's bars, matched by label. A colour is a role,
+  a ramp slot (`brand.3`) or `#RRGGBB`; read the file's own colour legend when it has one. Google
+  Slides cannot colour a pie slice, so a pie there keeps the ramp.
 - **`table`** — `headers` and `rows`; every row has one cell per header. **Every cell is a string
   you have already formatted** — `"1,842"`, `"$34.02"`, `"—"` — never a raw number, and never an
   object: a cell carries no colour or weight of its own, and a non-string cell is rejected. When a
@@ -367,6 +488,17 @@ shrinking it.
   sentence with a `run`.
 - **`image`** — a public `https` `url`, plus `alt` and `fit` (`cover` crops, `contain`
   letterboxes).
+- **`icon`** — one glyph from the icon library, the same library a single value widget picks
+  from: `file`, written verbatim (`"Heart--Streamline-Sharp.svg"`, `"Ad-clicks.svg"`), plus
+  `alt`. Browse the library with `list-widgets action=list_icons`; a file it does not have is
+  refused. It draws in the block's ink, so a themed page recolours it. The `Streamline-Sharp`
+  files are single-stroke line icons and take the ink wholesale; the older multicolour files
+  take it for their first shade and the chart ramp for the rest, and the few drawn in fixed
+  colours — the reactions, the search-engine logos — keep them.
+  **A channel's logo** is an `icon` with `channel` instead of `file`: the integration `slug` from
+  `list-integrations` (`"facebook-ads"`, `"google-ads"`, `"tiktok"`, `"linkedin-ads"`,
+  `"snapchat"`, `"google-dv360"`, `"youtube"`). It keeps the brand's own colours in every export.
+  X / Twitter has no bundled logo yet: crop it from the file with `crop_page`.
 - **`card`** — a surface holding other blocks. Give it `blocks`. **Child frames are fractions of
   the card on both axes**, not of the page, and **every child needs a real frame** — one filling
   its card is `{"x": 0, "y": 0, "w": 1, "h": 1}`. Cards cannot nest.
@@ -396,9 +528,12 @@ shrinking it.
   whenever the figures come from a source. A bound `chart` keeps its `chart_type` and `title`;
   a bound `metric` keeps nothing, and its label is the metric's own name from the catalogue. See
   *Inline or bound* for the rule and the shape.
-- **`control`** — a slider, a row of chips or a switch that narrows what its group shows. It goes
-  **only inside a card carrying a `query` binding**, and it filters the rows that card fetched
-  without refetching anything and without changing the document. See *A control* under *Groups*.
+- **`control`** — a filter the reader moves, and **where it sits decides what it reaches**.
+  Inside a card carrying a `query` binding it is a slider, a row of chips or a switch that narrows
+  the rows that card fetched, in the browser, without refetching anything. On the page, or inside
+  a card with no binding, it names a `source` and re-queries every block around it bound to that
+  source — the report's filter control, on a design. Neither changes the document. See *A
+  control* and *A filter* under *Groups*.
 - **`widget`** — an existing Whatagraph widget, drawn on the page. Its `binding` names the
   `widget_id`; the widget keeps its own configuration and picks up the design's brand. Chrome is
   off by default because the page already has its own text blocks. Give it at least 232 × 110
@@ -540,9 +675,10 @@ the rows that card fetched. Every metric, chart, table and bar list in the card 
 is left. It changes nothing in the document, costs no fetch, and works for somebody reading a
 share link.
 
-It may only go **inside a card carrying a `query` binding**, and its `field` must be one of the
-metrics or dimensions that binding names. Anywhere else there is no row set to narrow and the
-write is rejected.
+Inside a card carrying a `query` binding its `field` must be one of the metrics or dimensions
+that binding names, and it takes no `source` — the card already names one. The same block **on
+the page, or inside a card with no binding, is a filter** that re-queries instead of narrowing;
+see *A filter* below.
 
 Three kinds:
 
@@ -575,6 +711,83 @@ a rate draws nothing rather than a figure, because adding two percentages togeth
 and there is no way to recompute the rate from one column. Put the counts in a group that has a
 control on it and leave the rate to the table, or set `agg` to `avg` and say in the sentence that
 it is an average of the rows on screen.
+
+### A filter: letting the reader refilter the page
+
+The same `control` block **on the page**, or inside a card with no binding, is a filter over the
+page rather than over one card. It names a `source` and a `field`, and when the reader moves it
+every block around it bound to that source — a metric, a chart, a table, a bound card, a `widget`
+block — is fetched again with one more filter row, the way a report's Filter Control refetches
+every widget of its source. Nothing is stored but the control's own default: a reader's pick lives
+in their browser, travels with the data requests, and is drawn into the PDF or PNG they export.
+
+**Placement decides reach, and there is no scope field to disagree with it.**
+
+- **On the page**: every block on the page bound to `source`, wherever it sits, a bound card and a
+  widget block included.
+- **Inside a card with no binding**: that card's blocks only.
+- **Inside a card carrying a `query` binding**: it is the group control of the previous section —
+  it narrows the card's rows in the browser and is refused a `source`.
+
+A block bound to another source is left alone, and a block that reads nothing — an inlined
+figure — is reached by nothing. `targets` narrows the reach to the block ids it names, each of
+which must be one the control reaches anyway. Leave it off; that is the usual case.
+
+Three kinds, and when each is honest:
+
+- `choice` — a select over a dimension. Leave `options` off and the source's own values are
+  fetched when the select opens. **A source that lists values for none of its dimensions offers
+  an empty select** — Google Analytics 4 is one — so there, write the `options` yourself when the
+  set is known (the default channel groupings are), or use `text`. `eq` picks one, `in` several.
+- `text` — a text box matched by what the dimension contains: "campaigns containing `brand`".
+  Page only: inside a bound card the rows are already fetched and a `choice` over them is the
+  honest control. Give it `"apply": "button"`, because every apply re-queries every block the
+  control reaches, and nobody wants that per keystroke.
+- `range` — a slider over a metric, with `min`, `max` and `gte` or `lte`, as in a card. It
+  applies when released.
+
+`toggle` stays in the card: no filter can ask a source whether a column "holds anything at all".
+
+`apply` is `change` (the default) or `button`. `value` is the stored default — what a reader who
+never touches the control sees, and what a share link, a frozen copy and an export start from.
+Omit it and the page opens unfiltered.
+
+**A deck refuses it.** A page filter is allowed in the dashboard, A4 and custom formats and is
+rejected on a slide: a presentation has nobody to move it. Put the control inside a bound card
+there, pin the question in the binding's `filters`, or leave it out.
+
+**Name a source a block on the page reads.** The validator cannot check this, because the control
+fetches nothing on its own: a filter over a source no block is bound to saves cleanly and reaches
+nothing. Copy `source` from the `binding.sources` of the blocks it should move.
+
+A dashboard page with a channel filter over three metrics and a table, all reading one source:
+
+```json
+{ "layout": "content", "page_height": 0.9, "blocks": [
+  { "id": "channel", "type": "control",
+    "frame": {"x": 0.04, "y": 0.04, "w": 0.3, "h": 0.06},
+    "control": { "kind": "choice", "label": "Channel", "source": 2,
+      "field": "sessionDefaultChannelGrouping",
+      "options": ["Organic Search", "Paid Search", "Direct", "Referral", "Organic Social", "Email"] } },
+  { "id": "sessions", "type": "metric", "frame": {"x": 0.04, "y": 0.14, "w": 0.28, "h": 0.12},
+    "binding": { "kind": "query", "sources": [2], "metrics": ["sessions"], "compare": "previous" } },
+  { "id": "conversions", "type": "metric", "frame": {"x": 0.36, "y": 0.14, "w": 0.28, "h": 0.12},
+    "binding": { "kind": "query", "sources": [2], "metrics": ["conversions"], "compare": "previous" } },
+  { "id": "revenue", "type": "metric", "frame": {"x": 0.68, "y": 0.14, "w": 0.28, "h": 0.12},
+    "binding": { "kind": "query", "sources": [2], "metrics": ["totalRevenue"], "compare": "previous" } },
+  { "id": "pages", "type": "table", "frame": {"x": 0.04, "y": 0.3, "w": 0.92, "h": 0.5},
+    "binding": { "kind": "query", "sources": [2],
+      "metrics": ["sessions", "conversions"], "dimensions": ["pagePath"] } }
+] }
+```
+
+Every block the filter reaches draws a small caption of its own — *Filtered by Channel: Paid
+Search* — so the reader sees what was narrowed, and nothing in your text needs to say so. The
+deltas keep drawing: the comparison period is filtered the same way.
+
+A write that puts a filter where it cannot work is refused with the fix in the message — the
+`source` it is missing, the kind that belongs in a card, the slide it cannot sit on, the target
+it would not reach. Repair from the message; do not drop the filter to get past it.
 
 ### Suggested actions: the changes worth making to a group
 
@@ -786,6 +999,10 @@ design is opened:
   chart's categories, a table's first column, a bar list's labels.
 - A `metric` draws a delta only when there is a comparison to draw it from — set `compare` on the
   block, the page, or the document.
+- `filters` pins a condition on the query: a flat list of `{"dimension" | "metric", "operator",
+  "value" | "values", "join"}` in the `manage-filters` vocabulary (`includes`, `contains`, `>=`,
+  …), rows joined with `and` unless one says `or`. That is the filter the **author** decides;
+  the filter the **reader** moves is a `control` — see *A filter* under *Groups*.
 - A bound `table` or `bar_list` is **cut to what its frame holds**, so give it room for the rows
   you expect rather than assuming everything comes back.
 - `kind: "widget"` with a `widget_id` draws a widget instead of a query — either one a report
@@ -804,6 +1021,16 @@ is how a client gets March while the dashboard keeps rolling.
 manage-canvases action=update canvas_id=12 date_range=lastQuarter compare=previous
 ```
 
+A block can also pin **dates** instead of a key. `date_from` and `date_till` with no `date_range`
+is a fixed range; that is how a monthly trend from January to July sits on a page about July.
+`date_range: "customRangeYesterday"` with a `date_from` runs from that date up to yesterday, and
+`thisYearExclToday` is the year to date. Both dates are `YYYY-MM-DD`.
+
+```json
+{ "kind": "query", "sources": [2], "metrics": ["spend"], "dimensions": ["date"], "grouping": "1 month",
+  "date_from": "2026-01-01", "date_till": "2026-07-31" }
+```
+
 A period is a **calendar key, and it is camelCase**: `last30Days`, `lastMonth`, `thisQuarter`,
 `last12Month`. Snake case looks right and is not — an unknown key is refused with the full list,
 so read the message rather than guessing again.
@@ -812,19 +1039,121 @@ so read the message rather than guessing again.
 `inlined` to `bound`, so there is nothing to set. `inlined` only ever describes a design that has
 no bindings at all.
 
+### A channel with no account yet
+
+A report copied from a file usually names channels the team has not connected: Meta, TikTok,
+DV360. Do not settle for typing those figures in. Bind them to the **channel** instead of a
+source, and keep the payload you copied from the file. The block draws the channel's **sample
+data**, the same figures a demo report shows, so the page looks live and has the shape its real
+figures will take:
+
+```json
+{ "id": "meta-spend", "type": "metric", "frame": {"x": 0.04, "y": 0.16, "w": 0.2, "h": 0.11},
+  "metric": {"value": "$41,200", "label": "Spend"},
+  "binding": { "kind": "query", "channel_id": 4, "metrics": ["spend"] } }
+```
+
+- `channel_id` is the channel's id from `list-integrations`; `metrics` and `dimensions` come from
+  `list-sources` `action=list_dimensions_and_metrics` with that `channel_id` and no `source_id`.
+  A metric the channel does not have is refused when the block is read, naming the ones it does.
+- The block draws sample data until the channel is mapped: a dated chart gets one point per
+  period of the range. Only a channel with no sample data falls back to the payload, which is why
+  you still keep it.
+- Sample figures are not the person's. Never present them as their results, and keep any
+  commentary you write about them general until the channel is mapped.
+- Bind a **block**, not a card: a card's query feeds its children and has nothing to show
+  meanwhile, so a card waiting for a channel is refused.
+- Writing the block attaches the channel to the design with its sample data, so the channels
+  panel lists every channel the design needs, as a template report does. When the person
+  connects an account there, every block waiting for that channel goes live, on every page, and
+  removing the account puts them back on sample data. You do the same with one call:
+
+```
+manage-canvases action=map_channel canvas_id=12 channel_id=4 source_ids=[318]
+```
+
+### Totals across channels, and splits by business unit
+
+A figure summed over several ad platforms is one source when the platforms are blended. A
+**blend** (`manage-blends`) or a cross-channel **source group** (`manage-source-groups`) is an
+integration source like any other, so a binding names its id in `sources`. Their summed metrics
+have their own ids: list them with `list-sources action=list_dimensions_and_metrics` on the blend or group (a
+blend's are `aggregation_metric_universal_metric_<id>`; a source group's need its `report_type`).
+`list-sources action=list` hides blends and groups unless you pass their channel in `channels`.
+
+A split the file makes by **business unit, product or objective** usually lives only in campaign
+names. Make it a custom dimension with `manage-custom-dimensions` (`map_type: data`, one rule per
+unit, such as campaign name `contains` "brand" then "Brand") and name its
+`universal_dimension_<id>` in `dimensions` or in a `filters` condition. Make one dimension per
+split and reuse it on every page.
+
+### A summary: letting the page write its own narrative
+
+Commentary is data too. A paragraph that says "sessions rose 18% while spend held" is a figure
+typed into prose, and it goes stale the first time the range moves. A `text` block with a
+`summary` binding is written by the model from the data blocks around it, stored on the block,
+and written again whenever the data it read changes. It is the report's AI summary, drawn in the
+design's own typography.
+
+```json
+{ "id": "takeaways", "type": "text", "frame": {"x": 0.06, "y": 0.34, "w": 0.88, "h": 0.16},
+  "text": { "role": "body" },
+  "binding": { "kind": "summary", "sections": ["wins", "issues"] } }
+```
+
+- **`text` carries only `role`** (and `align` or `scale` if you want them). No `content`, no
+  `runs`: the resolver writes them.
+- **Where it sits decides what it reads.** On the page it reads every data block on that page.
+  Inside a card it reads that card. `scope: "document"` reads every page, for an executive summary
+  at the front of a deck. `targets: ["revenue_chart"]` reads only the blocks named, for "what does
+  this chart say". Text, images, icons, shapes and controls are never read; the page's title,
+  kicker and headings travel along so the model knows what the page is about.
+- **`sections`** are `summary`, `wins`, `issues`, `recommendations` and `custom`, written in the
+  order given. `custom` needs `custom_prompt`. `length` is `short` (about three sentences a
+  section, the default) or `long` (about eight). `language` takes the report's list, `English` by
+  default.
+- **`refresh`** is `auto` (rewritten when the data moves) or `manual` (kept until somebody asks for
+  new words). Leave it off: it defaults to `auto` where the team has AI summary auto-update and
+  `manual` where it does not, and the team's plan is checked on every read anyway.
+- **Nothing is written when you save the block.** The words are written the first time the page
+  is opened, which costs one model call and a few seconds. To write them now and read what came
+  out, call:
+
+  ```
+  manage-canvases action=regenerate_summary canvas_id=12 page_id=41 block_id=takeaways
+  → { "text": "Summary\nSessions rose 18%…", "inputs": ["sessions", "spend", "trend"] }
+  ```
+
+  `inputs` names the blocks it read. An empty one means the summary had nothing to read: put it
+  where the data blocks are, or name them in `targets`. The same call is how you change words the
+  person did not like, `manual` or not.
+- **Give it room.** One short section is three or four lines of body text; two sections with
+  their headings are about twice that. The block cannot be sized from its words because you do
+  not have them, so size the frame for the sections and length you asked for. A frame that is too
+  small clips the summary; the editor flags it, and nothing in the write refuses it.
+- **A summary over sample data only is refused** when it is read, as the report's is. One over a
+  mix leaves the sample blocks out of the narrative.
+
+**Write the narrative as a summary, not as typed text.** Your own `text` blocks are for headings,
+framing and what no data says ("Q3 was the first quarter on the new pricing"). The paragraph that
+reads the numbers back to the person belongs to a summary block. Do not inline it, even when you
+have just read the same numbers in `fetch-data`: to the person, typed commentary next to bound
+figures looks like the agent typed the numbers in, and it will disagree with them next month.
+
 ### Three ways to make a block live
 
-A `binding` has two kinds, and the `widget` kind covers two different situations, so there are
-three answers and they are not interchangeable.
+A `binding` that fetches figures has two kinds (the third, `summary`, writes words and is above),
+and the `widget` kind covers two different situations, so there are three answers and they are not
+interchangeable.
 
 **A `query` binding is the default.** One source, some metrics, resolved on every open. Nothing is
 created, nothing has to be cleaned up, and the block is the whole statement of what it shows.
 Reach for this first for any block's numbers, charts, tables and bar lists, whatever the format.
 
-One thing it does **not** do: a query binding names a source without **attaching** it to the
-design. `sources` on a binding is the global integration source id, so the numbers are live and
-correct while the design's channels panel stays empty. Attach the channel yourself when the design
-should show which sources it reads:
+`sources` on a binding is the global integration source id. Writing the page attaches every
+source its blocks read to the design as a channel, and every channel they wait for as its sample
+data, so the channels panel shows what the design reads without a call of yours. Attach a channel
+no block reads yet (one a widget will take) yourself:
 
 ```
 manage-canvases action=attach_sources canvas_id=12 source_ids=[2]
@@ -846,7 +1175,8 @@ per-widget behaviour a binding has no field for. Create one when the ask needs a
 - conditional formatting or auto colors on a table's column
 - currency conversion on a money metric
 - values typed by hand rather than fetched, which is what the offline widget types are for
-- a source filter, or a date range pinned per widget with a comparison of its own
+- a date range pinned per widget with a comparison of its own. A fixed filter on a query is
+  `binding.filters`, and a filter the reader moves is a `control`; neither needs a widget
 - a widget the person can go on editing in the drawer afterwards, with the report's own editor
 
 **And create one whenever the person asked for one.** The list above is about what a block cannot
@@ -871,8 +1201,8 @@ manage-widgets action=create design_id=12 page_id=41 channel_id="9" widget_type_
 → { "widget": { "id": 8814, ... } }
 
 manage-canvases action=patch_blocks canvas_id=12 page_id=41
-  blocks=[{ "id": "funnel", "type": "widget", "frame": {"x":0.06,"y":0.18,"w":0.4,"h":0.3},
-            "binding": { "kind": "widget", "widget_id": 8814 } }]
+  pages=[{ "blocks": [{ "id": "funnel", "type": "widget", "frame": {"x":0.06,"y":0.18,"w":0.4,"h":0.3},
+                        "binding": { "kind": "widget", "widget_id": 8814 } }] }]
 ```
 
 The widget is invisible until the block exists — a widget is data and a block is what draws it. A
@@ -894,7 +1224,7 @@ Six things a design refuses, most because its own editor offers no equivalent:
 | `position_x`, `position_y`, `auto_place`, `target_tab_id` | A design has no widget grid. The block's `frame` places it. |
 | `action=apply_premade` | Premade widgets are a report library. Create the widget with `action=create`. |
 | `action=duplicate`, `batch_duplicate` | Copy the block with `patch_blocks`; the widget follows it. |
-| `action=update_ai_text` | AI text is a comment widget's setting. A design writes prose in `text` blocks. |
+| `action=update_ai_text` | AI text is a comment widget's setting. On a design it is a `text` block with a `summary` binding; see *A summary*. |
 | Comment, calendar, image, filter control, report shortcut types | The design draws these with its own blocks, or has no surface for them. |
 | Multi-source table (37) | Deprecated in favour of blends and source groups, so nothing creates one any more, and a design will not draw an existing one either. Use `widget_type_id="table"`, or a `table` block. |
 
@@ -918,13 +1248,14 @@ want:
 | They ask for | They get | Cost |
 |---|---|---|
 | a PDF, a PNG | the page itself, drawn headlessly | nothing is lost |
-| a PowerPoint file | editable shapes, tables and native charts | a `widget` block becomes a picture |
-| a Google Slides deck | the same, with charts that stay editable in Google | 16:9 only, and no `widget` blocks at all |
+| a PowerPoint file | editable shapes, tables and native charts; an `icon` stays a vector | a `widget` block becomes a picture |
+| a Google Slides deck | the same, with charts that stay editable in Google | 16:9 only, and no `widget` or `icon` blocks at all |
 
 PDF and PNG cannot disagree with the screen, because they *are* the screen. The two writers redraw
 each page from the spec, so they are the ones with a cost — and both costs land on `widget` blocks,
 which is worth remembering when you are choosing between a `widget` and a `chart` for something
-that will be presented from PowerPoint.
+that will be presented from PowerPoint. Google Slides also draws an `icon` as a labelled gap: it
+takes pictures from a public URL only, and the glyph is markup the server holds.
 
 ## Composing for the format
 
@@ -933,7 +1264,8 @@ composition rules different. Everything above is shared; this is not.
 
 ### Slides — read across a room
 
-Six to ten pages for a review. Twenty is a report nobody will sit through.
+Six to ten pages for a review. Twenty is a report nobody will sit through. (A replica keeps the
+file's page count instead; see *Replicating a file somebody gave you*.)
 
 - **One idea per page.** If a page needs two headings, it is two pages.
 - **Big and few.** Three to five metrics at most; six numbers is a table, and a table on a
@@ -980,6 +1312,9 @@ worth of content on it looks empty and expensive.
 - **The top band is the answer.** Whoever opens this reads the first screen and often no more.
   Put the three or four numbers that matter at the top, bound and with `compare` set so their
   deltas draw.
+- **A filter at the top when the reader will want to narrow.** One `control` strip in the first
+  band, over the source the KPI row reads, reaches every bound block below it. See *A filter*
+  under *Groups*. It is the one format where a page filter is the normal shape.
 - **No source band.** Put the credit in a `caption` block at the bottom, at the rail.
 - **Smaller type is fine.** The legibility floor is lower here than on a slide because the reader
   is 60cm away, so `caption` and `body` do real work.
@@ -1047,11 +1382,13 @@ Fix one block without resending the page:
 
 ```
 manage-canvases action=patch_blocks canvas_id=<id> page_id=<id>
-                blocks=[{...the corrected block, same id...}]
+                pages=[{ "blocks": [{...the corrected block, same id...}] }]
                 remove_block_ids=["stray-caption"]
 ```
 
-Blocks whose `id` already exists are replaced in place; new ids are appended.
+Blocks whose `id` already exists are replaced in place; new ids are appended. The blocks ride in
+`pages` with one entry, the same field every other action writes blocks through; a page's other
+fields are ignored here, so `layout` can be left off.
 
 Rewrite a whole page — `pages` carries the page objects for every action, so this is `pages` with
 exactly one entry, and more than one is refused:
@@ -1141,8 +1478,9 @@ Composition is validated server-side and the message names the block and the fix
 **Repair from the message and resend.** Do not simplify the page to get past the validator — the
 error tells you the number to change, and dropping the block instead makes the document worse
 than the rule was protecting it from. The rules are: overlap, off-page frames, text that will not
-fit its frame, bars given too little room, block budgets, chrome bands, duplicate block ids, and
-a data-bearing block carrying neither values nor a binding.
+fit its frame, a pill or a table wider than its frame (neither wraps, so both are cut off), bars given too little room, block budgets, chrome bands, duplicate block ids, a
+data-bearing block carrying neither values nor a binding, and a `control` placed where it cannot
+work.
 
 ## Brands
 
@@ -1164,7 +1502,9 @@ manage-design-systems action=generate brief="a warm editorial brand for an indep
 manage-design-systems action=create name="Bookshop" decisions={...the six it returned...}
 ```
 
-`generate` saves nothing — keep what it returns and pass its `decisions` to `create`.
+`generate` saves nothing — keep what it returns and pass its `decisions` to `create`. Pass
+`asset` with a file's id (a brand book, a deck to match, a logo or a screenshot) to have the
+brand read from it.
 
 Attach a brand with `manage-canvases` `action=update design_system_id=<id>`. Switching it
 restyles every page and touches no block.
@@ -1186,7 +1526,8 @@ its chart palette beside it — and how it looks is the whole of what the person
   person presses the button. See *Sharing and exporting* above for what each one costs.
 - **Changing a format.** Every frame was composed against one page shape. Author again in the new
   format.
-- **Uploading an image.** `image` blocks take a public `https` URL that already exists.
+- **Uploading an image.** `image` blocks take a public `https` URL. A picture inside an attached
+  file is placed with `manage-assets action=crop_page`; any other picture needs a URL already.
 - **Styling a block in an Office export.** A block's own `style` reaches the browser, the PDF and
   the PNG. The PowerPoint and Google Slides writers draw the brand instead.
 
@@ -1194,9 +1535,20 @@ Surface a finished design as an artifact card in the chat rather than writing a 
 
 ## Common pitfalls
 
+- **A replica condensed into a summary.** Asked to recreate a file, keep every page. The
+  composition rules are for documents you decide, not for copies.
+- **Describing a design as live while its figures are typed in.** Read `data_blocks` in the write's
+  answer and report it. Typed-in figures do not change next month.
+- **Copying from the text alone.** The text has no layout and loses which number sits under which
+  label. Look at the page with `read-document` `pages`.
+
 - **Figures from a source typed into a block.** You fetched it, so bind it: the block carries the
   `fetch-data` call as its `binding`, not the answer it returned. A typed-in figure shows as "Not
   connected to data" and nothing can refresh it. Inline only what no source reports.
+- **Commentary on the numbers typed into a `text` block.** It is a figure in prose, and it goes
+  stale with the range. Use a `summary` binding; keep your own text for headings and framing.
+- **A summary placed away from what it should read.** On the page it reads the page; inside a
+  card it reads only that card. An empty `inputs` from `regenerate_summary` means it read nothing.
 - **A whole design inlined because it is a deck or a print.** The format changes the composition,
   not where the numbers come from. Pin the period with the document's `date_range` instead.
 - **Authoring before fetching.** You cannot query from inside a page. Fetch first.
@@ -1226,8 +1578,6 @@ Surface a finished design as an artifact card in the chat rather than writing a 
   noise.
 - **A widget created and never bound to a block.** It draws nothing and is deleted on the next page
   save. Create the widget and add its block in the same turn.
-- **A dashboard of `query` bindings handed over with an empty channels panel.** The numbers are
-  right and the design looks like it reads nothing. Attach the sources with `attach_sources`.
 - **A widget used where a `query` binding would do.** A metric, a chart, a table or a bar list
   needs no widget. Create one for what the list above names, or because the person asked for a
   widget.
@@ -1245,3 +1595,9 @@ Surface a finished design as an artifact card in the chat rather than writing a 
   one-line caption becomes a clipped two-line one. Use the exception table.
 - **A deck of ten `content` pages.** Vary the layout and the background. A dark `section` page and
   a `full_chart` are what give a document rhythm.
+- **A filter in a deck.** A page `control` is refused on a slide; a presentation has nobody to move
+  it. Narrow with a control inside a bound card, or pin the condition in the binding's `filters`.
+- **A filter whose source no block uses.** It saves and reaches nothing, and no message says so.
+  `control.source` is the id the `binding.sources` on the same page hold.
+- **`source` left off a page filter, or written on a card's control.** On the page it is required;
+  inside a card carrying a `query` binding it is refused. The message says which you have.
