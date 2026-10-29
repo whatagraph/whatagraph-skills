@@ -1063,7 +1063,10 @@ figures will take:
   commentary you write about them general until the channel is mapped.
 - Bind a **block**, not a card: a card's query feeds its children and has nothing to show
   meanwhile, so a card waiting for a channel is refused.
-- Once the person connects the account, one call makes every such block live, on every page:
+- Writing the block attaches the channel to the design with its sample data, so the channels
+  panel lists every channel the design needs, as a template report does. When the person
+  connects an account there, every block waiting for that channel goes live, on every page, and
+  removing the account puts them back on sample data. You do the same with one call:
 
 ```
 manage-canvases action=map_channel canvas_id=12 channel_id=4 source_ids=[318]
@@ -1147,10 +1150,10 @@ interchangeable.
 created, nothing has to be cleaned up, and the block is the whole statement of what it shows.
 Reach for this first for any block's numbers, charts, tables and bar lists, whatever the format.
 
-One thing it does **not** do: a query binding names a source without **attaching** it to the
-design. `sources` on a binding is the global integration source id, so the numbers are live and
-correct while the design's channels panel stays empty. Attach the channel yourself when the design
-should show which sources it reads:
+`sources` on a binding is the global integration source id. Writing the page attaches every
+source its blocks read to the design as a channel, and every channel they wait for as its sample
+data, so the channels panel shows what the design reads without a call of yours. Attach a channel
+no block reads yet (one a widget will take) yourself:
 
 ```
 manage-canvases action=attach_sources canvas_id=12 source_ids=[2]
@@ -1575,8 +1578,6 @@ Surface a finished design as an artifact card in the chat rather than writing a 
   noise.
 - **A widget created and never bound to a block.** It draws nothing and is deleted on the next page
   save. Create the widget and add its block in the same turn.
-- **A dashboard of `query` bindings handed over with an empty channels panel.** The numbers are
-  right and the design looks like it reads nothing. Attach the sources with `attach_sources`.
 - **A widget used where a `query` binding would do.** A metric, a chart, a table or a bar list
   needs no widget. Create one for what the list above names, or because the person asked for a
   widget.
