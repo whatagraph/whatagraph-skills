@@ -20,6 +20,14 @@ optional_tools:
     purpose: Create and edit a widget the design owns, for the widget types no block draws.
   - tool_name: list-widgets
     purpose: Read the widgets a design owns, or find a report's widget to bind a block to.
+  - tool_name: manage-assets
+    purpose: Crop a region of an attached file into an image a block can show.
+  - tool_name: list-custom-dimensions
+    purpose: Find a custom dimension that already splits by the file's business units or objectives.
+  - tool_name: manage-custom-dimensions
+    purpose: Create the business-unit or objective split a chart across platforms needs.
+  - tool_name: manage-custom-api
+    purpose: Store a file's figures for media no connector reads, so a chart can bind to them.
 ---
 
 # Designs
