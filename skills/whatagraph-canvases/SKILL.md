@@ -91,8 +91,8 @@ The steps:
    Do not stop to summarise or to offer to continue, and do not skip or merge pages.
 3. **Then make the figures live, page by page, without redrawing the page.** A traced chart is a
    picture with its title, axis labels and values as separate text lines, and a traced KPI is a
-   text line: right, but connected to nothing. Look at the page (`list-canvases action=preview`
-   and `action=show_page`), then swap one traced block at a time with `patch_blocks` and
+   text line: right, but connected to nothing. Look at the page (`list-canvases action=preview`,
+   and `action=show_page` with `fields=lines` for each block's id, words and frame), then swap one traced block at a time with `patch_blocks` and
    `replace_block_id` set to its id, sending one block and no `frame`:
    - a chart picture becomes a `chart` (or `table`, `bar_list`) of the same shape, never one
      `metric` (the server refuses a metric on a picture). Before sending it, read the picture
