@@ -20,6 +20,14 @@ optional_tools:
     purpose: Create and edit a widget the design owns, for the widget types no block draws.
   - tool_name: list-widgets
     purpose: Read the widgets a design owns, or find a report's widget to bind a block to.
+  - tool_name: manage-assets
+    purpose: Crop a region of an attached file into an image a block can show.
+  - tool_name: list-custom-dimensions
+    purpose: Find a custom dimension that already splits by the file's business units or objectives.
+  - tool_name: manage-custom-dimensions
+    purpose: Create the business-unit or objective split a chart across platforms needs.
+  - tool_name: manage-custom-api
+    purpose: Store a file's figures for media no connector reads, so a chart can bind to them.
 ---
 
 # Designs
@@ -113,8 +121,22 @@ The steps:
        platform as all of them. Read every chart's own labels, not the page title: bars named
        Meta, Google, TikTok are platforms on a page titled by BU too. DV360 is the channel
        `Google Display & Video 360`, not `Google Campaign Manager 360`. A write naming a metric one
-       channel lacks is refused by channel; give that entry its own `metrics`. A chart of business units or objectives across platforms is a
-       custom dimension over a blend: leave that picture and report it.
+       channel lacks is refused by channel; give that entry its own `metrics`.
+     - **business units or objectives across platforms**: a pie of spend by BU, or bars of CPM by
+       objective, summed over Meta, Google and TikTok, is `per_channel` with one `dimensions`
+       entry: the custom dimension for that split (see "Totals across channels, and splits by
+       business unit"). Every platform's rows are added together per value. A rate (CPM, CPC,
+       CPV) does not add up across platforms, so bind its parts as `metrics` and name the rate in
+       `ratio`: `{"name": "CPM", "numerator": "spend", "denominator": "impressions", "scale": 1000}`.
+       The server sums each part, then divides. A chart of one objective only takes a `filters`
+       condition on the objective dimension.
+     - **media no connector reads** (premium publishers, TV, radio, print, out of home): put the
+       file's figures into a Custom API source and bind the chart to it with `sources`. See
+       "Figures no connector reads".
+     Both are part of making the page live, not extras to offer afterwards: when no custom
+     dimension splits by the file's units yet, create it; when no source holds the publishers,
+     create the Custom API source. Leave such a chart as a picture only when a tool refuses, and
+     say which refusal.
    - a text line that prints a figure becomes a `metric` bound to that figure. The server draws it
      as that line, in its face and colours: "3.16M DH investis" stays one line with its words, and
      a line that is only a percentage ("+0.86 %") draws the change alone. For a change line, bind
@@ -1082,10 +1104,49 @@ blend's are `aggregation_metric_universal_metric_<id>`; a source group's need it
 `list-sources action=list` hides blends and groups unless you pass their channel in `channels`.
 
 A split the file makes by **business unit, product or objective** usually lives only in campaign
-names. Make it a custom dimension with `manage-custom-dimensions` (`map_type: data`, one rule per
-unit, such as campaign name `contains` "brand" then "Brand") and name its
-`universal_dimension_<id>` in `dimensions` or in a `filters` condition. Make one dimension per
-split and reuse it on every page.
+names. Make it a custom dimension with `manage-custom-dimensions`, before the pages that use it:
+
+```
+manage-custom-dimensions action=create name="Business unit" map_type=data transformation_level=channel
+  fields=[{"channel_id": 4, "field_external_id": "<Meta's campaign name>"},
+          {"channel_id": 12, "field_external_id": "<Google Ads' campaign name>"},
+          {"channel_id": 31, "field_external_id": "<TikTok's campaign name>"}]
+  maps=[{"when": "contains", "value": "B2C", "then": "B2C"},
+        {"when": "contains", "value": "B2B", "then": "B2B"},
+        {"default": "Other"}]
+```
+
+- Take the unit names from the file itself: the pie's legend, the chart's axis. One rule per
+  name, and `{default: "Other"}` last.
+- `fields` names the campaign-name dimension of **every** channel the split covers, found with
+  `list-sources action=list_dimensions_and_metrics` and that `channel_id`. A channel left out has
+  no such dimension, and a `per_channel` entry for it is refused.
+- `list-custom-dimensions action=list` shows the team's existing custom
+  dimensions; reuse one that already splits by the same names instead of making another.
+- Name its `universal_dimension_<id>` in `dimensions` or in a `filters` condition. Make one
+  dimension per split (one for BU, one for objective) and reuse it on every page.
+- On a channel still waiting for an account, the sample campaigns match none of the rules, so
+  the sample rows are spread over the rule's names. The chart shows the file's units with sample
+  figures, and the real split once an account is connected.
+
+### Figures no connector reads
+
+A file often reports media bought outside the ad platforms: premium publishers, TV, radio, print.
+No channel holds those, so there is no sample data either. Store the file's own figures in a
+**Custom API source** with `manage-custom-api`, and bind the chart to it like any source:
+
+1. `action=create_source`, named for what it holds ("Premium publishers"), with the design's
+   space in `space_ids`. Make one source per kind of media, and reuse it on every page.
+2. `action=define_schema`: one dimension per thing the chart splits by (`publisher`, type
+   `string`) and one metric per figure (`spend`, type `float`, accumulator `sum`).
+3. `action=push_data`: one row per bar, each dated the last day of the period the file reports
+   (`{"date": "2026-07-31", "publisher": "Hespress", "spend": 120000}`).
+4. Bind with `"sources": [<source_id>]`, the same `metrics` and `dimensions`, and `date_from` /
+   `date_till` spanning that period, so the chart keeps the file's month whatever the design's
+   date range.
+
+These are the file's figures, not a connection: say so in your answer, and tell the person they
+can send next month's rows to the same source to update the page.
 
 ### A summary: letting the page write its own narrative
 
