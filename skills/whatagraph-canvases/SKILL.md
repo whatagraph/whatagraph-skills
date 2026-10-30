@@ -1083,6 +1083,11 @@ figures will take:
   you still keep it.
 - Sample figures are not the person's. Never present them as their results, and keep any
   commentary you write about them general until the channel is mapped.
+- A team can turn sample data off. Then there is nothing to draw for a channel without an
+  account, and a write binding one is refused: type the file's figures into the block and leave
+  its `binding` out, as an offline widget holds them. On a traced page, keep such a figure's text
+  line as it is, and put a chart's figures in its `chart` payload. A `per_channel` chart names
+  only channels with an account. `trace_pages` says when sample data is off.
 - Bind a **block**, not a card: a card's query feeds its children and has nothing to show
   meanwhile, so a card waiting for a channel is refused.
 - Writing the block attaches the channel to the design with its sample data, so the channels
