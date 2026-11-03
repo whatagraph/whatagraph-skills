@@ -100,8 +100,11 @@ The steps:
 3. **Then make the figures live, page by page, without redrawing the page.** A traced chart is a
    picture with its title, axis labels and values as separate text lines, and a traced KPI is a
    text line: right, but connected to nothing. Look at the page (`list-canvases action=preview`,
-   and `action=show_page` with `fields=lines` for each block's id, words and frame), then swap one traced block at a time with `patch_blocks` and
-   `replace_block_id` set to its id, sending one block and no `frame`:
+   and `action=show_page` with `fields=lines` for each block's id, words and frame), then swap the
+   traced blocks with `patch_blocks`, sending no `frame`. Swap a whole page in one call: each new
+   block carries the id of the traced line or picture it replaces, and each is swapped as
+   `replace_block_id` would (one block per call) swap it. A dashboard page holds a dozen figures and
+   half a dozen charts; one call per block runs out of turn before the last pages:
    - a chart picture becomes a `chart` (or `table`, `bar_list`) of the same shape, never one
      `metric` (the server refuses a metric on a picture). Before sending it, read the picture
      (`list-canvases action=preview`) and match it:
@@ -133,6 +136,21 @@ The steps:
      - **media no connector reads** (premium publishers, TV, radio, print, out of home): put the
        file's figures into a Custom API source and bind the chart to it with `sources`. See
        "Figures no connector reads".
+     - **a filter the file states**: a dashboard prints what a page or a widget counts, in the page
+       title ("SEO", "Organic", "GA Paid", "Non-Branded"), under a widget's title ("Session
+       Default Channel") or in a caption ("Form Submission Breakdown"). Bind every figure and chart
+       it covers with the same `filters`, or the figure reads the whole site and does not match the
+       file. An organic page is `{"dimension": "sessionDefaultChannelGrouping", "operator":
+       "equals", "value": "Organic Search"}` on GA4; a paid page is two rows on that dimension
+       (`Paid Search`, `Paid Social`) joined `or`; a figure "First User Default Channel" filters
+       `firstUserDefaultChannelGrouping`; form submissions filter `eventName`; non-branded search
+       queries are `not_contains` the brand on the query dimension. Copy each id from
+       `list-sources list_dimensions_and_metrics`.
+     - **a table** is traced as a header band and one text line per cell, so no single block holds
+       it. Send a `table` block with `patch_blocks` and `clear_under: true`, its `frame` the
+       rectangle from the header's top-left to the last row's bottom-right (read the frames from
+       `show_page` `fields=lines`), bound with the first column's dimension and the file's metric
+       columns in order. Every cell line inside the frame goes; the title above it stays.
      Both are part of making the page live, not extras to offer afterwards: when no custom
      dimension splits by the file's units yet, create it; when no source holds the publishers,
      create the Custom API source. Leave such a chart as a picture only when a tool refuses, and
