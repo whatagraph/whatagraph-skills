@@ -146,11 +146,20 @@ The steps:
        `firstUserDefaultChannelGrouping`; form submissions filter `eventName`; non-branded search
        queries are `not_contains` the brand on the query dimension. Copy each id from
        `list-sources list_dimensions_and_metrics`.
-     - **a table** is traced as a header band and one text line per cell, so no single block holds
-       it. Send a `table` block with `patch_blocks` and `clear_under: true`, its `frame` the
-       rectangle from the header's top-left to the last row's bottom-right (read the frames from
-       `show_page` `fields=lines`), bound with the first column's dimension and the file's metric
-       columns in order. Every cell line inside the frame goes; the title above it stays.
+     - **a table** is traced as a coloured header band and one text line per cell. Every answer
+       lists the tables still typed in by their band's id and columns. Send a `table` under the
+       band's id, with empty `headers` and `rows`: it takes the whole table, the band's colours,
+       the file's type size, and the file's cells until the binding answers. Bind the first
+       column's dimension, then the file's metric columns in order. Where the file prints a "% Δ"
+       column after each figure, set `delta_columns: true` and the binding's `compare` (`previous`
+       for month on month, `last_year` for year on year). When dimensions, metrics and Δ columns
+       add up to the file's column count, the file's column names are kept.
+     - **sources over time**: a line chart comparing two platforms or two cuts of one ("GA leads vs
+       Salesforce leads", "GA paid leads vs Google Ads and Meta leads") takes `per_channel` with
+       `channel_series: true` and the date in `dimensions`. Each entry is one line: its first
+       metric, its `name` (the legend's words), and where its channel differs, its own date field
+       in `dimensions`, its `report_type` and its `filters` (GA paid is GA4 filtered to Paid
+       Search and Paid Social). The same channel may appear twice.
      Both are part of making the page live, not extras to offer afterwards: when no custom
      dimension splits by the file's units yet, create it; when no source holds the publishers,
      create the Custom API source. Leave such a chart as a picture only when a tool refuses, and
