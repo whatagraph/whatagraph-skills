@@ -106,16 +106,25 @@ The steps:
    `replace_block_id` would (one block per call) swap it. A dashboard page holds a dozen figures and
    half a dozen charts; one call per block runs out of turn before the last pages:
    - a chart picture becomes a `chart` (or `table`, `bar_list`) of the same shape, never one
-     `metric` (the server refuses a metric on a picture). Before sending it, read the picture
-     (`list-canvases action=preview`) and match it:
+     `metric` (the server refuses a metric on a picture). Every answer names each chart the file
+     drew in vectors by its title, kind and legend (`p35` "Gender" donut of 3 slices: Male,
+     Female, Undetermined): send that kind, split by the dimension its legend names (gender,
+     device, region; one line per metric the legend names), and the server paints it in the
+     file's colours, a donut's slices by name. A picture listed with no kind was a raster in the
+     file: read it (`list-canvases action=preview`). Match every chart:
      - **periods**: an axis of months (janvier to juillet) is the date dimension with
        `grouping: 1 month` and `date_from`/`date_till` spanning those months. Without them the chart
        reads the design's period, by day.
      - **what each bar is**: platforms, business units or campaigns, each a different dimension.
      - **series**: one bar per category, or two side by side (cost and impressions) is two metrics.
+     - **one line per value over time**: a line chart whose legend names values of one dimension
+       (google, bing, duckduckgo; chatgpt.com, perplexity.ai) binds one metric and two
+       `dimensions`, the date first, then that dimension (`["date", "sessionSource"]`). The ten
+       values with the most of the metric draw a line each.
      - **colours**: the server takes the bar direction and each series' colour from the picture
-       (black included, in the order the bars stand) and says so. Where it says nothing, set each
-       `series_style[i].color` to the file's colour yourself.
+       (black included, in the order the bars stand or the legend reads) and says so. Send the
+       series in the legend's order. Where it says nothing, set each `series_style[i].color` to the
+       file's colour yourself.
      - **platforms**: a chart whose bars are platforms (Meta, Google, TikTok) takes `per_channel`
        in place of `sources`: one entry per bar, in the picture's order, each a `channel_id` with
        the `source_id` of a connected account where there is one. An entry without one draws that
