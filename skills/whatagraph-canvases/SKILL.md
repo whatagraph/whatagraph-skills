@@ -183,6 +183,10 @@ The steps:
      it takes the whole passage and the room around it, and the server briefs it with the file's
      own words so it makes the same points in the same form from the live figures. Leave the
      passage's bold title ("Traffic & Conversion Analysis") as it is.
+   - **the report's dates** ("1 May 2026 - 31 May 2026" in the header) become a `text` block with
+     `binding: {"kind": "period"}`, sent under the line's id with nothing else. It keeps the
+     file's words and style and prints the page's dates in them, so the header never names the
+     file's month beside live figures. Every answer lists the date lines still typed in.
    - a text line that prints a figure becomes a `metric` bound to that figure. The server draws it
      as that line, in its face and colours: "3.16M DH investis" stays one line with its words, and
      a line that is only a percentage ("+0.86 %") draws the change alone. For a change line, bind
@@ -240,6 +244,7 @@ When you rebuild a block live, these are the usual page types and the blocks tha
 | Pie or donut breakdown | `chart`, `pie` or `donut`, one series |
 | Conversion funnel with step rates | One `card` per funnel, each step a `stadium` `shape` narrowing down the card, the step rate in a `circle` between steps (see *A funnel* above) |
 | Table | `table`, every cell a formatted string |
+| Report period ("1 May 2026 - 31 May 2026") | `text` with a `period` binding: the dates written as the file writes them, from the page's range |
 | Commentary paragraph or bullet box | `text` with a `summary` binding (see *A summary: letting the page write its own narrative*), inside a `card` when the file boxes it |
 | Platform logos (Meta, Google Ads, TikTok…) | `icon` with `channel` set to the integration slug |
 | Ad creatives, screenshots, other logos | Already pictures on a traced page; elsewhere an `image` with the `url` `manage-assets action=crop_page` returns for that region of the file's page |
