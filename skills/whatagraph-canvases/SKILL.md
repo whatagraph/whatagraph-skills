@@ -96,7 +96,11 @@ The steps:
 2. **Trace every page, in order, in this turn.** `trace_pages` with `asset_id` and `file_pages`
    `[1..10]`, then `[11..20]`, and so on to the last page. The first call records the file's page
    count, and every answer says how many pages are built: carry on until it says all of them are.
-   Do not stop to summarise or to offer to continue, and do not skip or merge pages.
+   Do not stop to summarise or to offer to continue, and do not skip or merge pages. The design's
+   pages are the file's pages, in the file's order: add no cover, summary or overview page of your
+   own and do not reorder them, even when the person asks for a different source. A page already
+   traced is not traced again (the answer names it); a page the tracer could not read is named in
+   the answer and has no page in the design.
 3. **Then make the figures live, page by page, without redrawing the page.** A traced chart is a
    picture with its title, axis labels and values as separate text lines, and a traced KPI is a
    text line: right, but connected to nothing. Look at the page (`list-canvases action=preview`,
@@ -173,6 +177,12 @@ The steps:
      dimension splits by the file's units yet, create it; when no source holds the publishers,
      create the Custom API source. Leave such a chart as a picture only when a tool refuses, and
      say which refusal.
+   - **commentary** (the analysis a report writes each period: "MoM, total leads dropped by 16%",
+     a "Results:" list of bullets) becomes an AI summary. Every answer lists each passage still
+     typed in by its first line's id. Send one `text` block with a `summary` binding under that id:
+     it takes the whole passage and the room around it, and the server briefs it with the file's
+     own words so it makes the same points in the same form from the live figures. Leave the
+     passage's bold title ("Traffic & Conversion Analysis") as it is.
    - a text line that prints a figure becomes a `metric` bound to that figure. The server draws it
      as that line, in its face and colours: "3.16M DH investis" stays one line with its words, and
      a line that is only a percentage ("+0.86 %") draws the change alone. For a change line, bind
@@ -183,20 +193,25 @@ The steps:
    are not the figure you meant, undo it with `patch_blocks` `restore_block_ids` (it puts the traced
    line or picture back exactly) and swap the right one. A line with no figure in it (a label, a
    heading, a date) is refused, and the refusal lists the page's lines that do print one.
-   Do not use `remove_block_ids` on a traced page and never resend or rebuild its panels, bands,
-   headings or commentary: the traced page is already right, and only its figures change. Bind each block to a source or to
+   Do not use `remove_block_ids` on a traced page and never resend or rebuild its panels, bands or
+   headings: the traced page is already right, and only its figures and commentary change. Bind each block to a source or to
    its channel (see *Inline or bound*). Work out which platform each figure comes from (the page title, its logo,
    the metric's name) and check `list-sources` for a connected account of it. Where there is none,
    do not leave the figure typed in: bind it to that platform's channel (*A channel with no account
    yet*), which draws the channel's sample data until the person connects the account. Keep the
    file's colours with `series_style[i].color` and `category_colors`.
    Leave a picture where no source could ever fill it: creatives, screenshots, logos.
+   When the person names a source ("use our GA4"), bind every figure that source can give to it,
+   and still make the other platforms' pages live on their channels: a page of Google Ads or Meta
+   figures left typed in is a page that never updates.
 4. **Report from the tool's answers.** Pages traced against the file's pages, `data_blocks` (bound,
-   waiting for a channel, typed in), the channels the person has to connect, and the charts still
-   drawn as pictures. Say plainly that figures waiting for a channel are sample data, not theirs.
+   waiting for a channel, typed in), the channels the person has to connect, and every chart,
+   table, figure or passage left as the file printed it, by page, with the reason. Say plainly
+   that figures waiting for a channel are sample data, not theirs.
 
 **If `trace_pages` fails, stop and report the error.** Do not draw the pages yourself instead: a
-hand-built page is what tracing replaces, and the person needs to know the tool failed.
+hand-built page is what tracing replaces, and the person needs to know the tool failed. When the
+answer names one page it could not trace, trace the rest and name that page in your report.
 
 **It is always a new design.** Do not present a design that already exists as the replica, even
 one with the same name made earlier in this conversation or by another agent. Build a new one, and
@@ -225,7 +240,7 @@ When you rebuild a block live, these are the usual page types and the blocks tha
 | Pie or donut breakdown | `chart`, `pie` or `donut`, one series |
 | Conversion funnel with step rates | One `card` per funnel, each step a `stadium` `shape` narrowing down the card, the step rate in a `circle` between steps (see *A funnel* above) |
 | Table | `table`, every cell a formatted string |
-| Commentary paragraph or bullet box | `text` with `role: body`, inside a `card` when the file boxes it |
+| Commentary paragraph or bullet box | `text` with a `summary` binding (see *A summary: letting the page write its own narrative*), inside a `card` when the file boxes it |
 | Platform logos (Meta, Google Ads, TikTok…) | `icon` with `channel` set to the integration slug |
 | Ad creatives, screenshots, other logos | Already pictures on a traced page; elsewhere an `image` with the `url` `manage-assets action=crop_page` returns for that region of the file's page |
 | Learnings grid (continue, optimise, stop, start) | One `card` per column at one `y` and `h`, each with a heading and a body |
