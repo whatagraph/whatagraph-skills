@@ -61,7 +61,7 @@ CANONICAL_TOOLS = {
     "list-assets", "manage-assets",
     "list-automations", "manage-automations", "delete-automations",
     "list-blends", "manage-blends", "delete-blends",
-    "list-canvases", "manage-canvases", "delete-canvases",
+    "list-freeform-reports", "manage-freeform-reports", "delete-freeform-reports",
     "list-conversations", "manage-conversations", "delete-conversations",
     "view-creatives",
     "list-custom-api-data", "manage-custom-api",
