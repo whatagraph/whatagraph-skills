@@ -1,25 +1,25 @@
 ---
-name: whatagraph-canvases
+name: whatagraph-freeform-reports
 type: domain
-description: Build designs — freeform documents where a slide deck, a printable client report and a continuous dashboard are one type in three formats. Blocks are positioned on the page and named by theme role, never by colour. Use when someone wants a deck, a presentation, a designed or printable report, a one-pager, or a dashboard view, rather than a grid report. Also covers design systems (brands) — the six decisions a design is drawn in.
+description: Build freeform reports — documents where a slide deck, a printable client report and a continuous dashboard are one type in three formats. Blocks are positioned on the page and named by theme role, never by colour. Use when someone wants a deck, a presentation, a designed or printable report, a one-pager, or a dashboard view, rather than a grid report. Also covers design systems (brands) — the six decisions a freeform report is drawn in.
 required_tools:
-  - list-canvases
-  - manage-canvases
+  - list-freeform-reports
+  - manage-freeform-reports
   - list-design-systems
   - fetch-data
 optional_tools:
   - tool_name: list-sources
     purpose: Find the sources to fetch the numbers from before authoring, and the ids attach_sources takes.
   - tool_name: list-spaces
-    purpose: Pick the space (client) the design belongs in.
+    purpose: Pick the space (client) the freeform report belongs in.
   - tool_name: manage-design-systems
-    purpose: Generate or create the brand the design is drawn in.
-  - tool_name: delete-canvases
-    purpose: Remove a design, or one page of one.
+    purpose: Generate or create the brand the freeform report is drawn in.
+  - tool_name: delete-freeform-reports
+    purpose: Remove a freeform report, or one page of one.
   - tool_name: manage-widgets
-    purpose: Create and edit a widget the design owns, for the widget types no block draws.
+    purpose: Create and edit a widget the freeform report owns, for the widget types no block draws.
   - tool_name: list-widgets
-    purpose: Read the widgets a design owns, or find a report's widget to bind a block to.
+    purpose: Read the widgets a freeform report owns, or find a report's widget to bind a block to.
   - tool_name: manage-assets
     purpose: Crop a region of an attached file into an image a block can show.
   - tool_name: list-custom-dimensions
@@ -30,18 +30,18 @@ optional_tools:
     purpose: Store a file's figures for media no connector reads, so a chart can bind to them.
 ---
 
-# Designs
+# Freeform reports
 
-Tools covered: `list-canvases`, `manage-canvases`, `delete-canvases`, `list-design-systems`, `manage-design-systems`.
+Tools covered: `list-freeform-reports`, `manage-freeform-reports`, `delete-freeform-reports`, `list-design-systems`, `manage-design-systems`.
 
-A **design** is a document made of pages, and each page is a `layout` plus positioned `blocks`.
+A **freeform report** is a document made of pages, and each page is a `layout` plus positioned `blocks`.
 A slide deck, a printable A4 client report and a continuous dashboard are the **same document
 type in three formats**. They differ in exactly three things: the shape of the page, whether
 page boundaries are shown, and the brand the block roles resolve to. Everything else — the
 blocks, the composition rules, this playbook — is shared.
 
-A design is **not a report**. A report is a grid of widgets on a layout the product decides. A
-design is blocks you place, on a page you compose. Either can hold live numbers — a design's
+A freeform report is **not a regular report**. A regular report is a grid of widgets on a layout the product decides. A
+freeform report is blocks you place, on a page you compose. Either can hold live numbers — a freeform report's
 blocks can be **bound** to a widget or a query and re-fetch every time somebody opens it — so
 "does it stay current" is no longer the question that chooses between them. The question is
 whether the output is a composed page. If the user wants the familiar report grid, they want
@@ -81,29 +81,29 @@ it applies: not the six to ten slides, not one idea per page, not the direction 
 picked. The person is judging one thing, whether it looks like their report, and every page you
 merge, drop or "improve" is a page that does not.
 
-**Trace the file, do not draw it.** `manage-canvases action=trace_pages` reads the file's pages and
-appends them to the design exactly as the file draws them: every line of text in its own face, size
+**Trace the file, do not draw it.** `manage-freeform-reports action=trace_pages` reads the file's pages and
+appends them to the freeform report exactly as the file draws them: every line of text in its own face, size
 and colour, every panel and band in its colour, every chart, photo, logo and icon as a picture of
 itself. A page you compose from a picture of the original comes out as your idea of that page; a
 traced page is the page.
 
 The steps:
 
-1. **Create the design empty, in the file's shape.** A 16:9 deck is `slide_16_9`, an A4 report is
+1. **Create the freeform report empty, in the file's shape.** A 16:9 deck is `slide_16_9`, an A4 report is
    `a4_portrait` or `a4_landscape`; anything else is `custom` with a `design_width`. Give it a brand
    generated from the file (`manage-design-systems action=generate asset=<the file's id>`), and no
    `pages`.
 2. **Trace every page, in order, in this turn.** `trace_pages` with `asset_id` and `file_pages`
    `[1..10]`, then `[11..20]`, and so on to the last page. The first call records the file's page
    count, and every answer says how many pages are built: carry on until it says all of them are.
-   Do not stop to summarise or to offer to continue, and do not skip or merge pages. The design's
+   Do not stop to summarise or to offer to continue, and do not skip or merge pages. The freeform report's
    pages are the file's pages, in the file's order: add no cover, summary or overview page of your
    own and do not reorder them, even when the person asks for a different source. A page already
    traced is not traced again (the answer names it); a page the tracer could not read is named in
-   the answer and has no page in the design.
+   the answer and has no page in the freeform report.
 3. **Then make the figures live, page by page, without redrawing the page.** A traced chart is a
    picture with its title, axis labels and values as separate text lines, and a traced KPI is a
-   text line: right, but connected to nothing. Look at the page (`list-canvases action=preview`,
+   text line: right, but connected to nothing. Look at the page (`list-freeform-reports action=preview`,
    and `action=show_page` with `fields=lines` for each block's id, words and frame), then swap the
    traced blocks with `patch_blocks`, sending no `frame`. Swap a whole page in one call: each new
    block carries the id of the traced line or picture it replaces, and each is swapped as
@@ -115,10 +115,10 @@ The steps:
      Female, Undetermined): send that kind, split by the dimension its legend names (gender,
      device, region; one line per metric the legend names), and the server paints it in the
      file's colours, a donut's slices by name. A picture listed with no kind was a raster in the
-     file: read it (`list-canvases action=preview`). Match every chart:
+     file: read it (`list-freeform-reports action=preview`). Match every chart:
      - **periods**: an axis of months (janvier to juillet) is the date dimension with
        `grouping: 1 month` and `date_from`/`date_till` spanning those months. Without them the chart
-       reads the design's period, by day.
+       reads the freeform report's period, by day.
      - **what each bar is**: platforms, business units or campaigns, each a different dimension.
      - **series**: one bar per category, or two side by side (cost and impressions) is two metrics.
      - **one line per value over time**: a line chart whose legend names values of one dimension
@@ -217,7 +217,7 @@ The steps:
 hand-built page is what tracing replaces, and the person needs to know the tool failed. When the
 answer names one page it could not trace, trace the rest and name that page in your report.
 
-**It is always a new design.** Do not present a design that already exists as the replica, even
+**It is always a new freeform report.** Do not present a freeform report that already exists as the replica, even
 one with the same name made earlier in this conversation or by another agent. Build a new one, and
 describe only what this turn wrote.
 
@@ -233,7 +233,7 @@ the page's width: a smaller circle cuts a percentage off. Convert to the card's 
 
 When you rebuild a block live, these are the usual page types and the blocks that draw them:
 
-| In the file | In the design |
+| In the file | In the freeform report |
 |---|---|
 | Section divider: one huge title on a band | `section` layout, `dark` or `accent` background, `heading` at `scale` 2 or more; a band of colour is a `card` with no blocks. Two-tone italic display type is one `heading` with two `runs`, each with its own `ink`, on a brand whose `type` is `display_italic` (every heading italic, in the face's real italic); on another brand, set `italic: true` on the runs |
 | KPI tiles: a dark box per figure with its label | A toned `card` (`tone: dark`) per tile, each holding a `metric`; tiles at one `y` and `h` form one row |
@@ -252,11 +252,11 @@ When you rebuild a block live, these are the usual page types and the blocks tha
 
 ## The workflow
 
-1. **Read the registry.** `list-canvases` `action=formats`. Page geometry, block budgets and the
+1. **Read the registry.** `list-freeform-reports` `action=formats`. Page geometry, block budgets and the
    bands the chrome occupies are server-owned and change without a release. Never author from
    remembered numbers.
 2. **Pick the brand.** `list-design-systems` `action=list`. Use the team's default unless the
-   user asks for something else. A design with no brand is drawn in the default one — never
+   user asks for something else. A freeform report with no brand is drawn in the default one — never
    unstyled — so this step is optional, not skippable-with-consequences.
 3. **Fetch the data.** `list-sources`, then `fetch-data`. Do this *before* authoring: the story
    comes from reading the numbers, and you cannot query from inside a page. Keep every call you
@@ -264,23 +264,23 @@ When you rebuild a block live, these are the usual page types and the blocks tha
    `source_id`, `report_type`, `metrics` and `dimensions`, not the figures it returned. See
    *Inline or bound*.
 4. **Decide the story, then the design direction.** See *Choose a design direction* below.
-5. **Author it in one call.** `manage-canvases` `action=create` with `pages`.
-6. **Read it back.** `list-canvases` `action=show`, and `show_page` on anything you are unsure
+5. **Author it in one call.** `manage-freeform-reports` `action=create` with `pages`.
+6. **Read it back.** `list-freeform-reports` `action=show`, and `show_page` on anything you are unsure
    of. Then fix what is wrong with `patch_blocks`.
-7. **Check it draws.** `list-canvases` `action=validate`. See *Checking a design still draws*
+7. **Check it draws.** `list-freeform-reports` `action=validate`. See *Checking a freeform report still draws*
    below — this is the step that catches a page nobody wrote breaking.
-8. **Look at it.** `preview_canvas`, if you have it. See *Looking at a page* below. A validator
+8. **Look at it.** `preview_freeform_report`, if you have it. See *Looking at a page* below. A validator
    tells you a heading does not fit; only the picture tells you the page is ugly.
 
-## Creating a design
+## Creating a freeform report
 
 ```
-manage-canvases action=create space_id=<id> name="Q3 client review" format=slide_16_9
+manage-freeform-reports action=create space_id=<id> name="Q3 client review" format=slide_16_9
                 design_system_id=<id> pages=[ ...page objects... ]
 ```
 
 `pages` is optional on `create` — without it you get one empty page — but passing it is the
-normal way to build a design, and it is one call instead of two.
+normal way to build a freeform report, and it is one call instead of two.
 
 A page object:
 
@@ -375,7 +375,7 @@ than the table says, need more room than you asked for, and get clipped. Use the
 | `caption` | 0.022 / 145 | 0.015 / 205 |
 | `kicker` | 0.018 / 113 | 0.013 / 160 |
 
-If the design's brand sets its own type scale, `list-canvases` `action=show` returns it as
+If the freeform report's brand sets its own type scale, `list-freeform-reports` `action=show` returns it as
 `type_scale` and `format_preset.min_type_size`. Recompute from the size the page will actually
 draw, which is `max(min_type_size, size × type_scale_ratio × scale)`: the line height is
 `that × line_height ÷ design_width`, and the characters per line at `w: 1.0` are
@@ -447,8 +447,8 @@ page.** It is how you say "this is the number that matters". Two say nothing.
 ## Styling one block
 
 A block may carry a `style` object overriding what the brand decided for it. **Leave it out
-unless you were asked for it.** A design where nothing is styled re-brands completely and a
-design where everything is styled re-brands not at all, and the person asking for one blue box
+unless you were asked for it.** A freeform report where nothing is styled re-brands completely and a
+freeform report where everything is styled re-brands not at all, and the person asking for one blue box
 is not asking for the second thing.
 
 ```json
@@ -476,7 +476,7 @@ solid one, and the tint is almost always what a ground wants — a full-strength
 text is what makes a page look like a warning.
 
 **Reach for a role or a slot first.** A literal is the only one of the four that a re-brand does
-not move, so a design full of literals is a design somebody has to restyle by hand later. Use one
+not move, so a freeform report full of literals is a freeform report somebody has to restyle by hand later. Use one
 when the colour is the point — a company's own red in a comparison, a traffic light — and not
 because you happen to know a nice blue.
 
@@ -597,7 +597,7 @@ shrinking it.
   It does not wrap — keep it to a phrase.
 - **`divider`** — a rule. `{"accent": true}` is the short brand-coloured mark that belongs under a
   title heading; without it, a hairline separator.
-- **`bar_list`** — a handful of labelled bars drawn as design rather than as a chart. Each item is
+- **`bar_list`** — a handful of labelled bars drawn as shapes rather than as a chart. Each item is
   `{label, value, ratio, emphasis?}` where `ratio` is 0..1 of the track and `value` is the
   formatted string shown. `horizontal` is a ranked comparison; `vertical` is a short progression.
   Max 6. **Prefer this over a chart for six or fewer figures** — it reads as part of the page
@@ -610,10 +610,10 @@ shrinking it.
   Inside a card carrying a `query` binding it is a slider, a row of chips or a switch that narrows
   the rows that card fetched, in the browser, without refetching anything. On the page, or inside
   a card with no binding, it names a `source` and re-queries every block around it bound to that
-  source — the report's filter control, on a design. Neither changes the document. See *A
+  source — the report's filter control, on a freeform report. Neither changes the document. See *A
   control* and *A filter* under *Groups*.
 - **`widget`** — an existing Whatagraph widget, drawn on the page. Its `binding` names the
-  `widget_id`; the widget keeps its own configuration and picks up the design's brand. Chrome is
+  `widget_id`; the widget keeps its own configuration and picks up the freeform report's brand. Chrome is
   off by default because the page already has its own text blocks. Give it at least 232 × 110
   design pixels — below that a widget refuses to render.
 
@@ -650,7 +650,7 @@ A child keeps its own `id`, so `patch_blocks` reaches it by that id without rese
 
 **A child's frame is a fraction of the card's interior on both axes**, so `x`, `y`, `w` and `h`
 all run 0 to 1 and one filling the card is `{"x": 0, "y": 0, "w": 1, "h": 1}`. This is the one
-place in a design where `y` is not in the page's width units, and forgetting it is what puts
+place in a freeform report where `y` is not in the page's width units, and forgetting it is what puts
 every child in the top eighth of the card.
 
 The interior is the card's box less its padding, which is **0.012 of the page's width on each
@@ -875,7 +875,7 @@ the values the chips cycle through.
 
 **It is not a control.** A control narrows what the group *shows* and changes nothing in the
 document. An action **edits the document**: it is stored, it can be undone, and only somebody who
-can edit the design sees it. Use a control for "only the channels above 10,000 sessions", and an
+can edit the freeform report sees it. Use a control for "only the channels above 10,000 sessions", and an
 action for "draw that as a line instead".
 
 ```json
@@ -996,7 +996,7 @@ conversions the stages produced, in one row so they take one size.
 ### Offering a group instead of writing one
 
 ```
-propose_group title="Paid search, last month" card={…} canvas_id=<id>
+propose_group title="Paid search, last month" card={…} freeform_report_id=<id>
 ```
 
 Composes the group and shows it to the person in the conversation, drawn with real data and with
@@ -1006,10 +1006,10 @@ its controls working, **without changing any document**. They press a button to 
 
 | They said | You do |
 |---|---|
-| "add a channel table to this page", "put three KPIs at the top", "make the chart a bar chart" | `manage-canvases` — write it |
+| "add a channel table to this page", "put three KPIs at the top", "make the chart a bar chart" | `manage-freeform-reports` — write it |
 | "show me where paid budget is being wasted", "what would a device breakdown look like", "can you make me a summary of last month" | `propose_group` — offer it |
 
-When no design is open, `propose_group` is the only one of the two that makes sense: there is no
+When no freeform report is open, `propose_group` is the only one of the two that makes sense: there is no
 page to write to. Pass `space_id` there, because the draft has to be kept somewhere.
 
 The `card` is exactly the block you would have written onto a page — `"type": "card"`,
@@ -1023,7 +1023,7 @@ where it sits is decided by the page it is eventually placed on.
 
 Three things to get right:
 
-- **Pass `canvas_id` whenever a design is open.** The group is drawn at that design's size and in
+- **Pass `freeform_report_id` whenever a freeform report is open.** The group is drawn at that freeform report's size and in
   its brand, which is what makes the picture in the conversation the same picture they will get on
   the page. Without it the draft falls back to a 16:9 slide in the space's default brand, and the
   card in the chat says so.
@@ -1033,8 +1033,8 @@ Three things to get right:
   the answer, not the blocks: *"Paid search spend is up 18% while conversions are flat — the table
   breaks it down by campaign."* not *"I have created a card with three metric blocks and a table."*
 
-To change a proposal after they ask for something different, edit page 1 of the draft design the
-call returned with `manage-canvases action=patch_blocks`, and the card in the conversation redraws.
+To change a proposal after they ask for something different, edit page 1 of the draft freeform report the
+call returned with `manage-freeform-reports action=patch_blocks`, and the card in the conversation redraws.
 Propose a new one only when they want a different answer rather than a change to this one.
 
 ## Inline or bound
@@ -1047,8 +1047,8 @@ numbers or **fetches** them.
 made: `source_id` becomes `sources`, and `report_type`, `metrics` and `dimensions` are copied
 over as they are. This holds for a deck and a printed page as much as for a dashboard. A typed-in
 figure is connected to nothing: the editor's Data panel says "Not connected to data" on every
-such block, nothing can refresh it, and the person opening the design cannot see where it came
-from. A design full of them reads as invented, however carefully each number was fetched, and
+such block, nothing can refresh it, and the person opening the freeform report cannot see where it came
+from. A freeform report full of them reads as invented, however carefully each number was fetched, and
 "why is this not linked to the source you pulled it from" is the first thing they will ask.
 
 **Inline** is for the figures no source reports: a number you computed from two fetched ones (a
@@ -1060,10 +1060,10 @@ period the deck is about (`lastQuarter` for a quarterly review, `lastMonth` for 
 `compare` to what the deltas are against, and every bound block reads that period. A PDF, a
 PowerPoint file and a Google Slides deck resolve the bindings when they are exported, so they
 carry the numbers the page shows. When the person wants a copy that never changes, `freeze` makes
-one and the design stays live.
+one and the freeform report stays live.
 
 Give the block a `binding` and no payload of its own — the resolver fills it every time the
-design is opened:
+freeform report is opened:
 
 ```json
 { "id": "sessions", "type": "metric", "frame": {"x": 0.04, "y": 0.16, "w": 0.2, "h": 0.11},
@@ -1084,19 +1084,19 @@ design is opened:
 - A bound `table` or `bar_list` is **cut to what its frame holds**, so give it room for the rows
   you expect rather than assuming everything comes back.
 - `kind: "widget"` with a `widget_id` draws a widget instead of a query — either one a report
-  already has, or one the design owns. See *Three ways to make a block live* below.
+  already has, or one the freeform report owns. See *Three ways to make a block live* below.
 - A **card** takes a `query` binding too, and that binds every data block inside it to one row
   set. It is the right answer whenever a card's children are all about the same question. See
   *One query for the whole group*.
 
-**Dates cascade: document → page → block.** Set `date_range` once on the design and every bound
+**Dates cascade: document → page → block.** Set `date_range` once on the freeform report and every bound
 block follows it; a page or a block overrides it with a period key of its own. `inherit` is the
 default on a binding and is almost always what you want — one picker moving a whole document is
 the point. A **share link** can pin a period too, standing in for the document's own rung, which
 is how a client gets March while the dashboard keeps rolling.
 
 ```
-manage-canvases action=update canvas_id=12 date_range=lastQuarter compare=previous
+manage-freeform-reports action=update freeform_report_id=12 date_range=lastQuarter compare=previous
 ```
 
 A block can also pin **dates** instead of a key. `date_from` and `date_till` with no `date_range`
@@ -1113,8 +1113,8 @@ A period is a **calendar key, and it is camelCase**: `last30Days`, `lastMonth`, 
 `last12Month`. Snake case looks right and is not — an unknown key is refused with the full list,
 so read the message rather than guessing again.
 
-`data_mode` follows the bindings: the first binding written onto a design promotes it from
-`inlined` to `bound`, so there is nothing to set. `inlined` only ever describes a design that has
+`data_mode` follows the bindings: the first binding written onto a freeform report promotes it from
+`inlined` to `bound`, so there is nothing to set. `inlined` only ever describes a freeform report that has
 no bindings at all.
 
 ### A channel with no account yet
@@ -1146,13 +1146,13 @@ figures will take:
   only channels with an account. `trace_pages` says when sample data is off.
 - Bind a **block**, not a card: a card's query feeds its children and has nothing to show
   meanwhile, so a card waiting for a channel is refused.
-- Writing the block attaches the channel to the design with its sample data, so the channels
-  panel lists every channel the design needs, as a template report does. When the person
+- Writing the block attaches the channel to the freeform report with its sample data, so the channels
+  panel lists every channel the freeform report needs, as a template report does. When the person
   connects an account there, every block waiting for that channel goes live, on every page, and
   removing the account puts them back on sample data. You do the same with one call:
 
 ```
-manage-canvases action=map_channel canvas_id=12 channel_id=4 source_ids=[318]
+manage-freeform-reports action=map_channel freeform_report_id=12 channel_id=4 source_ids=[318]
 ```
 
 ### Totals across channels, and splits by business unit
@@ -1196,14 +1196,14 @@ A file often reports media bought outside the ad platforms: premium publishers, 
 No channel holds those, so there is no sample data either. Store the file's own figures in a
 **Custom API source** with `manage-custom-api`, and bind the chart to it like any source:
 
-1. `action=create_source`, named for what it holds ("Premium publishers"), with the design's
+1. `action=create_source`, named for what it holds ("Premium publishers"), with the freeform report's
    space in `space_ids`. Make one source per kind of media, and reuse it on every page.
 2. `action=define_schema`: one dimension per thing the chart splits by (`publisher`, type
    `string`) and one metric per figure (`spend`, type `float`, accumulator `sum`).
 3. `action=push_data`: one row per bar, each dated the last day of the period the file reports
    (`{"date": "2026-07-31", "publisher": "Hespress", "spend": 120000}`).
 4. Bind with `"sources": [<source_id>]`, the same `metrics` and `dimensions`, and `date_from` /
-   `date_till` spanning that period, so the chart keeps the file's month whatever the design's
+   `date_till` spanning that period, so the chart keeps the file's month whatever the freeform report's
    date range.
 
 These are the file's figures, not a connection: say so in your answer, and tell the person they
@@ -1215,7 +1215,7 @@ Commentary is data too. A paragraph that says "sessions rose 18% while spend hel
 typed into prose, and it goes stale the first time the range moves. A `text` block with a
 `summary` binding is written by the model from the data blocks around it, stored on the block,
 and written again whenever the data it read changes. It is the report's AI summary, drawn in the
-design's own typography.
+freeform report's own typography.
 
 ```json
 { "id": "takeaways", "type": "text", "frame": {"x": 0.06, "y": 0.34, "w": 0.88, "h": 0.16},
@@ -1242,7 +1242,7 @@ design's own typography.
   out, call:
 
   ```
-  manage-canvases action=regenerate_summary canvas_id=12 page_id=41 block_id=takeaways
+  manage-freeform-reports action=regenerate_summary freeform_report_id=12 page_id=41 block_id=takeaways
   → { "text": "Summary\nSessions rose 18%…", "inputs": ["sessions", "spend", "trend"] }
   ```
 
@@ -1273,22 +1273,22 @@ created, nothing has to be cleaned up, and the block is the whole statement of w
 Reach for this first for any block's numbers, charts, tables and bar lists, whatever the format.
 
 `sources` on a binding is the global integration source id. Writing the page attaches every
-source its blocks read to the design as a channel, and every channel they wait for as its sample
-data, so the channels panel shows what the design reads without a call of yours. Attach a channel
+source its blocks read to the freeform report as a channel, and every channel they wait for as its sample
+data, so the channels panel shows what the freeform report reads without a call of yours. Attach a channel
 no block reads yet (one a widget will take) yourself:
 
 ```
-manage-canvases action=attach_sources canvas_id=12 source_ids=[2]
+manage-freeform-reports action=attach_sources freeform_report_id=12 source_ids=[2]
 ```
 
 Ids are the global ones from `list-sources`, the same family the binding takes. Attaching one that
-is already attached changes nothing and says so, so a repeat is safe. `list-canvases action=show`
-reports the design's `channels`, each with the document-local `source_id` that `manage-widgets`
-takes. Attaching is also the **prerequisite for a widget the design owns** on any real channel:
-`manage-widgets action=create design_id=…` attaches whatever source its widget reads, so doing it
+is already attached changes nothing and says so, so a repeat is safe. `list-freeform-reports action=show`
+reports the freeform report's `channels`, each with the document-local `source_id` that `manage-widgets`
+takes. Attaching is also the **prerequisite for a widget the freeform report owns** on any real channel:
+`manage-widgets action=create freeform_report_id=…` attaches whatever source its widget reads, so doing it
 first is a choice about what the panel shows rather than a step you can skip.
 
-**A widget the design owns** is for what a block cannot draw. A block draws four shapes — a metric,
+**A widget the freeform report owns** is for what a block cannot draw. A block draws four shapes — a metric,
 a chart, a table, a bar list — and the reporting side has widget types that are none of them, plus
 per-widget behaviour a binding has no field for. Create one when the ask needs any of these:
 
@@ -1306,59 +1306,59 @@ draw, and that is not the only reason to make a widget. "Use a report table", "p
 it", or a widget type named out loud is a decision already taken, and a `table` block handed back
 instead is the wrong answer however well it draws. Take the ask literally: `manage-widgets
 action=create` with the type they named, `widget_type_id="table"` for the plain table. The one
-case you cannot honour is a refused type, and there you name which type it is and what the design
+case you cannot honour is a refused type, and there you name which type it is and what the freeform report
 will draw instead, rather than substituting a block silently.
 
 **A report's widget** is for showing something a report already has, where the two should stay the
 same. Find the id with `list-widgets action=list report_id=…` and bind to it. Editing it edits the
 report's widget, because it is the report's widget.
 
-### Creating a widget the design owns
+### Creating a widget the freeform report owns
 
 Two calls, in this order, and both belong in the same turn.
 
 ```
-manage-widgets action=create design_id=12 page_id=41 channel_id="9" widget_type_id="115"
+manage-widgets action=create freeform_report_id=12 page_id=41 channel_id="9" widget_type_id="115"
   rows=[{ "configs": [{ "source_id": 2, "options": { "metrics": [...] } }] }]
 → { "widget": { "id": 8814, ... } }
 
-manage-canvases action=patch_blocks canvas_id=12 page_id=41
+manage-freeform-reports action=patch_blocks freeform_report_id=12 page_id=41
   pages=[{ "blocks": [{ "id": "funnel", "type": "widget", "frame": {"x":0.06,"y":0.18,"w":0.4,"h":0.3},
                         "binding": { "kind": "widget", "widget_id": 8814 } }] }]
 ```
 
 The widget is invisible until the block exists — a widget is data and a block is what draws it. A
-widget with no block pointing at it is deleted on the design's next page save, which is also the
+widget with no block pointing at it is deleted on the freeform report's next page save, which is also the
 cleanup if the second call fails: nothing is left behind, and nothing has to be swept.
 
 Removing the block removes the widget, so there is no widget delete to make. `delete-widgets`
-refuses a design and says so.
+refuses a freeform report and says so.
 
-Everything the design's own widget editor can change, `manage-widgets action=update` can change
-with `design_id`: sources, metrics, dimensions, filters, row labels, settings, conditional
-formats, currency. `list-widgets action=list design_id=12` reads them back by page, and reports the
+Everything the freeform report's own widget editor can change, `manage-widgets action=update` can change
+with `freeform_report_id`: sources, metrics, dimensions, filters, row labels, settings, conditional
+formats, currency. `list-widgets action=list freeform_report_id=12` reads them back by page, and reports the
 `blocks` drawing each one — an empty list there is a widget about to be reaped.
 
-Six things a design refuses, most because its own editor offers no equivalent:
+Six things a freeform report refuses, most because its own editor offers no equivalent:
 
 | Refused | Why, and what to do instead |
 |---|---|
-| `position_x`, `position_y`, `auto_place`, `target_tab_id` | A design has no widget grid. The block's `frame` places it. |
+| `position_x`, `position_y`, `auto_place`, `target_tab_id` | A freeform report has no widget grid. The block's `frame` places it. |
 | `action=apply_premade` | Premade widgets are a report library. Create the widget with `action=create`. |
 | `action=duplicate`, `batch_duplicate` | Copy the block with `patch_blocks`; the widget follows it. |
-| `action=update_ai_text` | AI text is a comment widget's setting. On a design it is a `text` block with a `summary` binding; see *A summary*. |
-| Comment, calendar, image, filter control, report shortcut types | The design draws these with its own blocks, or has no surface for them. |
-| Multi-source table (37) | Deprecated in favour of blends and source groups, so nothing creates one any more, and a design will not draw an existing one either. Use `widget_type_id="table"`, or a `table` block. |
+| `action=update_ai_text` | AI text is a comment widget's setting. On a freeform report it is a `text` block with a `summary` binding; see *A summary*. |
+| Comment, calendar, image, filter control, report shortcut types | The freeform report draws these with its own blocks, or has no surface for them. |
+| Multi-source table (37) | Deprecated in favour of blends and source groups, so nothing creates one any more, and a freeform report will not draw an existing one either. Use `widget_type_id="table"`, or a `table` block. |
 
 A widget block is also the one block the PowerPoint and Google Slides writers cannot draw as
 shapes — see the export table above. If a table or a chart will do, use `table` or `chart`.
 
-**Freeze** keeps a copy of today: `manage-canvases action=freeze canvas_id=12` resolves every
-bound block once and stores the result as a static twin. The design itself stays live and keeps
+**Freeze** keeps a copy of today: `manage-freeform-reports action=freeze freeform_report_id=12` resolves every
+bound block once and stores the result as a static twin. The freeform report itself stays live and keeps
 its bindings — freezing is how you make "the report as of March" *without* giving up the
 dashboard.
 
-**Sharing and exporting are the person's, not yours.** A design is published from its own header —
+**Sharing and exporting are the person's, not yours.** A freeform report is published from its own header —
 a link that opens signed out, with an optional password, an expiry, and switches for download and
 date changing — and exported from beside it. There is no tool for either, and that is deliberate:
 publishing to a client is a decision. What you can do is make the document worth sharing, which
@@ -1491,10 +1491,10 @@ Hard floors. Hold these whatever direction you chose.
 ## Reading and revising
 
 ```
-list-canvases action=show canvas_id=<id>            # the outline: every page, its layout, its block count
-list-canvases action=show_page canvas_id=<id> page_id=<id>   # one page's full spec
-list-canvases action=validate canvas_id=<id>        # which pages will draw wrong, if any
-list-canvases action=preview canvas_id=<id>         # look at a page (two calls — see below)
+list-freeform-reports action=show freeform_report_id=<id>            # the outline: every page, its layout, its block count
+list-freeform-reports action=show_page freeform_report_id=<id> page_id=<id>   # one page's full spec
+list-freeform-reports action=validate freeform_report_id=<id>        # which pages will draw wrong, if any
+list-freeform-reports action=preview freeform_report_id=<id>         # look at a page (two calls — see below)
 ```
 
 `show` deliberately does not return every page's blocks — a whole document would blow the
@@ -1503,7 +1503,7 @@ response cap. Read the pages you need, one at a time.
 Fix one block without resending the page:
 
 ```
-manage-canvases action=patch_blocks canvas_id=<id> page_id=<id>
+manage-freeform-reports action=patch_blocks freeform_report_id=<id> page_id=<id>
                 pages=[{ "blocks": [{...the corrected block, same id...}] }]
                 remove_block_ids=["stray-caption"]
 ```
@@ -1516,7 +1516,7 @@ Rewrite a whole page — `pages` carries the page objects for every action, so t
 exactly one entry, and more than one is refused:
 
 ```
-manage-canvases action=update_page canvas_id=<id> page_id=<id> pages=[{...one page...}]
+manage-freeform-reports action=update_page freeform_report_id=<id> page_id=<id> pages=[{...one page...}]
 ```
 
 Omit `page_id` and the page is appended to the end instead. `action=sort_pages` takes every page
@@ -1532,20 +1532,20 @@ one of them losing work with no error anywhere.
 ## Looking at a page
 
 ```
-preview_canvas canvas_id=<id> page_id=<id>
+preview_freeform_report freeform_report_id=<id> page_id=<id>
 ```
 
 Renders one page as an image, by the same renderer that draws it on screen and in the PDF.
 
-**If `preview_canvas` is not in your tool list, use `list-canvases action=preview` instead.** It is
+**If `preview_freeform_report` is not in your tool list, use `list-freeform-reports action=preview` instead.** It is
 the same render delivered the other way, in two calls:
 
 ```
-list-canvases action=preview canvas_id=<id> page_id=<id>     # returns a render_job_id
-list-canvases action=preview canvas_id=<id> render_job_id=<id>   # returns the image
+list-freeform-reports action=preview freeform_report_id=<id> page_id=<id>     # returns a render_job_id
+list-freeform-reports action=preview freeform_report_id=<id> render_job_id=<id>   # returns the image
 ```
 
-Wait between the two. A render takes twenty to thirty seconds, and much longer for a design bound
+Wait between the two. A render takes twenty to thirty seconds, and much longer for a freeform report bound
 to live data, so a tight polling loop just spends turns. The turn rule below applies to that shape
 too: until the second call hands you the image, you have not seen the page.
 
@@ -1562,22 +1562,22 @@ that both technically fit. A page that is half empty. Numbers too small to read 
 page is actually viewed. A card whose contents are crowded against its edges. Say what is wrong
 in words first, then fix it with `patch_blocks` and look again.
 
-Use it after authoring a design, after a layout change you are unsure of, and whenever somebody
+Use it after authoring a freeform report, after a layout change you are unsure of, and whenever somebody
 says a page looks wrong and you cannot see why from the spec.
 
-## Checking a design still draws
+## Checking a freeform report still draws
 
 ```
-list-canvases action=validate canvas_id=<id>
+list-freeform-reports action=validate freeform_report_id=<id>
 ```
 
 Every write you make is validated as you make it, so this is not a second check on your own work.
 It answers a question your writes cannot: **has something changed underneath a page that was
-already correct.** The type scale belongs to the brand, so switching a design to a brand with
+already correct.** The type scale belongs to the brand, so switching a freeform report to a brand with
 larger headings can leave a heading that no longer fits its frame, and nothing was written, so
 nothing was validated.
 
-Call it after a run of edits, after changing a design's brand, and before telling anyone a design
+Call it after a run of edits, after changing a freeform report's brand, and before telling anyone a freeform report
 is ready to share.
 
 It reports content that does not fit the frame it was given, per page, in the same words a
@@ -1628,10 +1628,10 @@ manage-design-systems action=create name="Bookshop" decisions={...the six it ret
 `asset` with a file's id (a brand book, a deck to match, a logo or a screenshot) to have the
 brand read from it.
 
-Attach a brand with `manage-canvases` `action=update design_system_id=<id>`. Switching it
+Attach a brand with `manage-freeform-reports` `action=update design_system_id=<id>`. Switching it
 restyles every page and touches no block.
 
-**Changing an existing brand restyles every design already drawn in it.** When one design needs
+**Changing an existing brand restyles every freeform report already drawn in it.** When one freeform report needs
 its own look, make a new brand rather than editing the shared one.
 
 Two things worth knowing: the `mono` chart palette yields only two separable colours by
@@ -1653,13 +1653,13 @@ its chart palette beside it — and how it looks is the whole of what the person
 - **Styling a block in an Office export.** A block's own `style` reaches the browser, the PDF and
   the PNG. The PowerPoint and Google Slides writers draw the brand instead.
 
-Surface a finished design as an artifact card in the chat rather than writing a link to it.
+Surface a finished freeform report as an artifact card in the chat rather than writing a link to it.
 
 ## Common pitfalls
 
 - **A replica condensed into a summary.** Asked to recreate a file, keep every page. The
   composition rules are for documents you decide, not for copies.
-- **Describing a design as live while its figures are typed in.** Read `data_blocks` in the write's
+- **Describing a freeform report as live while its figures are typed in.** Read `data_blocks` in the write's
   answer and report it. Typed-in figures do not change next month.
 - **Copying from the text alone.** The text has no layout and loses which number sits under which
   label. Look at the page with `read-document` `pages`.
@@ -1671,11 +1671,11 @@ Surface a finished design as an artifact card in the chat rather than writing a 
   stale with the range. Use a `summary` binding; keep your own text for headings and framing.
 - **A summary placed away from what it should read.** On the page it reads the page; inside a
   card it reads only that card. An empty `inputs` from `regenerate_summary` means it read nothing.
-- **A whole design inlined because it is a deck or a print.** The format changes the composition,
+- **A whole freeform report inlined because it is a deck or a print.** The format changes the composition,
   not where the numbers come from. Pin the period with the document's `date_range` instead.
 - **Authoring before fetching.** You cannot query from inside a page. Fetch first.
-- **A report and a design confused.** "Live, always current, in the reporting tool" means a
-  report. "I'm presenting this Thursday" or "send them a PDF" means a design.
+- **A regular report and a freeform report confused.** "Live, always current, in the reporting tool" means a
+  regular report. "I'm presenting this Thursday" or "send them a PDF" means a freeform report.
 - **Treating `y` as a fraction of height.** It is a fraction of the *width*, like every other
   frame value. A block at `y: 0.8` is off the bottom of a slide.
 - **A frame sized for the heading you first imagined.** Count the characters and the lines. This
