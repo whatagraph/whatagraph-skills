@@ -107,7 +107,7 @@ NATIVE_AGENT_TOOLS = {
     "computer-exec", "computer-write-file", "computer-read-file", "computer-list-files",
     "computer-job", "computer-export", "computer-chart", "computer-import-attachment",
     "computer-fetch-data", "computer-http-request",
-    "browser-navigate", "browser-extract", "browser-act", "browser-submit", "browser-screenshot",
+    "browser-navigate", "browser-extract", "browser-act", "browser-submit", "browser-screenshot", "browser-save-media",
     "browser-ask-person",
 }
 
