@@ -37,6 +37,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-reports` | Create, duplicate, and update reports. |
 | `whatagraph-report-tabs` | Create, duplicate, rename, and reorder report tabs. |
 | `whatagraph-widgets` | Build and lay out widgets on the grid. |
+| `whatagraph-freeform-reports` | Build freeform reports — a slide deck, a printable client report and a continuous dashboard as one document type in three formats. Covers the brands they are drawn in. |
 | `whatagraph-tab-layout` | Decide what goes on a report page: tab structure, chart choice, titles, narrative text, and full-page layouts. |
 | `whatagraph-widget-advanced` | Less common widget features: formula rows, duplicating widgets, conditional formatting, currency conversion, table column widths, and creative thumbnails in tables. |
 | `whatagraph-freeform-reports` | Build freeform reports — a slide deck, a printable client report and a continuous dashboard as one document type in three formats. Covers the brands they are drawn in. |

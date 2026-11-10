@@ -159,6 +159,14 @@ The steps:
        `firstUserDefaultChannelGrouping`; form submissions filter `eventName`; non-branded search
        queries are `not_contains` the brand on the query dimension. Copy each id from
        `list-sources list_dimensions_and_metrics`.
+     - **conversions on GA4**: GA4 calls conversions *key events*. A figure, column or legend
+       labelled "Conversions", "Key events" or "Leads" counts key events: bind `conversions`, which
+       is GA4's key event total in Whatagraph, or `keyEvents:<event>` when the label names one
+       event (a column headed `keyEvents:form_submission`). Bind `eventCount` only where the file
+       prints "Event count", and then with the `eventName` filter the page states: without it,
+       `eventCount` counts every event, page views included, and reads hundreds of times the
+       file's figure. When the property has no `keyEvents:<event>` for the event the file names,
+       bind `eventCount` filtered to that `eventName`, and say so in your report.
      - **a table** is traced as a coloured header band and one text line per cell. Every answer
        lists the tables still typed in by their band's id and columns. Send a `table` under the
        band's id, with empty `headers` and `rows`: it takes the whole table, the band's colours,
@@ -177,6 +185,21 @@ The steps:
      dimension splits by the file's units yet, create it; when no source holds the publishers,
      create the Custom API source. Leave such a chart as a picture only when a tool refuses, and
      say which refusal.
+   - **an empty slot** (`missing0`, `missing1`, ...) is where the file printed an error instead of
+     a component: an export that could not load a widget's data ("Unknown data source", "See
+     details"). The tracer leaves an empty outline there and never copies the error, and neither do
+     you. Work out what the slot showed from the page: the page title ("Ranking overview"), the
+     heading over the slot ("Desktop", "Top Performing Keywords"), the logos
+     (`list-freeform-reports action=preview` shows an Advanced Web Ranking logo the text does not
+     name), the commentary, which names the figures it discusses ("keywords in top 3, 10, 20"),
+     and the same widget on the file's other pages. A scorecard-sized slot is a `metric`, a larger
+     one a `chart` or `table`. Where you can tell what it showed and a connected source or a
+     channel gives it, send the block under the slot's id. Where you cannot tell, or the platform
+     has no channel in Whatagraph, do not guess silently: once every other figure on every page is
+     live, ask the person in ONE `ask-user` call covering every slot, before setting the report
+     `ready`. Offer what you think each showed with the closest source (keyword positions by device
+     are in Search Console's position metric, split by query, page and device), leaving the slot
+     empty for them to fill, or removing it with `remove_block_ids`.
    - **commentary** (the analysis a report writes each period: "MoM, total leads dropped by 16%",
      a "Results:" list of bullets) becomes an AI summary. Every answer lists each passage still
      typed in by its first line's id. Send one `text` block with a `summary` binding under that id:
@@ -197,7 +220,7 @@ The steps:
    are not the figure you meant, undo it with `patch_blocks` `restore_block_ids` (it puts the traced
    line or picture back exactly) and swap the right one. A line with no figure in it (a label, a
    heading, a date) is refused, and the refusal lists the page's lines that do print one.
-   Do not use `remove_block_ids` on a traced page and never resend or rebuild its panels, bands or
+   Do not use `remove_block_ids` on a traced page (except on an empty slot the person asked to remove) and never resend or rebuild its panels, bands or
    headings: the traced page is already right, and only its figures and commentary change. Bind each block to a source or to
    its channel (see *Inline or bound*). Work out which platform each figure comes from (the page title, its logo,
    the metric's name) and check `list-sources` for a connected account of it. Where there is none,
@@ -210,7 +233,8 @@ The steps:
    figures left typed in is a page that never updates.
 4. **Report from the tool's answers.** Pages traced against the file's pages, `data_blocks` (bound,
    waiting for a channel, typed in), the channels the person has to connect, and every chart,
-   table, figure or passage left as the file printed it, by page, with the reason. Say plainly
+   table, figure or passage left as the file printed it, by page, with the reason, and what you
+   put in each empty slot and why (or that the person chose to leave or remove it). Say plainly
    that figures waiting for a channel are sample data, not theirs.
 
 **If `trace_pages` fails, stop and report the error.** Do not draw the pages yourself instead: a
