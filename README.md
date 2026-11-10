@@ -56,7 +56,7 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `designing-ad-creatives` | The layout library for static ads and social creatives: 28 proven ad archetypes with their layout, copy and build, and what separates the best real ads for performance, brand, local, B2B and social goals. Available inside Whatagraph IQ agents only. |
 | `generating-videos` | Make Story and Reels ads and other short videos with exact text: an animated HTML layout recorded as an MP4, optionally over a Veo clip that animates the client's own product photo. Available inside Whatagraph IQ agents only, which have the video tools. |
 | `creating-ad-campaigns` | Plan and produce an on-brand ad campaign grounded in the client's real ad results on every connected channel: brand kit, creative memory, concepts with copy and a test hypothesis, every placement, names that bring results back, a board, and refreshes. Available inside Whatagraph IQ agents only. |
-| `whatagraph-sharing` | Create and update public share links for reports. |
+| `whatagraph-sharing` | Create, update and revoke public share links for reports, overviews and documents. |
 | `whatagraph-automations` | Schedule automated report delivery by email. |
 | `whatagraph-snapshots` | Save and restore the structural state of a report. |
 | `whatagraph-integrations-admin` | Connect sources from already-authenticated accounts and assign them to spaces. |
