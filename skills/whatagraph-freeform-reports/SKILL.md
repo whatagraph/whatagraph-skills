@@ -167,11 +167,14 @@ The steps:
        `eventCount` counts every event, page views included, and reads hundreds of times the
        file's figure. When the property has no `keyEvents:<event>` for the event the file names,
        bind `eventCount` filtered to that `eventName`, and say so in your report.
-     - **a table** is traced as a coloured header band and one text line per cell. Every answer
-       lists the tables still typed in by their band's id and columns. Send a `table` under the
-       band's id, with empty `headers` and `rows`: it takes the whole table, the band's colours,
-       the file's type size, and the file's cells until the binding answers. Bind the first
-       column's dimension, then the file's metric columns in order. Where the file prints a "% Δ"
+     - **a table** is traced as a `table` block holding the file's cells, under the id its header
+       band had, in the band's colours and the file's type size. Every answer lists the tables
+       not bound yet by id and columns. Send a `table` under that id with its `binding`, empty
+       `headers` and `rows`, and no `frame`: it keeps the whole table and shows the file's cells
+       until the binding answers. A table's frame holds its rows, so never send it the frame of
+       its old header band. Bind the first column's dimension, then the file's metric columns in
+       order. When the channel lacks one metric, bind the table without that column rather than
+       leaving it unbound. Where the file prints a "% Δ"
        column after each figure, set `delta_columns: true` and the binding's `compare` (`previous`
        for month on month, `last_year` for year on year). When dimensions, metrics and Δ columns
        add up to the file's column count, the file's column names are kept.
@@ -183,8 +186,13 @@ The steps:
        Search and Paid Social). The same channel may appear twice.
      Both are part of making the page live, not extras to offer afterwards: when no custom
      dimension splits by the file's units yet, create it; when no source holds the publishers,
-     create the Custom API source. Leave such a chart as a picture only when a tool refuses, and
-     say which refusal.
+     create the Custom API source.
+     **A chart is never left as a picture, and a table is never left unbound.** The server
+     refuses `ready` while one is, every time. When a binding is refused, bind the chart or table
+     to the page's channel with a metric that channel has: it draws sample data until an
+     account is connected. A picture with no kind in the answer was a raster in the file (a
+     chart exported as an image): look at it with `list-freeform-reports action=preview` and
+     send the chart it draws, like any other.
    - **an empty slot** (`missing0`, `missing1`, ...) is where the file printed an error instead of
      a component: an export that could not load a widget's data ("Unknown data source", "See
      details"). The tracer leaves an empty outline there and never copies the error, and neither do
