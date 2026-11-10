@@ -97,7 +97,7 @@ If the user wants a **downloadable Excel file** rather than an inline digest:
 export-report report_id: {id}
 ```
 
-This returns `download_url` (temporary, expires in 1 hour), `file_size_bytes`, and `tabs`. Each widget becomes a separate sheet in the `.xlsx` file. This is async — the first call on an unwarmed report may take 30-90 seconds.
+Outside an agent conversation this returns `download_url` (temporary, expires in 1 hour), `file_size_bytes`, and `tabs`. Inside an agent conversation the file is saved to the conversation as a document card, and the result carries `asset_ulid` instead of `download_url`. Each widget becomes a separate sheet in the `.xlsx` file. This is async — the first call on an unwarmed report may take 30-90 seconds.
 
 ## Date Ranges
 

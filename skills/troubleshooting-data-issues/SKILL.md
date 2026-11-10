@@ -154,7 +154,24 @@ Blends and source groups combine data from multiple sources, which introduces co
    ```
    Widgets can have their own filter configurations that override or layer on top of report-level filters, but current `show` responses may omit option details. If the filter is not visible there, verify through `csv_export` / `export-report` and the UI.
 
-4. **Common causes**:
+4. **Reproduce the filtered widget with `fetch-data`**: This tells a filter problem apart from a data problem.
+   1. In the `list-widgets action: show` response, note the widget's `source_id`, report type, metrics, dimensions and `inline_filters`.
+   2. Fetch with every `inline_filters` id. Leave out the filter with scope `source` when the widget shows `source_filter_off: true`.
+      ```
+      fetch-data source_id: <id>, report_type: "<type>", metrics: [...], dimensions: [...],
+        from: "<start>", till: "<end>", filter_ids: [<widget_config_filter_id>, <source_filter_id>]
+      ```
+      The two filters are combined the way the widget combines them.
+   3. Fetch again without `filter_ids`, and then with one condition at a time in `filters` (format in `whatagraph-sources-and-data`, "Filtering the fetch").
+
+   How to read the results:
+   - The filtered fetch matches the widget but not the native platform: the filter is the cause. Compare its conditions with the platform's own filter.
+   - The unfiltered fetch is already wrong: the filter is not the cause. Go back to "Workflow: Data Discrepancies".
+   - The filtered fetch does not match the widget: check the report type and the date range first. Then check that you passed every filter id.
+
+5. **Common causes**:
+   - **Case sensitivity**: On GA4, `exactly_matches_dimension` and regex are case sensitive, and a regex must match the whole value. `contains`, `starts_with` and `ends_with` are not case sensitive.
+   - **Groups joined the wrong way**: In a version 2 filter, groups are joined with AND and the conditions in one group with OR. A version 1 filter joins groups with OR too. A condition placed in the wrong group changes the result.
    - **Filters applied to blended sources vs original sources**: Filters may behave differently when applied to blends compared to individual sources.
    - **Dimension value mismatches**: Filter values must exactly match the dimension values in the source data.
    - **Inherited vs widget-specific filters**: Report-level filters cascade to all widgets unless overridden.

@@ -22,13 +22,18 @@ Five paths exist — pick based on what you need:
 |------|---------|----------|
 | `preview-report` | Page images in the response | Seeing the report yourself, to check your own work |
 | `view-creatives` | Ad-creative images in the response | Looking at the actual ad visuals (creative analysis, creative QA) |
-| `export-report format=pdf` | PDF download URL (temporary, 1-hour expiry) | The report as a document, for a person to open |
-| `export-report` (default `format=xlsx`) | `.xlsx` download URL (temporary, 1-hour expiry) | Giving users a downloadable Excel file |
+| `export-report format=pdf` | A PDF file (see "Where the file goes") | The report as a document, for a person to open |
+| `export-report` (default `format=xlsx`) | An `.xlsx` file (see "Where the file goes") | Giving users a downloadable Excel file |
 | `list-widgets action=csv_export` | Inline `csv_rows: string[][]` (JSON) | AI/LLM processing, per-widget data extraction |
 
-**Which of the first two you want.** `export-report format=pdf` returns a URL, and you cannot open a URL — that path produces a file for a person. `preview-report` puts the pages in front of you as images. To check your own work, use `preview-report`. To give the user a file, use `export-report`.
+**Which of the first two you want.** `export-report format=pdf` produces a file for a person, and you cannot look at it. `preview-report` puts the pages in front of you as images. To check your own work, use `preview-report`. To give the user a file, use `export-report`.
 
 **Exporting never shares the report.** `export-report` is read-only and leaves a report exactly as shared or unshared as it was. Do not create a share link in order to get a file.
+
+## Where the file goes
+
+- **Inside a Whatagraph agent conversation**, the file is saved to the conversation and shown in the chat as a document card. The result carries `asset_ulid`, `file_name`, `file_size_bytes` and `shown_in_chat`, and no download URL. The card is how the user opens, downloads and shares the file, so never write a link to it. If the card has scrolled out of view, call `show_document` with the `asset_ulid`. With a shell, copy the file to the computer with `computer_import_attachment` and the `asset_ulid` (up to 8 MB).
+- **Everywhere else** (an MCP client outside Whatagraph), the result carries a temporary `download_url` that expires 1 hour after you get it.
 
 **Feature gate**: the two data paths — `format=xlsx` and `csv_export` — require the `widget-csv-export` plan feature. Teams without it get a "csv export feature not included in your plan" error. `format=pdf` is **not** gated on that feature.
 
@@ -75,9 +80,9 @@ of that tab, so do not describe such a tab as fully reviewed.
 table whose last row is missing, a title that is clipped, an image that failed to load.
 
 **If `preview-report` is not in your tool list**, you cannot see a report yourself. Do
-not pretend otherwise and do not send a `download_url` as if it were a picture. Render
-with `export-report format=pdf`, give the user the link, and tell them exactly what to
-look at.
+not pretend otherwise and do not send the exported file as if it were a picture. Render
+with `export-report format=pdf`, give the user the file as described in "Where the file
+goes", and tell them exactly what to look at.
 
 ## See the ad creatives (images you can analyze)
 
@@ -149,10 +154,10 @@ export-report report_id=<id> format=pdf pdf_job_id=<pdf_job_id>
 The `status` field tells you what to do next:
 
 - `pending` — still rendering. Wait a few seconds, then call again. Do not poll in a tight loop.
-- `ready` — the response carries `download_url`, `expires_in_seconds`, `file_name` and `file_size_bytes`.
+- `ready` — the response carries the file as described in "Where the file goes". Outside an agent conversation that is `download_url`, `expires_in_seconds`, `file_name` and `file_size_bytes`.
 - `expired` — the job id is unknown, or the render is older than 24 hours. Start a new one.
 
-A small report is usually ready in a few seconds; a report with many tabs takes longer. **The `download_url` expires one hour after you get it.** If it lapses, call again with the same `pdf_job_id` for a fresh URL.
+A small report is usually ready in a few seconds; a report with many tabs takes longer. Outside an agent conversation, **the `download_url` expires one hour after you get it**. If it lapses, call again with the same `pdf_job_id` for a fresh URL. Inside an agent conversation, calling again with the same `pdf_job_id` returns the file already saved and posts no second card.
 
 ### One tab or the whole report
 
@@ -170,7 +175,7 @@ Landscape, 1440 CSS px wide, one page per tab, and each page as tall as that tab
 
 **To verify a PDF you generated:** a multi-page PDF can mix page sizes, and most tools report only the first page's dimensions — so examine every page. Also check the last row of every table (see `whatagraph-widgets` → "Tables truncate silently").
 
-## Excel export (download URL)
+## Excel export
 
 ```
 export-report report_id=<id>
@@ -178,7 +183,7 @@ export-report report_id=<id> tab_id=<tab_id>
 export-report report_id=<id> widget_ids=[<id1>, <id2>]
 ```
 
-Response:
+Response outside an agent conversation:
 ```json
 {
   "success": true,
@@ -189,6 +194,8 @@ Response:
   "message": "Excel export ready. Download URL expires in 1 hour."
 }
 ```
+
+Inside an agent conversation, `download_url` is replaced by `asset_ulid`, `file_name` and `shown_in_chat`, and the file appears in the chat as a document card. See "Where the file goes".
 
 Each widget becomes a separate sheet in the `.xlsx` file. Comment, calendar, image, and filter-control widgets are excluded server-side.
 
@@ -229,14 +236,15 @@ Response:
 
 - Filter the export by dimension or date post-hoc — the widget's own filters and date range apply.
 - Export custom dimension/metric definitions — only widget data.
-- Read the xlsx file contents inline — the download URL must be fetched externally.
+- Read the xlsx file contents inline — fetch the download URL externally, or, in an agent conversation with a shell, copy the file in with `computer_import_attachment`.
 
 ## Common pitfalls
 
 - **Reading the first `format=pdf` response as the finished PDF** — it only queues the render. The file comes from the second call, with the `pdf_job_id`.
 - **Calling for the PDF once and giving up** — the first collecting call almost always returns `pending`. Wait a few seconds, then call again. Do not poll in a tight loop.
-- **Expecting inline CSV from `export-report`** — it returns a download URL, not inline data. Use `csv_export` for inline data.
-- **Download URL expiry** — the temporary URL expires in 1 hour. Generate a fresh one if needed.
+- **Expecting inline CSV from `export-report`** — it returns a file, not inline data. Use `csv_export` for inline data.
+- **Download URL expiry** — outside an agent conversation the temporary URL expires in 1 hour. Generate a fresh one if needed.
+- **Writing a link to an export in an agent conversation** — the file is a document card in the chat. Never paste a URL to it, in a reply or in an email; re-show the card with `show_document` instead.
 - **PDF with Meta/Google creative images** — platform creative URLs rotate, so a long-lived PDF may end up with broken thumbnails.
 - **Analyzing creatives from URLs or ad copy** — creative URL columns in exports are strings you cannot see, and they rotate. To actually look at the ads, call `view-creatives` (see above), which returns the images directly.
 - **Huge exports** — very large reports can take 30-90 seconds on first call. Use `tab_id` or `widget_ids` to narrow scope.

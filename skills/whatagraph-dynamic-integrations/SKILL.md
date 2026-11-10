@@ -40,11 +40,39 @@ You author three artifacts.
 from copying an idiom that only built-in connectors are allowed, or from putting a valid key one
 level too deep.
 
+## First check that the user is allowed to build one
+
+Only a team admin can build, change, connect, re-sync or delete a dynamic integration. Before
+anything else (before you ask what they want to connect, read any API documentation, or ask for
+a credential), call `list-dynamic-integrations` with no arguments and read `can_author`.
+
+- `can_author` is `true`: continue with [Work in this order](#work-in-this-order).
+- `can_author` is `false`: stop here. Tell the user plainly that only a team admin can set up
+  custom integrations, and suggest they ask an admin on their team either to give them the Admin
+  role or to set it up for them. Do not research the API, do not ask for credentials, and do not
+  draft anything.
+
+Listing is open to every member, so a non-admin can still see what the team has already built.
+
 ## Work in this order
 
 ```
 draft -> test-auth -> sample -> publish -> connect
 ```
+
+An `oauth2` definition replaces `test-auth` with a stop for the user, `set-oauth-client` and
+`authorize` (see [OAuth2](#oauth2)):
+
+```
+draft -> STOP: user registers the redirect URLs -> set-oauth-client -> authorize -> user approves -> sample -> publish -> connect
+```
+
+**Before the first `draft`, find the provider's rate limits.** Search its API documentation for
+"rate limit", "quota" and "concurrent" before you read anything else, and write down the number,
+the window, and what it counts against (a project, an account, a token). Every `test-auth`,
+`sample`, sync and widget refresh spends that same budget, and a customer's other tools usually
+share it too. If the documentation states no limit, ask the user whether they know of one, and say
+in your plan that none is declared. See [Rate limits](#rate-limits) for what to do with the number.
 
 Each step is gated on the one before it. Every response carries a `next` field saying what to do,
 so follow that rather than guessing.
@@ -52,6 +80,8 @@ so follow that rather than guessing.
 | Action | What it does | Key inputs |
 |---|---|---|
 | `draft` | Validates and stores a new version of the definition. Every guard runs here, including building every component the engine would build. Omit `channel_id` to create a new integration; the response returns the id you use for everything after. Pass `channel_id` to append a version to an existing one. | `title`, `manifest_yaml`, `spec_yaml`, `schema`, `host_allowlist` |
+| `set-oauth-client` | `oauth2` only. Stores the client id and secret of the OAuth application the user registered with the provider. Never returns them. | `channel_id`, `client_id`, `client_secret` |
+| `authorize` | `oauth2` only, in place of `test-auth`. Returns `authorize_url`, a Whatagraph link the user opens to approve access. The callback stores the connected account. | `channel_id` |
 | `test-auth` | Runs the spec's `access_acquisition_flow` against the live API, on the newest draft. Failure stores nothing. Success stores the connected account for the steps that follow. | `channel_id`, `credentials` |
 | `sample` | Reads live records from one stream of the newest draft through the whole engine, using the stored account. Publishing is gated on this. | `channel_id`, `stream`, `source_external_id`, `source_options`, `limit`, `last_days` |
 | `publish` | Promotes the newest version to live, writes the report type, dimension and metric rows, and syncs the storage template. | `channel_id` |
@@ -75,8 +105,15 @@ publish. That is the only cheap moment to catch a wrong field mapping.
 where it is, so only `publish` changes what the data path reads. A re-draft also clears the sample,
 so sample again before re-publishing.
 
+**The title is the exception: it applies at draft.** A re-draft renames the integration
+immediately, even when it is published, so the team sees the new name in the connect modal before
+anything is published. The first draft may append " (2)" when the team already has a connector with
+that name. Re-draft with the `title` the first draft returned, unless the user asked for a
+different name. Never re-draft a published integration just to test how something renders.
+
 Use `list-dynamic-integrations` at any point. Each entry shows `status`, `live_version`,
 `newest_version`, `has_unpublished_draft`, `newest_version_sampled` and `connected_source_count`.
+The response also carries `can_author`, which says whether this user may author at all.
 Passing `channel_id` adds the `host_allowlist` and every version with its `sampled_at` and
 `published_at`.
 
@@ -288,6 +325,7 @@ Each of these is rejected at draft. The deprecated ones name their replacement i
 | `JwtFormField` | `TokenAuthenticator` with `JwtKeyPairTokenProvider` |
 | `IntegrationKeyStoreFlowStep`, `IntegrationKeyCredentialStoreFlowStep` | a `connection_specification.account` block |
 | `IntegrationSourceStoreFlowStep` | a `source_specification.source` block |
+| `ExternalAuthorizationFlowUrlBuilder` | an `AuthorizationFlowUrlBuilder` with a literal `url_base` (see [OAuth2](#oauth2)) |
 | any component that builds a database query or reads Whatagraph's own systems rather than calling the provider's API | an HTTP request to the provider |
 
 ### The spec may not use database validation rules
@@ -309,6 +347,11 @@ rejected rather than silently dropped:
 
 Scope a field to certain report types with `options.report_types`, listing declared report type
 ids. A top-level `report_types` on a field is rejected.
+
+**Every report type needs at least one metric and one dimension it can use**, or draft is refused
+with a message naming the report type. A field without `options.report_types` counts for every
+report type; one with it counts only for the report types it lists. A widget on a report type with
+no metric has nothing to show, and one with no dimension can only show totals and a date trend.
 
 **A metric `formula` is rejected.** A dynamic integration does not compute formulas. Declare the
 parts as metrics of their own and combine them in a custom metric on the report.
@@ -776,14 +819,9 @@ authenticator:
 
 Declare the token host in `host_allowlist` too.
 
-**There are no platform credentials and no hosted OAuth redirect.** A shipped connector reads its
-OAuth client id and secret from Whatagraph's own configuration, and the `Platform*` components
-(`PlatformCredentialField`, `PlatformCredentialHeaderPlacement`,
-`PlatformBasicCredentialsTokenProvider`) read that configuration. A dynamic integration has none,
-and the tools cannot set any, so those components fail at fetch time with "Platform credential ...
-is not configured". The `oauth2` flow type also needs a browser redirect that `test-auth` cannot
-perform. Use a credential the user already holds instead: an API key, a personal access token, a
-service account, or a client id and secret collected as properties.
+If the provider supports OAuth2 with a consent screen, build an `oauth2` flow as described in
+[OAuth2](#oauth2). Otherwise use a credential the user already holds: an API key, a personal access
+token, a service account, or a client id and secret collected as properties.
 
 A long-lived refresh token pasted into a property can be exchanged with an `ExternalTokenProvider`
 that sends it with `SuppliedCredentialField`. This works only for a provider that keeps the refresh
@@ -791,6 +829,200 @@ token the same. If the provider issues a new refresh token on every refresh, the
 working after the first refresh, so say so rather than shipping it. If an auth style can only be
 signed with a secret held on the server, say so rather than shipping a definition that fails
 authentication.
+
+### OAuth2
+
+An `oauth2` flow sends the user to the provider's consent screen and exchanges the code the
+provider returns. It authenticates against an OAuth application **the user registers with the
+provider themselves**. Whatagraph's own OAuth applications are never available to a dynamic
+integration, so never try to reuse a shipped connector's client id.
+
+**Run it in this order, and stop where it says stop.**
+
+1. **`draft`.** The response includes `oauth_redirect_urls`, two URLs: the connect callback
+   (ending `/add-integration/dynamic-<id>`) and the reconnect callback (ending `/verify-account`).
+   They depend only on the integration id, so they never change for this integration.
+2. **Stop and tell the user.** Do not call any other action yet. Show both `oauth_redirect_urls`
+   exactly as returned, and ask the user to:
+   - create an OAuth application with the provider, or open the one they have;
+   - add **both** URLs as allowed redirect URLs (the provider's setting is usually named "Valid
+     OAuth Redirect URIs", "Authorized redirect URIs" or "Callback URL");
+   - grant the scopes the definition asks for;
+   - tell you when it is saved, and give you the application's client id and client secret.
+
+   The provider refuses the consent for any redirect URL it was not told about, so skipping this
+   step only produces a failed connect later. Never invent or guess a client id.
+
+   List **every** `oauth_redirect_urls` entry, never only the first: the reconnect callback is
+   what a later re-authorization returns to, and leaving it out breaks that months later. Question
+   text renders as markdown, so ask it as numbered steps with each URL in a code span, which the
+   user copies exactly. Then ask for the client id and the client secret as separate questions:
+
+   ```markdown
+   Set up your <Provider> OAuth app:
+
+   1. Open your app in the <Provider> developer console, or create one.
+   2. Add both of these as <the provider's setting name>:
+      - `<oauth_redirect_urls[0]>`
+      - `<oauth_redirect_urls[1]>`
+   3. Grant the scopes <scopes>, and save.
+
+   Then paste the app's client ID below.
+   ```
+3. **`set-oauth-client`** with the `client_id` and `client_secret` the user gave. It stores them
+   encrypted and never returns them. Do not repeat the secret back in the chat.
+4. **`authorize`.** Give the user `authorize_url` as a link, and ask them to open it while signed
+   in to Whatagraph and approve access. From an IQ Chat they come back to this conversation
+   afterwards. Otherwise they see a page saying whether the account connected. Write it as a named
+   markdown link, not a bare URL, and do not repeat the redirect URLs here; they were step 2:
+
+   ```markdown
+   [Approve access in <Provider>](<authorize_url>)
+
+   Sign in, approve the requested access, and you will come back to this chat.
+   ```
+5. **`sample`** once the user says they are back. If `sample` answers that there are no stored
+   credentials, the connect failed. Ask the user what the page or the notice said, and have them
+   open the same `authorize_url` again after fixing the cause. Do not re-run `set-oauth-client`:
+   the stored client is per integration, not per draft version, and re-drafting does not clear it.
+
+**Consent runs the newest draft only until the first publish.** After that, every consent, the
+one `authorize` starts included, runs the live version, so customers never run an unpublished
+draft. A later draft that still works with the existing token samples and publishes as usual. A
+later draft that needs a new consent, such as one that adds a scope, cannot be proven before it is
+published, and it cannot be published until it samples. Tell the user so before re-drafting, and
+build the new scope set as a new integration instead.
+
+**Write the consent URLs and the code exchange with the engine's fields.** Draft refuses anything
+else in an `oauth2` flow:
+
+- `authorization_url` and `verification_url` are `AuthorizationFlowUrlBuilder` blocks whose
+  `url_base` is a literal `https://` URL on a host in `host_allowlist`, with no user part,
+  backslash, whitespace or port other than 443. Their `query_parameters` are `CompositeQueryParameters`,
+  whose `fields` set `client_id` with a `PlatformCredentialField` (`credential: oauth_client_id`),
+  `redirect_uri` with a `PlatformUrlField` (`url: connect` for `authorization_url`, `url: verify`
+  for `verification_url`), and include a `StateField` after `redirect_uri`.
+- The code exchange is a `TokenExchangeFlowStep`. It sends the client with `PlatformCredentialField`
+  (`oauth_client_id`, `oauth_client_secret`) or `PlatformBasicCredentialsTokenProvider`, and it sends
+  the **same** `redirect_uri` as the consent URL: a `PlatformUrlField` with `url: connect`, or an
+  `InterpolatedField` whose value is `"{{ redirect_uri }}"`. Never use `CallbackUrlField` there. It
+  builds a different URL, and the provider refuses the exchange. An exchange that sends no
+  `redirect_uri` at all is refused too.
+- `ExternalAuthorizationFlowUrlBuilder` is not available to a stored definition.
+
+A complete flow, for a provider that issues long-lived access tokens:
+
+```yaml
+connection_specification:
+  properties: {}
+  account:
+    external_id: "{{ id }}"
+    name: "{{ name }}"
+    credentials:
+      access_token: "{{ access_token }}"
+  authorization_flow:
+    type: oauth2
+    authorization_url:
+      type: AuthorizationFlowUrlBuilder
+      url_base: "https://www.example.com"
+      path: "oauth/authorize"
+      query_parameters:
+        type: CompositeQueryParameters
+        fields:
+          - { type: StaticField, field_path: [ response_type ], value: "code" }
+          - { type: PlatformCredentialField, field_path: [ client_id ], credential: oauth_client_id }
+          - { type: PlatformUrlField, field_path: [ redirect_uri ], url: connect }
+          - { type: StaticField, field_path: [ scope ], value: "read" }
+          - { type: StateField, field_path: [ state ] }
+    verification_url:
+      type: AuthorizationFlowUrlBuilder
+      url_base: "https://www.example.com"
+      path: "oauth/authorize"
+      query_parameters:
+        type: CompositeQueryParameters
+        fields:
+          - { type: StaticField, field_path: [ response_type ], value: "code" }
+          - { type: PlatformCredentialField, field_path: [ client_id ], credential: oauth_client_id }
+          - { type: PlatformUrlField, field_path: [ redirect_uri ], url: verify }
+          - { type: StaticField, field_path: [ scope ], value: "read" }
+          - { type: StateField, field_path: [ state ] }
+    access_acquisition_flow:
+      - type: TokenExchangeFlowStep
+        requester:
+          type: HttpRequester
+          http_method: "POST"
+          url_base: "https://api.example.com"
+          path: "oauth/token"
+          body_format: "form_params"
+          request_body:
+            type: CompositeRequestBody
+            fields:
+              - { type: StaticField, field_path: [ grant_type ], value: "authorization_code" }
+              - { type: PlatformCredentialField, field_path: [ client_id ], credential: oauth_client_id }
+              - { type: PlatformCredentialField, field_path: [ client_secret ], credential: oauth_client_secret }
+              - { type: PlatformUrlField, field_path: [ redirect_uri ], url: connect }
+              - { type: InterpolatedField, field_path: [ code ], value: "{{ code }}" }
+          middlewares:
+            - <<: *retry
+            - <<: *logger
+            - <<: *classifier
+      - type: RequestFlowStep          # reads the account the token belongs to
+        requester:
+          type: HttpRequester
+          http_method: "GET"
+          url_base: "https://api.example.com"
+          path: "me"
+          request_headers:
+            type: SimpleRequestHeaders
+            headers:
+              Authorization: "Bearer {{ access_token }}"
+          middlewares:
+            - <<: *retry
+            - <<: *logger
+            - <<: *classifier
+```
+
+The streams then authenticate with `SuppliedCredentialTokenProvider` (`credential: access_token`)
+and `HeaderTokenPlacement` (`scheme: bearer`). Declare every host the flow calls, the consent host
+included, in `host_allowlist`.
+
+For a provider whose access token expires, drop `access_token` from `account.credentials`. The
+`TokenExchangeFlowStep` stores the refresh token the provider returns on its own. The streams then
+mint an access token from it with an `ExternalTokenProvider`:
+
+```yaml
+authenticator:
+  type: TokenAuthenticator
+  token_placement:
+    type: HeaderTokenPlacement
+    scheme: bearer
+  token_provider:
+    type: ExternalTokenProvider
+    requester:
+      http_method: "POST"
+      body_format: "form_params"
+      url_base: "https://api.example.com"
+      path: "oauth/token"
+      request_body:
+        type: CompositeRequestBody
+        fields:
+          - { type: RefreshTokenField, field_path: [ refresh_token ] }
+          - { type: StaticField, field_path: [ grant_type ], value: "refresh_token" }
+          - { type: PlatformCredentialField, field_path: [ client_id ], credential: oauth_client_id }
+          - { type: PlatformCredentialField, field_path: [ client_secret ], credential: oauth_client_secret }
+      middlewares:
+        - <<: *retry
+        - <<: *logger
+        - <<: *classifier
+  token_storage:
+    type: AccountCredentialStore
+    refresh_token_field: refresh_token
+    expiration_policy:
+      type: ConstantExpirationPolicy
+      every: 3500
+```
+
+Set `every` a little under the provider's access token lifetime.
 
 ## Per-source inputs
 
@@ -854,7 +1086,22 @@ paginator:
 - `PageIncrement` stops when a page returns fewer records than `page_size`.
 - `LimitedPageIncrement` adds `total_count`, for an API that reports how many records exist.
 - `OffsetIncrement` steps by `page_size`; inject `offset` rather than `page`.
-- `CursorPagination` needs a `cursor_value` naming where the next token sits in the response body.
+- `CursorPagination` needs a `cursor_value`, which is a template rendered against the response
+  body. Variables are the body's top-level keys, with no `response.` or `body.` prefix. The last
+  page usually has no cursor key, so always give it a default; an empty cursor is what stops the
+  paginator. A plain path such as `paging.cursors.after` is not rendered and is sent to the API as
+  literal text. For a Graph-style `paging` object:
+
+  ```yaml
+  pagination_strategy:
+    type: CursorPagination
+    page_size: 100
+    cursor_value: "{{ paging.cursors.after | default('') }}"
+  page_token_option:
+    type: RequestOption
+    inject_into: "query_parameters"
+    field_path: [ "after" ]
+  ```
 - `LinkHeaderPagination` is for an API that returns the next page in a `Link` header rather than
   the body (`Link: <...?page=2>; rel="next"`), which `CursorPagination` cannot see. Set
   `extract_param` to the query parameter carried in that URL. It stops when the API omits
@@ -919,6 +1166,54 @@ That is a net, not a substitute:
   `optional: true` on that extractor, not a failure.
 - Anything non-transient that matches no filter surfaces the raw response body to the caller, which
   is your signal to add a filter for that status or shape.
+
+## Rate limits
+
+Retrying a 429 keeps a sync alive. It does not keep you under the provider's limit, and a
+connector that only retries will spend a whole hour's budget in its first minutes. Declare the
+documented limit on the requester instead, so the engine paces its own calls:
+
+```yaml
+definitions:
+  <<: &query_rate
+    type: RateLimiter
+    max_requests: 50            # 60 per hour documented; leave room for the customer's own use
+    time_window: 3600
+    wait_for_free_slot: 30
+    tags:
+      project: "{{ integration_source.external_id }}"
+  <<: &query_concurrency
+    type: ConcurrencyLimiter
+    max_slots: 5                # the documented concurrent-query limit
+    wait_for_slot_to_be_released: 30
+    tags:
+      project: "{{ integration_source.external_id }}"
+
+# on every requester that spends the same budget
+        middlewares:
+          - *retry
+          - *logger
+          - *classifier
+          - *query_rate
+          - *query_concurrency
+```
+
+- **Declare it on every requester that spends the same budget**, and give those requesters the same
+  `tags`. Requesters with the same tags share one count. Tag by what the provider counts against:
+  `{{ integration_source.external_id }}` for a per-project or per-account limit, a fixed string for
+  a limit on the whole credential. Endpoints with separate limits get separate tags.
+- **Set `max_requests` below the documented number.** About 80% leaves room for the customer's own
+  dashboards and other tools on the same project.
+- **Waits are capped at 60 seconds**, because a waiting fetch holds a shared worker. When the wait
+  runs out, the engine retries the fetch later, so a short wait is correct even for an hourly limit.
+- **Count the first sync before you `connect`.** After `connect`, storage backfills each report type
+  one month at a time over the whole backfill range, about 37 requests per report type, plus one
+  per page. Divide that by your `max_requests` and tell the user how long the first sync will take,
+  and that widgets show a rate-limit message until it finishes. Two report types against a 60-per-hour
+  limit is about 90 minutes. If that is too long, ship fewer report types first, or use one request
+  that returns several series at once.
+- **Your own calls count too.** On a tight limit, sample with `last_days: 7`, and do not re-sample a
+  stream whose definition did not change.
 
 ## Getting a definition right
 
@@ -986,7 +1281,8 @@ data. An id belonging to another team reads as absent rather than forbidden.
 | `test-auth` fails | The credential or the flow. Check the endpoint, the placement `scheme`, and whether the API wants a prefix. |
 | `test-auth` passes but `sample` says credentials are missing | The manifest names a `credential` that `account.credentials` does not declare, or declares under a different name. |
 | The connection fails with an empty `external_id` or name | The `account` block reads an input that `ValidationFlowStep` dropped because it had no rule, or a probe field that the `record_selector` did not extract. |
-| "Platform credential ... is not configured" | A `Platform*` component. A dynamic integration has no platform credentials; collect the value from the user. |
+| "Platform credential ... is not configured" | In an `oauth2` flow, `set-oauth-client` has not been called for this integration. Otherwise a `Platform*` component outside OAuth2: a dynamic integration has no other platform credentials, so collect the value from the user. |
+| `sample` says there are no stored credentials after `authorize` | The OAuth2 connect failed and stored nothing. Ask the user what the page or notice said, fix the cause (usually a redirect URL missing from the provider's application), and have them open the same `authorize_url` again. |
 | `sample` returns nothing | Usually the extractor's `field_path` does not match the response shape, or the date filter excludes everything. |
 | `sample` returns one record that is the whole envelope | `field_path: []` against an enveloped response. Name the key holding the list. |
 | A source named `N/A` or with external id `-` | The factory's `name` or `external_id` read a key the discovery record does not have. |
@@ -997,3 +1293,4 @@ data. An id belonging to another team reads as absent rather than forbidden.
 | Every row dated to the range start | No `NormalizeTimeValues` or `NormalizeEpochTimeValues` before the mapping. |
 | A fetch says the definition "has been updated and republished" | The engine upgraded an old live definition. Retry the request. |
 | Data still wrong after a fix | Republishing does not correct stored data. `resync` the range. |
+| Widgets say the rate limit has been reached right after `connect` | The first backfill is spending the provider's budget. Wait for it to finish rather than re-sampling, and check that the requesters declare the documented limit. See [Rate limits](#rate-limits). |

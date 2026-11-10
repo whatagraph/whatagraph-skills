@@ -38,6 +38,8 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-report-tabs` | Create, duplicate, rename, and reorder report tabs. |
 | `whatagraph-widgets` | Build and lay out widgets on the grid. |
 | `whatagraph-freeform-reports` | Build freeform reports — a slide deck, a printable client report and a continuous dashboard as one document type in three formats. Covers the brands they are drawn in. |
+| `whatagraph-tab-layout` | Decide what goes on a report page: tab structure, chart choice, titles, narrative text, and full-page layouts. |
+| `whatagraph-widget-advanced` | Less common widget features: formula rows, duplicating widgets, conditional formatting, currency conversion, table column widths, and creative thumbnails in tables. |
 | `whatagraph-dynamic-charts` | Build chart families with no dedicated widget type — scatter, bubble, heatmap, candlestick, box plot, radar, funnel, stacked and 100% stacked, horizontal bars, combo, top-N. |
 | `whatagraph-offline-reports` | Build a whole report from numbers you already have, with no connected source. |
 | `whatagraph-blends` | Combine data from different channels into one virtual source. |
@@ -50,6 +52,10 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-templates` | Convert a report into a reusable template and apply templates to new reports. |
 | `whatagraph-themes` | Apply and manage themes (logos, fonts, headers/footers) and color palettes. |
 | `whatagraph-assets` | Import, find, read and publish files — brand images for reports and themes, and searchable documents. |
+| `generating-images` | Create and edit any visual as a finished design: ads and their placement sets, social posts, flyers, covers, banners, infographics, photos, illustrations and edits. Lays out exact copy, logos, prices and charts over generated pictures when the agent has the design renderer. Available inside Whatagraph IQ agents only, which have the image tool. |
+| `designing-ad-creatives` | The layout library for static ads and social creatives: 28 proven ad archetypes with their layout, copy and build, and what separates the best real ads for performance, brand, local, B2B and social goals. Available inside Whatagraph IQ agents only. |
+| `generating-videos` | Make Story and Reels ads and other short videos with exact text: an animated HTML layout recorded as an MP4, optionally over a Veo clip that animates the client's own product photo. Available inside Whatagraph IQ agents only, which have the video tools. |
+| `creating-ad-campaigns` | Plan and produce an on-brand ad campaign grounded in the client's real ad results on every connected channel: brand kit, creative memory, concepts with copy and a test hypothesis, every placement, names that bring results back, a board, and refreshes. Available inside Whatagraph IQ agents only. |
 | `whatagraph-sharing` | Create and update public share links for reports. |
 | `whatagraph-automations` | Schedule automated report delivery by email. |
 | `whatagraph-snapshots` | Save and restore the structural state of a report. |
@@ -58,6 +64,19 @@ Start with `whatagraph-mcp-overview`; it explains the mental model (spaces → r
 | `whatagraph-team-and-members` | View team settings and subscription; invite and update team members. |
 | `whatagraph-customer-patterns` | Common multi-tool flows and decision trees across skills. |
 | `whatagraph-deleting` | Safe deletion, removal, and revocation across Whatagraph entities. |
+
+### Team computer and browser (IQ agents)
+
+These three skills are written for Whatagraph's own IQ agents, which load them from this
+repository when they work on the team computer and in the agent's browser. They describe tools
+that exist only inside the Whatagraph app (`computer-exec`, `browser-navigate` and the others), so
+they do nothing for a Claude client that uses the MCP server alone.
+
+| Skill | What it does |
+|---|---|
+| `team-computer` | Python analysis, files and finished deliverables on the team computer: charts, decks, workbooks and reports in the Whatagraph look, a customer's brand or the look of an attached file, a report turned into a deck with one slide per widget, forecasts and marketing mix models. Long work runs as background jobs, and every deck and workbook is looked at and checked before it is handed over. |
+| `team-browser` | Read and use websites in the browser that belongs to the acting person: when to use the browser and when the Whatagraph tools read a report instead, pictures of pages for a deck, research across many sites, what never to click, and asking the person on the page when it needs a sign-in. |
+| `board-pack` | Prepare a long pack (a board pack, a quarterly review, a competitor study with thirty or more slides) alone from one request: stages over several turns, state kept in files, research read from pages the browser opened, and the checks before delivery. |
 
 ## Skill frontmatter — declaring tools
 

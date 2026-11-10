@@ -1,0 +1,478 @@
+---
+name: team-computer
+type: domain
+group: computer
+description: Use the team computer for Python analysis, files and finished deliverables. Covers charts, decks, workbooks and reports with the wgviz helpers, a customer's brand or the look of an attached file, a report turned into a deck, forecasts and marketing mix models, long work as background jobs, and looking at and checking every file before it is handed over.
+required_tools:
+  - computer-exec
+optional_tools:
+  - tool_name: computer-job
+    purpose: Run commands that need more than 60 seconds and resume from the completion event.
+  - tool_name: computer-write-file
+    purpose: Save scripts or text inputs before execution.
+  - tool_name: computer-read-file
+    purpose: Read large output, job logs, existing inputs or a rendered page.
+  - tool_name: computer-list-files
+    purpose: Discover existing inputs and completed files without guessing paths.
+  - tool_name: computer-export
+    purpose: Deliver an existing file as a downloadable conversation card.
+  - tool_name: computer-chart
+    purpose: Present an interactive chart from a supported ECharts specification.
+  - tool_name: computer-import-attachment
+    purpose: Bring an attachment from this conversation onto the computer.
+  - tool_name: computer-fetch-data
+    purpose: Write connected marketing data directly to a local file.
+  - tool_name: computer-http-request
+    purpose: Request data from an outside API, with a secret from the person's vault when it needs one, and save the answer as a local file.
+---
+
+# Team computer
+
+The tool descriptions say how each computer tool works. This skill covers what they do not: inputs,
+long work, the answer to the person, and deliverables that look finished the first time.
+
+## Files and inputs
+
+Keep private or temporary inputs out of `/team` unless the person intends to share them. An
+attachment of this conversation comes onto the computer with `computer-import-attachment`. For
+connected marketing data use `computer-fetch-data` with discovered source and field identifiers;
+do not rebuild a large dataset from chat snippets. Use only the tools granted to this agent.
+
+Start the work without exploring the computer. The tool descriptions name the folders, so do not
+print the environment, list `/runs` or read `.run.json` first. Save a file that a later turn or the
+person needs in `/team/<project>/`, or in `/agents/<your id>/` when it is private. A `/runs/<run>/`
+folder is scratch for one turn, and a later turn cannot write to it.
+
+Build a deliverable with one script that makes the file, run it, check the saved file, then export
+it. Do not write separate test scripts, and do not add charts, sheets or slides beyond what the
+person asked for.
+
+## Long work
+
+A model fit (for example a Meridian mix model with more than one chain), a forecast over many
+series, or any script you expect to run longer than about half a minute is background work with
+`computer-job`, not an inline command: an inline command that hits its limit is charged and
+wasted, and its partial output is unusable. A quick single-chain check may stay inline; the fit
+you will report from runs as a job. `mmm.fit`, `mmm.validate`, `mmm.crosscheck` and
+`mmm.stability` never run in `computer-exec`: its 60-second limit stops them every time. Start
+them in one `computer-job` script and continue with other work, such as research or the parts of
+the deck that do not need the model; the finished job wakes this conversation.
+
+Report a timeout or a failure plainly. Run the job again only after fixing its cause and checking
+whether partial output already exists. Reuse a valid completed result rather than charging for the
+same job again. If the job cannot be made to work and you change the method (fewer samples, a
+simpler model, resampling an existing fit instead of refitting), say so in the answer and label it
+truthfully in every deliverable. Never describe a substitute method as the one that was asked for,
+and state what the failed job was and why.
+
+Create a wake-up, a reminder or a recurring schedule only when the person asked for one. A finished
+job wakes this conversation by itself, so it needs none. When the person says when to check back
+("stop and check back in two hours"), create one wake-up at that time, and do not check or message
+them before it.
+
+## The answer
+
+Write to the person in their words. The answer names what was made, the two or three findings
+that matter, and what to decide next. Leave out job and run IDs, folder paths, script names,
+package names and formulas in LaTeX or code notation; the person sees the files as cards. When a
+background job failed, say "the first attempt failed because ..., I fixed it and ran it again" in
+those plain words; do not describe a failure as a relaunch or an adjustment.
+
+One client's file does not show another client's results. When the person asks to compare a client
+with another client of the agency, a file meant for the first client calls the other one "a
+comparable client" and keeps its name out of titles, sheets and file names. Say in your answer
+that you did this, and name the other client there only. Use the names in the file when the person
+says the file is internal.
+
+Deliver the files the person asked for. Do not export a Markdown or text file (notes, a summary, a
+read-me or a log) that nobody asked for; say its content in the answer instead. A read-me sheet
+inside a workbook is part of the workbook and is fine.
+
+## Product-style outputs
+
+Deliverables must look finished the first time: no label printed over another, no text
+running out of its box, no table stretched to fill a slide, no empty half-slides, no
+shadows, gradients or clip-art. The usual way to get that is to build every chart, deck,
+workbook and report with the installed `wgviz` helpers and to let them lay things out.
+
+A deck may also be built another way when the request needs a look the helpers do not make: by
+hand with python-pptx, from a customer's template, or from pages rendered to PDF. Then nothing lays
+it out for you, so the review below is the only check of the layout: give it the time the build
+took. Keep content well inside its box. A rounded card needs room in its corners: start text and
+tables at least the corner's radius from a rounded edge (python-pptx draws a corner of one sixth of
+the card's shorter side unless you set it), and never let a table or a picture reach the card's
+edge. Size a card to what it holds instead of leaving its lower half empty.
+
+- Charts for a file: `wgviz.charts` (`bar`, `grouped_bar`, `stacked_bar`, `line`,
+  `donut`, `kpi_cards`, `quadrant`, `heatmap`, and for a long pack `waterfall`, `ranking`
+  (sorted bars with "us" highlighted), `scatter`, `stacked_area`, `combo` (a volume with its
+  rate) and `small_multiples`). They apply the
+  product style, label the values, put the legend under the plot and wrap or slant long
+  category labels. Do not call matplotlib directly for a deliverable.
+- Charts in the conversation: build the option with `wgviz.echarts` (`line`, `area`,
+  `bar`, `column`, `pie`, `donut`, `scatter`, `heatmap`, `quadrant`) and save it with
+  `wgviz.echarts.save`; then `computer-chart`. The helpers reserve room for axis labels
+  and the legend; a hand-written option is the usual cause of a cut-off label.
+- A pack of thirty or more slides, a board pack, a market or competitor study: load the
+  `board-pack` skill. It has the stages, the deck and workbook structure and the way to continue
+  over several turns.
+- Decks: `wgviz.deck.Deck`. Title slide, then one idea per slide: `kpis` (cards with a
+  notes area), `chart` (a chart PNG with a commentary column), `table` (only as tall as
+  its rows, up to 14), `bullets` (at most six short lines), `columns` (two text columns),
+  `image` (a screenshot with numbered callouts and optional markers), `two_up` (two
+  screenshots side by side with captions and up to four numbered observations),
+  `section` (a divider with one statement). A long pack also uses `agenda`, `summary`,
+  `statement` (one number set very large), `chart_grid` (two to four charts), `screenshot`
+  (a web page in a browser window, or with `facts=` a competitor profile), `decisions`,
+  `gallery` (two to six pages side by side), `matrix` (who offers what), `timeline`, `quote`,
+  `sources` (links that open), `notes` (speaker notes) and `picture` (a slide that is mostly one
+  photo or page); `wgviz.help("deck")` has each one's arguments. Text is measured and shrinks to
+  fit; keep it short anyway.
+  Never build slide layouts from raw shapes when a Deck method exists.
+- Choose the slides and their order from the story this customer needs, not from a fixed
+  outline: a pitch opens with the problem and the answer, a monthly report with the numbers, a
+  quarterly review with results, what drove them and the plan. A short deck needs no agenda,
+  section or sources slide.
+- A Whatagraph report turned into a deck: read the report and its widgets with the Whatagraph
+  report tools, as the `generating-report-digests` skill shows, and give every widget its own
+  slide in the report's order, unless the person asks for another grouping. The slide's title
+  says what the widget shows, its chart is drawn again from the widget's data with the matching
+  chart helper, and a table widget becomes a `table` slide. Do not put several widgets on one
+  slide to save slides.
+- Workbooks: `wgviz.excel.write_table` per sheet; a chart in a workbook is a native
+  Excel chart from openpyxl, never a pasted image, and the workbook carries the numbers
+  behind every chart in the deck. A read-me or notes sheet is written with
+  `wgviz.excel.write_text(sheet, [paragraph, ...], title="Read me")`, so a printed or PDF copy
+  does not cut a sentence. Both helpers set the print layout; do not set column widths by hand.
+  Give every table its number formats by column: `write_table(..., formats=["text", "eur", "int", "percent", "ratio"])`
+  (the names are in `excel.FORMATS`). A percentage is stored as a share (0.042) with the
+  `"percent"` format, never as the text "4.2%". `write_frame(ws, frame, formats={...})` writes a
+  data frame, `link(ws, "B4", url)` an address that opens, `highlight(ws, ref, "ROI")` shades a
+  column by value, and `add_chart` draws `bar`, `stacked`, `percent`, `horizontal`, `line`,
+  `area`, `pie` and `scatter` (`columns=[2, 3]` picks the table columns to plot). A workbook of
+  many sheets starts with `cover(wb, title=..., notes=[...])` and ends with
+  `add_index(wb, descriptions={sheet: what it holds})` and `polish(wb)`.
+- Reports: `wgviz.report.Report` for PDF or Word.
+
+Style and brand. Every helper draws in one theme. Its default is Whatagraph's own look (white and
+light grey surfaces, near-black text, the Whatagraph pink as a small accent, Inter), which is right
+only for a deliverable about Whatagraph itself. For a customer, set a theme from their brand before
+the first chart or `Deck(...)`, from the first source below that has it, and use it for every
+chart, slide, page and sheet of the deliverable:
+
+- Brand colours in the request: `style.use(style.Theme.from_colors(["#0B3D2E", "#BEF264"], brand="Northstar Digital"))`
+  before the first chart or `Deck(...)`; the first colour becomes the accent and the list the
+  chart palette. Add `font="Georgia"` for a named typeface and `logo="/team/brand/logo.png"`
+  for an attached logo (import the attachment first). `Deck(..., theme=...)` and
+  `Report(..., theme=...)` accept the same theme.
+- The customer's own PowerPoint template (an attached .pptx or .potx): import it and pass it as
+  `Deck(..., template="/team/brand/template.pptx")`. Its master, background and body font are
+  under every slide.
+- No colours given, but the customer has a website: open its home page in the browser, save a
+  screenshot and the logo image, and read the colours with `wgviz.images.brand_colors(path)`.
+  Look at the logo and the page before you use them. A brand whose pages are dark gets
+  `Theme.from_colors([...], background="#0B1F33")`; the text and the surfaces follow it.
+- Photos of the customer's products, stores or campaigns (from their site or attached):
+  `Deck(..., cover=path)` puts one on the title slide and `deck.picture(path, title=..., text=...,
+  layout="right" | "left" | "full")` makes a slide of one.
+- "Our report theme" or "the colours of our reports": read the applied palette with the themes
+  tool (`show_color`), then `style.Theme.from_report_theme(payload, brand="Client A")`.
+- An attached file that shows the look to follow (an earlier deck, a report PDF, a brand guide or
+  an image): import it and look at every page (render a PDF or a deck with `wgviz.render.pages`
+  first; read an image as it is). Copy its colours, its typeface and its layout, not only the
+  colours: pass the colours and the typeface to `from_colors`, and follow where it places the
+  title, the chart and the text, its cover and its closing page, with the Deck slide types that
+  match. Never guess a brand colour from memory. Say in the answer which colours and typeface you
+  used and what of the layout the helpers could not follow.
+- Nothing about the brand can be found (no colours, no file, no website, no report theme): do not
+  keep the default. Choose two or three colours and a typeface that suit the customer's industry
+  and the reader, pass them to `from_colors`, and say in the answer that they are a choice and that
+  the customer's website or brand guide would let you match the brand.
+- One accent, at most three colours on a slide beside the chart palette, no gradients,
+  shadows or clip art, and a chart placed on a slide that already has a title is drawn without
+  its own title. Do not paint large areas in the accent.
+
+Before handing a deck, a document or a workbook over, look at it: `deck.render(dir)` or
+`wgviz.render.pages(path, dir)` writes one PNG per page, and `computer-read-file` on a
+PNG shows it to you. Read every page image, and write one line per page of what you checked
+and what you found before you change anything. Look for each of these on every page:
+
+- text or a table that touches or crosses the edge of its card, or sits on a rounded corner;
+- a label, a number or a word cut off at an edge;
+- two elements drawn over each other;
+- a picture cropped through the thing it is meant to show (a face, a product, an ad's headline);
+- a card or a half of the slide that is mostly empty;
+- a number in the text that differs from the chart or table beside it.
+
+Fix the script for every finding (shorter text, fewer rows, more room, another slide type) and
+render again. A page with no line written was not reviewed. Hand over only what you have seen. For a deck of more
+than twelve slides use `deck.preview(dir)`: it renders the deck and tiles the pages twelve to a
+sheet with their slide numbers, so forty slides are four pictures to read. Read every sheet, then
+open a single page only where a sheet shows something to check.
+
+Screenshots from the browser belong in these deliverables when the request is about what a page
+looks like. Take each one as the `team-browser` skill describes. `Deck.screenshot`,
+`Deck.gallery`, `Deck.image` and `Deck.two_up` place it; they cut a tall page from its top to the
+shape of its frame and size the file, so twenty screenshots do not make the deck too heavy to
+deliver. Pass the page's address as `url=` and the day as `captured=`, and write the observations
+from what is visible in the picture, not from memory of the brand. `wgviz.images.crop(path,
+top=0.2, height=0.5)` cuts the band worth showing when the top of the page is not it.
+
+Read the helpers' signatures once, in one command, instead of opening their source:
+
+```python
+import wgviz
+wgviz.help("deck")      # or wgviz.help() for every module: style, charts, echarts, deck, report, excel, forecast, mmm, render
+```
+
+`Deck(..., brand="the agency", client="the client")` writes both into the footer: the agency is
+the author of the pack, the client is who it is about. `Deck(..., title_slide=False)` starts with
+the first content slide when the person has named what the first slide is; a bullet may be a pair
+`("Lead-in", "rest of the sentence")` for a bold lead-in, `bullets(..., numbered=True)` numbers the
+list, and you never type a bullet, a dash or a number at the start of an item; `charts.bar(..., color=[...])` takes one colour per bar to highlight one of them.
+
+| Output | Helper |
+|---|---|
+| PNG charts | `from wgviz import charts`: bar, grouped_bar, stacked_bar, line with bands, donut, kpi_cards, quadrant, heatmap, waterfall, ranking, scatter, stacked_area, combo, small_multiples |
+| Branded PDF | `from wgviz.report import Report`: kpis, chart, table, heading, text, bullets, save |
+| Branded 16:9 presentation | `from wgviz.deck import Deck`: kpis, chart (with takeaways and source), chart_grid, table, matrix, bullets, columns, image, two_up, screenshot (callouts or facts), gallery, agenda, summary, statement, decisions, section, timeline, quote, sources, notes, save, render, preview; `theme=` and `logo=` for a customer's look |
+| Pictures | `from wgviz import images`: fit (crop to a shape and size for a slide), crop (cut a band), contact_sheets, size |
+| Style and brand | `from wgviz import style`: `Theme`, `Theme.from_colors`, `Theme.from_report_theme`, `Theme.load`, `style.use`, `style.current` |
+| Workbook | `from wgviz.excel import write_table, write_frame, add_chart, link, highlight, cover, add_index, polish, verify_totals, FORMATS` |
+| Interactive chart | `from wgviz import echarts as ec`, then `computer-chart` if granted |
+| Forecast | `from wgviz import forecast`: complete_weeks for a weekly series from daily rows; run with date_col, value_col and horizon (backtests the models and returns `reading`, `backtest`, `totals`, `warnings`); pacing for a month-end projection from daily rows; target_plan, chart and echarts_option |
+| Marketing mix model | `from wgviz import mmm`: audit first; then, in one background job, fit at `quality="standard"`, validate, crosscheck, triangulate and stability; read `warnings`, `review`, the 90% intervals and `range_to_report`; curves_chart for spend against return |
+
+## Forecasts
+
+A request to forecast or project a series (spend, conversions or revenue to month end,
+next month or next quarter) is a statistical forecast made with `forecast.run`. It never picks a
+model by how well it fits the history it was trained on. It cuts the history at several points,
+lets each candidate (seasonal naive, drift, ETS, ARIMA, Theta, MSTL for daily data, Croston when
+many periods are zero, and the median of the best three) forecast periods it never saw, and keeps
+the one with the lowest error. It keeps that model only when it beats repeating the last season
+by 5%; otherwise it reports the seasonal naive forecast and says so in `warnings`.
+
+Report what the result holds, and nothing it does not:
+
+- `totals`: the forecast total and its range (`forecast_lo` to `forecast_hi`). The range of the
+  total comes from the errors of whole-horizon totals in the backtest. Never add the bands of
+  single periods to get it.
+- `reading`: the sentence that says which model won, its backtest error, how much better it did
+  than repeating the last season, and how often the range held the actual values. Put it in the
+  answer and in the methods note of every file.
+- `warnings`: every one is read and either fixed (drop an incomplete last period, use a longer
+  history) or said in the deliverable.
+
+A straight-line run rate (average per day times the days left) is pacing arithmetic, not a
+forecast. For "where will we land this month", call `forecast.pacing(daily, date_col=...,
+value_col=..., period_end="YYYY-MM-DD", target=...)` with daily rows up to yesterday. It returns
+the actual to date, the projected total with its range, the run rate for reference and, with a
+target, the share reached and the amount needed per remaining day. Show the projection and the
+run rate side by side and say which figure is which. Drop today and, for platforms that revise
+recent days, the last two or three days before fitting. Say plainly whether the projection is above or below the
+target. When the target lies inside the range, the outcome is uncertain: say so, and do not call a
+target below the projection "within reach" or one above it "safe".
+
+Never cut the history to "the stable period" before calling `run`. A lasting change of level is
+found and applied by `run` itself: it fits from that week (returned as `fit_from`) and says so in
+`reading`, while the year-over-year model still reads the year before. Pass `fit_from` yourself only
+for a change you know of that it did not find, or `fit_from=False` to fit on all rows. When
+`reading` says that last year's same periods give a different total, a yearly event lies ahead (a
+seasonal rise, a sale, a holiday). Quote `reading` whole, name what happened in those weeks last
+year, and give the range it states.
+
+After a tracking change, report a series as it is recorded now. Never scale it to what the old
+tracking would have counted (an "underlying" or "adjusted" figure): no data measures that ratio.
+Two forecasts of one series for different periods must agree per week, or the slide says why
+they do not.
+
+Ask for a horizon the history can test. The backtest needs about four times the horizon in
+periods, so 58 weeks test a forecast of about 13 weeks and not 24. When `warnings` say the
+series is too short to backtest, shorten the horizon (for example to the end of the quarter), or
+forecast the daily series and add the days up; anything beyond the tested horizon is indicative.
+An untested forecast says "indicative, not tested on held-out data" in its slide title or caption
+and on its sheet, not only in the methods note.
+
+A weekly series comes from `forecast.complete_weeks(daily, date_col=..., value_cols=[...])`,
+which keeps full Monday-to-Sunday weeks only; a partial last week looks like a collapse to every
+model. A forecast of spend, clicks, conversions or revenue is never below zero; the helper cuts
+it there. With under three years of weekly history the forecast carries no yearly season: put
+beside it what the same weeks brought a year before, and say when the forecast is therefore
+likely cautious. Forecast spend is an assumption, and a forecast chart shows the actuals, the
+forecast beyond the last actual date and the band.
+
+## Marketing mix models
+
+A marketing mix model is fitted on the whole business outcome per week (all new revenue, all
+orders), with one spend column and, when there is one, one impressions column per channel. The
+revenue or the conversions that the ad platforms attribute to themselves are not that outcome:
+they leave no baseline, and the platforms count the same sale more than once. Look for a source
+that holds the business result (sales, new business, orders, a CRM or a shop) before you settle
+for platform numbers, and show the platforms' own claim beside the model's as a finding.
+
+A question about what drives the results or where the next euro should go, asked with paid
+channels and a weekly outcome, is a mix model request. Cost per result by campaign, channel shares
+in analytics and the conversions the platforms claim are descriptive figures: present them as
+such, and never call them a model, a driver model or attribution. When the audit blocks the model
+or the fit fails and cannot be fixed, the answer and every file say that no mix model was fitted
+and why, and no title, slide or sheet uses the word model for what replaced it.
+
+A mix model that a person will act on goes through five steps. Do them in this order and do not
+skip one.
+
+1. `gate = mmm.audit(frame, channels)` before any fit. It counts the weeks and the weeks per
+   estimated parameter, and checks that each channel's spend varies, carries a real share and does
+   not move in lockstep with another channel. When `gate["usable"]` is false, report no channel
+   return. Say which check failed (`gate["blocking"]`) and offer what the data supports: a holdout
+   or geo test, a pre and post readout, or the observed cost per result. Channels in
+   `gate["joint_groups"]` move together and are reported only together, never one by one.
+2. `result = mmm.fit(frame, channels, out_dir=...)` at its default `quality="standard"` (four
+   chains), as a background job. It runs the audit again and then Meridian's model review
+   (`result["review"]`: convergence, baseline, predictive checks, fit, how far the data moved the
+   priors, consistency of the returns). A review that fails, or warnings that say the modelled
+   media contribution is above the actual total, mean the fit is not usable however it is
+   explained.
+3. `mmm.validate(frame, channels, out_dir=...)` in the same job refits with a fifth of the weeks
+   held out at random and says how well it predicts them (`verdict` "holds", "weak" or "fails",
+   and `reading`). Do not hold out the last weeks as one block: a mix model explains the past and
+   is not a forecast.
+4. `cross = mmm.crosscheck(frame, channels)` is an independent second method (carryover and
+   saturation per channel chosen by blocked cross-validation, non-negative coefficients, and a
+   bootstrap that chooses them again in every replicate). `tri = mmm.triangulate(result, cross,
+   gate)` compares the two channel by channel. Report each channel's `range_to_report`, which is
+   the union of both intervals. Give a single ROI only for a channel whose row says `agree`, and
+   still give its range. Report a ranking only where both methods and their intervals support it.
+   On simulated data with known returns, Meridian's 90% interval held the true ROI in 88% of the
+   channels and `range_to_report` held it in all of them; a single point was off by about 20% at
+   the median. Say this kind of uncertainty plainly.
+5. `mmm.stability(frame, channels, out_dir=...)` refits with other seeds and with the last weeks
+   cut off. A channel whose return moves a lot between refits is reported as uncertain.
+
+`mmm.curves_chart(result, path=...)` draws what each channel returns as its spend grows, with a
+dot at today's spend. Budget advice stays within the spend levels the data has seen; a shift
+beyond them is an assumption and is labeled one.
+
+Budget shifts come from `triangulate(...)["budget_shifts"]` (pass it the stability result), never
+from your own reading of the numbers. Its `reading` names the moves the data supports and the
+channels not to cut, with the reason; quote it. A move is allowed only when both methods rank the
+channels the same way and their ROI ranges do not overlap. The return on the next euro
+(`marginal_returns`, the cross-check's `marginal_roi`) is indicative only: its intervals missed the
+true value in tests, so never move budget or size a gain on it. The size of a gain is not known from
+the model; propose a holdout or geo test to measure it, and never call a figure "verified": say which
+checks it passed.
+
+To reuse a finished fit, call `mmm.load(out_dir)`, which repeats the fit's warnings; do not read
+`summary.json` yourself, and say in the answer and in the file that the fit is from an earlier run
+and when it ran. `quality="quick"` only proves that the script runs and is never the fit a
+deliverable reports. Put these in the deliverable in plain words: the weeks used, the sampler
+settings and the largest R-hat (in a methods note), the review result, the validation reading, the
+triangulation verdict, and each channel's range. A chart whose title names a range draws it:
+`charts.bar(names, values, intervals=[(low, high), ...], value_format="{:.2f}x")` puts a whisker on
+every bar. Do not draw the low end, the mean and the high end as three bars. Do not call
+Meridian's classes directly when `mmm` covers the request.
+
+## Numbers and checks before handing over
+
+Numbers a reader can trust. Compute every figure once, in the script that builds the deliverable,
+and keep the figures in one dictionary or frame. Every sentence, KPI card, caption, chart label and
+table cell is formatted from those variables in that same run, for example
+`f"Meta Ads returns {roas['Meta Ads']:.2f} per euro"`. Never type a number into a text string, and
+never reuse a number printed by an earlier command or an earlier turn: the job recomputes, and a
+pasted number then contradicts the chart next to it. A KPI card names its unit (`€226,171`,
+`1.91x`, `104.7%`), and shows a change only against a real earlier period that you computed and
+name. A table of six rows or fewer takes `takeaways=[...]` so the slide says what the numbers mean.
+`deck.save(...)` prints a line that starts with `CHECK THE NUMBERS` for every number in a slide's
+text that is close to, but not the same as, a number in the chart or table on that slide. Each
+line is a slide that contradicts itself: fix the script and save again until none is printed.
+It also prints `CHECK THE LAYOUT` for a text that does not fit its box even at the smallest size
+of its layout: its last lines are drawn over what is under it. Shorten the text or split the
+slide, and save again until none is printed. A preview sheet is too small to show an overlap;
+the file check below finds it.
+
+Check the finished file before you export it. Run
+`python3 -m wgviz.verify /team/<folder>/<file>.pptx --auto` (the same for an `.xlsx`). It reads the
+saved file the way a careful colleague would: text drawn over other text, over the footer line or
+below the slide (measured, and read from the rendered pages), a table of companies that names ones
+no page read in this conversation mentions, a sentence that contradicts the table or chart on
+its slide, a remark cell that contradicts its own row, a negative forecast of spend or clicks, an
+unfilled value, Markdown characters shown as typed, a mostly empty slide, a screenshot shrunk to
+a narrow strip, the same picture on two slides, a file too heavy to deliver. It prints at most
+twelve findings and says in `total_problems` how many there are, so check again after fixing. It
+also repeats the warnings that `mmm.fit` and `forecast.run` raised in this run. Treat every
+finding by changing the script, building the file again and checking again. A finding that is
+rightly as it is (a scenario beside the base case, last year beside this year) stays only when the
+slide says which one it is. Nobody reads the file of a scheduled or triggered run before the
+customer does. You are the last reader, so never pass a finding you have not looked at.
+
+Say how fresh the data is. After loading dated rows, call
+`verify.freshness(frame["date"], name="Google Ads")`. When it returns a sentence, the source
+stopped arriving days ago: lead the report with that sentence, name the source, and do not
+describe the missing days as a change in performance. A recurring report that repeats the same
+totals as its last run has the same cause. The context of each turn states today's date and the
+team's time zone, so do not run `date` to learn them.
+
+Users, sessions, reach and other counts of distinct people or visits do not add up across days or
+segments: the same person or a visit that crosses midnight is counted in each. Take the total of a
+period from a fetch of the whole period, and the share of a segment from the same fetch. A sum of
+daily rows is right only for additive counts (clicks, cost, conversions, events).
+
+Rates come from totals (cost / clicks, revenue / cost), never from an average of rates. A rate
+whose denominator is zero (no deals, no clicks, no spend) is "not computable": never show it as 0
+or as infinite, and say why the denominator is zero.
+
+Never add amounts in different currencies. `computer-fetch-data` names the currency of the money
+metrics in its answer and in a currency column of the file; read it for every source before you
+add or compare spend. When the sources differ:
+
+1. Look for a source group that holds them (`list-source-groups`). A source group reports every
+   account in its own currency, so fetch the group, with its `integration_source_id` as the
+   source id, instead of the sources one by one.
+2. When there is none, pass `currency` to `computer-fetch-data` for each source. It converts the
+   money metrics with the exchange rates the team's reports use, each day at its own rate when
+   the rows are split by date. Name the currency of every figure and say that amounts were
+   converted at daily reference rates.
+3. When the person will report on these accounts together again, suggest in one sentence that they
+   create a source group with them, named by the accounts, so reports and analyses use the same
+   currency. You do not create it yourself.
+
+A rate set on a blend, a report or a currency override is a display setting, not a source. Today
+is incomplete in every source, so leave it out of any model, forecast or comparison of days.
+
+Check totals, labels, date ranges and produced files before handing over a result. When
+the same figure appears in the answer, a workbook and a deck, it must be the same number
+in all three; reconcile a modelled total with the actual total in the data and say how
+they relate before exporting. When you read the rendered pages, compare the numbers in each
+slide's text with the chart or table on the same slide, and fix the script when they differ.
+
+When a figure comes from an earlier conversation or an earlier turn rather than from
+data fetched in this turn (for example competitor numbers another run read from a
+web page), say so in the answer and in the deliverable, with the time it was read.
+
+## Sites, the browser and the computer
+
+Three tools reach the internet, and each answers a different question:
+
+| You need | Use |
+| --- | --- |
+| A page as a person sees it: reading it, clicking, signing in, a picture of it | the browser tools (`team-browser` skill) |
+| An API answer or a file download, with a secret from the vault when it needs one | `computer-http-request` |
+| Packages or data that a program on the computer downloads itself | `computer-exec` or `computer-job` |
+
+The browser carries the person's sign-ins and runs the page's scripts. The computer does neither,
+and reaches only the sites the team's setting allows. A result with `network_note` means the
+team's setting refused that site: the site itself said nothing. Never use the computer to test a
+site that refused the browser, and never report a site as blocking you from an error on the
+computer. Go back to the browser, or ask the person.
+
+## Boundaries and recovery
+
+For a website, an app or other code to build and run, load the `team-coding` skill. Before
+you write any HTML page, such as a one-pager beside a deck or the first page of an app, load
+`designing-pages` and follow it; writing or exporting a page is refused until it is loaded.
+
+Do not install a network tunnel, read another run's or another conversation's files, logs or
+processes (including anything under `/proc`), extract browser cookies,
+or route around a denied permission. If a required capability is absent, explain
+the missing capability in plain language and use an available smaller workflow
+only when it can satisfy the request.
