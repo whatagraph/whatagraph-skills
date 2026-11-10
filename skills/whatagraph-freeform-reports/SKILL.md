@@ -159,6 +159,14 @@ The steps:
        `firstUserDefaultChannelGrouping`; form submissions filter `eventName`; non-branded search
        queries are `not_contains` the brand on the query dimension. Copy each id from
        `list-sources list_dimensions_and_metrics`.
+     - **conversions on GA4**: GA4 calls conversions *key events*. A figure, column or legend
+       labelled "Conversions", "Key events" or "Leads" counts key events: bind `conversions`, which
+       is GA4's key event total in Whatagraph, or `keyEvents:<event>` when the label names one
+       event (a column headed `keyEvents:form_submission`). Bind `eventCount` only where the file
+       prints "Event count", and then with the `eventName` filter the page states: without it,
+       `eventCount` counts every event, page views included, and reads hundreds of times the
+       file's figure. When the property has no `keyEvents:<event>` for the event the file names,
+       bind `eventCount` filtered to that `eventName`, and say so in your report.
      - **a table** is traced as a coloured header band and one text line per cell. Every answer
        lists the tables still typed in by their band's id and columns. Send a `table` under the
        band's id, with empty `headers` and `rows`: it takes the whole table, the band's colours,

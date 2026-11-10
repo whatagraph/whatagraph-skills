@@ -156,7 +156,7 @@ If no group covers the scope and the question will come back (a scheduled digest
 ### Web Analytics (Google Analytics 4)
 - **Traffic**: `sessions`, `users`, `new_users`, `page_views`
 - **Engagement**: `engagement_rate`, `average_session_duration`, `bounce_rate`
-- **Conversions**: `conversions`, `conversion_rate`
+- **Conversions**: GA4 calls them key events. `conversions` is the key event total, `keyEvents:<event>` counts one key event, and `sessionConversionRate` is the share of sessions with one. `eventCount` counts every event, page views included, so filter it by `eventName` when you use it for one event
 - **Dimensions**: `source_medium`, `landing_page`, `device_category`, `country`
 
 ### Social Media (Facebook Page, Instagram, LinkedIn Page)
