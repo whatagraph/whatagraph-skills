@@ -57,8 +57,9 @@ challenge page or a pop-up over the content.
   lists images and videos with the size of their file and the size the page shows them at, for
   example `[e6_41] image "Spring sale" 1080x1350 shown 466x583`. The file lands under
   `downloads/` in the conversation's files at the size the site serves it. Check `width` and
-  `height` in the result, and hand the file over with `computer-export`. A file the browser saved
-  can never be published, so it cannot go into a report, a theme or a published document.
+  `height` in the result, and hand the file over with `computer-export`. Never publish a file the
+  browser saved, a copy or an edited version of it, and never put it in a report, a theme or a
+  published document: it belongs to the site, and the platform refuses to publish it.
 - Take a screenshot instead when the save answers that there is no file (a video the page streams
   in pieces, a canvas, an SVG), or when the person wants the page as it looks.
 - To show one thing from a page as it looks (a chart, a product card, an ad with its frame), pass
