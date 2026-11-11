@@ -100,7 +100,9 @@ The steps:
    pages are the file's pages, in the file's order: add no cover, summary or overview page of your
    own and do not reorder them, even when the person asks for a different source. A page already
    traced is not traced again (the answer names it); a page the tracer could not read is named in
-   the answer and has no page in the freeform report.
+   the answer and has no page in the freeform report. When the answer says the pages are being
+   traced and to call again, the trace runs in the background: call `trace_pages` again with the
+   same `asset_id` and `file_pages` to collect it, and do nothing else to those pages meanwhile.
 3. **Then make the figures live, page by page, without redrawing the page.** A traced chart is a
    picture with its title, axis labels and values as separate text lines, and a traced KPI is a
    text line: right, but connected to nothing. Look at the page (`list-freeform-reports action=preview`,
