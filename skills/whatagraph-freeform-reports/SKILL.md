@@ -521,6 +521,9 @@ because you happen to know a nice blue.
 - `radius` — corner rounding in design pixels.
 - `shadow` — `none`, `soft` or `strong`.
 - `opacity` — 0 to 1, over the whole block, its text included.
+- `border_side` — `left`, `top`, `right` or `bottom` draws the edge on that side only. A colored
+  stripe down the left of a scorecard is `{"border_width": 3, "border_color": "accent",
+  "border_side": "left"}`; the rest of a card keeps its brand outline.
 
 ### What each type does with it
 
@@ -583,6 +586,11 @@ shrinking it.
   `delta_sentiment` (`positive`/`negative`/`neutral`) to say whether that move is *good news*,
   which sets the colour. They are separate on purpose: a CPA falling 12% is `down` **and**
   `positive`. Omit the sentiment and the delta renders neutral rather than guessing.
+  **`"variant": "kpi"`** draws a dashboard scorecard: the `label` small and uppercase above the
+  value, a `note` under it ("Top: Brand campaign (7,660)"), the change in words with no arrow
+  (write the words into `delta`: `"+3.3% vs prev"`) and an `icon` library file in the top right.
+  Give it a `style` ground (`background`, `border_*`, `radius`), and a colored `border_side: left`
+  for the stripe a KPI row usually carries. A scorecard is one block, so it works inside a tab.
 - **`chart`** — `chart_type`, `categories`, `series`. Every series' `values` must be the same
   length as `categories`. `pie` and `donut` take one series. Types: `bar`, `line`, `area`, `pie`,
   `donut`, `scatter`, `radar`. On a `bar`, `line` or `area` chart one series can draw as another of
@@ -593,11 +601,32 @@ shrinking it.
   "#C8102E"}]` for a pie's slices or a one-series chart's bars, matched by label. A colour is a role,
   a ramp slot (`brand.3`) or `#RRGGBB`; read the file's own colour legend when it has one. Google
   Slides cannot colour a pie slice, so a pie there keeps the ramp.
+  For a dashboard trend: `"fill": "gradient"` fades an `area` from the line to the axis, which keeps
+  two overlapping areas readable; `legend_style: "dots"` with `legend_align: "center"` puts a dot
+  legend above the plot; `value_axis_title` and `secondary_axis_title` label the axes ("Spend",
+  "Clicks"); `show_grid_bands` tints every other band between the rules.
 - **`table`** — `headers` and `rows`; every row has one cell per header. **Every cell is a string
   you have already formatted** — `"1,842"`, `"$34.02"`, `"—"` — never a raw number, and never an
   object: a cell carries no colour or weight of its own, and a non-string cell is rejected. When a
   figure has to be coloured, it is not a table cell — pull it out into a `metric`, or write the
   sentence with a `run`.
+  **A cell can hold two lines**, split by `\n`. The second draws small under the first: under a
+  name it is a muted id (`"Brand campaign\n21075879312"`), and under a figure it is the change,
+  coloured by its sign (`"£880.44\n+15.4% vs prev"`). List the columns where a rise is bad (spend,
+  cost) in `inverted_columns`, and the ones whose figure draws in the accent in `accent_columns`;
+  both are zero-based. `header_fill: "accent"` with `header_ink: "#FFFFFF"` is the filled header
+  band, `align: "center"` centres every column after the first, and `grid: "all"` adds rules
+  between columns. Leave a row of two-line cells about 66 design pixels.
+  A **bound** table gets the same look from its data: set `delta_columns` and `"delta_lines": true`
+  with a `compare`, and each change is drawn under its figure instead of in a "% Δ" column. Name the
+  columns as they are drawn in `headers` (one per dimension and one per metric), and count
+  `accent_columns` and `inverted_columns` the same way.
+- **`bar_list`** on a dashboard: `"layout": "inline"` puts the label, the bar, the figure and a tag
+  on one row, which fits five rows in about 170 design pixels. `"bar_fill": "gradient"` runs each bar
+  from the first brand colour into the second. An item's `tag` ("Top", "Lowest") draws in a small
+  capsule after the figure, coloured by `tag_sentiment`. `"tag_extremes": true` tags the largest
+  item "Top" and the smallest "Lowest" by itself, which is how a **bound** list keeps its tags as
+  the figures change.
 - **`image`** — a public `https` `url`, plus `alt` and `fit` (`cover` crops, `contain`
   letterboxes).
 - **`icon`** — one glyph from the icon library, the same library a single value widget picks
@@ -1218,6 +1247,10 @@ figures will take:
   only channels with an account. `trace_pages` says when sample data is off.
 - Bind a **block**, not a card: a card's query feeds its children and has nothing to show
   meanwhile, so a card waiting for a channel is refused.
+- Styling stays with the block. A bound `kpi` scorecard keeps its `note` and `icon`, a bound table
+  keeps its `align`, `grid` and accent columns, a bound bar list keeps its `layout`, and a bound
+  chart keeps its series names when it names one series per metric. So a page built to look right
+  on the file's figures still looks right on sample data, and again on the real account's.
 - Writing the block attaches the channel to the freeform report with its sample data, so the channels
   panel lists every channel the freeform report needs, as a template report does. When the person
   connects an account there, every block waiting for that channel goes live, on every page, and
