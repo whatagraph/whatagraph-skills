@@ -621,6 +621,7 @@ shrinking it.
   tint, so ink inside it inverts just as it does on a dark page. Put the text **inside** the
   toned card: a text block merely positioned over one still resolves its ink against the page and
   can come out unreadable.
+  **`tabs`** turns the card into a **tab block**, on dashboards only — see *Tabs* below.
   **A card with an empty `blocks` list is a band of colour** — that is how you author a split
   background or a colour field behind a title, which a page background cannot do. Set
   `"rounded": false` for a band, author it *before* the blocks that sit on it (blocks draw in
@@ -650,6 +651,43 @@ shrinking it.
   `widget_id`; the widget keeps its own configuration and picks up the freeform report's brand. Chrome is
   off by default because the page already has its own text blocks. Give it at least 232 × 110
   design pixels — below that a widget refuses to render.
+
+## Tabs
+
+A **tab block** is a `card` with a `tabs` list. It draws a row of tabs along its top, and the
+reader clicks one to see the blocks on it. Use it when a dashboard has alternative views of the
+same question and showing them all would make the page twice as long: paid and organic, one tab
+per channel, this month and the trend.
+
+**Dashboards only.** A slide, an A4 page and every export show one state, and nobody can click a
+tab on them, so `tabs` is refused on every format but `dashboard`. On a deck, put the views on
+separate pages or side by side.
+
+- **`tabs`** is a list of `{"id", "label"}`, at most 12. Keep labels to a word or two.
+- **Every child names its tab** in `tab`, by the tab's `id`. A child with no `tab`, or one
+  naming a tab that does not exist, is refused.
+- **Frame each tab's children as if that tab were the only one.** Children on different tabs
+  share the same space and are not checked against each other for overlap. `y: 0` starts under
+  the row of tabs, which the card reserves for itself.
+- **The first tab is the default.** It is what the page opens on, and what a PDF or PNG export
+  draws. Put the view that answers the page's question first.
+- **`tab_style`** is `underline` (the default), `pills` or `segmented`. **`tab_align`** is
+  `left` (the default), `center` or `stretch`. Colors come from the brand, and the card's own
+  `style` and `tone` apply as on any card.
+- **A tab block takes no `binding`.** It is layout only. Bind each block on its tabs on its own;
+  a binding on the card itself is refused.
+
+```json
+{ "id": "channels", "type": "card", "frame": {"x": 0.06, "y": 0.4, "w": 0.88, "h": 0.36},
+  "card": { "rounded": true, "tab_style": "underline",
+    "tabs": [ {"id": "paid", "label": "Paid"}, {"id": "organic", "label": "Organic"} ],
+    "blocks": [
+      { "id": "paid-chart", "type": "chart", "tab": "paid",
+        "frame": {"x": 0.02, "y": 0.04, "w": 0.96, "h": 0.92}, "binding": { "...": "..." } },
+      { "id": "organic-chart", "type": "chart", "tab": "organic",
+        "frame": {"x": 0.02, "y": 0.04, "w": 0.96, "h": 0.92}, "binding": { "...": "..." } }
+    ] } }
+```
 
 ## Groups
 
@@ -1471,6 +1509,8 @@ worth of content on it looks empty and expensive.
 - **A filter at the top when the reader will want to narrow.** One `control` strip in the first
   band, over the source the KPI row reads, reaches every bound block below it. See *A filter*
   under *Groups*. It is the one format where a page filter is the normal shape.
+- **Tabs instead of a longer page.** When two or more bands answer the same question for different
+  splits, put them in one tab block. See *Tabs*.
 - **No source band.** Put the credit in a `caption` block at the bottom, at the rail.
 - **Smaller type is fine.** The legibility floor is lower here than on a slide because the reader
   is 60cm away, so `caption` and `body` do real work.
