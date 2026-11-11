@@ -13,6 +13,8 @@ optional_tools:
     purpose: Submit a form or press the button that sends, saves, posts, buys or deletes something. The person approves it unless they chose Always allow.
   - tool_name: browser-screenshot
     purpose: Inspect or share the currently rendered page, or save a clean picture of it on the team computer for a deck or a document.
+  - tool_name: browser-save-media
+    purpose: Save the original file of an image or video on the page, at the size the site serves it, into the conversation's downloads.
   - tool_name: browser-ask-person
     purpose: Wait while the person signs in, enters a code, passes a check or gives a consent on the live page; the run continues on its own when they are done.
 ---
@@ -50,12 +52,22 @@ challenge page or a pop-up over the content.
 - The viewport is 1440 by 900. `height: 1800` captures the page from its top down to two screens,
   which suits a pricing table that starts below the first screen. `full_page` of a long marketing
   page is a very tall picture that no slide can show, so prefer `height`.
-- To show one thing from a page (an ad, a chart, a product card), pass its `ref` from the
-  snapshot, or a CSS `selector` when it has no ref, and only that element is captured at its own
-  size. Never crop it out of a page capture afterwards: the coordinates are guesses and the result
-  is cut in the wrong place. A list or grid usually shows a small, cut-off preview of each item, so
-  first open the largest clean view of it: the item's own page, an enlarged view, or the original
-  image or video file when its address is on the page.
+- When the person wants an image or a video itself (an ad creative, a product photo, a banner),
+  save its file with `browser-save-media` and the image's `ref` from the snapshot. The snapshot
+  lists images and videos with the size of their file and the size the page shows them at, for
+  example `[e6_41] image "Spring sale" 1080x1350 shown 466x583`. The file lands under
+  `downloads/` in the conversation's files at the size the site serves it. Check `width` and
+  `height` in the result, and hand the file over with `computer-export`. Never publish a file the
+  browser saved, a copy or an edited version of it, and never put it in a report, a theme or a
+  published document: it belongs to the site, and the platform refuses to publish it.
+- Take a screenshot instead when the save answers that there is no file (a video the page streams
+  in pieces, a canvas, an SVG), or when the person wants the page as it looks.
+- To show one thing from a page as it looks (a chart, a product card, an ad with its frame), pass
+  its `ref` from the snapshot, or a CSS `selector` when it has no ref, and only that element is
+  captured at its own size. Never crop it out of a page capture afterwards: the coordinates are
+  guesses and the result is cut in the wrong place. A list or grid usually shows a small, cut-off
+  preview of each item, so first open the largest clean view of it: the item's own page or an
+  enlarged view.
 - Give every picture its own file name that says what it shows (`<vendor>-home.png`,
   `<vendor>-pricing.png`). Note the page's address and today's date next to it.
 - A field that holds a value is covered with a grey box in every picture, so nothing a person
@@ -163,6 +175,10 @@ on.
   another page. Check the numbers with `research.cite` as for benchmarks.
 - Mark inferences as inference: the vendor behind a host name, why an issue matters, what a
   competitor intends.
+- To collect ad creatives, open the ad's details in the library and save the creative there with
+  `browser-save-media`. Save each card of a carousel separately. A saved creative belongs to the
+  advertiser: label it with the advertiser, the page it came from and the date, and put only the
+  creatives the deliverable uses into it.
 - Page speed comes only from a PageSpeed Insights or CrUX result that loaded. Name lab or field
   data, the device, and the URL or origin. If neither loads, write "not measured".
 
