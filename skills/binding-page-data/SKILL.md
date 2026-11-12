@@ -120,6 +120,10 @@ account or a campaign type, is a filter the page's own script applies to rows it
 
 Do not use a `form` element for the controls.
 
+A page with several views (a menu, tabs) switches them with `button` elements, not with links. The
+viewer lets people edit a page's text in place, so a plain click on a link only puts the cursor in
+its text, and a `#results` link without an element of that id opens nothing.
+
 ## 3. Tables and charts the page draws itself
 
 A table of campaigns or a chart over time has as many numbers as the data has rows, so the page's
