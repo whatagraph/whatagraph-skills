@@ -2,7 +2,7 @@
 name: binding-page-data
 type: workflow
 group: report_building
-description: Bind the numbers of an HTML page made with create-document to the data they come from, so the page fills them in when it is saved, refreshes them later with no agent, switches date range and comparison on the page, and shows where each number came from. Load it before you write an HTML page that shows numbers from the customer's connected sources, such as a dashboard, a performance report, a scorecard, an account or campaign table, a chart of results over time, or any page the user wants "live", "kept up to date", "refreshed automatically" or "linked to the data". Also covers a number looked up on the internet, such as a benchmark. It does not apply to Whatagraph reports, to Markdown, CSV or text files, or to files made on the team computer.
+description: Bind the numbers of an HTML page made with create-document to the data they come from, so the page fills them in when it is saved, refreshes them later with no agent, switches date range and comparison on the page, and shows where each number came from. Load it before you write an HTML page that shows numbers from the customer's connected sources, such as a dashboard, a performance report, a scorecard, an account or campaign table, a chart of results over time, or any page the user wants "live", "kept up to date", "refreshed automatically" or "linked to the data". Also covers a number looked up on the internet, such as a benchmark, and a workbook (.xlsx) or an HTML page made on the team computer whose numbers should refresh the same way. It does not apply to Whatagraph reports, to Markdown, CSV or text files, or to decks and Word documents.
 required_tools:
   - create-document
   - list-sources
@@ -11,6 +11,8 @@ optional_tools:
     purpose: Look at the rows a dataset will return before the page is built around them.
   - tool_name: read-document
     purpose: Read the page back before changing its manifest.
+  - tool_name: computer-export
+    purpose: Deliver a bound workbook or page made on the team computer; the export fetches its data.
 ---
 
 # Binding page data
@@ -170,3 +172,55 @@ screenshots of the check, and compare two or three of them with `fetch-data` for
 
 In the reply, say that the numbers are linked to the data, which controls the page has, and that
 the person sets how often it refreshes with the data control at the bottom left of the viewer.
+
+## 6. A workbook or a page from the team computer
+
+An HTML page written on the team computer is bound exactly as above. `computer-export` fetches its
+data and returns the same `lineage` field.
+
+A workbook (.xlsx) carries the same manifest in a sheet named `_wg_lineage`, as JSON text down
+column A, 30,000 characters to a cell. Whatagraph keeps the fetched rows in column B of that sheet
+and hides it; never write column B.
+
+    text = json.dumps(manifest)
+    lineage = wb.create_sheet("_wg_lineage")
+    for start in range(0, len(text), 30000):
+        lineage.cell(row=start // 30000 + 1, column=1, value=text[start:start + 30000])
+
+Datasets and values are written as in section 1, with two more keys that place the data:
+
+    "datasets": {
+      "accounts": {"resolver": "whatagraph", "label": "Google Ads accounts", "source_id": 4821,
+        "metrics": ["cost", "clicks"], "dimensions": ["account"],
+        "date_range": "last30Days", "compare": "previous", "sheet": "Accounts"}
+    },
+    "values": {
+      "spend": {"dataset": "accounts", "metric": "cost", "cell": "Summary!B4"},
+      "spend_change": {"dataset": "accounts", "metric": "cost", "of": "change", "cell": "Summary!C4"}
+    }
+
+- `sheet` on a dataset names the sheet that holds its rows: the field names in row 1 from A1, the
+  dimensions first and then the metrics, in the manifest's order, and one row per result below.
+  Each refresh empties that sheet and writes it again, so it holds the rows and nothing else. Write
+  the rows you fetched into it in this layout yourself, so that the file you check before the
+  export already shows real numbers.
+- `cell` on a value names the one cell that shows it, as `Summary!B4` or `'Q3 summary'!B4`. The
+  number is written as it is and the cell keeps its number format, so `format` in the manifest does
+  nothing here: set the number format in the workbook. A `change` is a share (0.25 for 25% more), so
+  its cell needs a percent format.
+- Everything else is yours and stays as you made it: text, styles, formulas and charts. A formula
+  or a native chart that reads a data sheet follows the refreshed rows, so compute rates and totals
+  with formulas over the data sheet, and give their ranges more rows than the data has today, as in
+  `=SUM(Accounts!B2:B5000)`.
+- A workbook has no controls. Write `date_range` and `compare` on each dataset and leave `params`
+  out.
+- Only `whatagraph` datasets refresh in a workbook. Type a number from the internet into its cell,
+  with the address of the page it came from in the cell beside it.
+
+The result of `computer-export` has `lineage` for a bound workbook. `fetched` names the datasets
+whose rows and numbers are now in the file. `problems` lists what is wrong, and the cells it
+concerns stay as you wrote them and never refresh: fix the `_wg_lineage` sheet in your script, build
+the file again and export it with `replace_asset_ulid` before you reply.
+
+A deck or a Word document cannot be bound yet. When the person wants one kept up to date, say so
+and offer a bound page or workbook beside it.
