@@ -22,6 +22,8 @@ optional_tools:
     purpose: Bring an attachment from this conversation onto the computer.
   - tool_name: computer-fetch-data
     purpose: Write connected marketing data directly to a local file.
+  - tool_name: computer-run-script
+    purpose: Run a script that reads source data and widgets, and may update widget tables and comments, in one call.
   - tool_name: computer-http-request
     purpose: Request data from an outside API, with a secret from the person's vault when it needs one, and save the answer as a local file.
 ---
@@ -46,6 +48,26 @@ folder is scratch for one turn, and a later turn cannot write to it.
 Build a deliverable with one script that makes the file, run it, check the saved file, then export
 it. Do not write separate test scripts, and do not add charts, sheets or slides beyond what the
 person asked for.
+
+## Scripts that read and write Whatagraph data
+
+One call for a script that reads Whatagraph data: `computer-run-script`. Save the script with
+`computer-write-file`, then run it with `computer-run-script`. In `data_access`, list the source
+ids it reads and the report ids whose widgets it reads, and nothing more. In the script,
+`import wg`:
+
+- `wg.fetch_data(source_id, metrics, dimensions=None, date_from=, date_to=)` returns rows as dicts.
+- `wg.fetch_widgets(report_id, widget_ids)` returns `{widget_id: rows}`.
+- `wg.batch([wg.request.fetch_data(...), ...])` sends many requests at once.
+
+Where the tool's description says a script may change widgets,
+`wg.update_widget_table(report_id, widget_id, rows)` takes a header row and data rows or a pandas
+DataFrame, and `wg.update_widget_comment(report_id, widget_id, html)` takes HTML; list those
+reports in `data_access.update_widgets`. A refused request raises `wg.WgError`.
+
+Read `exit_code`, `stderr_tail` and `platform_calls` in the answer before you report. Keep the
+script under two minutes when you can. When the answer says the script is still running, end your
+turn; the conversation is woken with the result.
 
 ## Long work
 
