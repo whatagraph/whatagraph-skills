@@ -153,7 +153,9 @@ script draws it from the stored rows through `window.wgLineage`:
   `data-wg-figure='{"dataset": "campaigns", "metric": "cost", "where": {"campaign": "Brand UK"},
   "format": "currency:GBP:0"}'`; with a `format` it is filled for you. Give a chart or a number
   worked out from several rows `data-wg-dataset="campaigns"` instead.
-- Draw only from `rows` and `dataset`. A copy of the numbers in the script does not refresh.
+- Draw only from `rows` and `dataset`. A copy of the numbers in the script does not refresh, and
+  the check lists each number of the copy that no tool returned, such as a day added up from a
+  fetch that answered `has_more`.
 - A dataset with no data, because it was never fetched or its source is gone, has no rows, just
   like a period with no activity, but its `state` is `pending` or `broken` instead of `live` or
   `stale`. Read `state` before you draw anything from no rows: without data, draw `–` or say that
