@@ -115,6 +115,11 @@ account or a campaign type, is a filter the page's own script applies to rows it
   holds no number for it: not fetched yet, its source or field gone, or no row that matches. Each
   save replaces whatever the element holds, so type `–` inside it. The element also gets
   `data-wg-sign` (`positive`, `negative`, `zero`, `none`), so CSS can color a change.
+- The words around a bound number are typed and do not refresh, so write them to stay true
+  whatever the number becomes. Let the number carry the direction and the size, as in
+  `Spend was <span data-wg-value="spend">–</span> (<span data-wg-value="spend_change">–</span>)`,
+  or have the script pick the words from `value(id).number` (section 3). "Spend fell 11.7%" turns
+  false the first month spend rises.
 - `data-wg-param` with `data-wg-option`, or on a `select`, switches a parameter. The picked option
   gets `data-wg-active`.
 - `data-wg-period` shows the dates of a dataset's current range, or of its comparison.
