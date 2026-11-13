@@ -140,7 +140,8 @@ script draws it from the stored rows through `window.wgLineage`:
     });
 
 - `rows(id)` gives each row as an object by field name, with `previous` holding the same row of
-  the comparison. `dataset(id)` gives `totals`, `previous`, `from`, `till`, `source`, `fetched_at`.
+  the comparison. `dataset(id)` gives `state`, `totals`, `previous`, `from`, `till`, `source`,
+  `fetched_at`.
 - `format(number, format)` writes a number as the values do. `value(id)` gives `{number, text}`,
   and `number` is null when the data holds none.
 - So that a number the script writes still answers a hover, give its element
@@ -148,9 +149,11 @@ script draws it from the stored rows through `window.wgLineage`:
   "format": "currency:GBP:0"}'`; with a `format` it is filled for you. Give a chart or a number
   worked out from several rows `data-wg-dataset="campaigns"` instead.
 - Draw only from `rows` and `dataset`. A copy of the numbers in the script does not refresh.
-- A dataset with no data, because it was never fetched or its source is gone, has no rows and its
-  `state` is `pending` or `broken`. Draw `–` or say there is no data then, never a 0 or an empty
-  chart that reads as zero.
+- A dataset with no data, because it was never fetched or its source is gone, has no rows, just
+  like a period with no activity, but its `state` is `pending` or `broken` instead of `live` or
+  `stale`. Read `state` before you draw anything from no rows: without data, draw `–` or say that
+  the data is missing, never a 0, an empty chart that reads as zero, or a sentence about the
+  period such as "No conversions this month".
 
 ## 4. A number from the internet
 
@@ -181,9 +184,10 @@ The result of `create-document` and `edit-document` has a `lineage` field when t
 
 The check that writes the `check` field also opens the page as it shows once its data is gone, as
 after its sources are lost, and its `problems` list every number still shown where data belongs: a
-number typed into an element styled like the bound ones, a fetched number copied into the text or a
-script, and a 0 or NaN that a script draws from no rows. Bind each one, or draw it from the rows as
-section 3 says.
+number typed into an element styled like the bound ones, a fetched number or change copied into the
+text or a script, and a 0 or NaN that a script draws from no rows. They also list a sentence the page
+shows both for a period with no rows and without its data. Bind each number, or draw it from the
+rows, and make each such sentence read `state`, as section 3 says.
 
 `read-document` shows the page without the stored rows. To see the numbers, look at the
 screenshots of the check, and compare two or three of them with `fetch-data` for the same range.
