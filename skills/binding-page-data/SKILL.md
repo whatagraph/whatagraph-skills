@@ -111,9 +111,10 @@ account or a campaign type, is a filter the page's own script applies to rows it
     <select data-wg-param="compare"><option value="previous">vs previous</option><option value="last_year">vs last year</option></select>
     <span data-wg-period="totals"></span> compared with <span data-wg-period="totals:previous"></span>
 
-- `data-wg-value` fills the element with the value's formatted text. Type `–` inside it, never a
-  number. The element also gets `data-wg-sign` (`positive`, `negative`, `zero`, `none`), so CSS
-  can color a change.
+- `data-wg-value` fills the element with the value's formatted text, or with `–` when the data
+  holds no number for it: not fetched yet, its source or field gone, or no row that matches. Each
+  save replaces whatever the element holds, so type `–` inside it. The element also gets
+  `data-wg-sign` (`positive`, `negative`, `zero`, `none`), so CSS can color a change.
 - `data-wg-param` with `data-wg-option`, or on a `select`, switches a parameter. The picked option
   gets `data-wg-active`.
 - `data-wg-period` shows the dates of a dataset's current range, or of its comparison.
@@ -140,12 +141,16 @@ script draws it from the stored rows through `window.wgLineage`:
 
 - `rows(id)` gives each row as an object by field name, with `previous` holding the same row of
   the comparison. `dataset(id)` gives `totals`, `previous`, `from`, `till`, `source`, `fetched_at`.
-- `format(number, format)` writes a number as the values do. `value(id)` gives `{number, text}`.
+- `format(number, format)` writes a number as the values do. `value(id)` gives `{number, text}`,
+  and `number` is null when the data holds none.
 - So that a number the script writes still answers a hover, give its element
   `data-wg-figure='{"dataset": "campaigns", "metric": "cost", "where": {"campaign": "Brand UK"},
   "format": "currency:GBP:0"}'`; with a `format` it is filled for you. Give a chart or a number
   worked out from several rows `data-wg-dataset="campaigns"` instead.
 - Draw only from `rows` and `dataset`. A copy of the numbers in the script does not refresh.
+- A dataset with no data, because it was never fetched or its source is gone, has no rows and its
+  `state` is `pending` or `broken`. Draw `–` or say there is no data then, never a 0 or an empty
+  chart that reads as zero.
 
 ## 4. A number from the internet
 
@@ -157,7 +162,9 @@ resolver, and say exactly what to look up, so that the same lookup can be repeat
 
 A value reads it like any other: `{"dataset": "benchmark", "metric": "ctr", "format": "percent:2"}`.
 Look the number up, then store it with the `data` argument of `edit-document`, with the address of
-the page you read it on. A refresh asks an agent to look it up again.
+the page you read it on and the sentence each number is written in. When you find no number, store
+`not_found` with the reason: the page shows `–`, which is right, and a guess is not. A refresh asks
+an agent to look it up again.
 
 ## 5. After the save
 
@@ -222,9 +229,9 @@ Datasets and values are written as in section 1, with two more keys that place t
   with the address of the page it came from in the cell beside it.
 
 The result of `computer-export` has `lineage` for a bound workbook. `fetched` names the datasets
-whose rows and numbers are now in the file. `problems` lists what is wrong, and the cells it
-concerns stay as you wrote them and never refresh: fix the `_wg_lineage` sheet in your script, build
-the file again and export it with `replace_asset_ulid` before you reply.
+whose rows and numbers are now in the file. `problems` lists what is wrong, and the cells and data
+sheets it concerns are saved empty until it is fixed: fix the `_wg_lineage` sheet in your script,
+build the file again and export it with `replace_asset_ulid` before you reply.
 
 A deck or a Word document cannot be bound yet. When the person wants one kept up to date, say so
 and offer a bound page or workbook beside it.
