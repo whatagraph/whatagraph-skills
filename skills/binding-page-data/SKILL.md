@@ -158,13 +158,14 @@ A benchmark or a competitor's price has no connected source. Give it a dataset w
 resolver, and say exactly what to look up, so that the same lookup can be repeated later:
 
     "benchmark": {"resolver": "agent", "label": "Search ads benchmark",
-      "instruction": "The average click-through rate of Google Ads search campaigns across all industries, from the most recent WordStream benchmarks report. Store it as metric `ctr`, as a ratio (0.0642 for 6.42%)."}
+      "instruction": "The average click-through rate of search ads across all industries, from the most recent LocalIQ search advertising benchmarks. Store it as metric `ctr`, as a ratio (0.0642 for 6.42%)."}
 
 A value reads it like any other: `{"dataset": "benchmark", "metric": "ctr", "format": "percent:2"}`.
 Look the number up, then store it with the `data` argument of `edit-document`, with the address of
-the page you read it on and the sentence each number is written in. When you find no number, store
-`not_found` with the reason: the page shows `–`, which is right, and a guess is not. A refresh asks
-an agent to look it up again.
+the page you read it on and the sentence each number is written in. Whatagraph opens that page and
+checks the sentence, so name a page it can read: a PDF or a site that blocks bots is refused. When
+you find no number, store `not_found` with the reason: the page shows `–`, which is right, and a
+guess is not. A refresh asks an agent to look it up again.
 
 ## 5. After the save
 
