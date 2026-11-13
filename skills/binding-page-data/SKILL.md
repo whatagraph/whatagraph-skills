@@ -179,6 +179,12 @@ The result of `create-document` and `edit-document` has a `lineage` field when t
   fetched, so the page shows `–` until it is fixed.
 - The save changes the page, so use the `checksum` of the result for the next edit.
 
+The check that writes the `check` field also opens the page as it shows once its data is gone, as
+after its sources are lost, and its `problems` list every number still shown where data belongs: a
+number typed into an element styled like the bound ones, a fetched number copied into the text or a
+script, and a 0 or NaN that a script draws from no rows. Bind each one, or draw it from the rows as
+section 3 says.
+
 `read-document` shows the page without the stored rows. To see the numbers, look at the
 screenshots of the check, and compare two or three of them with `fetch-data` for the same range.
 
