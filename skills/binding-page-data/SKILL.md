@@ -192,7 +192,9 @@ after its sources are lost, and its `problems` list every number still shown whe
 number typed into an element styled like the bound ones, a fetched number or change copied into the
 text or a script, and a 0 or NaN that a script draws from no rows. They also list a sentence the page
 shows both for a period with no rows and without its data. Bind each number, or draw it from the
-rows, and make each such sentence read `state`, as section 3 says.
+rows, and make each such sentence read `state`, as section 3 says. They also list each number typed
+outside the bound elements that no tool result and no message of the user holds, which
+`designing-pages` says how to fix.
 
 `read-document` shows the page without the stored rows. To see the numbers, look at the
 screenshots of the check, and compare two or three of them with `fetch-data` for the same range.
