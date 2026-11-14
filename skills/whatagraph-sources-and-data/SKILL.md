@@ -236,6 +236,16 @@ When the widget uses its source filter, the saved filters are combined the way t
 | Blend (cross-channel, channel_id=142 — verified Jun 2026) — fetch-data | `aggregation_metric_universal_metric_<n>` | `aggregation_dimension_universal_dimension_<n>` |
 | Blend — per-sub-source fields (rare in fetch) | `blend_metric_<id>` | `blend_dimension_<id>` |
 
+### A universal metric can count a different event on each channel
+
+A `universal_metric_<n>` is one name over a different native metric on each channel. In `list_dimensions_and_metrics`, its `description` names the native metric it reads on that source. Read that description on every source before you compare channels on the metric. For example, "Total Conversions" (`universal_metric_788`) reads All conversions (`metrics.all_conversions`) on Google Ads, which counts every conversion action, including ones that are not purchases. On Meta Ads it reads Total custom conversions (`total_custom_conversions`). Neither of them is purchases, and the two are not the same event.
+
+When you compare channels on conversions, cost per conversion, conversion rate or ROAS:
+
+- Fetch the event the user cares about by its native id on each channel. For purchases on Google Ads, use `metrics.conversions` (primary conversion actions only), and add the `segments.conversion_action_category` dimension when you need the purchase category alone. On Meta Ads, use `omni_purchase|actions` and `omni_purchase|action_values`.
+- Name the event behind every number, such as "Google Ads primary conversions" or "Meta purchases", never just "conversions".
+- Treat a conversion rate above 100% (more conversions than clicks) as a sign that the metric counts other actions, not as performance. Say so, and do not recommend moving budget between channels on those numbers until both channels count the same event.
+
 If `fetch-data` returns `Invalid metrics: X` or `Invalid dimensions: X`, do not retry with a variant spelling. Re-run `list_dimensions_and_metrics` and pick the value verbatim from the response — including dots and prefixes.
 
 ### Fetching from a source group or blend
