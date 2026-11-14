@@ -73,8 +73,6 @@ Do not start creating widgets. Two decisions come first, and both are expensive 
 
 Offline values go in a row-level `data` array. There are two shapes, and the widget type picks which one.
 
-**Every value needs a source in this conversation:** the user's message or file, or a tool result, such as a fetch, a script's output or a page you read. A number from another agent's brief or report, or from memory, has none. The `manage-widgets` result lists each value of three or more digits that it finds in neither: replace it with the number a tool returns, or remove it.
-
 **Entry list** — Single value, List, Pie, Donut, Funnel, Goal:
 
 ```

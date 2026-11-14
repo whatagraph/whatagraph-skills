@@ -155,10 +155,8 @@ made for it, their products, their places, their words, their photographs. Pages
 should not share a layout.
 
 **What the preview of a document allows.** Scripts load from cdnjs.cloudflare.com and
-cdn.jsdelivr.net, and fonts from Google Fonts. The page cannot fetch data files, so the data is in
-the page. When the numbers come from the customer's connected sources, do not type them: load the
-`binding-page-data` skill and bind them, so that the save fills them in and they refresh later with
-no agent. Motion may draw things in or move them, but every text and number must also be readable
+cdn.jsdelivr.net, and fonts from Google Fonts. The page cannot fetch data files, so put the data in
+the page. Motion may draw things in or move them, but every text and number must also be readable
 when it does not run: in a printed copy, for a reader who turned motion off, and in the check's
 screenshots. A site on the team computer can
 install what it needs instead.
@@ -228,20 +226,9 @@ every number, name, date, address, source and claim, find where it came from:
 - the customer's data, fetched in this conversation;
 - a page you read in this conversation.
 
-Delete whatever has none of these, or ask the user for it. A figure you work out from those numbers
-stays when its element carries the calculation in `data-wg-calc`, written with the numbers as the
-tools returned them, a dot for decimals, and `+ - * /` and parentheses:
-`<b data-wg-calc="19952.08 / 6493">€3.07</b>`. Mark the element of a figure the user gave, such as a
-target, with `data-wg-given`, and sample numbers the user asked for with `data-wg-demo`. The same
-holds for numbers a script types as data, such as the series of a chart or the rows of a table:
-draw them from a dataset with `wgLineage.rows` (`binding-page-data`), or type each one as a tool
-returned it, and type a figure you worked out as its calculation, such as `cpc: 1234.56 / 789`. A
-total per day or per campaign counts once its fetch answered every row, so after a fetch that
-answered `has_more`, fetch the rest before you add anything up. Put `data-wg-demo` on a script of
-sample numbers. After each save, the check looks up every other number of three or more digits in
-this conversation's tool results and the user's messages, and lists each one it finds in neither.
-A number from another agent's brief or report counts only once a tool returns it. What gets added
-most often: a budget split nobody gave, named retailers, markets or partners, benchmarks and targets, tactics
+Delete whatever has none of these, or ask the user for it. A figure you work out from the numbers
+you were given stays when the page shows how it was worked out. What gets added most often: a
+budget split nobody gave, named retailers, markets or partners, benchmarks and targets, tactics
 and plans nobody asked for, reference numbers, an office address or phone number, time saved,
 counts of integrations or clients, a "Source:" line naming tools nobody used, a "Generated on"
 date, "Confidential" labels, and praise such as "above industry benchmarks". On a site, also

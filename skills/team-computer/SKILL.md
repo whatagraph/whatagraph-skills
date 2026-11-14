@@ -152,9 +152,6 @@ edge. Size a card to what it holds instead of leaving its lower half empty.
   `area`, `pie` and `scatter` (`columns=[2, 3]` picks the table columns to plot). A workbook of
   many sheets starts with `cover(wb, title=..., notes=[...])` and ends with
   `add_index(wb, descriptions={sheet: what it holds})` and `polish(wb)`.
-  When the person wants the workbook's numbers kept up to date, or it reports connected sources and
-  will be opened again later, load the `binding-page-data` skill and bind its data sheets and cells,
-  so that the export fetches them and they refresh later with no agent.
 - Reports: `wgviz.report.Report` for PDF or Word.
 
 Style and brand. Every helper draws in one theme. Its default is Whatagraph's own look (white and
