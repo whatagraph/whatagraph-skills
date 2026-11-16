@@ -154,8 +154,8 @@ script draws it from the stored rows through `window.wgLineage`:
   "format": "currency:GBP:0"}'`; with a `format` it is filled for you. Give a chart or a number
   worked out from several rows `data-wg-dataset="campaigns"` instead.
 - Draw only from `rows` and `dataset`. A copy of the numbers in the script does not refresh, and
-  the check lists each number of the copy that no tool returned, such as a day added up from a
-  fetch that answered `has_more`.
+  a save is refused while the copy holds a number that no tool returned, such as a day added up
+  from a fetch that answered `has_more`.
 - A dataset with no data, because it was never fetched or its source is gone, has no rows, just
   like a period with no activity, but its `state` is `pending` or `broken` instead of `live` or
   `stale`. Read `state` before you draw anything from no rows: without data, draw `–` or say that
@@ -194,9 +194,12 @@ after its sources are lost, and its `problems` list every number still shown whe
 number typed into an element styled like the bound ones, a fetched number or change copied into the
 text or a script, and a 0 or NaN that a script draws from no rows. They also list a sentence the page
 shows both for a period with no rows and without its data. Bind each number, or draw it from the
-rows, and make each such sentence read `state`, as section 3 says. They also list each number typed
-outside the bound elements that no tool result and no message of the user holds, and say how to
-back it.
+rows, and make each such sentence read `state`, as section 3 says.
+
+A save is refused, and nothing is stored, while the page shows a number typed outside the bound
+elements that no tool result and no message or file of the person holds. The error lists each one.
+Put a number the person gave you in an element marked `data-wg-given`, and give a number you worked
+out from backed numbers its calculation in `data-wg-calc`, such as `data-wg-calc="19952.08 / 6493"`.
 
 `read-document` shows the page without the stored rows. To see the numbers, look at the
 screenshots of the check, and compare two or three of them with `fetch-data` for the same range.
