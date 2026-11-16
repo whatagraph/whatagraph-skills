@@ -156,9 +156,10 @@ script draws it from the stored rows through `window.wgLineage`:
 - Draw only from `rows` and `dataset`. A copy of the numbers in the script does not refresh, and
   a save is refused while the copy holds a number that no tool returned, such as a day added up
   from a fetch that answered `has_more`.
-- A dataset with no data, because it was never fetched or its source is gone, has no rows, just
-  like a period with no activity, but its `state` is `pending` or `broken` instead of `live` or
-  `stale`. Read `state` before you draw anything from no rows: without data, draw `–` or say that
+- A dataset with no data, because it was never fetched or its source was lost before it had any,
+  has no rows, just like a period with no activity, but its `state` is `pending` or `broken` instead
+  of `live`, `stale` or `frozen`. A `frozen` dataset lost its source after it was fetched: it keeps
+  its rows, which no longer update, and its card says so. Read `state` before you draw anything from no rows: without data, draw `–` or say that
   the data is missing, never a 0, an empty chart that reads as zero, or a sentence about the
   period such as "No conversions this month".
 
@@ -174,8 +175,9 @@ A value reads it like any other: `{"dataset": "benchmark", "metric": "ctr", "for
 Look the number up, then store it with the `data` argument of `edit-document`, with the address of
 the page you read it on and the sentence each number is written in. Whatagraph opens that page and
 checks the sentence, so name a page it can read: a PDF or a site that blocks bots is refused. When
-you find no number, store `not_found` with the reason: the page shows `–`, which is right, and a
-guess is not. A refresh asks an agent to look it up again.
+you find no number, store `not_found` with the reason: the page shows `–`, or keeps the number it
+last checked marked as no longer updating, which is right, and a guess is not. A refresh asks an
+agent to look it up again.
 
 ## 5. After the save
 
