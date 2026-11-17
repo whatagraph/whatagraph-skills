@@ -2,7 +2,7 @@
 name: binding-page-data
 type: workflow
 group: report_building
-description: Bind the numbers of an HTML page made with create-document to the data they come from, so the page fills them in when it is saved, refreshes them later with no agent, switches date range and comparison on the page, and shows where each number came from. Load it before you write an HTML page that shows numbers from the customer's connected sources, such as a dashboard, a performance report, a scorecard, an account or campaign table, a chart of results over time, or any page the user wants "live", "kept up to date", "refreshed automatically" or "linked to the data". Also covers a number looked up on the internet, such as a benchmark, and a workbook (.xlsx) or an HTML page made on the team computer whose numbers should refresh the same way. It does not apply to Whatagraph reports, to Markdown, CSV or text files, or to decks and Word documents.
+description: Bind the numbers of an HTML page made with create-document to the data they come from, so the page fills them in when it is saved, refreshes them later with no agent, switches date range and comparison on the page, and shows where each number came from. Load it before you write an HTML page that shows numbers from the customer's connected sources, such as a dashboard, a performance report, a scorecard, an account or campaign table, a chart of results over time, or any page the user wants "live", "kept up to date", "refreshed automatically" or "linked to the data". Also covers a number about the workspace itself, such as how many conversations, sources, reports or files the team has, a number looked up on the internet, such as a benchmark, and a workbook (.xlsx) or an HTML page made on the team computer whose numbers should refresh the same way. It does not apply to Whatagraph reports, to Markdown, CSV or text files, or to decks and Word documents.
 required_tools:
   - create-document
   - list-sources
@@ -27,8 +27,8 @@ on the schedule the person picks in the viewer, with no agent. The reader can sw
 on the page, on a share link and in a downloaded copy, and hovering a number shows its source,
 metric, dates and fetch time.
 
-Bind every number on the page that comes from a connected source. Type a number only when it is
-part of the text someone wrote, such as a date or a target quoted in a sentence.
+Bind every number on the page that comes from a connected source or from a Whatagraph tool. Type a
+number only when it is part of the text someone wrote, such as a date or a target quoted in a sentence.
 
 ## 1. The manifest
 
@@ -76,7 +76,9 @@ with several metrics each, not one dataset per number. A page has at most 40.
   they mean in `fetch-data`. Take every field name from `list-sources action:
   list_dimensions_and_metrics` for that source and report type; a guessed name fails the fetch.
 - `limit` is the most rows kept, 200 unless you say otherwise and at most 5000. A daily series by
-  campaign needs a high limit.
+  campaign needs a high limit. A series longer than its limit keeps its first days, so for a long
+  range raise `limit`, or sum a lone `date` dimension into periods with `grouping`: `1 week`,
+  `1 month`, `1 quarter`, `1 year`, or `auto` to let the range decide, as a report chart does.
 - `date_range` is a period key (`yesterday`, `last7Days`, `last14Days`, `last30Days`, `last90Days`,
   `thisMonth`, `lastMonth` and the others the report calendar has; a wrong key is answered with
   the full list), fixed dates as `{"from": "2026-01-01", "till": "2026-03-31"}`, or `"$name"` to
@@ -154,15 +156,42 @@ script draws it from the stored rows through `window.wgLineage`:
   "format": "currency:GBP:0"}'`; with a `format` it is filled for you. Give a chart or a number
   worked out from several rows `data-wg-dataset="campaigns"` instead.
 - Draw only from `rows` and `dataset`. A copy of the numbers in the script does not refresh, and
-  the check lists each number of the copy that no tool returned, such as a day added up from a
-  fetch that answered `has_more`.
-- A dataset with no data, because it was never fetched or its source is gone, has no rows, just
-  like a period with no activity, but its `state` is `pending` or `broken` instead of `live` or
-  `stale`. Read `state` before you draw anything from no rows: without data, draw `–` or say that
+  a save is refused while the copy holds a number that no tool returned, such as a day added up
+  from a fetch that answered `has_more`.
+- A dataset with no data, because it was never fetched or its source was lost before it had any,
+  has no rows, just like a period with no activity, but its `state` is `pending` or `broken` instead
+  of `live`, `stale` or `frozen`. A `frozen` dataset lost its source after it was fetched: it keeps
+  its rows, which no longer update, and its card says so. Read `state` before you draw anything from no rows: without data, draw `–` or say that
   the data is missing, never a 0, an empty chart that reads as zero, or a sentence about the
   period such as "No conversions this month".
 
-## 4. A number from the internet
+## 4. A number about the workspace
+
+A number about Whatagraph itself, such as how many conversations, sources, reports or files the
+team has, comes from a Whatagraph tool that only reads. Give it a dataset with the `tool` resolver
+and the arguments you called the tool with. Each refresh runs the tool again as it ran for you: for
+the person you work for in this conversation, and only when the tool is one of your own tools.
+
+    "conversations": {"resolver": "tool", "label": "Conversations", "tool": "list-conversations",
+      "arguments": {"action": "list", "type": "user"}, "rows": "conversations", "dimensions": ["status"], "metrics": ["*"]}
+
+- `rows` is the key of the answer that holds the list, such as `conversations`, or a path such as
+  `data.items`. Every page of the list is read. Leave `rows` out to read the whole answer as one
+  row, for a number it gives once, such as `total_count`.
+- `dimensions` and `metrics` name fields of each row, as paths of keys. The metric `*` counts the
+  rows, and `true` counts as 1. A dimension is compared as text, `true` and `false` too:
+  `{"dataset": "conversations", "metric": "*", "where": {"status": "completed"}}`.
+- Its rows are grouped as a source's are: one row for each combination of the dimensions, with
+  each metric summed over the entries of the list. `lineage.rows('conversations')` gives one row
+  per status, and its `*` holds how many conversations have that status. A script that counts
+  entries adds up `row['*']`; counting the rows counts the combinations instead.
+- It counts what the workspace holds now, so it has no `date_range` or `compare`, and takes no
+  `source_id`, `filters` or `limit`. Pass what the tool takes in `arguments`, never `cursor`.
+- Only a tool that only reads runs, and not `fetch-data` (use a `whatagraph` dataset),
+  `read-document`, `search-assets`, `load-skill` or the previews.
+- A field that no row holds fails the fetch, and the problem lists the fields the rows hold.
+
+## 5. A number from the internet
 
 A benchmark or a competitor's price has no connected source. Give it a dataset with the `agent`
 resolver, and say exactly what to look up, so that the same lookup can be repeated later:
@@ -174,10 +203,11 @@ A value reads it like any other: `{"dataset": "benchmark", "metric": "ctr", "for
 Look the number up, then store it with the `data` argument of `edit-document`, with the address of
 the page you read it on and the sentence each number is written in. Whatagraph opens that page and
 checks the sentence, so name a page it can read: a PDF or a site that blocks bots is refused. When
-you find no number, store `not_found` with the reason: the page shows `–`, which is right, and a
-guess is not. A refresh asks an agent to look it up again.
+you find no number, store `not_found` with the reason: the page shows `–`, or keeps the number it
+last checked marked as no longer updating, which is right, and a guess is not. A refresh asks an
+agent to look it up again.
 
-## 5. After the save
+## 6. After the save
 
 The result of `create-document` and `edit-document` has a `lineage` field when the page is bound.
 
@@ -194,9 +224,12 @@ after its sources are lost, and its `problems` list every number still shown whe
 number typed into an element styled like the bound ones, a fetched number or change copied into the
 text or a script, and a 0 or NaN that a script draws from no rows. They also list a sentence the page
 shows both for a period with no rows and without its data. Bind each number, or draw it from the
-rows, and make each such sentence read `state`, as section 3 says. They also list each number typed
-outside the bound elements that no tool result and no message of the user holds, which
-`designing-pages` says how to fix.
+rows, and make each such sentence read `state`, as section 3 says.
+
+A save is refused, and nothing is stored, while the page shows a number typed outside the bound
+elements that no tool result and no message or file of the person holds. The error lists each one.
+Put a number the person gave you in an element marked `data-wg-given`, and give a number you worked
+out from backed numbers its calculation in `data-wg-calc`, such as `data-wg-calc="19952.08 / 6493"`.
 
 `read-document` shows the page without the stored rows. To see the numbers, look at the
 screenshots of the check, and compare two or three of them with `fetch-data` for the same range.
@@ -204,7 +237,7 @@ screenshots of the check, and compare two or three of them with `fetch-data` for
 In the reply, say that the numbers are linked to the data, which controls the page has, and that
 the person sets how often it refreshes with the data control at the bottom left of the viewer.
 
-## 6. A workbook or a page from the team computer
+## 7. A workbook or a page from the team computer
 
 An HTML page written on the team computer is bound exactly as above. `computer-export` fetches its
 data and returns the same `lineage` field.
@@ -243,10 +276,10 @@ Datasets and values are written as in section 1, with two more keys that place t
   or a native chart that reads a data sheet follows the refreshed rows, so compute rates and totals
   with formulas over the data sheet, and give their ranges more rows than the data has today, as in
   `=SUM(Accounts!B2:B5000)`.
-- A workbook has no controls. Write `date_range` and `compare` on each dataset and leave `params`
-  out.
-- Only `whatagraph` datasets refresh in a workbook. Type a number from the internet into its cell,
-  with the address of the page it came from in the cell beside it.
+- A workbook has no controls. Write `date_range` and `compare` on each `whatagraph` dataset and
+  leave `params` out.
+- A number from the internet never refreshes in a workbook. Type it into its cell, with the address
+  of the page it came from in the cell beside it.
 
 The result of `computer-export` has `lineage` for a bound workbook. `fetched` names the datasets
 whose rows and numbers are now in the file. `problems` lists what is wrong, and the cells and data
