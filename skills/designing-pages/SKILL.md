@@ -156,9 +156,11 @@ should not share a layout.
 
 **What the preview of a document allows.** Scripts load from cdnjs.cloudflare.com and
 cdn.jsdelivr.net, and fonts from Google Fonts. The page cannot fetch data files, so put the data in
-the page. Motion may draw things in or move them, but every text and number must also be readable
-when it does not run: in a printed copy, for a reader who turned motion off, and in the check's
-screenshots. A site on the team computer can
+the page. When the page shows numbers from the client's connected sources and your skill list has
+`binding-page-data`, load that skill before you write any HTML: the page then names the data it
+shows, each save fetches it, and you never type those numbers. Motion may draw things in or move
+them, but every text and number must also be readable when it does not run: in a printed copy, for
+a reader who turned motion off, and in the check's screenshots. A site on the team computer can
 install what it needs instead.
 
 ## 3. What makes a page look generated
