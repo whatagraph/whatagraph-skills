@@ -161,6 +161,16 @@ when it does not run: in a printed copy, for a reader who turned motion off, and
 screenshots. A site on the team computer can
 install what it needs instead.
 
+**Write the content into the HTML, not into a script.** Every image, card, table row and number
+the reader needs is written into the page as HTML: each ad creative is its own `<img>` tag with its
+own caption and figures. Never leave an empty container for a script to fill from a JSON block,
+such as a gallery `<div>` that holds only a "populated by JavaScript" comment. When the script does
+not run, or runs before the element exists, the reader sees an empty space where the content
+should be. A script may only add to what the HTML already shows: draw a chart of numbers the page
+also states in text, or filter and sort cards that are already in the page by hiding and showing
+them. The check's screenshots show only the first screen, so a section further down that stays
+empty is not caught: use `read-document` on that section to make sure its content is in the HTML.
+
 ## 3. What makes a page look generated
 
 People called generated pages "vibe-coded" because of these patterns. Each one is the default a
