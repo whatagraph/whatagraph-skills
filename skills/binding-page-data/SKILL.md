@@ -2,7 +2,7 @@
 name: binding-page-data
 type: workflow
 group: report_building
-description: Bind the numbers of an HTML page made with create-document to the data they come from, so the page fills them in when it is saved, refreshes them later with no agent, switches date range and comparison on the page, and shows where each number came from. Load it before you write an HTML page that shows numbers from the customer's connected sources, such as a dashboard, a performance report, a scorecard, an account or campaign table, a chart of results over time, or any page the user wants "live", "kept up to date", "refreshed automatically" or "linked to the data". Also covers a number about the workspace itself, such as how many agents, sources, reports or files the team has, a number looked up on the internet, such as a benchmark, and a workbook (.xlsx) or an HTML page made on the team computer whose numbers should refresh the same way. It does not apply to Whatagraph reports, to Markdown, CSV or text files, or to decks and Word documents.
+description: Bind the numbers of an HTML page made with create-document to the data they come from, so the page fills them in when it is saved, refreshes them later with no agent, switches date range and comparison on the page, and shows where each number came from. Load it before you write an HTML page that shows numbers from the customer's connected sources, such as a dashboard, a performance report, a scorecard, an account or campaign table, a chart of results over time, or any page the user wants "live", "kept up to date", "refreshed automatically" or "linked to the data". Also covers a number about the workspace itself, such as how many conversations, sources, reports or files the team has, a number looked up on the internet, such as a benchmark, and a workbook (.xlsx) or an HTML page made on the team computer whose numbers should refresh the same way. It does not apply to Whatagraph reports, to Markdown, CSV or text files, or to decks and Word documents.
 required_tools:
   - create-document
   - list-sources
@@ -76,7 +76,9 @@ with several metrics each, not one dataset per number. A page has at most 40.
   they mean in `fetch-data`. Take every field name from `list-sources action:
   list_dimensions_and_metrics` for that source and report type; a guessed name fails the fetch.
 - `limit` is the most rows kept, 200 unless you say otherwise and at most 5000. A daily series by
-  campaign needs a high limit.
+  campaign needs a high limit. A series longer than its limit keeps its first days, so for a long
+  range raise `limit`, or sum a lone `date` dimension into periods with `grouping`: `1 week`,
+  `1 month`, `1 quarter`, `1 year`, or `auto` to let the range decide, as a report chart does.
 - `date_range` is a period key (`yesterday`, `last7Days`, `last14Days`, `last30Days`, `last90Days`,
   `thisMonth`, `lastMonth` and the others the report calendar has; a wrong key is answered with
   the full list), fixed dates as `{"from": "2026-01-01", "till": "2026-03-31"}`, or `"$name"` to
@@ -165,20 +167,20 @@ script draws it from the stored rows through `window.wgLineage`:
 
 ## 4. A number about the workspace
 
-A number about Whatagraph itself, such as how many agents, sources, reports, files or members the
+A number about Whatagraph itself, such as how many conversations, sources, reports or files the
 team has, comes from a Whatagraph tool that only reads. Give it a dataset with the `tool` resolver
-and the arguments you called the tool with. Each refresh runs the tool again, as it ran in this
-conversation:
+and the arguments you called the tool with. Each refresh runs the tool again as it ran for you: for
+the person you work for in this conversation, and only when the tool is one of your own tools.
 
-    "agents": {"resolver": "tool", "label": "Agents of the team", "tool": "list-agents",
-      "arguments": {"action": "list"}, "rows": "agents", "dimensions": ["is_premade"], "metrics": ["*"]}
+    "conversations": {"resolver": "tool", "label": "Conversations", "tool": "list-conversations",
+      "arguments": {"action": "list", "type": "user"}, "rows": "conversations", "dimensions": ["status"], "metrics": ["*"]}
 
-- `rows` is the key of the answer that holds the list, such as `agents`, or a path such as
+- `rows` is the key of the answer that holds the list, such as `conversations`, or a path such as
   `data.items`. Every page of the list is read. Leave `rows` out to read the whole answer as one
   row, for a number it gives once, such as `total_count`.
 - `dimensions` and `metrics` name fields of each row, as paths of keys. The metric `*` counts the
-  rows, and `true` counts as 1. A dimension is compared as text, so `true` and `false` too:
-  `{"dataset": "agents", "metric": "*", "where": {"is_premade": "true"}}`.
+  rows, and `true` counts as 1. A dimension is compared as text, `true` and `false` too:
+  `{"dataset": "conversations", "metric": "*", "where": {"status": "completed"}}`.
 - It counts what the workspace holds now, so it has no `date_range` or `compare`, and takes no
   `source_id`, `filters` or `limit`. Pass what the tool takes in `arguments`, never `cursor`.
 - Only a tool that only reads runs, and not `fetch-data` (use a `whatagraph` dataset),
