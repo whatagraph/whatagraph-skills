@@ -39,6 +39,10 @@ default form for each kind of document is exactly what makes generated pages loo
 they are for. The look of each page comes from its customer, and its form comes from what the
 customer needs and wants from it. This skill says how to find both, and which patterns to leave out.
 
+When the page will show numbers from the customer's connected sources and your skill list has
+`binding-page-data`, load that skill too before you write any HTML. The page then names the data
+each number comes from, every save fetches it, and you never type those numbers.
+
 ## 1. Find the customer's look
 
 Use every source you have, in this order, and stop when you know the look:
@@ -155,10 +159,8 @@ made for it, their products, their places, their words, their photographs. Pages
 should not share a layout.
 
 **What the preview of a document allows.** Scripts load from cdnjs.cloudflare.com and
-cdn.jsdelivr.net, and fonts from Google Fonts. The page cannot fetch data files, so the data is in
-the page. When the numbers come from the customer's connected sources, do not type them: load the
-`binding-page-data` skill and bind them, so that the save fills them in and they refresh later with
-no agent. Motion may draw things in or move them, but every text and number must also be readable
+cdn.jsdelivr.net, and fonts from Google Fonts. The page cannot fetch data files, so put the data in
+the page. Motion may draw things in or move them, but every text and number must also be readable
 when it does not run: in a printed copy, for a reader who turned motion off, and in the check's
 screenshots. A site on the team computer can
 install what it needs instead.

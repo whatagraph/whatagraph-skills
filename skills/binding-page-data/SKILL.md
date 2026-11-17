@@ -80,9 +80,12 @@ with several metrics each, not one dataset per number. A page has at most 40.
   range raise `limit`, or sum a lone `date` dimension into periods with `grouping`: `1 week`,
   `1 month`, `1 quarter`, `1 year`, or `auto` to let the range decide, as a report chart does.
 - `date_range` is a period key (`yesterday`, `last7Days`, `last14Days`, `last30Days`, `last90Days`,
-  `thisMonth`, `lastMonth` and the others the report calendar has; a wrong key is answered with
-  the full list), fixed dates as `{"from": "2026-01-01", "till": "2026-03-31"}`, or `"$name"` to
-  follow a parameter.
+  `thisMonth`, `thisMonthExclToday`, `lastMonth` and the others the report calendar has; a wrong
+  key is answered with the full list), fixed dates as `{"from": "2026-01-01", "till": "2026-03-31"}`,
+  or `"$name"` to follow a parameter. When the request names a period counted from today, such as
+  this month or the last 7 days, use a key or a parameter, so the page moves with the calendar.
+  Fixed dates never move: use them only for dates the person named or a period no key matches, and
+  then say in your reply that the page keeps those dates.
 - `compare` is `none`, `previous`, `last_year`, or `"$name"`.
 - An id starts with a letter and holds only letters, digits and underscores.
 
