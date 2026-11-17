@@ -233,6 +233,9 @@ A save is refused, and nothing is stored, while the page shows a number typed ou
 elements that no tool result and no message or file of the person holds. The error lists each one.
 Put a number the person gave you in an element marked `data-wg-given`, and give a number you worked
 out from backed numbers its calculation in `data-wg-calc`, such as `data-wg-calc="19952.08 / 6493"`.
+Write each number of a calculation as the tool returned it or the person wrote it. Its only other
+numbers are whole numbers up to 1000, such as 100 for a percent or 7 days: write 15% more as
+`* 115 / 100`.
 
 `read-document` shows the page without the stored rows. To see the numbers, look at the
 screenshots of the check, and compare two or three of them with `fetch-data` for the same range.
