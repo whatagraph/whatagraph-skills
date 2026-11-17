@@ -114,8 +114,8 @@ CANONICAL_TOOLS = {
 NATIVE_AGENT_TOOLS = {
     "computer-exec", "computer-write-file", "computer-read-file", "computer-list-files",
     "computer-job", "computer-export", "computer-chart", "computer-import-attachment",
-    "computer-fetch-data", "computer-http-request",
-    "browser-navigate", "browser-extract", "browser-act", "browser-submit", "browser-screenshot",
+    "computer-fetch-data", "computer-fetch-widgets", "computer-http-request", "computer-run-script",
+    "browser-navigate", "browser-extract", "browser-act", "browser-submit", "browser-screenshot", "browser-save-media",
     "browser-ask-person",
     # Agent-only tools from AgentToolRegistry::nonGrantableToolNames() that a skill declares.
     "create-document", "generate-image", "generate-music", "generate-video",
