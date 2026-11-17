@@ -678,12 +678,16 @@ manage-widgets action=batch_delete_date_range
 
 manage-widgets action=batch_change_filter_visibility
    report_id=<id> widget_ids=[...] source_filter_off=true
+
+manage-widgets action=batch_remove_widget_filters
+   report_id=<id> widget_ids=[...]
 ```
 
 - `widget_ids` is required. An empty array is a no-op, not "all widgets".
 - `batch_change_source` takes global or report-local ids and auto-attaches. The new source must be the widgets' channel; a cross-channel swap is rejected with the mismatched widgets named. The new source may lack a report type or field the widgets use, so check them with `show` afterwards.
 - `batch_change_date_range` sets a widget-level override; `batch_delete_date_range` removes it (the widgets inherit the report date again).
 - `batch_change_filter_visibility` sets `source_filter_off` on many widgets: `true` disables source-level filters, `false` re-enables them.
+- `batch_remove_widget_filters` removes every widget-level filter from the listed widgets in one call. Report source filters stay and keep applying. Use it when the user wants report filters instead of widget filters: find the widgets with `list-widgets action=list` (`has_filters: true`), then pass their ids. Do not clear filters one widget at a time with `update` and `filter_id: null`. The response gives `removed_filter_count` per widget, so it needs no `show` call afterwards.
 - `batch_change_settings` takes the `options` keys, so a `title` is refused when a selected widget is a Comment, Calendar, Filter control or Report shortcut (the error names them). Drop those widgets or the `title`.
 - Use batches for about 10 or more widgets.
 
@@ -812,7 +816,7 @@ manage-filters action=create channel_id=<id> dimension="campaign.name" dimension
 
 One call, no orphaned team filter. The channel must match the target's. It replaces any existing filter on that target. Pass `widget_config_id` or `source_id`, not both.
 
-**2. An existing team filter, inline** in `rows[].configs[]`: `manage-widgets action=update ... rows=[{configs: [{filter_id: <team filter id>}]}]`. `filter_id: null` detaches. The channel must match.
+**2. An existing team filter, inline** in `rows[].configs[]`: `manage-widgets action=update ... rows=[{configs: [{filter_id: <team filter id>}]}]`. `filter_id: null` detaches. To detach from several widgets, use `batch_remove_widget_filters` (see "Batch operations"). The channel must match.
 
 **3. Create, then attach** (one filter on several targets): `manage-filters action=create ...` without a target, then `manage-filters action=attach filter_id=<id> widget_config_id=<config id>`.
 
