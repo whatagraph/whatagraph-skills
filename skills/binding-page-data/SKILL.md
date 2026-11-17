@@ -2,7 +2,7 @@
 name: binding-page-data
 type: workflow
 group: report_building
-description: Bind the numbers of an HTML page made with create-document to the data they come from, so the page fills them in when it is saved, refreshes them later with no agent, switches date range and comparison on the page, and shows where each number came from. Load it before you write an HTML page that shows numbers from the customer's connected sources, such as a dashboard, a performance report, a scorecard, an account or campaign table, a chart of results over time, or any page the user wants "live", "kept up to date", "refreshed automatically" or "linked to the data". Also covers a number looked up on the internet, such as a benchmark, and a workbook (.xlsx) or an HTML page made on the team computer whose numbers should refresh the same way. It does not apply to Whatagraph reports, to Markdown, CSV or text files, or to decks and Word documents.
+description: Bind the numbers of an HTML page made with create-document to the data they come from, so the page fills them in when it is saved, refreshes them later with no agent, switches date range and comparison on the page, and shows where each number came from. Load it before you write an HTML page that shows numbers from the customer's connected sources, such as a dashboard, a performance report, a scorecard, an account or campaign table, a chart of results over time, or any page the user wants "live", "kept up to date", "refreshed automatically" or "linked to the data". Also covers a number about the workspace itself, such as how many agents, sources, reports or files the team has, a number looked up on the internet, such as a benchmark, and a workbook (.xlsx) or an HTML page made on the team computer whose numbers should refresh the same way. It does not apply to Whatagraph reports, to Markdown, CSV or text files, or to decks and Word documents.
 required_tools:
   - create-document
   - list-sources
@@ -27,8 +27,8 @@ on the schedule the person picks in the viewer, with no agent. The reader can sw
 on the page, on a share link and in a downloaded copy, and hovering a number shows its source,
 metric, dates and fetch time.
 
-Bind every number on the page that comes from a connected source. Type a number only when it is
-part of the text someone wrote, such as a date or a target quoted in a sentence.
+Bind every number on the page that comes from a connected source or from a Whatagraph tool. Type a
+number only when it is part of the text someone wrote, such as a date or a target quoted in a sentence.
 
 ## 1. The manifest
 
@@ -163,7 +163,29 @@ script draws it from the stored rows through `window.wgLineage`:
   the data is missing, never a 0, an empty chart that reads as zero, or a sentence about the
   period such as "No conversions this month".
 
-## 4. A number from the internet
+## 4. A number about the workspace
+
+A number about Whatagraph itself, such as how many agents, sources, reports, files or members the
+team has, comes from a Whatagraph tool that only reads. Give it a dataset with the `tool` resolver
+and the arguments you called the tool with. Each refresh runs the tool again, as it ran in this
+conversation:
+
+    "agents": {"resolver": "tool", "label": "Agents of the team", "tool": "list-agents",
+      "arguments": {"action": "list"}, "rows": "agents", "dimensions": ["is_premade"], "metrics": ["*"]}
+
+- `rows` is the key of the answer that holds the list, such as `agents`, or a path such as
+  `data.items`. Every page of the list is read. Leave `rows` out to read the whole answer as one
+  row, for a number it gives once, such as `total_count`.
+- `dimensions` and `metrics` name fields of each row, as paths of keys. The metric `*` counts the
+  rows, and `true` counts as 1. A dimension is compared as text, so `true` and `false` too:
+  `{"dataset": "agents", "metric": "*", "where": {"is_premade": "true"}}`.
+- It counts what the workspace holds now, so it has no `date_range` or `compare`, and takes no
+  `source_id`, `filters` or `limit`. Pass what the tool takes in `arguments`, never `cursor`.
+- Only a tool that only reads runs, and not `fetch-data` (use a `whatagraph` dataset),
+  `read-document`, `search-assets`, `load-skill` or the previews.
+- A field that no row holds fails the fetch, and the problem lists the fields the rows hold.
+
+## 5. A number from the internet
 
 A benchmark or a competitor's price has no connected source. Give it a dataset with the `agent`
 resolver, and say exactly what to look up, so that the same lookup can be repeated later:
@@ -179,7 +201,7 @@ you find no number, store `not_found` with the reason: the page shows `–`, or 
 last checked marked as no longer updating, which is right, and a guess is not. A refresh asks an
 agent to look it up again.
 
-## 5. After the save
+## 6. After the save
 
 The result of `create-document` and `edit-document` has a `lineage` field when the page is bound.
 
@@ -209,7 +231,7 @@ screenshots of the check, and compare two or three of them with `fetch-data` for
 In the reply, say that the numbers are linked to the data, which controls the page has, and that
 the person sets how often it refreshes with the data control at the bottom left of the viewer.
 
-## 6. A workbook or a page from the team computer
+## 7. A workbook or a page from the team computer
 
 An HTML page written on the team computer is bound exactly as above. `computer-export` fetches its
 data and returns the same `lineage` field.
@@ -248,10 +270,10 @@ Datasets and values are written as in section 1, with two more keys that place t
   or a native chart that reads a data sheet follows the refreshed rows, so compute rates and totals
   with formulas over the data sheet, and give their ranges more rows than the data has today, as in
   `=SUM(Accounts!B2:B5000)`.
-- A workbook has no controls. Write `date_range` and `compare` on each dataset and leave `params`
-  out.
-- Only `whatagraph` datasets refresh in a workbook. Type a number from the internet into its cell,
-  with the address of the page it came from in the cell beside it.
+- A workbook has no controls. Write `date_range` and `compare` on each `whatagraph` dataset and
+  leave `params` out.
+- A number from the internet never refreshes in a workbook. Type it into its cell, with the address
+  of the page it came from in the cell beside it.
 
 The result of `computer-export` has `lineage` for a bound workbook. `fetched` names the datasets
 whose rows and numbers are now in the file. `problems` lists what is wrong, and the cells and data
