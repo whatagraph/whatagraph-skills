@@ -23,6 +23,7 @@ required_tools:
   - delete-overviews
   - delete-report-tabs
   - delete-reports
+  - delete-roles
   - delete-sharing
   - delete-snapshots
   - delete-source-groups
@@ -34,6 +35,10 @@ required_tools:
   - remove-integrations
   - remove-members
 optional_tools:
+  - tool_name: list-roles
+    purpose: See who holds a custom role before deleting it.
+  - tool_name: manage-guest-access
+    purpose: Revoke one person's emailed report link.
   - tool_name: manage-reports
     purpose: Detach a source / remove a widget reference before deleting it.
   - tool_name: manage-sharing
@@ -295,6 +300,13 @@ remove-members action=cancel_invite invite_id=<id>
 ```
 
 The only action is `cancel_invite` — despite the tool name, it can NOT remove an accepted member (UI only). `invite_id` comes from `manage-members`.
+
+```
+delete-roles role_id=<id>
+manage-guest-access action=revoke report_id=<id> guest_id=<guest_id>
+```
+
+`delete-roles` deletes a custom role, and everyone who held it loses it at once. Pre-made roles cannot be deleted. Read who holds it first with `list-roles action=principals`. Revoking a guest stops only that person's emailed link; the report's public share link is not touched.
 
 ## Deletes hiding in manage tools
 

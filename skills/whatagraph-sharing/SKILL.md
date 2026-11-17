@@ -9,11 +9,13 @@ required_tools:
 optional_tools:
   - tool_name: delete-sharing
     purpose: Revoke a public share link.
+  - tool_name: manage-guest-access
+    purpose: Email a report's read-only link to one person and revoke it for them alone.
 ---
 
 # Sharing
 
-Tools covered: `view-sharing`, `manage-sharing`, `delete-sharing`.
+Tools covered: `view-sharing`, `manage-sharing`, `delete-sharing`, `manage-guest-access`.
 
 A **share** is a public, view-only URL for a report, an overview or a document. Anyone with the link (and optional password) can view; no login required. Each report, overview and document has at most one link.
 
@@ -127,6 +129,20 @@ delete-sharing action=delete document_id=<ulid>
 
 Invalidates the public URL immediately — anyone with the old link gets a 404. Use when a client relationship ends or a password leaked. Do this before regenerating a share so stale links don't linger. To invalidate viewer sessions while keeping the link, change the password via `update` instead — see `whatagraph-deleting` for the full destructive-action playbook. If `delete-sharing` isn't exposed on this server, load `whatagraph-deleting` to check what is available.
 
+## Share a report with a person by email
+
+A guest link is a personal, read-only link for one person outside the team. It needs no account and no password, and you can stop it for that person alone. The report needs a share link first (`manage-sharing action=create`).
+
+```
+manage-guest-access action=invite report_id=<id> email="<client_email>" expires_at="2026-12-31"
+manage-guest-access action=list report_id=<id>
+manage-guest-access action=revoke report_id=<id> guest_id=<guest_id>
+```
+
+- `expires_at` is optional; without it the link works until revoked.
+- Revoking stops only that person's link. The public share link keeps working for anyone who has it, unless it has a password. To limit access to invited people only, set `require_password=true` on the share and do not hand out the password.
+- Send the invite only to the address the user gave you. Never guess or complete an email address.
+
 ## What MCP can't do here
 
-- Allowlist specific email addresses — not exposed via MCP; UI only.
+- Invite a guest to a whole space by email — UI only (Space → Share).
