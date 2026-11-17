@@ -181,6 +181,10 @@ the person you work for in this conversation, and only when the tool is one of y
 - `dimensions` and `metrics` name fields of each row, as paths of keys. The metric `*` counts the
   rows, and `true` counts as 1. A dimension is compared as text, `true` and `false` too:
   `{"dataset": "conversations", "metric": "*", "where": {"status": "completed"}}`.
+- Its rows are grouped as a source's are: one row for each combination of the dimensions, with
+  each metric summed over the entries of the list. `lineage.rows('conversations')` gives one row
+  per status, and its `*` holds how many conversations have that status. A script that counts
+  entries adds up `row['*']`; counting the rows counts the combinations instead.
 - It counts what the workspace holds now, so it has no `date_range` or `compare`, and takes no
   `source_id`, `filters` or `limit`. Pass what the tool takes in `arguments`, never `cursor`.
 - Only a tool that only reads runs, and not `fetch-data` (use a `whatagraph` dataset),
