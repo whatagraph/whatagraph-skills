@@ -76,6 +76,8 @@ CANONICAL_TOOLS = {
     "list-integrations", "manage-integrations", "remove-integrations",
     "load-skill",
     "manage-members", "remove-members",
+    "list-roles", "manage-roles", "delete-roles",
+    "manage-guest-access",
     "list-overviews", "manage-overviews", "delete-overviews",
     "preview-report",
     "read-document",

@@ -58,13 +58,13 @@ Both work same-channel and cross-channel — channel count is not what separates
 | Reusable report blueprints, linked reports | `whatagraph-templates` |
 | Saving and restoring a report's structure | `whatagraph-snapshots` |
 | Visual branding, colors, fonts, logo | `whatagraph-themes` |
-| Public share links, password protection | `whatagraph-sharing` |
+| Public share links, password protection, emailing a report to one person | `whatagraph-sharing` |
 | Scheduled email delivery | `whatagraph-automations` |
 | PDF/CSV export of a whole report | `whatagraph-export` |
 | Seeing how a report renders, checking your own work | `whatagraph-export` |
 | Looking at the actual ad-creative images from a report's media widgets (creative analysis, creative QA) | `whatagraph-export` (`view-creatives`) |
 | Pushing data to BigQuery / data warehouse | `whatagraph-destinations` |
-| Inviting teammates, roles, subscription | `whatagraph-team-and-members` |
+| Inviting teammates, roles (custom and per space), subscription | `whatagraph-team-and-members` |
 | Connecting a new integration account to the team | `whatagraph-integrations-admin` |
 | Deleting, removing, disconnecting, revoking anything | `whatagraph-deleting` |
 | Target/pacing progress — reading where a goal stands right now | `whatagraph-goals` (`view-goals`) |
