@@ -15,6 +15,7 @@ required_tools:
   - view-sharing
   - delete-automations
   - delete-blends
+  - delete-freeform-reports
   - delete-custom-dimensions
   - delete-custom-metrics
   - delete-destinations
@@ -34,6 +35,8 @@ required_tools:
   - remove-integrations
   - remove-members
 optional_tools:
+  - tool_name: manage-freeform-reports
+    purpose: Rewrite a freeform report's page instead of deleting it.
   - tool_name: manage-reports
     purpose: Detach a source / remove a widget reference before deleting it.
   - tool_name: manage-sharing
@@ -171,6 +174,15 @@ delete-spaces action=delete client_id=<id>
 ```
 
 The parameter is `client_id`, not `space_id`. Reports and measurements inside the space are soft-deleted with it (support-restorable). The Home space cannot be deleted. Deleting a client folder is visible to the whole team — always confirm.
+
+### Freeform reports
+
+```
+delete-freeform-reports action=delete freeform_report_id=<id>
+delete-freeform-reports action=delete_page freeform_report_id=<id> page_id=<id>
+```
+
+A freeform report is the document behind a deck, a printable report or a dashboard — see `whatagraph-freeform-reports`. Deleting one takes its pages, share links and snapshots with it. `delete_page` removes one page and closes the gap; a freeform report cannot be left with none, so the last page is refused. Neither is recoverable through MCP. To replace a page's content rather than remove it, use `manage-freeform-reports action=update_page`.
 
 ### Data sources & accounts
 
