@@ -178,20 +178,25 @@ Values: `previous` (matching-length previous period), `last_year` (same dates, y
 
 `fetch-data` filters data the same way a widget filter does. The filter applies to the rows, to `totals` and to the `comparison` block. Use `filters` for an ad hoc filter, `filter_ids` for saved filters, or both in one call.
 
-**`filters`** is an array of groups. Each group is an array of conditions.
+**`filters`** is a flat array of conditions. Each condition names its `group` with a number.
 
-- Groups are joined with **AND**. The conditions inside one group are joined with **OR**.
+- A condition is `{"group": <n>, "dimension": <id>, "filter_operator": <op>, "value": [<v>]}` or `{"group": <n>, "metric": <id>, "filter_operator": <op>, "value": [<v>]}`. `group` and `filter_operator` are required. `value` is always an array of strings, with one element for every operator except `includes` and `excludes`.
+- Conditions with the same `group` are joined with **OR**. Different groups are joined with **AND**.
 - On a channel that still uses version 1 filters, groups are joined with OR as well. `list-filters action=show` reports a saved filter's `version`.
-- A condition is `{"dimension": <id>, "filter_operator": <op>, "value": <v>}` or `{"metric": <id>, "filter_operator": <op>, "value": <v>}`. Take the ids from `list_dimensions_and_metrics` for the same source and report type, the same as for `metrics` and `dimensions`. Custom dimensions (`universal_dimension_<n>`) work too.
+- Take the ids from `list_dimensions_and_metrics` for the same source and report type, the same as for `metrics` and `dimensions`. Custom dimensions (`universal_dimension_<n>`) work too.
 - One group holds only dimensions or only metrics, and only channel fields or only custom fields. Put different kinds in separate groups.
+- An error names a condition by its position in the array and its group, for example `filters[2] (group 0)`.
 
 ```
 fetch-data source_id=<ga4_source_id> metrics=["screenPageViews"] dimensions=["unifiedPagePathScreen"]
    period="lastMonth"
-   filters=[[{"dimension":"unifiedPagePathScreen","filter_operator":"contain_dimension","value":"/blog/"}],
-            [{"metric":"screenPageViews","filter_operator":"greater_metric","value":"0"}]]
-# pages whose path contains /blog/ AND that had at least one view
+   filters=[{"group":0,"dimension":"unifiedPagePathScreen","filter_operator":"contain_dimension","value":["/blog/"]},
+            {"group":0,"dimension":"unifiedPagePathScreen","filter_operator":"contain_dimension","value":["/news/"]},
+            {"group":1,"metric":"screenPageViews","filter_operator":"greater_metric","value":["0"]}]
+# pages whose path contains /blog/ OR /news/, AND that had at least one view
 ```
+
+The same `filters` work in `wg.fetch_data` on the team computer.
 
 Operators:
 
@@ -201,7 +206,7 @@ Operators:
 | Metric | `equal_metric` (`=`), `not_equal_metric` (`!=`), `greater_metric` (`>`), `greater_or_equal_metric` (`>=`), `less_metric` (`<`), `less_or_equal_metric` (`<=`), `empty_metric`, `not_empty_metric` |
 
 - Each channel supports only some operators. One it does not support is rejected with the list it does support.
-- The empty operators need no `value`. `includes` and `excludes` take an array of values and match them exactly. Every other operator takes one value, and an array is rejected.
+- The empty operators need no `value`. `includes` and `excludes` take several values and match them exactly. Every other operator takes exactly one value; to match any of several values, put one condition per value in the same group.
 - **GA4:** `exactly_matches_dimension` and the regex operators are case sensitive, and a regex must match the whole value (`.*/blog/.*`, not `/blog/`). `contains`, `starts_with` and `ends_with` are not case sensitive. A GA4 dimension condition takes one value, so use a regex instead of `includes`.
 - **Google Sheets** compares a metric condition with each sheet row before rows are grouped, so `> 900` can drop rows whose group total is above 900. A widget on the same sheet does the same.
 
