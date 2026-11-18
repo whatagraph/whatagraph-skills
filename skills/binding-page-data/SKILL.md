@@ -239,9 +239,10 @@ Write each number of a calculation as the tool returned it or the person wrote i
 use 1, 100 and 1000 for a change, a percent or a per mille, as in `(a / b - 1) * 100`, and at most
 one other whole number up to 1000: to multiply, as `* 115 / 100` does for 15% more, or to divide by
 the days, weeks or months of a period, such as `/ 7`, by a count a tool returned, or by the number
-of terms of the sum it divides, as `(a + b) / 2` does for an average. A calculation of the person's
-numbers alone, such as a target for a year from one for a month, goes in an element marked
-`data-wg-given` too.
+of terms of the sum it divides, as `(a + b) / 2` does for an average. Add or subtract at most one
+constant in the whole calculation, and only 1, 100 or 1000, as `(a / b - 1) * 100` subtracts 1. A
+calculation of the person's numbers alone, such as a target for a year from one for a month, goes in
+an element marked `data-wg-given` too.
 
 `read-document` shows the page without the stored rows. To see the numbers, read `shows` and the
 screenshots of the check, and compare two or three of them with `fetch-data` for the same range.
