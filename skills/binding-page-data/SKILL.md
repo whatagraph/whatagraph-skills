@@ -216,6 +216,8 @@ The result of `create-document` and `edit-document` has a `lineage` field when t
 
 - `fetched` names the datasets that were fetched. A save that leaves a dataset unchanged does not
   fetch it again, so editing the markup costs nothing.
+- `shows` gives, for each dataset fetched, the dates its numbers cover and what the page now shows
+  for each of its values. These are the numbers and dates to give the person in your reply.
 - `problems` lists what is wrong: a field the source does not have, a value that names a metric
   its dataset does not fetch, an element bound to an id the manifest lacks. Fix each one with
   `edit-document` before you reply. A manifest with a problem is saved as written and nothing is
@@ -237,7 +239,7 @@ Write each number of a calculation as the tool returned it or the person wrote i
 numbers are whole numbers up to 1000, such as 100 for a percent or 7 days: write 15% more as
 `* 115 / 100`.
 
-`read-document` shows the page without the stored rows. To see the numbers, look at the
+`read-document` shows the page without the stored rows. To see the numbers, read `shows` and the
 screenshots of the check, and compare two or three of them with `fetch-data` for the same range.
 
 In the reply, say that the numbers are linked to the data, which controls the page has, and that
