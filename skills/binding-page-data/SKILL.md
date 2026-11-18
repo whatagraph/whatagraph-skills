@@ -241,6 +241,7 @@ one other whole number up to 1000: to multiply, as `* 115 / 100` does for 15% mo
 the days, weeks or months of a period, such as `/ 7`, by a count a tool returned, or by the number
 of terms of the sum it divides, as `(a + b) / 2` does for an average. Add or subtract at most one
 constant in the whole calculation, and only 1, 100 or 1000, as `(a / b - 1) * 100` subtracts 1. A
+term whose value does not change with its numbers counts as a constant, as `1000 * a / a` does. A
 calculation of the person's numbers alone, such as a target for a year from one for a month, goes in
 an element marked `data-wg-given` too.
 
