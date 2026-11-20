@@ -686,6 +686,9 @@ manage-widgets action=batch_change_filter_visibility
 
 manage-widgets action=batch_remove_widget_filters
    report_id=<id> widget_ids=[...]
+
+manage-widgets action=batch_resize
+   report_id=<id> widget_ids=[...] options={"height": 1}
 ```
 
 - `widget_ids` is required. An empty array is a no-op, not "all widgets".
@@ -693,6 +696,7 @@ manage-widgets action=batch_remove_widget_filters
 - `batch_change_date_range` sets a widget-level override; `batch_delete_date_range` removes it (the widgets inherit the report date again).
 - `batch_change_filter_visibility` sets `source_filter_off` on many widgets: `true` disables source-level filters, `false` re-enables them.
 - `batch_remove_widget_filters` removes every widget-level filter from the listed widgets in one call. Report source filters stay and keep applying. Use it when the user wants report filters instead of widget filters: find the widgets with `list-widgets action=list` (`has_filters: true`), then pass their ids. Do not clear filters one widget at a time with `update` and `filter_id: null`. The response gives `removed_filter_count` per widget, so it needs no `show` call afterwards.
+- `batch_resize` gives every listed widget the same size: `options` holds `width` (1..6), `height` (≥1) or both, and nothing else. Make one call per size (KPI cards in one call, charts in another). It then compacts each affected tab: every widget moves up as far as it can in reading order, keeps its column unless its new width no longer fits, and moves down when it would overlap. The response gives each resized widget's new position and size in `results`, and every other widget it moved in `moved_widgets`, so it needs no `list` call afterwards. Use it to narrow, shorten or widen several widgets. Do not resize them one at a time with `update`, and do not resize with `batch_change_settings` (it sets the size without moving anything, so widgets overlap). Freeform reports refuse it.
 - `batch_change_settings` takes the `options` keys, so a `title` is refused when a selected widget is a Comment, Calendar, Filter control or Report shortcut (the error names them). Drop those widgets or the `title`.
 - Use batches for about 10 or more widgets.
 
@@ -710,6 +714,8 @@ The report uses a **6-column grid**. Every widget is a rectangle:
 > **Grid width follows the report layout.** Landscape (`printing_landscape_6x6`, the default) is the 6-column grid. Portrait (`printing_portrait_4x8`) has **4 columns**: every width and `position_x` limit caps at 4. Orientation is set at report create and cannot change once widgets exist. Landscape gives a wider, shorter page: favour wide rows.
 
 > **A tab is a page.** In a PDF each visible tab is exactly one page, as tall as its content; tabs are never split or combined. Put a section break on a new tab, not lower down the grid (`whatagraph-export` → "PDF export").
+
+**Resizing an existing widget:** an `update` that changes `options.width` or `options.height` and sends no position compacts the tab the same way as `batch_resize`, and lists the other widgets it moved in `moved_widgets`. An `update` that also sends `position_x`/`position_y` keeps that position. For several widgets, use `batch_resize` (see "Batch operations").
 
 > **Input and output differ:** pass `width` and `height` inside `options` on create and update; they come back as **top-level** `width` and `height`. With `fields`, use `fields="width,height"`.
 
