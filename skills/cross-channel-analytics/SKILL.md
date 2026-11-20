@@ -203,7 +203,7 @@ Source groups are where a large account list belongs — dozens or hundreds of s
 ### Total Performance Summary
 Fetch key metrics from each channel and present a unified summary:
 - **Total Spend**: Sum of spend across all paid channels
-- **Total Conversions**: Sum of conversions (watch for attribution overlap)
+- **Total Conversions**: Sum of conversions, but only when every channel counts the same event (see "Conversions are not one event across channels" below), and watch for attribution overlap
 - **Blended ROAS**: Total conversion value / Total spend
 - **Blended CPC**: Total spend / Total clicks
 
@@ -224,6 +224,7 @@ Calculate each channel's share of total spend, conversions, or traffic to unders
 ## Important Considerations
 
 - **Metric naming varies across platforms**: "Clicks" in Google Ads may be "link_clicks" in Facebook Ads. Blends handle this mapping, but when comparing sources directly, check metric names with `list_dimensions_and_metrics`.
+- **Conversions are not one event across channels**: the universal "Total Conversions" reads All conversions on Google Ads and Total custom conversions on Meta Ads, and neither is purchases. Each universal metric's `description` in `list_dimensions_and_metrics` names the native metric it reads on that source. Before comparing CPA, conversion rate or ROAS, fetch the same event on each channel by its native id (for purchases: Google Ads `metrics.conversions`, Meta Ads `omni_purchase|actions`), and name the event behind each number. A conversion rate above 100% means the metric counts other actions. Do not recommend moving budget between channels on mismatched conversion data.
 - **Currency differences**: Sources may report in different currencies. Check the `currency` field on each source.
 - **Attribution overlap**: When summing conversions across channels, the total may exceed actual conversions due to multi-touch attribution. Note this when presenting cross-channel totals.
 - **Date alignment**: Ensure all channel data covers the exact same date range for fair comparison.
