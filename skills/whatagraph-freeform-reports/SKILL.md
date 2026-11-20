@@ -190,8 +190,9 @@ The steps:
      dimension splits by the file's units yet, create it; when no source holds the publishers,
      create the Custom API source.
      **A chart is never left as a picture, and a table is never left unbound.** The server
-     refuses `ready` while one is, every time. When a binding is refused, bind the chart or table
-     to the page's channel with a metric that channel has: it draws sample data until an
+     refuses `ready` while one is, every time. The same holds for every figure, change and date
+     line still typed in, and for a chart's ticks, dates and legend left as separate lines. When a
+     binding is refused, bind the chart or table to the page's channel with a metric that channel has: it draws sample data until an
      account is connected. A picture with no kind in the answer was a raster in the file (a
      chart exported as an image): look at it with `list-freeform-reports action=preview` and
      send the chart it draws, like any other.
@@ -223,7 +224,14 @@ The steps:
    - a text line that prints a figure becomes a `metric` bound to that figure. The server draws it
      as that line, in its face and colours: "3.16M DH investis" stays one line with its words, and
      a line that is only a percentage ("+0.86 %") draws the change alone. For a change line, bind
-     the metric that changed with `compare: previous`; its value is not what is drawn.
+     the metric that changed with `compare: previous` (or `last_year` for "from previous year");
+     its value is not what is drawn. This covers every line of a row: when three changes sit under
+     three figures, swap all three. A figure with no source anywhere (a target the person gave, a
+     benchmark you can cite) stays typed only with `typed_reason` on its block; see *Inline or bound*.
+   - **a chart's labels** (axis ticks, months under the plot, legend entries) are the chart's, never
+     blocks of their own. Swapping the chart's picture takes them, its whole axes included. When an
+     answer still lists chart labels left as separate lines, swap the chart they label, then remove
+     the lines that are left with `remove_block_ids`.
    The new block takes the traced block's exact frame and place. Over a picture, the text lines
    inside it go too, except a change printed over the chart (`+0.86 %`): the answer names it as
    kept, so swap it with `replace_block_id` too. Every answer quotes the words it replaced; if they
@@ -1152,9 +1160,14 @@ such block, nothing can refresh it, and the person opening the freeform report c
 from. A freeform report full of them reads as invented, however carefully each number was fetched, and
 "why is this not linked to the source you pulled it from" is the first thing they will ask.
 
-**Inline** is for the figures no source reports: a number you computed from two fetched ones (a
-share, a ratio of ratios), a figure you researched on the web, an estimate, a target. Write those
-as formatted strings and say in `notes` how each was arrived at.
+**Inline** is for the figures no source reports: a figure you researched on the web, an estimate,
+a target the person gave. A rate the source reports (CTR, conversion rate) is still bound, as that
+metric; across channels, bind its parts as `metrics` and name the rate in `ratio`. Every block that types a figure carries
+`typed_reason`, one line saying where the figure came from ("The target the person gave in the
+brief", "Industry benchmark, from the page you cite in `notes`"). A write that types a figure
+without it is refused, and so is a `text` block that prints one, so a figure cannot reach the page
+by being typed into a heading or a caption. Every `typed_reason` is listed in the write's answer:
+name each one in your report.
 
 **A deck's numbers do not drift when they are bound.** Set the document's `date_range` to the
 period the deck is about (`lastQuarter` for a quarterly review, `lastMonth` for a monthly one) and
@@ -1776,6 +1789,10 @@ Surface a finished freeform report as an artifact card in the chat rather than w
   connected to data" and nothing can refresh it. Inline only what no source reports.
 - **Commentary on the numbers typed into a `text` block.** It is a figure in prose, and it goes
   stale with the range. Use a `summary` binding; keep your own text for headings and framing.
+- **A chart built out of separate blocks.** Axis ticks, month labels and legend entries typed as
+  `text` blocks around a chart, to make it look like the file, are refused. A `chart` block draws
+  its own axes and legend from its data; style it (`series_style`, `value_axis_title`,
+  `legend_style`) instead of drawing around it.
 - **A summary placed away from what it should read.** On the page it reads the page; inside a
   card it reads only that card. An empty `inputs` from `regenerate_summary` means it read nothing.
 - **A whole freeform report inlined because it is a deck or a print.** The format changes the composition,
