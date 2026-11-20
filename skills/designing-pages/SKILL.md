@@ -39,6 +39,10 @@ default form for each kind of document is exactly what makes generated pages loo
 they are for. The look of each page comes from its customer, and its form comes from what the
 customer needs and wants from it. This skill says how to find both, and which patterns to leave out.
 
+When the page will show numbers from the customer's connected sources and your skill list has
+`binding-page-data`, load that skill too before you write any HTML. The page then names the data
+each number comes from, every save fetches it, and you never type those numbers.
+
 ## 1. Find the customer's look
 
 Use every source you have, in this order, and stop when you know the look:
