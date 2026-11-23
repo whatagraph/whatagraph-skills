@@ -92,11 +92,16 @@ The steps:
 1. **Create the freeform report empty, in the file's shape.** A 16:9 deck is `slide_16_9`, an A4 report is
    `a4_portrait` or `a4_landscape`; anything else is `custom` with a `design_width`. Give it a brand
    generated from the file (`manage-design-systems action=generate asset=<the file's id>`), and no
-   `pages`.
+   `pages`. Then attach the person's connected accounts for the file's platforms
+   (`attach_sources`), before tracing: as each page is traced, the platform makes the charts and
+   headline figures it can tell live on those accounts.
 2. **Trace every page, in order, in this turn.** `trace_pages` with `asset_id` and `file_pages`
    `[1..10]`, then `[11..20]`, and so on to the last page. The first call records the file's page
    count, and every answer says how many pages are built: carry on until it says all of them are.
-   Do not stop to summarise or to offer to continue, and do not skip or merge pages. The freeform report's
+   Do not stop to summarise or to offer to continue, and do not merge pages. Leave a page out only
+   when the person asked for fewer, or no connected account or channel has its data: list it in
+   `skip_file_pages` (on `trace_pages` or `update`) and name it, with the reason, in your report. A
+   file page that is neither traced nor listed there keeps the report from `ready`. The freeform report's
    pages are the file's pages, in the file's order: add no cover, summary or overview page of your
    own and do not reorder them, even when the person asks for a different source. A page already
    traced is not traced again (the answer names it); a page the tracer could not read is named in
@@ -105,7 +110,13 @@ The steps:
    same `asset_id` and `file_pages` to collect it, and do nothing else to those pages meanwhile.
 3. **Then make the figures live, page by page, without redrawing the page.** A traced chart is a
    picture with its title, axis labels and values as separate text lines, and a traced KPI is a
-   text line: right, but connected to nothing. Look at the page (`list-freeform-reports action=preview`,
+   text line: right, but connected to nothing. The platform swaps what it can tell itself: each
+   chart picture whose legend names metrics of an attached account or of the page's platform
+   becomes a bound `chart`, each headline figure under a label becomes a bound `metric`, and each
+   line of the file's dates becomes a `period` line. The trace answer (and the `attach_sources`
+   answer) says how many blocks it made live on each page and lists each name it took as the
+   closest match: check those against the file first, and fix any that are wrong. Then swap
+   everything the answer still lists. Look at the page (`list-freeform-reports action=preview`,
    and `action=show_page` with `fields=lines` for each block's id, words and frame), then swap the
    traced blocks with `patch_blocks`, sending no `frame`. Swap a whole page in one call: each new
    block carries the id of the traced line or picture it replaces, and each is swapped as
@@ -245,12 +256,15 @@ The steps:
    do not leave the figure typed in: bind it to that platform's channel (*A channel with no account
    yet*), which draws the channel's sample data until the person connects the account. Keep the
    file's colours with `series_style[i].color` and `category_colors`.
-   Leave a picture where no source could ever fill it: creatives, screenshots, logos.
+   Leave a picture where no source could ever fill it: creatives, screenshots, logos. Give a large
+   one a `typed_reason` saying what it is. A picture of a chart is refused on every write,
+   whether it is the tracer's or a region you cut with `manage-assets action=crop_page`: a chart
+   is always a `chart` block.
    When the person names a source ("use our GA4"), bind every figure that source can give to it,
    and still make the other platforms' pages live on their channels: a page of Google Ads or Meta
    figures left typed in is a page that never updates.
-4. **Report from the tool's answers.** Pages traced against the file's pages, `data_blocks` (bound,
-   waiting for a channel, typed in), the channels the person has to connect, and every chart,
+4. **Report from the tool's answers.** Pages traced against the file's pages and the pages left
+   out, `data_blocks` (bound, waiting for a channel, typed in, typed lines, chart pictures), the channels the person has to connect, and every chart,
    table, figure or passage left as the file printed it, by page, with the reason, and what you
    put in each empty slot and why (or that the person chose to leave or remove it). Say plainly
    that figures waiting for a channel are sample data, not theirs.
@@ -261,7 +275,9 @@ answer names one page it could not trace, trace the rest and name that page in y
 
 **It is always a new freeform report.** Do not present a freeform report that already exists as the replica, even
 one with the same name made earlier in this conversation or by another agent. Build a new one, and
-describe only what this turn wrote.
+describe only what this turn wrote. Do not copy another freeform report's pages or blocks as a
+template either: it may still hold pictures and typed figures. Trace the file, and bind from the
+catalogue of the account you attached.
 
 **A funnel** (page views, add to cart, payment, purchase) is shapes, one card per funnel so four
 platforms side by side stay inside a page's block budget. In each card: the platform name as a
@@ -1160,14 +1176,17 @@ such block, nothing can refresh it, and the person opening the freeform report c
 from. A freeform report full of them reads as invented, however carefully each number was fetched, and
 "why is this not linked to the source you pulled it from" is the first thing they will ask.
 
-**Inline** is for the figures no source reports: a figure you researched on the web, an estimate,
-a target the person gave. A rate the source reports (CTR, conversion rate) is still bound, as that
+**Inline** is for the figures no source reports: a figure you found on a web page you cite, or a
+target the person gave. A rate the source reports (CTR, conversion rate) is still bound, as that
 metric; across channels, bind its parts as `metrics` and name the rate in `ratio`. Every block that types a figure carries
 `typed_reason`, one line saying where the figure came from ("The target the person gave in the
 brief", "Industry benchmark, from the page you cite in `notes`"). A write that types a figure
 without it is refused, and so is a `text` block that prints one, so a figure cannot reach the page
-by being typed into a heading or a caption. Every `typed_reason` is listed in the write's answer:
-name each one in your report.
+by being typed into a heading or a caption. Where the team checks the numbers agents type, a
+figure kept with `typed_reason` must be in the person's messages or files, or on a web page you
+cited: a figure nothing in the conversation holds is refused, and so is one `fetch-data` returned,
+which is data and is bound instead. Every `typed_reason` is listed in the write's answer: name
+each one in your report.
 
 **A deck's numbers do not drift when they are bound.** Set the document's `date_range` to the
 period the deck is about (`lastQuarter` for a quarterly review, `lastMonth` for a monthly one) and
