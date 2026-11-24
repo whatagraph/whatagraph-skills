@@ -225,9 +225,9 @@ When `compare_type` is set, both primary and comparison data paginate together u
 - If a metric returns unexpected results, check if the report type is correct — different report types expose different metrics.
 - Keep each call focused — fetch the metrics you actually need rather than the whole catalog. There is no hard cap on the number of metrics, but large requests are slower and the response is byte-capped (~50 KB) and paginated. The `limit` parameter caps the number of **rows** returned (default 100, max 1000), not metrics.
 - For period-over-period comparisons, use `compare_type` on a **single** `fetch-data` call — no need for two calls. Supported modes:
-  - `compare_type: "previous"` — shifts the date range backward by the same duration
+  - `compare_type: "previous"` — shifts the date range backward by the same duration, so October 1 to 31 is compared with August 31 to September 30. With `period`, it follows the report calendar, so `lastMonth` is compared with the whole month before it
   - `compare_type: "last_year"` — compares against the same dates one year prior
-  - `compare_type: "custom"` — pass `vs_from` and `vs_till` for an arbitrary comparison window
+  - `compare_type: "custom"` — pass `vs_from` and `vs_till` for an arbitrary comparison window. Use it to compare a month given by `from`/`till` with the month before it, and name the comparison by the `from` and `till` of the `comparison` block
   The response includes a `comparison` block alongside the primary `data` block, with its own `from`, `till`, `rows`, and `totals`.
 
 ## Handling Errors (read before retrying)

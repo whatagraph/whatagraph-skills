@@ -167,12 +167,12 @@ Use `compare_type` to get comparison data alongside the primary data:
 
 ```
 fetch-data source_id=<id> metrics=[...] from="2025-10-01" till="2025-10-31"
-   compare_type="previous"              # auto-calculates the previous period
-fetch-data source_id=<id> metrics=[...] from="2025-10-01" till="2025-10-31"
-   compare_type="custom" vs_from="2025-04-01" vs_till="2025-04-30"
+   compare_type="custom" vs_from="2025-09-01" vs_till="2025-09-30"   # October against September
+fetch-data source_id=<id> metrics=[...] period="last30Days"
+   compare_type="previous"              # the 30 days before them
 ```
 
-Values: `previous` (matching-length previous period), `last_year` (same dates, year prior), `custom` (explicit `vs_from`/`vs_till`).
+Values: `previous` (matching-length previous period), `last_year` (same dates, year prior), `custom` (explicit `vs_from`/`vs_till`). With `from`/`till`, `previous` compares October 1 to 31 with August 31 to September 30, so to compare a month with the month before it, use `custom` with that month's dates. With `period`, `previous` follows the report calendar, so `lastMonth` is compared with the whole month before it. Name the comparison by the `from` and `till` of the `comparison` block.
 
 ### Filtering the fetch — `filters` and `filter_ids`
 
