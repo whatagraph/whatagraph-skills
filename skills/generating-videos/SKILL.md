@@ -37,6 +37,8 @@ Tools covered: `generate-video`, `generate-voiceover`, `generate-music`, `render
 - `generate-music` makes a 30 second instrumental track for 4 credits.
 - `render-video` cuts the shots together, mixes their sound with the voice-over and the music, and lays your HTML on top: the text, captions, logo and end card, exactly as written. It costs no credits except a fraction of a credit to read back what is said.
 
+**Every finished video comes from `render-video`.** Its result is an asset in the conversation that the user sees and that `manage-assets` can publish. Never assemble, re-encode or export the deliverable with ffmpeg, Hyperframes or any other tool on the team computer, and never clone or install an outside video tool. A file made on the computer cannot be handed to the user. To change the size, render again with `width` and `height`; do not re-encode.
+
 When the user asks for a video, the answer is a finished video made in this turn, not a storyboard or a still. This holds when the video is one part of a larger request, such as a report or a campaign board: make the video first, then put it in the document. Plan it, make it, check it and show it. Offer plans for more videos only after the first one is made.
 
 The video tools are not offered to every team; check your tool list. Teams whose AI processing must stay in the EU have `generate-image` and `render-video` but no footage, voice-over or music, so they get template motion (the last section) with a photo from `generate-image`.
@@ -358,8 +360,13 @@ Keep all text and logos out of the top 14% (above y = 270), the bottom 35% (belo
 9. No interface, dashboard or chart appears that is not a real screenshot, and every number on screen comes from the client.
 10. The person and the product look the same in every shot, and no logo or text appeared in any clip.
 11. `spoken_lines` of the finished ad match the script.
+12. `has_audio` is true whenever the plan had voice-over or music. A render that comes back silent is not the video that was planned: fix it, or tell the user plainly what is missing and why.
 
 Then tell the user what you made: the file name, size and length, the cost (the sum of `credits_used`), and the AI label question when it applies.
+
+## When the planned video cannot be delivered
+
+Never replace the planned video with a lesser one (silent, shorter, slides instead of footage, lower quality) without saying so. Tell the user in the first line of the reply what changed and why, for example: "This version has no music or voice-over because ...". Then offer to make the full version.
 
 ## Versions and sizes
 
@@ -387,7 +394,7 @@ The design rules of `generating-images` still apply: one display face and one te
 
 ## Putting a video somewhere
 
-A video is private to the conversation until you publish it. `manage-assets` runs only after the `whatagraph-assets` skill is loaded in the conversation:
+A video is private to the conversation until you publish it. To show or share a finished video: `render-video` → `manage-assets action=publish asset_id=<asset_ulid>` → use the returned CDN URL. A `data:` URL, a file on the team computer or any other host does not play in a document. `manage-assets` runs only after the `whatagraph-assets` skill is loaded in the conversation:
 
 ```
 manage-assets action=publish asset_id=<asset_ulid>      → {"url": "<public_url>"}
