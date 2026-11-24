@@ -86,7 +86,13 @@ with several metrics each, not one dataset per number. A page has at most 40.
   this month or the last 7 days, use a key or a parameter, so the page moves with the calendar.
   Fixed dates never move: use them only for dates the person named or a period no key matches, and
   then say in your reply that the page keeps those dates.
-- `compare` is `none`, `previous`, `last_year`, or `"$name"`.
+- `compare` is `none`, `previous`, `last_year`, fixed dates as
+  `{"from": "2026-09-01", "till": "2026-09-30"}`, or `"$name"`. `previous` compares a period key
+  as the report calendar does (`lastMonth` with the month before it), and fixed dates with as many
+  days before them: October 1 to 31 with August 31 to September 30. When a page with fixed dates
+  compares with a whole month, or with any period that is not the same number of days right before
+  them, write that period's dates as `compare`, so a change sits beside the column it is the change
+  from.
 - An id starts with a letter and holds only letters, digits and underscores.
 
 **A parameter is a control the reader switches.** Its type is `date_range` or `compare`, with up
