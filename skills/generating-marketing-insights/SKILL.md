@@ -90,7 +90,7 @@ fetch-data source_id: <id>, report_type: "<type>",
   compare_type: "previous"
 ```
 
-Supported `compare_type` values: `previous` (same duration shifted back), `last_year` (year-over-year), `custom` (with `vs_from`/`vs_till`). The response includes a `comparison` block with its own `rows` and `totals`.
+Supported `compare_type` values: `previous` (same duration shifted back), `last_year` (year-over-year), `custom` (with `vs_from`/`vs_till`). The response includes a `comparison` block with its own `from`, `till`, `rows` and `totals`. For month over month with `from`/`till`, use `custom` with the previous month's dates: `previous` compares October 1 to 31 with August 31 to September 30, which is not September.
 
 ### Step 3: Analyze and Narrate
 
