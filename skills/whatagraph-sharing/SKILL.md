@@ -86,7 +86,7 @@ The same calls with `overview_id` instead of `report_id`. An overview share supp
 
 ## Share a document
 
-A document is a file an agent made in a conversation: a web page, deck, PDF, spreadsheet and so on. Uploaded files and notes cannot be shared. Inside a conversation you can share the documents that conversation can open.
+A document is a file an agent made in a conversation: a web page, deck, PDF, spreadsheet and so on. Uploaded files and notes cannot be shared. Inside a conversation you can share the documents that conversation can open. `document_id` takes the document's ulid, its share link (`.../shared/d/<id>`) or its share id, so a link the client already has finds the document behind it.
 
 ```
 manage-sharing action=create

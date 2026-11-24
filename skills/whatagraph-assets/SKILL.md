@@ -24,6 +24,8 @@ The asset library holds files that belong to the team. Two jobs use it:
 
 Every asset hangs off one **owner node**: the team, a space (client), or a report. In an agent conversation it can also belong to the agent or the conversation. You see an asset if you can reach its owner node.
 
+A document you write with `create_document` belongs to your conversation. Your later conversations (the same agent, for example a refresh run) find, read and edit it without moving it, and editing keeps its share link. So do not promote a page only to find it again. Inside a conversation, `promote` accepts `team`, `agent` and `conversation`; `client` and `report` are refused there.
+
 ## Use this when
 
 - A report needs a logo, cover image, or a comment-widget background.
@@ -151,7 +153,7 @@ manage-assets action=set_visibility asset_id=<asset_ulid> visibility=private
 | `report` | `target_report_id` |
 | `agent` / `conversation` | Only valid inside an agent conversation |
 
-**Default to `target_scope=team`** for anything a report will display. A report-scoped image cannot be reused, and duplicating it later is worse than scoping it correctly now.
+**Default to `target_scope=team`** for anything a report will display. For a page you wrote, keep it where it is unless the user asks for it to be shared with the whole team. A report-scoped image cannot be reused, and duplicating it later is worse than scoping it correctly now.
 
 ## Common pitfalls
 
