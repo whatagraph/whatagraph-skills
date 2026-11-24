@@ -203,6 +203,7 @@ The tool schema now lists **all** valid periods dynamically — check the `perio
 - **Currency**: Check the source's `currency` field from `list-sources` to know which currency cost metrics are reported in.
 - **Aggregation**: Data is aggregated by the dimensions you specify. No dimensions = single totals row. Adding `date` dimension gives daily breakdown.
 - **Rate metrics**: Metrics like CTR, conversion rate, and ROAS may be pre-calculated or may need manual calculation from component metrics depending on the source.
+- **Conversions differ by channel**: a universal metric such as "Total Conversions" (`universal_metric_788`) reads a different native metric on each channel: All conversions on Google Ads, Total custom conversions on Meta Ads. Neither is purchases. Its `description` in `list_dimensions_and_metrics` names the native metric it reads on that source. Before you compare conversions, CPA, conversion rate or ROAS across channels, fetch the same event on each by its native id (purchases: `metrics.conversions` on Google Ads, `omni_purchase|actions` and `omni_purchase|action_values` on Meta Ads), and name the event behind every number. A conversion rate above 100% means the metric counts other actions. Do not recommend moving budget between channels until both count the same event.
 - **`totals`**: Every `fetch-data` response includes a `totals` object with aggregated values across all rows (not just the current page). Use this for headline numbers without summing rows manually.
 
 ## Row Pagination
