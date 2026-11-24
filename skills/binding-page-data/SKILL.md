@@ -86,7 +86,13 @@ with several metrics each, not one dataset per number. A page has at most 40.
   this month or the last 7 days, use a key or a parameter, so the page moves with the calendar.
   Fixed dates never move: use them only for dates the person named or a period no key matches, and
   then say in your reply that the page keeps those dates.
-- `compare` is `none`, `previous`, `last_year`, or `"$name"`.
+- `compare` is `none`, `previous`, `last_year`, fixed dates as
+  `{"from": "2026-09-01", "till": "2026-09-30"}`, or `"$name"`. `previous` compares a period key
+  as the report calendar does (`lastMonth` with the month before it), and fixed dates with as many
+  days before them: October 1 to 31 with August 31 to September 30. When a page with fixed dates
+  compares with a whole month, or with any period that is not the same number of days right before
+  them, write that period's dates as `compare`, so a change sits beside the column it is the change
+  from.
 - An id starts with a letter and holds only letters, digits and underscores.
 
 **A parameter is a control the reader switches.** Its type is `date_range` or `compare`, with up
@@ -234,14 +240,20 @@ rows, and make each such sentence read `state`, as section 3 says.
 A save is refused, and nothing is stored, while the page shows a number typed outside the bound
 elements that no tool result and no message or file of the person holds. The error lists each one.
 Put a number the person gave you in an element marked `data-wg-given`, and give a number you worked
-out from backed numbers its calculation in `data-wg-calc`, such as `data-wg-calc="19952.08 / 6493"`.
-Write each number of a calculation as the tool returned it or the person wrote it. Besides those,
+out from backed numbers its calculation in `data-wg-calc`, such as
+`data-wg-calc="19952.08@bodek / 6493@bodek"`. Write each number of a calculation as the tool
+returned it, followed by `@` and the name its result starts with (`{"cite":"bodek", ...}`), or as the
+person wrote it, followed by `@person`. The check looks a named number up in that result only, so a
+small count such as `81@bodek` is backed too. Write `@own` after a number you chose, such as the
+share of a phase of a plan, and `@knowledge` after one from your general knowledge. Besides those,
 use 1, 100 and 1000 for a change, a percent or a per mille, as in `(a / b - 1) * 100`, and at most
 one other whole number up to 1000: to multiply, as `* 115 / 100` does for 15% more, or to divide by
 the days, weeks or months of a period, such as `/ 7`, by a count a tool returned, or by the number
-of terms of the sum it divides, as `(a + b) / 2` does for an average. A calculation of the person's
-numbers alone, such as a target for a year from one for a month, goes in an element marked
-`data-wg-given` too.
+of terms of the sum it divides, as `(a + b) / 2` does for an average. Add or subtract at most one
+constant in the whole calculation, and only 1, 100 or 1000, as `(a / b - 1) * 100` subtracts 1. A
+term whose value does not change with its numbers counts as a constant, as `1000 * a / a` does. A
+calculation of the person's numbers alone, such as a target for a year from one for a month, goes in
+an element marked `data-wg-given` too.
 
 `read-document` shows the page without the stored rows. To see the numbers, read `shows` and the
 screenshots of the check, and compare two or three of them with `fetch-data` for the same range.
