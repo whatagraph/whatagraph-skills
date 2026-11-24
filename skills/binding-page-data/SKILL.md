@@ -240,8 +240,12 @@ rows, and make each such sentence read `state`, as section 3 says.
 A save is refused, and nothing is stored, while the page shows a number typed outside the bound
 elements that no tool result and no message or file of the person holds. The error lists each one.
 Put a number the person gave you in an element marked `data-wg-given`, and give a number you worked
-out from backed numbers its calculation in `data-wg-calc`, such as `data-wg-calc="19952.08 / 6493"`.
-Write each number of a calculation as the tool returned it or the person wrote it. Besides those,
+out from backed numbers its calculation in `data-wg-calc`, such as
+`data-wg-calc="19952.08@bodek / 6493@bodek"`. Write each number of a calculation as the tool
+returned it, followed by `@` and the name its result starts with (`{"cite":"bodek", ...}`), or as the
+person wrote it, followed by `@person`. The check looks a named number up in that result only, so a
+small count such as `81@bodek` is backed too. Write `@own` after a number you chose, such as the
+share of a phase of a plan, and `@knowledge` after one from your general knowledge. Besides those,
 use 1, 100 and 1000 for a change, a percent or a per mille, as in `(a / b - 1) * 100`, and at most
 one other whole number up to 1000: to multiply, as `* 115 / 100` does for 15% more, or to divide by
 the days, weeks or months of a period, such as `/ 7`, by a count a tool returned, or by the number
